@@ -197,6 +197,13 @@ Hardening `AppUnderTest`:
   process. Where the application writes its logs, since a failure can be
   invisible on screen and present in a log. And how to recognize the
   application's own stray processes for cleanup.
+- **`bundleDir` is needed on day one, not as an escape hatch.** The lifted
+  default expects `dist/<productName>-darwin-arm64/<productName>.app`. Neither
+  confirmed consumer matches it: one builds a directory named for its product
+  but a bundle named something shorter, and the other declares no product name
+  at all and uses a different packager's layout entirely. Two consumers, two
+  layouts, neither the default. Treat the default as a convenience for one
+  packager rather than as the shape.
 - **The exclusion list may have to be conditional rather than flat.** A real
   application had six ways to quit, three of which are not buttons, and one
   that is harmless many times and fatal once: the shortcut closing an editor
@@ -293,6 +300,15 @@ by necessity. Candidates worth measuring rather than assuming: the survey
 result unchanged across two consecutive reads, no animations in flight, and a
 bounded round trip returning. Record what the chosen one costs, because it
 runs after every hop and multiplies by the budget.
+
+**What mature suites do instead is worth knowing, even though the engine
+cannot require it.** Neither application examined has a global settle signal.
+Both express readiness per component, against something the product already
+renders: a console's prompt character, a data grid's idle badge, a pane's
+progress indicator, a busy attribute on a group. An adapter can name those
+where they exist, and they make excellent checks. They are an optimization on
+top of the generic strategy, never a replacement for it, because an explorer
+arriving somewhere unexpected has no idea which component it is in.
 
 **Choosing is a named seam rather than a line in the loop**, taking the
 candidate list and a source of randomness and returning one candidate; the only
@@ -506,6 +522,23 @@ animation mid-flight changes what is visible. The mechanism is undecided and
 phase 4 says what is known about choosing one: it has to work without the
 application's help. Any drift here shows as R13 firing on a replay against an
 application with no bug, which is how it will be noticed.
+
+**A virtualized list under-counts silently.** A windowed list renders only
+the rows currently visible, positioned by a transform, with the true position
+in a data attribute rather than in the document order. A survey enumerating
+candidates sees twelve of forty and reports no error at all. The Route then
+believes it explored a list it barely touched, and the journal faithfully
+records the twelve it could see. This is worse than a dead end, because a dead
+end is visible and this is not. Any survey needs to know whether a container
+is windowed, and there is no general way to ask.
+
+**A dismissed widget can stay in the DOM and still take input.** In one real
+application a closed picker is hidden rather than removed, so a naive query
+returns the stale one, and a keypress aimed at it lands in the console and is
+executed as code. For a scripted test that is a wrong assertion. For a Route
+choosing its own moves it is an arbitrary command run against the application
+under test. Filtering candidates on visibility is what prevents it, which is
+already required, but the consequence of getting it wrong is worth stating.
 
 **Attachments and traces are not the journal.** Playwright writes both at test
 end. A run killed mid-route writes neither. The journal is its own file,

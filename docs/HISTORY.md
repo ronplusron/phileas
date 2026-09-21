@@ -58,12 +58,19 @@ looking for the evidence in the files will not always find it there.
 
 ### Attaching to a hardened Electron build
 
-**A packaged Electron application may refuse automation entirely.** RStudio
-ships with the fuses `EnableNodeCliInspectArguments` and `RunAsNode` disabled,
-which is Electron's own recommended hardening. Playwright's `electron.launch()`
-attaches through the Node inspector, so it hangs and times out. Measured here
-against the installed build, then confirmed against the documentation rather
-than inferred.
+**A packaged Electron application may refuse automation entirely -- but that
+is one application's choice, not the norm.** RStudio ships with the fuses
+`EnableNodeCliInspectArguments` and `RunAsNode` disabled, which is Electron's
+own recommended hardening. Playwright's `electron.launch()` attaches through
+the Node inspector, so it hangs and times out. Measured against the installed
+build, then confirmed against the documentation rather than inferred.
+
+Four builds were checked in the end and RStudio is the outlier. Positron
+carries no fuse configuration at all and leaves `RunAsNode` enabled, because
+the editor it forks needs it for its own command line. Both confirmed
+consumers have the fuses enabled. So the ordinary launch path works for three
+of four, and the engine needs the debugging-port path as a fallback rather
+than as its default.
 
 The workaround works and was measured: spawn the binary with
 `--remote-debugging-port`, poll until the endpoint answers, attach with
@@ -106,16 +113,35 @@ across 728 tests: **semantic locators are 9.5% of 1,772 element references,
 and `getByRole` alone is 4%.** Their stated hierarchy puts stable product IDs
 above roles.
 
-**The correct reading is that the resting screen is a ceiling, not a floor.**
-Role discovery reaches the chrome -- toolbars, menus, dialogs, panes -- and
-every surface with real behavior has no role semantics at all: the console,
-every source tab, the data grid, the visual editor, autocomplete. A Route that
-hops into the editor finds a text area and has nowhere further to go. That is
-not a defect in the engine. It is what stranded means, and it will be right.
+The resting screen is a ceiling rather than a floor for that application:
+role discovery reaches the chrome -- toolbars, menus, dialogs, panes -- and
+stops at the console, the source tabs, the data grid and the visual editor. A
+Route that hops into the editor finds a text area and has nowhere further to
+go. That is not a defect in the engine; it is what stranded means.
 
 Worth knowing: in one place their authors choose a role over an ID
 deliberately, because the accessibility tree filters out ghost dialogs the DOM
 retains. Role discovery works with the grain there rather than against it.
+
+**A second census, on a different application, corrected the conclusion drawn
+from the first.** A fork of a large editor, built on ordinary DOM rather than
+a Java-to-JavaScript toolkit, came in at 30.3% semantic locators and 14.7%
+`getByRole` -- roughly three and a half times the other, with a written policy
+that ranks accessible roles *above* stable product IDs, inverting the first
+application's hierarchy.
+
+**So the boundary is rendering technique, not how interesting a surface is.**
+Roles fail on canvas-backed and virtualized surfaces -- a code editor's text
+layer, a terminal's canvas, a windowed list -- and work on ordinary DOM
+however much behavior sits behind it. Those two categories coincide in an
+integrated development environment, which is why one census read as though
+every interesting surface were opaque. The clearest evidence is that
+project's accessibility scanner configuration, which excludes exactly two
+things: the editor's text layer and the terminal's canvas.
+
+The practical consequence is better than the first reading suggested. The
+mechanism is stronger than one application implied, and its real limit is
+nameable in advance rather than diffuse.
 
 ### The settling question, reversed
 
@@ -184,6 +210,56 @@ command, a keyboard shortcut and menu paths. One of them is worse than a
 static list can express: the shortcut that closes an editor tab closes the
 *application* once no tabs remain. A control that is harmless many times and
 fatal once cannot be excluded by name alone.
+
+## 2026-09-21: a second suite read, and three claims narrowed
+
+A focused reading of the other large candidate -- a fork of a large editor,
+ordinary DOM rather than a generated interface -- set against the numbers from
+the first. Its job was to confirm or refute two conclusions rather than
+describe another codebase, and it did one of each.
+
+**Held: the engine cannot require an adapter to supply a settle signal.** That
+project ships a purpose-built driver injected at launch, with entries for
+setting values, reading elements, typing into the editor, reading the terminal
+buffer and executing any registered command by identifier. It still has no
+"the application has settled" primitive. Its only lifecycle-wide signal fires
+once per window and never again, and 47 blind waits remain in the test path
+against roughly 280 retrying constructs. A mature suite with a bespoke bridge
+still could not produce one, which is the same answer the first project gave
+from the opposite direction.
+
+**What both do instead is per-component readiness**, keyed to something the
+product already renders: a prompt character, an idle badge, a progress
+indicator, a busy attribute. `PLAN.md` carries that as an optimization an
+adapter may offer, never as a requirement.
+
+**Narrowed: role discovery does not stop at "surfaces with real behavior."**
+That was drawn from one census and was too broad. The second came in at 30.3%
+semantic locators against the first's 9.5%, and its written policy ranks
+accessible roles above stable product identifiers -- the inverse of the first.
+The real boundary is rendering technique: roles fail on canvas-backed and
+virtualized surfaces and work on ordinary DOM regardless of how much behavior
+sits behind it. In an integrated development environment those coincide, which
+is why one census read as though every interesting surface were opaque.
+
+**Narrowed: a hardened build is one application's choice, not the norm.** Four
+builds were checked. Only the first has the fuses disabled. The second carries
+no fuse configuration at all, and both confirmed consumers have them enabled.
+The ordinary launch path works for three of four, so the debugging-port path
+is a fallback rather than the default.
+
+**Two hazards found that no amount of reasoning would have produced**, both
+recorded in `PLAN.md`: a windowed list reports only its visible rows and a
+survey under-counts it silently, and a dismissed widget can remain in the
+document and still receive keystrokes, which for a Route choosing its own
+moves means arbitrary input reaching the application.
+
+**And a measurement from the two confirmed consumers**, taken locally rather
+than read: neither packages into the layout the lifted launch code expects by
+default. One names its directory for the product and its bundle something
+shorter; the other declares no product name and uses a different packager
+entirely. The override for this is a day-one requirement rather than an escape
+hatch.
 
 ## 2026-09-21: the consumers were settled, and two of them were read
 
