@@ -346,8 +346,15 @@ Stated as what must be true for someone using it.
 - **C1a** The staleness guard in R23 needs the sources the build came from, so
   it works wherever those are available and cannot run at all against an
   installed binary alone. Everything else here works on any Electron
-  application that can be launched, since it observes a running process rather
-  than reading source.
+  application the engine can get all the way into, since it observes a running
+  process rather than reading source.
+- **C1b** A release can be built to refuse the ordinary way in. Such an
+  application can still be traveled through, but only through a connection
+  that reaches the part of it drawing the screen, so the checks that watch the
+  process behind that screen are unavailable and the run says so rather than
+  reporting them as passed. This is the application's choice rather than the
+  engine's, and it is only forced on a run that has no sources to build from,
+  since anyone building the application decides it for themselves.
 - **C2** Slots into a team's existing browser-automation test run. A team not
   already running one has to adopt it first, which is a real cost of entry.
 - **C3** Everything produced by a run -- results, journals -- stays

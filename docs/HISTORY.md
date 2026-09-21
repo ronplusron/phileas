@@ -25,6 +25,43 @@ re-deriving them would cost it again.
 
 ---
 
+## 2026-09-21: a correction recorded as made, which was never made
+
+The entry below on reading RStudio's suite closes by saying `../CLAUDE.md`
+was corrected about what the third deployment shape loses. It was not. That
+bullet has not been touched since the day it was written, which
+`git log -L` on those five lines shows in one command, and
+`PRODUCT_REQUIREMENTS.md` C1a carried the same uncorrected claim beside it.
+Both say it now.
+
+**Recording a correction as done is worse than leaving it open.** An open
+item is visible in `OUTSTANDING.md` and gets picked up; a closed one reads as
+handled and nobody looks again. Nothing distinguished the two from the
+outside here, and the claim sat wrong for as long as it took somebody to
+check a sentence that had no reason to be doubted.
+
+**What found it was a review of `PLAN.md` against this file**, asking of each
+research finding whether the plan reflects it. That review had a reason to
+follow the pointer: the plan now sends a reader to `../CLAUDE.md` for the
+shapes' limits, so a claim that had been decorative acquired a reader. A
+correction nobody needs is also a correction nobody checks.
+
+**And the claim being corrected was itself slightly wrong, which is why the
+fix is not what the earlier entry asked for.** What costs the main process is
+the application shipping hardened against automation, not the deployment
+shape. The two coincide in the third shape, and only there, because it is the
+one shape where how the build was made is somebody else's choice: under the
+second you build the application yourself and decide. Writing the earlier
+entry's wording into `../CLAUDE.md` verbatim would have made a true sentence
+about one case into a false one about a category. The later entry narrowing
+hardened builds to one in four narrowed how often this bites, not what it
+attaches to.
+
+The requirement gained a number rather than a clause, as C1b, because what it
+asks for is behavior a finished build can be held up to: a run that cannot
+see the process behind the screen says so, instead of reporting the checks
+that watch it as passed. `PLAN.md` carries it in phase 1 and as a hazard.
+
 ## 2026-09-21: the lineage, and where the Fix came from
 
 Recorded because it is the design's origin and existed nowhere in writing.

@@ -330,12 +330,24 @@ is a property of the application rather than of the engine:
   application that you build yourself. Available for any application whose
   source you can obtain, which includes every public repository. Everything
   works in this shape, including the staleness guard, because you built the
-  thing you are testing.
+  thing you are testing -- which is also what lets you decide whether it is
+  built hardened against automation, and the bullet below is what that
+  decides.
 - **Adapters in a repository of your own, pointed at an installed binary.**
-  The only shape available for a closed-source application. The traversal and
-  the universal checks all work, since they observe a running process. The
+  The only shape available for a closed-source application, and the only one
+  where how the application was built is somebody else's choice. The
   staleness guard cannot run at all, because there are no sources to compare
   against, and a test oracle is usually out of reach for the same reason.
+  **Whether anything else is lost depends on the release rather than on the
+  shape.** Where it allows the ordinary launch path, the traversal and the
+  universal checks all work, since they observe a running process. Where it
+  ships hardened, the engine gets in over the debugging protocol instead, and
+  that reaches the part of the application that draws the screen and not the
+  process behind it: stubbing outbound links, keeping windows off the screen,
+  checking that process is alive and reaching native menus all go with it,
+  and the checks that rest on them read green while checking nothing.
+  `docs/HISTORY.md` has the measurement and `docs/PLAN.md` carries it as a
+  hazard.
 
 **A build you made is not the artifact a user installs.** Signing, packaging
 flags and bundled runtimes can all differ. Testing your own build of somebody

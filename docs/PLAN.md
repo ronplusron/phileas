@@ -232,11 +232,11 @@ process. Under it `external.ts`, `menu.ts`, keeping windows off the screen and
 the main-process half of "still responding" are all unavailable. So the launch
 layer states which path it took, and the report names what was consequently
 not checked, through the same mechanism R19 uses for a narrowed check rather
-than a second one beside it. Decide here whether the fallback lands in this
-phase or waits for the first consumer that needs it; if it lands here, the
-example application in phase 2 needs a second variant with the fuses disabled,
-so the path can be verified in this repository rather than against somebody
-else's build.
+than a second one beside it, which is C1b. Decide here whether the fallback
+lands in this phase or waits for the first consumer that needs it; if it
+lands here, the example application in phase 2 needs a second variant with
+the fuses disabled, so the path can be verified in this repository rather
+than against somebody else's build.
 
 Boundary: bookkeeping. The typecheck passes; nothing can run, because there is
 nothing to launch.
