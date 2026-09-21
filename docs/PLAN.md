@@ -64,12 +64,12 @@ src/
   survey.ts            discovery by role, with the exclusion list applied
   route.ts             one Route: Fix, hops, stop rules, stranded; exports runRoute()
   journal.ts           the per-hop record, appended and flushed per hop
-  invariants/
+  oracles/
     index.ts           the runner: whole set after every Hop, first violation ends the Route
-    universal/         the tier that assumes nothing about the application (R17)
+    implicit/          the tier that assumes nothing about the application (R17)
     structural.ts      the shape of an app-declared same-moment check (R18)
     metamorphic.ts     the shape of a relation between two states (R20)
-    oracle.ts          the shape of an independently computed answer (R21)
+    specified.ts       the shape of an independently computed answer (R21)
   report/              the Journey summary, with stranded kept apart from failed
 tests/                 the engine's own tests
 examples/<app>/        a small Electron application, packaged, with planted defects
@@ -171,7 +171,10 @@ real adapter to find where the shape is wrong.
 Hardening `AppUnderTest`:
 
 - Add the exclusion list. R22 names it and `HISTORY.md` records that the
-  lifted interface has nothing for it.
+  lifted interface has nothing for it. Where the application's source is
+  available, prefer deriving the list from it and checking it, rather than
+  writing it out by hand: a hand-written list goes stale the day upstream adds
+  another way out of the application, and does so silently.
 - Fold the per-application flag for whether an uncaught renderer exception
   fails the test into R19's general narrowing. A special-case field for one
   check is what R19 generalizes, and keeping both invites them to disagree.
@@ -292,7 +295,7 @@ What is still missing is any notion of something being wrong.
 The journal already exists from phase 4; this phase fills in its check-results
 field and nothing else about it changes.
 
-`invariants/universal/` is R17, one check per item, each with its evidence:
+`oracles/implicit/` is R17, one check per item, each with its evidence:
 
 - Uncaught error and console error: the listeners the lifted `launch.ts`
   already attaches, read and drained after every hop instead of at test end.
@@ -365,11 +368,11 @@ the engine performs the counterpart, compares, and records those hops in the
 journal marked as probe hops. Whether probe hops count against the hop budget
 is undecided and is decided here.
 
-`oracle.ts` (R21) takes an expected value the adapter computed from a source of
-truth and compares it to the screen. `../CLAUDE.md` records the trap: the
-test oracle must not share logic with what it judges. Make that mechanical in
-this
-phase with a check that the adapter's oracle module imports nothing from the
+`specified.ts` (R21) takes an expected value the adapter computed from a
+source of truth and compares it to the screen. `../CLAUDE.md` records the
+trap: a specified oracle must not share logic with what it judges. Make that
+mechanical in this phase with a check that the adapter's oracle module imports
+nothing from the
 application's source. Prose alone will not hold it.
 
 **Be honest in the document and in the check's own message about what that

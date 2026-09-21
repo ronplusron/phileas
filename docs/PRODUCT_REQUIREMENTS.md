@@ -56,7 +56,7 @@ jobs, which may be the same person on different days.
 
 ## 3. Goals
 
-- Do exploratory testing, automatically and unattended. The tool chooses each
+- Do exploratory testing, automatically and unattended. The engine chooses each
   move from what the application is offering at that moment, which is what
   makes it exploratory rather than a suite of scripts somebody generated.
 - Keep the two things hand exploration loses: repeatability, and a record of
@@ -113,7 +113,7 @@ jobs, which may be the same person on different days.
 
 ## 5. Features
 
-- **Unscripted traversal.** The tool decides its own next move from what the
+- **Unscripted traversal.** The engine decides its own next move from what the
   screen actually offers, rather than following a written path. Answers: the
   paths nobody thought to write down.
 - **Seeded runs.** Every run is defined by a seed, so any run or any single
@@ -186,11 +186,31 @@ them changes, this list changes with it.
   that is wrong the same way every time satisfies every one of these.
 - **An independently computed answer (R21).** The only path that judges
   whether what is displayed is right, rather than whether it is consistent.
-  This is a **test oracle**, the standard term for a component that knows the
-  expected answer. Optional, and the remedy for the limit above.
+  In the taxonomy below this is a **specified oracle**, or a **pseudo-oracle**
+  where the expected answer comes from an independent implementation rather
+  than a specification. Optional, and the remedy for the limit above.
 - **Running out of moves (R5, R6).** A route that strands has found a dead
   end, a trap, or a corner with nothing further to do, without any check being
   written for it.
+
+**The first four are test oracles**, in the established sense of a mechanism
+that decides whether observed behavior is correct. The literature names the
+kinds, and using its words rather than inventing more costs nothing:
+
+| Path | Kind |
+| --- | --- |
+| Checks needing no comparison (R17) | **implicit** -- needs no specification, works on any application |
+| Two things agreeing on screen (R18) | no clean standard name; called structural here |
+| Agreeing with itself over time (R20) | **metamorphic**, a **partial** or **hybrid** oracle |
+| An independently computed answer (R21) | **specified**, or a **pseudo-oracle** where it is an independent implementation |
+
+Running out of moves is not an oracle. It is a liveness property: the route
+could not continue, which says nothing about whether anything was correct.
+
+**No collective noun is needed.** These are siblings that check different
+things and never arbitrate with each other, so the ensemble and voting
+vocabulary from elsewhere does not apply. Plainly, they are the **checks**,
+and the runner runs all of them after every hop.
 
 ### Running a journey
 
@@ -261,7 +281,7 @@ them changes, this list changes with it.
 - **R16 (Must)** A route stops at the first failed check rather than
   continuing. Continuing produces cascading noise that buries the hop that
   mattered.
-- **R17 (Must)** The tool ships with checks that assume nothing about the
+- **R17 (Must)** The engine ships with checks that assume nothing about the
   application: no uncaught error, no error written to the console, the
   application still responding, the window still showing content, no
   navigation away from the application, no unexpected dialog, and every
@@ -378,6 +398,14 @@ Stated as what must be true for someone using it.
   nobody has chosen.
 - **Who decides the budget for a scheduled run?** A deadline that is too short
   finds nothing and still reports green.
+- **Should a journey report what it never reached?** Nobody has weighed this.
+  Where the application's source is available, what exists can be enumerated,
+  and the journals record what was reached, so the engine could report that two
+  hundred routes never once entered a particular view. That is not coverage as
+  a guarantee, which is a stated non-goal, but it is the only way to tell
+  exploring apart from circling the same corner. It would be the first thing
+  here that needs the application's source rather than just its running
+  process.
 
 ## 12. Assumptions
 

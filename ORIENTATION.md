@@ -27,7 +27,7 @@ summarized here -- read them.
 **Scaffold and documentation only.** The repository holds `package.json`,
 `tsconfig.json`, `.gitignore`, the README, this file, `CLAUDE.md` and five
 documents under `docs/`. There is no engine code at all: `src/`,
-`src/invariants/`, `tests/` and `examples/` contain nothing but `.gitkeep`.
+`src/oracles/`, `tests/` and `examples/` contain nothing but `.gitkeep`.
 
 `package.json` declares no dependencies. `npm run typecheck` and `npm test`
 are both inert until `typescript` and `@playwright/test` are added, so neither

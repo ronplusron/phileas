@@ -121,7 +121,7 @@ budget. No invariant catches that, because the page is structurally fine. A
 Route that fails for not finishing means dead ends, inescapable modals and
 traps get caught without a check written for any of them.
 
-## The test oracle never shares logic with what it judges
+## A specified oracle never shares logic with what it judges
 
 Accuracy checking needs an oracle that computes the expected answer from a
 source of truth and compares it to the screen. Sharing the data loader with
@@ -177,6 +177,40 @@ stop this being a framework, which is the trade the project exists to make.
 What the adapter does supply is an exclusion list -- things that must never be
 hopped to, such as Quit and outbound links. That list is a safety rail, not a
 map.
+
+## Source access is useful, and is how two declined decisions come back
+
+Most deployment shapes give you the source, and several things depend on it:
+the staleness guard needs it by definition, a test oracle usually needs the
+application's own data to compute an expected answer from, and fault injection
+needs to be able to corrupt something.
+
+**One further use is worth taking deliberately.** The exclusion list can be
+derived from the source rather than written by hand -- the quit handler, calls
+that open something outside the application, outbound links -- and, more
+importantly, *checked* against it. A hand-written list silently goes stale the
+day upstream adds a new way out of the application. A derived one fails
+instead, which is the difference between a guard and a note.
+
+**Now the part that matters.** Source access makes both of the following
+easier, cheaper and more tempting than they have ever been, and each is a
+decision already taken and recorded as declined:
+
+- **Reading the source to enumerate what can be hopped to.** It is precise, it
+  is tractable, and it is the per-application enumeration that
+  `docs/OUTSTANDING.md` records as declined, arriving by a route nobody
+  recognizes as the same idea. `survey` finds candidates by role, from the
+  running application, and consults no source.
+- **Deriving checks from the implementation rather than from intent.** A
+  structural check asserting that a heading's count matches what the code
+  computes is a tautology: it passes whatever the code does, including when
+  the code is wrong. This is the test oracle trap above, wearing different
+  clothes, and the same rule settles it -- a check earns its place by knowing
+  what *should* be true, never by restating what the code already does.
+
+The engine reads no source at run time, ever. Everything above that uses
+source happens beforehand, in the adapter or in a build step, and produces
+something the engine consumes without knowing where it came from.
 
 ## Exploratory runs never gate a push
 
