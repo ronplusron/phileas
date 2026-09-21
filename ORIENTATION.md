@@ -26,8 +26,9 @@ summarized here -- read them.
 
 **Scaffold and documentation only.** The repository holds `package.json`,
 `tsconfig.json`, `.gitignore`, the README, this file, `CLAUDE.md` and five
-documents under `docs/`. There is no engine code at all: `src/`,
-`src/oracles/`, `tests/` and `examples/` contain nothing but `.gitkeep`.
+documents under `docs/`, together about 2,600 lines. There is no engine code
+at all: `src/`, `src/oracles/`, `tests/` and `examples/` contain nothing but
+`.gitkeep`.
 
 `package.json` declares no dependencies. `npm run typecheck` and `npm test`
 are both inert until `typescript` and `@playwright/test` are added, so neither
@@ -40,14 +41,26 @@ before first publication.
 applications, with the seam kept capable of other targets that render to a
 browser-style page, though none is promised. Read it before anything else.
 
-**`docs/PLAN.md` is a stub and is the next thing to write.** It is being
-worked through directly rather than drafted ahead, and it could not be written
-before the requirements it sequences.
+`docs/PLAN.md` is written: ten phases, three of whose boundaries are real
+verification points rather than bookkeeping.
 
-`docs/OUTSTANDING.md` holds what is open. Two items gate work rather than
-waiting quietly: which sibling repositories are actually intended as
-consumers, where two earlier records disagree, and what becomes of three of
-the seven files being lifted out of the sibling repository.
+**Phase 0 is the next thing to do, and nothing blocks it.** Add `typescript`,
+`@playwright/test`, `@types/node` and `@electron/asar`, plus an empty
+`src/index.ts` so the typecheck has a file to read. `docs/PLAN.md` says why
+those four and not two.
+
+`docs/OUTSTANDING.md` holds what is open. Its section 1 gates phase 1 rather
+than phase 0: how much `AppUnderTest` has to carry now the consumers are
+known, which deployment shape each consumer uses, and whether the plan's
+proposed homes for three lifted files are accepted.
+
+**Two research readings are recorded in `docs/HISTORY.md` and worth knowing
+before designing anything.** Discovery by accessibility role was measured
+against a real application and works, with its limit set by rendering
+technique rather than by how interesting a surface is. And the engine cannot
+require an application to tell it when it has settled: two mature suites were
+examined and neither has such a signal, so the strategy has to work without
+cooperation.
 
 ## 3. Part of this engine already exists, in a sibling repository
 
