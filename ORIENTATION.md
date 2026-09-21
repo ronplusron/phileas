@@ -68,8 +68,16 @@ The launch and bundle layer was written inside a sibling Electron project's
 Playwright suite and deliberately structured to be lifted out, including an
 `AppUnderTest` interface whose own header comment states that the directory is
 meant to become a shared package that sibling apps consume. `docs/HISTORY.md`
-has what was measured; `docs/PLAN.md` says where it is and what moving it
-involves.
+has what was measured; `docs/PLAN.md` says what moving it involves.
+
+**It is `e2e/kit/` in `trickster-tales`, which is a project on hold rather
+than one of the confirmed consumers.** Worth stating, because no document
+said it before and finding it took a search of every checkout on the
+machine. Two things follow. The kit is not going to keep moving underneath
+this work, since the project holding it is not being worked on. And neither
+confirmed consumer has anything like it: the one with a Playwright suite has
+two flat spec files that call `electron.launch` directly, so there is no
+second copy anywhere to reconcile against.
 
 **Read that code before designing any of it again.** It covers launching an
 Electron app, refusing to run against a stale build, and waiting for

@@ -302,10 +302,22 @@ nothing about traveling.
 ### Phase 4: survey, hop, and the journal
 
 `survey.ts` finds candidates by role: visible, enabled, carrying an accessible
-name, with menu items as a second source. The exclusion list is applied before
-the draw, so the draw is over what may actually be hopped to. Candidate order
-comes from the accessibility tree and is deterministic; the hazards below say
-what breaks otherwise.
+name, with menu items as a second source -- that second source being phase 1's
+position on where `menu.ts` belongs, which is not yet accepted. The exclusion
+list is applied before the draw, so the draw is over what may actually be
+hopped to. Candidate order comes from the accessibility tree and is
+deterministic; the hazards below say what breaks otherwise.
+
+**The risk that discovery by role finds too little has been measured and
+retired, and this phase should not be built as though it were still open.**
+`HISTORY.md` has the two censuses and the numbers. What they settled is that
+the limit is rendering technique rather than how much behavior sits behind a
+surface: roles work on ordinary DOM and fail on canvas-backed and virtualized
+ones. So a Route that hops into a code editor's text layer or a terminal
+finds one text area and has nowhere further to go, and that is stranded
+working correctly rather than a defect in `survey`. What remains genuinely
+unmeasured is the opposite failure, which is an application offering more
+candidates than a hop budget can visit.
 
 A hop chooses a candidate, acts on it, and waits for the page to settle.
 
@@ -372,6 +384,16 @@ field and nothing else about it changes.
 
 - Uncaught error and console error: the listeners the lifted `launch.ts`
   already attaches, read and drained after every hop instead of at test end.
+  **Read what it actually attaches before assuming this one is free.** It
+  collects renderer page errors and renderer console errors, and separately
+  it collects the main process's standard error stream, which nothing acts
+  on. R17 says "no uncaught error" without qualifying which process, and the
+  first of the three real bugs in `HISTORY.md` is an uncaught exception in
+  the main process raised while quitting. So this phase decides what in that
+  stream counts as an uncaught error, and the check is not finished while it
+  watches the renderer alone. The interface's `failOnPageError` names the
+  renderer in its own field name, which is part of why the gap is easy to
+  miss; R19's narrowing replaces that flag anyway.
 - Still responding: a bounded round trip to the renderer and one to the main
   process. A hang is a failure of the route after a stated wait, never a run
   that hangs.
@@ -383,7 +405,12 @@ field and nothing else about it changes.
   Native main-process dialogs are a hazard below.
 - A readable name on every visible control: this comes from the survey itself.
   An element with a role and no name is reported by the survey that found it
-  and could not hop to it.
+  and could not hop to it. **Expect this one to need narrowing on a real
+  application on its first day.** The census in `HISTORY.md` found 80 of 84
+  elements named on one application's resting screen, and a Route ends at the
+  first violation, so if any of those four is a visible control every Route
+  there ends at hop one. Whether they are has not been checked and is worth
+  checking before pointing a Journey at that application rather than after.
 
 **A log that grew an error is the seventh check, and which tier it belongs to
 is decided in this phase.** It is what the interface's log-location member,
@@ -448,7 +475,13 @@ something working rather than nothing.
 Boundary: **real.** A Journey with a small budget travels through the example
 application and reports, which is the last step of the wiring flow in
 `PRODUCT_REQUIREMENTS.md`. R1 through R11, R15 through R17, and R22 through
-R24 can each be held up and answered. A reader who stops here has an
+R24 can each be held up and answered. Two of those are answered by Playwright
+rather than by anything built here: R6 and R7 hold at this boundary only
+because each Route is a test carrying its own outcome and its seed as an
+annotation, which is enough to tell stranded from failed and to name the seed
+that reproduces a failure. The summary that states them deliberately, across
+a whole Journey, is phase 7's, and phase 7 is where they stop depending on
+how a test runner happens to print things. A reader who stops here has an
 exploratory tester that finds the R17 class and strands on traps: the product
 with its shallowest tier only.
 
@@ -588,12 +621,13 @@ end is visible and this is not. Any survey needs to know whether a container
 is windowed, and there is no general way to ask.
 
 **A dismissed widget can stay in the DOM and still take input.** In one real
-application a closed picker is hidden rather than removed, so a naive query
-returns the stale one, and a keypress aimed at it lands in the console and is
-executed as code. For a scripted test that is a wrong assertion. For a Route
-choosing its own moves it is an arbitrary command run against the application
-under test. Filtering candidates on visibility is what prevents it, which is
-already required, but the consequence of getting it wrong is worth stating.
+application a closed picker is hidden rather than removed, so an unfiltered
+query returns the stale one, and a keypress aimed at it lands in the console
+and is executed as code. For a scripted test that is a wrong assertion. For a
+Route choosing its own moves it is an arbitrary command run against the
+application under test. Filtering candidates on visibility is what prevents
+it, which is already required, but the consequence of getting it wrong is
+worth stating.
 
 **Attachments and traces are not the journal.** Playwright writes both at test
 end. A run killed mid-route writes neither. The journal is its own file,

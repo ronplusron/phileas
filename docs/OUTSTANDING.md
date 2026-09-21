@@ -25,11 +25,13 @@ external ones justify a broader one. The answer lands in the phase that hardens
 the interface, and every later phase builds on it.
 
 The large candidates pull hardest. Both already run Playwright, so adoption is
-cheap, but their surfaces are hostile in opposite directions -- one may give
-discovery by role almost nothing to work with, the other far more than a hop
-budget can handle, and it changes underfoot. Neither is a reason to narrow the
-interface; both are reasons to measure discovery against a real one before
-phase 4 rather than during it.
+cheap, but their surfaces are hostile in opposite directions. **That
+measurement has since been taken against both**, and `HISTORY.md` has it: the
+first gives discovery by role considerably more than feared, and the limit is
+rendering technique rather than a generated interface. So only half of the
+worry survives, and it is the second half -- an application offering more
+candidates than a hop budget can visit, changing underfoot between one survey
+and the next. Neither half is a reason to narrow the interface.
 
 ### 1.2 Which deployment shape each candidate consumer uses
 
