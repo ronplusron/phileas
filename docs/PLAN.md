@@ -151,19 +151,18 @@ there until they are accepted:**
   the Route's own verdict, trace and timeout. Its existing fixture that gives a
   test a process of its own is the per-Route relaunch path used in phase 5.
 
-**This phase has an unanswered question in front of it, and it is the one that
-decides how much the interface has to carry.** `OUTSTANDING.md` records that
-two earlier records disagree about which repositories are actually intended as
-consumers, one naming three and an earlier one naming five, and says the answer
-belongs before this interface is hardened rather than after. One consumer
-justifies far less abstraction than five, and the difference lands here, in
-`AppUnderTest`, not in the phase that eventually wires a second repository up.
+**The consumers are known, and what is in front of this phase is the question
+they leave behind: how much the interface has to carry.** `HISTORY.md` records
+them. Two small Electron applications under the same ownership justify a narrow
+`AppUnderTest`, and two large external candidates, both already driving
+themselves with Playwright, justify a broader one. `OUTSTANDING.md` holds the
+question and says why the answer belongs here rather than in the phase that
+eventually wires a second repository up.
 
-Answering it is cheap. Hardening the interface against a guess is not: the
-hardening below is where the guess becomes permanent, and every later phase
-builds on it. If the answer is not available when this phase starts, harden for
-the consumer that exists, write down that it was a guess, and expect the first
-real adapter to find where the shape is wrong.
+The hardening below is where the answer becomes permanent, and every later
+phase builds on it. Harden for the two confirmed consumers, and read the six
+members below as the measure of what the external pair would additionally
+need, since that is where they came from.
 
 Hardening `AppUnderTest`:
 
@@ -215,7 +214,29 @@ Hardening `AppUnderTest`:
   application's own tree; under the third there is no such path at all. Decide
   here whether the field becomes optional, is renamed for what it actually
   points at, or splits from whatever the staleness guard needs, because every
-  later phase builds on whichever answer this phase gives.
+  later phase builds on whichever answer this phase gives. The default is the
+  second shape: it is the only one available for every candidate without
+  anyone's permission and it keeps the staleness guard working, and
+  `OUTSTANDING.md` has the reasoning. So the field points at a checkout, which
+  for the two confirmed consumers happens to be the application's own
+  repository, and it is absent only under the third shape, which is C1a.
+
+**`launch.ts` needs a second way in, and it is a fallback rather than the
+default.** `HISTORY.md` records that one build in four refuses Playwright's own
+Electron launch outright, because the fuses its attach path depends on are
+disabled; it records the measured workaround, a debugging port polled until it
+answers and attached to over CDP; and it records the four refinements that
+make that survive parallel workers, each of which exists because something
+went wrong. It also records what that path cannot reach, which is the main
+process. Under it `external.ts`, `menu.ts`, keeping windows off the screen and
+the main-process half of "still responding" are all unavailable. So the launch
+layer states which path it took, and the report names what was consequently
+not checked, through the same mechanism R19 uses for a narrowed check rather
+than a second one beside it. Decide here whether the fallback lands in this
+phase or waits for the first consumer that needs it; if it lands here, the
+example application in phase 2 needs a second variant with the fuses disabled,
+so the path can be verified in this repository rather than against somebody
+else's build.
 
 Boundary: bookkeeping. The typecheck passes; nothing can run, because there is
 nothing to launch.
@@ -234,8 +255,12 @@ gets in phase 9.
 Keep it small but not trivial. Its surface is chosen against the five detection
 paths in `PRODUCT_REQUIREMENTS.md`, because each is where a defect gets
 planted later: a few named controls, a list with a count above it, a search box
-with a clear, a view to navigate away from and back, a menu with Quit, and an
-outbound link.
+with a clear, a view to navigate away from and back, a menu with Quit, an
+outbound link, and a displayed value derived from a data file the application
+ships. That last one is what gives the specified oracle in phase 6 a source of
+truth to compute its own answer from, and `HISTORY.md` records, of a candidate
+that lacks one, that it is the hardest thing to retrofit into an application
+later.
 
 The example needs `electron` and a packager as its own dev dependencies. Which
 packager is not decided. The constraints on it: the output must match the
@@ -287,7 +312,7 @@ A hop chooses a candidate, acts on it, and waits for the page to settle.
 **Settling is the second difficulty of the project, after `survey`, and the
 engine cannot delegate it.** The obvious design is for the adapter to supply a
 signal meaning the application has stopped moving. `HISTORY.md` records why
-that cannot be *required*: in the most favourable real case available -- an
+that cannot be *required*: in the most favorable real case available -- an
 application that already shipped an automation bridge, with someone who knew
 exactly what signal was wanted and wrote down why -- it was still never built.
 So the engine needs a strategy that works with no cooperation at all, and an
@@ -360,13 +385,27 @@ field and nothing else about it changes.
   An element with a role and no name is reported by the survey that found it
   and could not hop to it.
 
+**A log that grew an error is the seventh check, and which tier it belongs to
+is decided in this phase.** It is what the interface's log-location member,
+added in phase 1, exists to feed: an adapter names where the application
+writes its logs and the check reads what was appended since the last hop.
+`HISTORY.md` records the bug that makes it necessary, which showed nothing on
+screen, raised no dialog, wrote nothing to the browser console, and left a
+client exception in the session log. Nothing else here would have caught it.
+What is undecided is where it sits, because it does not fit the tier it is
+most useful in: the universal tier assumes nothing about the application, and
+this check does nothing at all unless an adapter names a log. Decide whether
+it is a universal check that is inert by default, or a tier of its own. An
+adapter that names no log gets no check either way, and the report says so
+rather than leaving its absence to be inferred from silence.
+
 **Every check in this tier has to be tested against a broken application, not
 just a working one.** The rule comes from a team that learned it on a real
 suite: pick the signal by asking what a broken build does. A check that reads
 the same on a healthy and a broken application is worse than no check, because
-a Route that ends at the first violation will never end. Each of the six above
-needs a planted defect that makes it fire, which is what phase 5's planting
-step is for, and any that cannot be made to fire does not ship.
+a Route that ends at the first violation will never end. Each of the checks
+above needs a planted defect that makes it fire, which is what phase 5's
+planting step is for, and any that cannot be made to fire does not ship.
 
 The runner executes the whole set after every hop (R15) and ends the Route on
 the first violation (R16). R19 narrowing is declared in the adapter and the
@@ -393,10 +432,11 @@ Stranded needs a third outcome, and Playwright has pass, fail and skip. The
 encoding is undecided and is decided in this phase. The constraint is R5 and
 R6: stranded never reads as a pass and is never counted among the failures.
 
-Plant the first defects in the example, one per R17 item: a control that
-throws, a control that logs an error, a control that blanks the window, a
-control that leaves the application, a control with no name, and a dialog with
-no way out, which strands. Add the tests asserting a Journey finds each.
+Plant the first defects in the example, one per check: a control that throws,
+a control that logs an error, a control that blanks the window, a control that
+leaves the application, a control with no name, a control that fails silently
+on screen and writes the error only to the log, and a dialog with no way out,
+which strands. Add the tests asserting a Journey finds each.
 
 **This is the largest phase, and it ends at a real point, so there is no safe
 place to stop inside it.** Take the parts in the order given: the checks, then
@@ -456,9 +496,22 @@ reports what it traveled through, so a green result can be told from a run
 that did nothing. Every failure names its route and seed (R7), and the summary
 is enough to reproduce from (R12).
 
+**R27 lands here too, and it asks for more than the nothing-found case.** A
+run where the application never launched, where every Route stranded at its
+first hop, or where zero Routes ran at all is reported as degraded rather than
+green, and a Journey setting turns degraded into failed, for the scheduled
+runs where an absence of findings is meant to mean something. The stranding
+case is the one to watch: each Route individually reports stranded, which is
+an honest outcome and not a failure, and only the summary can see that every
+Route did it at hop one.
+
 R13 gets its design from R10: replay a reported seed and compare each hop's
 survey against the recorded one. The first divergence is where the seed
-stopped reproducing, and the report says so instead of passing.
+stopped reproducing, and the report says so instead of passing. The same
+comparison answers R14, which is why that requirement costs nothing extra
+here: where the recorded candidates differ from what is available now, the
+application changed, and where they match and only the outcome differs, the
+outcome did.
 
 Journeys become their own Playwright project in the consumer's configuration.
 That puts their results in the same run as the scripted suite (R25) and makes
@@ -486,10 +539,12 @@ A `file:` dependency, an adapter, journeys, a spec and a project entry in that
 repository's Playwright configuration, following the example's consumer layout
 exactly. This phase repeats a shape phase 2 already proved.
 
-It needs a named repository to wire up, which `OUTSTANDING.md` is still holding
-a question about. That question does its real damage much earlier, in phase 1,
-and is stated there; by the time this phase runs, the interface it affects has
-already been hardened one way or the other.
+The repository is the confirmed consumer that already has an interface to
+travel through; the second follows once its own migration gives it one.
+`HISTORY.md` names both. What `OUTSTANDING.md` still holds about consumers is
+upstream of this phase and does its real damage in phase 1, which is where it
+is stated; by the time this phase runs, the interface it affects has already
+been hardened one way or the other.
 
 What the first real adapter discovers about the seam goes back into
 `AppUnderTest`. `HISTORY.md` records that the second adapter is what finds
@@ -588,6 +643,14 @@ Windows are kept off the screen by replacing the window's `show` method in the
 main process, which the lifted comment calls a real intrusion into the
 application under test; it is measured there that Electron accepts a headless
 flag and ignores it. The visible-window switch stays for debugging.
+
+**The fallback launch path reaches the renderer and not the main process.**
+Everything the engine does in the main process is absent under it, and absent
+without saying so: the external-link stub records nothing, the menu source
+offers nothing, windows cannot be kept off the screen, and the main-process
+half of "still responding" cannot run. Every one of those reads as a check
+that found nothing wrong. `HISTORY.md` records what is lost and phase 1 says
+what the launch layer and the report have to state about it.
 
 **Source mode bypasses the staleness guard.** The lifted launch can run the
 working tree instead of the packaged build, for an inner loop where
