@@ -42,8 +42,8 @@ Some ship with the engine and assume nothing about the application: no
 uncaught error, no console error, still responding, still showing something,
 still where it started, every visible control carrying a name. An application
 adds its own on top, and can supply answers worked out independently of the
-code being tested, which is the only way the engine judges whether a value is
-right rather than merely consistent.
+code being tested. That is a test oracle, and it is the only way the engine
+judges whether a value is right rather than merely consistent.
 
 A Route that runs out of moves before spending its budget is reported as
 stranded, which is neither a pass nor a failure. Sometimes that is a dead end

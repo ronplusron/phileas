@@ -99,5 +99,5 @@ an optional extra.
 A second limit is inherent rather than a gap to close. Metamorphic checks buy
 self-consistency, not correctness: a bug that is consistently wrong passes
 every round-trip, idempotence and commutativity relation there is. Catching
-that class needs an oracle computing the expected answer from a source of
+that class needs a test oracle computing the expected answer from a source of
 truth, and `CLAUDE.md` records the trap that makes oracles fail silently.

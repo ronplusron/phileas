@@ -25,6 +25,28 @@ re-deriving them would cost it again.
 
 ---
 
+## 2026-09-21: a third Route outcome, stranded
+
+A Route that runs out of available moves before spending its hop budget had
+been reported as a failure. That was wrong, and the README said so outright:
+"a Route that cannot finish its hop budget has found a dead end."
+
+**It has not necessarily found anything.** A dead end, an inescapable dialog
+and a trap all strand, and so does a perfectly reasonable corner of the
+application with nothing further to do in it. Reporting all four as failures
+asserts a defect the engine has not found, which is the same class of mistake
+as a test that fails for the wrong reason: it costs trust in every other red
+result.
+
+It is not a pass either, because the Route did not do what was asked of it. So
+a third outcome, reported apart from both, worth investigating and claiming
+nothing.
+
+The word was chosen to carry no verdict of its own. The requirements define it
+with the terms, the plan leaves its encoding in Playwright's pass, fail and
+skip undecided until the phase that needs it, and `../CLAUDE.md` carries the
+rule that it is never folded into either neighbor.
+
 ## 2026-09-21: Passepartout dropped, and the verb settled
 
 The naming entry further down, from the day before, records Passepartout as

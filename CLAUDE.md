@@ -61,9 +61,9 @@ getting a clean state. A cached Fix means route 5 begins from whatever route 4
 left behind, every route still reports green, and the failures it hides are
 precisely the state-leakage bugs this engine exists to find. Caching it also
 forecloses different Fixes per Route, which was raised as a wanted option.
-Stated
-close to verbatim by the user in the originating session: keep the fixes
-running per route, saving ten seconds is not worth losing the functionality.
+Stated close to verbatim by the user in the originating session: keep the
+fixes running per route, saving ten seconds is not worth losing the
+functionality.
 
 **The journal flushes after every Hop, not at the end of the Route.** A crash
 is exactly the case where end-of-test reporting never runs, and a crash is
@@ -101,6 +101,19 @@ universal tier ships with the engine and assumes nothing about any app. One
 of its checks does double duty: an element with no accessible name is both an
 accessibility fault and something the traversal cannot reliably hop to.
 
+## A Route has three outcomes, and stranded is the third
+
+Passed, failed, and **stranded**: the Route ran out of available moves before
+spending its hop budget. Stranded is reported separately and is never folded
+into either of the others.
+
+**It is not a failure**, because nothing has been shown to be wrong. A dead
+end, an inescapable dialog and a trap all strand, and so does a perfectly
+reasonable corner of the application with nothing further to do in it. Calling
+it a failure asserts a defect the engine has not found, which is the mistake
+the README made before this was settled. **It is not a pass either**, because
+the Route did not do what was asked of it.
+
 ## Completing the Journey is itself an assertion
 
 If `survey` returns nothing actionable at hop 23, the Route cannot finish its
@@ -108,13 +121,22 @@ budget. No invariant catches that, because the page is structurally fine. A
 Route that fails for not finishing means dead ends, inescapable modals and
 traps get caught without a check written for any of them.
 
-## The oracle never shares logic with what it judges
+## The test oracle never shares logic with what it judges
 
 Accuracy checking needs an oracle that computes the expected answer from a
 source of truth and compares it to the screen. Sharing the data loader with
 the application is acceptable. **Sharing the logic under test is not:** a bug
 then exists identically on both sides, both agree, the test passes, and the
 screen lies.
+
+**Independence is lost through maintenance more often than through
+construction.** Building an oracle that imports the application's logic is the
+obvious mistake and the easy one to catch. The likelier path is drift: the
+application changes, the oracle disagrees, and somebody repairs the oracle by
+looking at what the application now produces. At that moment it stops being
+independent and starts agreeing with every future bug, and nothing about it
+looks any different afterwards. When an oracle fails, the first question is
+whether the expected answer changed, not how to make the oracle match.
 
 The application under test never judges anything. The app-specific test code
 does. An earlier phrasing, "the app supplies the judge", caused a real

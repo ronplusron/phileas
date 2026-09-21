@@ -165,25 +165,29 @@ jobs, which may be the same person on different days.
 
 ### How a defect gets found
 
-Five ways, differing in what each is capable of catching. This subsection
-states no requirement of its own: each path is a requirement below, named
-here so the shape is visible in one place. If one of them changes, this list
-changes with it.
+Five ways, differing in what each is capable of catching. The checks are also
+called **invariants**, since each states something that should hold after
+every hop. This subsection states no requirement of its own: each path is a
+requirement below, named here so the shape is visible in one place. If one of
+them changes, this list changes with it.
 
-- **Checks needing no comparison (R16).** An uncaught error, or a window gone
+- **Checks needing no comparison (R17).** An uncaught error, or a window gone
   blank, is a defect on its own evidence. These ship with the engine and assume
-  nothing about the application.
-- **Two things on screen agreeing with each other (R17).** A count in a
+  nothing about the application, and are called the **universal** checks.
+- **Two things on screen agreeing with each other (R18).** A count in a
   heading against the rows beneath it. Catches a wrong answer without anyone
-  having to know what the right answer was.
-- **The application agreeing with itself over time (R19).** Search then clear,
+  having to know what the right answer was. These are the **structural**
+  checks.
+- **The application agreeing with itself over time (R20).** Search then clear,
   navigate away and back. Catches state that leaks, resets that do not
-  reset, and drift on repetition. **This is the path with the limit stated in
-  the non-goals:** a result that is wrong the same way every time satisfies
-  every one of these.
-- **An independently computed answer (R20).** The only path that judges
+  reset, and drift on repetition. Known in testing literature as
+  **metamorphic** checks, because they assert a relationship rather than a
+  value. **This is the path with the limit stated in the non-goals:** a result
+  that is wrong the same way every time satisfies every one of these.
+- **An independently computed answer (R21).** The only path that judges
   whether what is displayed is right, rather than whether it is consistent.
-  Optional, and the remedy for the limit above.
+  This is a **test oracle**, the standard term for a component that knows the
+  expected answer. Optional, and the remedy for the limit above.
 - **Running out of moves (R5, R6).** A route that strands has found a dead
   end, a trap, or a corner with nothing further to do, without any check being
   written for it.
@@ -215,7 +219,12 @@ changes with it.
 - **R7 (Must)** Every failure names one route and the seed that reproduces
   that route.
 - **R8 (Must)** Re-running a reported seed against an unchanged application
-  reproduces the same route, hop for hop.
+  reproduces the same route, hop for hop. **A seed is only meaningful against
+  the build it was recorded on.** A route is reproduced by drawing from the
+  same candidates at each hop, so anything that changes what is on screen at
+  hop 3 sends the draw elsewhere and every hop after it diverges. Findings
+  from an older build cannot be re-run against a newer one, which is why the
+  journal is the durable artifact and the seed is not.
 - **R9 (Must)** The record of a route is readable after anything that ends the
   run abruptly, covering every hop completed up to that point. This covers the
   application crashing, the application hanging and being given up on, the run
@@ -238,58 +247,65 @@ changes with it.
   only way anyone finds out that reproducibility itself has broken, whether
   from a change in how moves are chosen or from an edit to what the engine is
   allowed to touch, so it is not the optional extra it first appears to be.
+- **R14 (Should)** When a seed no longer reproduces, the report says whether
+  the application changed or the outcome did. Both look identical otherwise:
+  the defect was fixed, or the interface moved and the route now goes
+  somewhere else. The journal records what could have been chosen at each hop,
+  so comparing that against what is available now answers it. Without this, a
+  green re-run is unreadable, which is the same failure the requirement above
+  exists to prevent, one level up.
 
 ### What gets checked
 
-- **R14 (Must)** Checks run after every hop.
-- **R15 (Must)** A route stops at the first failed check rather than
+- **R15 (Must)** Checks run after every hop.
+- **R16 (Must)** A route stops at the first failed check rather than
   continuing. Continuing produces cascading noise that buries the hop that
   mattered.
-- **R16 (Must)** The tool ships with checks that assume nothing about the
+- **R17 (Must)** The tool ships with checks that assume nothing about the
   application: no uncaught error, no error written to the console, the
   application still responding, the window still showing content, no
   navigation away from the application, no unexpected dialog, and every
   visible control carrying a readable name.
-- **R17 (Must)** An application can declare checks that two things visible at
+- **R18 (Must)** An application can declare checks that two things visible at
   the same moment agree with each other: one view active at a time, a selected
   row matching the detail shown beside it, a displayed count matching what it
   counts. These are the checks that catch a wrong answer without needing to
   know what the right answer is.
-- **R18 (Must)** An application can switch off or narrow any built-in check
+- **R19 (Must)** An application can switch off or narrow any built-in check
   that does not apply to it, and the report states which were changed. An
   application that writes to the console in normal operation is otherwise
-  unusable with this tool, and silently weakening the check for everyone is
+  unusable with this engine, and silently weakening the check for everyone is
   the wrong answer.
-- **R19 (Should)** An application can declare relationships that compare two
+- **R20 (Should)** An application can declare relationships that compare two
   states: searching then clearing returns the original list, navigating away
   and back returns the same state, applying a filter twice equals applying it
   once.
-- **R20 (Could)** An application can supply expected answers computed
+- **R21 (Could)** An application can supply expected answers computed
   independently of the code being tested, and the engine compares them against
   what is displayed. Without this, a result that is consistently wrong is
   never caught.
 
 ### Setting it up
 
-- **R21 (Must)** An application is connected by stating how to start it, how
+- **R22 (Must)** An application is connected by stating how to start it, how
   to tell it is ready, and what must never be interacted with.
-- **R22 (Must)** A journey refuses to start when the packaged build does not
+- **R23 (Must)** A journey refuses to start when the packaged build does not
   match the sources it was built from, and names each file that differs.
   Comparison is by content rather than by timestamp, and reports a difference
   in either direction: a source edited after packaging and a build carrying
   something no longer in the sources are both reasons the results would
   describe an application nobody is running.
-- **R23 (Should)** A setup that is wrong reports what is missing, rather than
+- **R24 (Should)** A setup that is wrong reports what is missing, rather than
   waiting and reporting that something did not appear. A timeout says nothing
   about why.
 
 ### Fitting into existing work
 
-- **R24 (Must)** Failures appear in the team's existing test results,
+- **R25 (Must)** Failures appear in the team's existing test results,
   alongside the scripted suite's own.
-- **R25 (Must)** Running a journey never blocks a merge or a push unless a
+- **R26 (Must)** Running a journey never blocks a merge or a push unless a
   team deliberately configures it to.
-- **R26 (Should)** A journey can be started on demand or on a schedule.
+- **R27 (Should)** A journey can be started on demand or on a schedule.
 
 ## 8. Constraints
 
@@ -324,7 +340,10 @@ Stated as what must be true for someone using it.
   through -- how many routes, how many hops, what was checked -- so a green
   result can be told apart from a run that did nothing.
 - **A seed no longer reproduces.** Stated plainly in the report rather than
-  passing quietly.
+  passing quietly, and distinguishing a fixed defect from a changed interface.
+- **The application changed since the finding was recorded.** Older seeds stop
+  replaying. The journals stay readable, so what happened can still be read
+  even where it can no longer be re-run.
 - **The build is stale.** The run refuses to start rather than testing
   yesterday's application and reporting on today's.
 
@@ -355,9 +374,10 @@ Stated as what must be true for someone using it.
 
 ## 12. Assumptions
 
-- The application behaves the same way twice given the same inputs. A seed
-  replays a route only while that holds, which is why the journal
-  exists alongside the seed rather than being redundant with it.
+- The application behaves the same way twice given the same inputs, and does
+  not change between the run and the replay. A seed replays a route only while
+  both hold, which is why the journal exists alongside the seed rather than
+  being redundant with it.
 - The application's controls carry readable names. A control without one
   cannot be reliably hopped to, which is why the engine treats a missing name as
   a failure rather than working around it.

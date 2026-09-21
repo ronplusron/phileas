@@ -66,10 +66,10 @@ src/
   journal.ts           the per-hop record, appended and flushed per hop
   invariants/
     index.ts           the runner: whole set after every Hop, first violation ends the Route
-    universal/         the tier that assumes nothing about the application (R16)
-    structural.ts      the shape of an app-declared same-moment check (R17)
-    metamorphic.ts     the shape of a relation between two states (R19)
-    oracle.ts          the shape of an independently computed answer (R20)
+    universal/         the tier that assumes nothing about the application (R17)
+    structural.ts      the shape of an app-declared same-moment check (R18)
+    metamorphic.ts     the shape of a relation between two states (R20)
+    oracle.ts          the shape of an independently computed answer (R21)
   report/              the Journey summary, with stranded kept apart from failed
 tests/                 the engine's own tests
 examples/<app>/        a small Electron application, packaged, with planted defects
@@ -140,7 +140,7 @@ there until they are accepted:**
 - `external.ts` is engine. It stubs Electron's own `shell.openExternal` in the
   main process and records what would have opened. Nothing in it knows the
   application. It makes an outbound link safe to hop and detectable when
-  hopped, which serves R16's "no navigation away" from the main-process side,
+  hopped, which serves R17's "no navigation away" from the main-process side,
   alongside the exclusion list.
 - `menu.ts` is engine, and becomes a second candidate source for `survey`. The
   reason is `../CLAUDE.md`'s own example: the exclusion list exists for things
@@ -170,19 +170,19 @@ real adapter to find where the shape is wrong.
 
 Hardening `AppUnderTest`:
 
-- Add the exclusion list. R21 names it and `HISTORY.md` records that the
+- Add the exclusion list. R22 names it and `HISTORY.md` records that the
   lifted interface has nothing for it.
 - Fold the per-application flag for whether an uncaught renderer exception
-  fails the test into R18's general narrowing. A special-case field for one
-  check is what R18 generalizes, and keeping both invites them to disagree.
+  fails the test into R19's general narrowing. A special-case field for one
+  check is what R19 generalizes, and keeping both invites them to disagree.
 - The staleness guard compares content, not timestamps, and names each file
-  that differs, in both directions, which is R22 exactly. R22 was reworded to
+  that differs, in both directions, which is R23 exactly. R23 was reworded to
   match it: it previously said "older" and "newer", which described a weaker
   timestamp check than the lifted code actually performs. The guard has a skip
   switch for running against a stale build anyway, which the run announces.
   Keep the switch and keep the announcement.
 - The readiness hook's contract, that it must throw with the application's own
-  message rather than wait for a success marker, is R23 already written down.
+  message rather than wait for a success marker, is R24 already written down.
   Keep the comment; it is the reason a future implementer would otherwise
   remove.
 
@@ -213,8 +213,8 @@ lifted default layout or the adapter must point at it, and it must produce an
 unpacked builds are not supported.
 
 Boundary: **real.** This is the first time anything runs end to end. It
-launches a packaged build (C1), refuses a stale one (R22), waits for ready and
-reports what is missing when it is not (R23), and stays off the screen (C5).
+launches a packaged build (C1), refuses a stale one (R23), waits for ready and
+reports what is missing when it is not (R24), and stays off the screen (C5).
 Stopping here leaves a working launch layer as a package, which is what the
 kit was in its origin and is now consumable.
 
@@ -285,7 +285,7 @@ What is still missing is any notion of something being wrong.
 The journal already exists from phase 4; this phase fills in its check-results
 field and nothing else about it changes.
 
-`invariants/universal/` is R16, one check per item, each with its evidence:
+`invariants/universal/` is R17, one check per item, each with its evidence:
 
 - Uncaught error and console error: the listeners the lifted `launch.ts`
   already attaches, read and drained after every hop instead of at test end.
@@ -302,8 +302,8 @@ field and nothing else about it changes.
   An element with a role and no name is reported by the survey that found it
   and could not hop to it.
 
-The runner executes the whole set after every hop (R14) and ends the Route on
-the first violation (R15). R18 narrowing is declared in the adapter and the
+The runner executes the whole set after every hop (R15) and ends the Route on
+the first violation (R16). R19 narrowing is declared in the adapter and the
 report says what was narrowed.
 
 `fixtures.ts` is reshaped here: the Route is the test; the Fix runs in
@@ -327,7 +327,7 @@ Stranded needs a third outcome, and Playwright has pass, fail and skip. The
 encoding is undecided and is decided in this phase. The constraint is R5 and
 R6: stranded never reads as a pass and is never counted among the failures.
 
-Plant the first defects in the example, one per R16 item: a control that
+Plant the first defects in the example, one per R17 item: a control that
 throws, a control that logs an error, a control that blanks the window, a
 control that leaves the application, a control with no name, and a dialog with
 no way out, which strands. Add the tests asserting a Journey finds each.
@@ -341,26 +341,27 @@ something working rather than nothing.
 
 Boundary: **real.** A Journey with a small budget travels through the example
 application and reports, which is the last step of the wiring flow in
-`PRODUCT_REQUIREMENTS.md`. R1 through R11, R14 through R16, and R21 through
-R23 can each be held up and answered. A reader who stops here has an
-exploratory tester that finds the R16 class and strands on traps: the product
+`PRODUCT_REQUIREMENTS.md`. R1 through R11, R15 through R17, and R22 through
+R24 can each be held up and answered. A reader who stops here has an
+exploratory tester that finds the R17 class and strands on traps: the product
 with its shallowest tier only.
 
 ### Phase 6: app-declared checks
 
-`structural.ts` (R17) is a predicate over the page, declared by the adapter and
+`structural.ts` (R18) is a predicate over the page, declared by the adapter and
 run after every hop like the universal tier.
 
-`metamorphic.ts` (R19) is not a per-hop invariant, and treating it as one is
+`metamorphic.ts` (R20) is not a per-hop invariant, and treating it as one is
 the easy mistake. A relation compares two states, so the engine has to take
 moves of its own: when a hop has just performed the operation a relation names,
 the engine performs the counterpart, compares, and records those hops in the
 journal marked as probe hops. Whether probe hops count against the hop budget
 is undecided and is decided here.
 
-`oracle.ts` (R20) takes an expected value the adapter computed from a source of
+`oracle.ts` (R21) takes an expected value the adapter computed from a source of
 truth and compares it to the screen. `../CLAUDE.md` records the trap: the
-oracle must not share logic with what it judges. Make that mechanical in this
+test oracle must not share logic with what it judges. Make that mechanical in
+this
 phase with a check that the adapter's oracle module imports nothing from the
 application's source. Prose alone will not hold it.
 
@@ -373,9 +374,9 @@ test passes while the screen lies. A check reported as enforcing the rule, when
 it enforces the reachable half of it, is worse than no check, because it stops
 anyone looking. The remaining half is caught by review, or not at all.
 
-Plant one defect per path: a count that disagrees with its rows (R17), a clear
-that does not clear (R19), and a value that is wrong the same way every time,
-which only the oracle catches (R20).
+Plant one defect per path: a count that disagrees with its rows (R18), a clear
+that does not clear (R20), and a value that is wrong the same way every time,
+which only the oracle catches (R21).
 
 Boundary: bookkeeping. Each tier is verified by its planted defect as it
 lands, but nothing new about the assembled engine is shown until phase 8.
@@ -394,9 +395,9 @@ survey against the recorded one. The first divergence is where the seed
 stopped reproducing, and the report says so instead of passing.
 
 Journeys become their own Playwright project in the consumer's configuration.
-That puts their results in the same run as the scripted suite (R24) and makes
-the project selectable on its own for on-demand and scheduled runs (R25, R26).
-R25 is a convention on the consumer's side; the plan's part is making the
+That puts their results in the same run as the scripted suite (R25) and makes
+the project selectable on its own for on-demand and scheduled runs (R26, R27).
+R26 is a convention on the consumer's side; the plan's part is making the
 journey project trivial to leave out of any push gate.
 
 Boundary: bookkeeping.
@@ -476,7 +477,7 @@ decided.
 **What "blank" means.** A window with no visible text and no drawn boxes is
 one definition, and a legitimately empty state trips it. Define it narrowly,
 tune it against the example and then against the first real consumer rather
-than against imagined cases, and remember this is one of the checks R18 exists
+than against imagined cases, and remember this is one of the checks R19 exists
 for.
 
 **The Route timeout.** Playwright's default per-test timeout is thirty
@@ -555,7 +556,7 @@ From the lifted kit, with the reason each stays behind:
   5 says why a reload is not enough. It stays available as an optimization to
   measure, not as the default.
 - **The per-application flag for uncaught renderer exceptions.** Replaced by
-  R18's general narrowing, so one check has no private switch that the report
+  R19's general narrowing, so one check has no private switch that the report
   does not know about.
 - **End-of-test attachments as the record.** Kept as attachments on failure,
   which are useful; not kept as the journal, which they cannot be.

@@ -44,7 +44,7 @@ relation there is: the same wrong answer on both sides, so the relation holds.
 That is a property of the technique, conceded deliberately when the design was
 challenged on it, not a shortcoming in an implementation that does not exist
 yet. It belongs in `PRODUCT_REQUIREMENTS.md` as a stated limit, and the
-answer to it is an independent oracle rather than a fix.
+answer to it is an independent test oracle rather than a fix.
 
 **A green Journey against a working application is not evidence of a defect
 being absent.** It is consistent with an engine that checks nothing at all.
