@@ -248,6 +248,28 @@ tests/                the scripted suite, keeping Playwright's default meaning
 harmful, because it collides with "the application" and caused a misreading in
 the originating session.
 
+**That layout assumes the adapter can live in the application's own
+repository, and it is not the only shape.** Three exist, and which one applies
+is a property of the application rather than of the engine:
+
+- **In the application's repository**, as above. Available when the repository
+  is yours, or when its maintainers accept the directory upstream.
+- **Adapters in a repository of your own**, pointed at a checkout of the
+  application that you build yourself. Available for any application whose
+  source you can obtain, which includes every public repository. Everything
+  works in this shape, including the staleness guard, because you built the
+  thing you are testing.
+- **Adapters in a repository of your own, pointed at an installed binary.**
+  The only shape available for a closed-source application. The traversal and
+  the universal checks all work, since they observe a running process. The
+  staleness guard cannot run at all, because there are no sources to compare
+  against, and a test oracle is usually out of reach for the same reason.
+
+**A build you made is not the artifact a user installs.** Signing, packaging
+flags and bundled runtimes can all differ. Testing your own build of somebody
+else's application answers a slightly different question than testing their
+release, and a finding should say which one it came from.
+
 ## The stack, and why each piece
 
 | Piece | Choice | Why |

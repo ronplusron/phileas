@@ -27,7 +27,34 @@ Worth answering before that interface is hardened, not after. `PLAN.md` names
 this at the phase that does the hardening, which is early, rather than at the
 one that eventually wires a second repository up.
 
-### 1.2 Three of the seven files being lifted have no planned home
+### 1.2 Which deployment shape each candidate consumer uses
+
+`../CLAUDE.md` records three shapes: adapters in the application's own
+repository, adapters in a repository of your own pointed at a source checkout
+you build, or adapters pointed at an installed binary. The first is cheapest
+and the third is the most limited, since the staleness guard cannot run there.
+
+For the applications under your own ownership the first shape applies and
+nothing is open. For the two large external candidates it is genuinely
+undecided, and the answer is not entirely yours: their maintainers may accept
+a directory upstream, which would make the first shape available. If they do
+not, both are public repositories that can be cloned and built, so the second
+shape is always available as a fallback and no candidate is forced into the
+third.
+
+**The plan's position is to default to the second shape and not wait on this.**
+It is the only one available for every candidate without anyone's permission,
+it keeps the staleness guard working, and it makes the first shape an upgrade
+to be earned rather than a decision to be made now. Asking an external project
+to accept a phileas directory is a conversation better had after the engine
+has found something than before it exists.
+
+Nothing in phases 0 through 8 depends on the answer, since the example
+application lives inside this repository. One concrete consequence does land
+earlier, in the phase that hardens the interface: `repoRoot` assumes the first
+shape, and `PLAN.md` carries it there.
+
+### 1.3 Three of the seven files being lifted have no planned home
 
 The kit that becomes `src/` has 7 files. The planned layout accounts for
 `app-under-test.ts`, `launch.ts` and `bundle.ts`. It says nothing about the
@@ -136,6 +163,14 @@ by a change. That holds today.
 dependency, or when anyone outside would be asked to write an adapter. Both
 turn interface stability and adapter ergonomics from preferences into
 requirements, which is a larger change to this document set than to the code.
+
+**One deployment shape forces the question immediately.** If an external
+application's maintainers accept a phileas directory in their own repository,
+that repository becomes a consumer and cannot reach a `file:` dependency on a
+private package, so the engine would have to be published before the offer
+could be taken up. The other two shapes keep every consumer under your own
+ownership and leave this deferred. So the answer is downstream of a question
+nobody has asked yet, rather than of a date.
 
 **What is not deferred:** the engine is already named
 `@drugstoresushi/phileas` and versioned, so the decision is about whether to

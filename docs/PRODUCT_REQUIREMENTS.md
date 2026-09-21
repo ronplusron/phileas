@@ -311,8 +311,15 @@ them changes, this list changes with it.
 
 Stated as what must be true for someone using it.
 
-- **C1** Runs against a packaged build of the application, the same artifact a
-  user would install, not a development server.
+- **C1** Runs against a packaged build of the application rather than a
+  development server. Ideally the same artifact a user would install, though a
+  build made from source is the common case and is not identical to a release.
+  Where the two differ, a finding should say which was tested.
+- **C1a** The staleness guard in R23 needs the sources the build came from, so
+  it works wherever those are available and cannot run at all against an
+  installed binary alone. Everything else here works on any Electron
+  application that can be launched, since it observes a running process rather
+  than reading source.
 - **C2** Slots into a team's existing browser-automation test run. A team not
   already running one has to adopt it first, which is a real cost of entry.
 - **C3** Everything produced by a run -- results, journals -- stays

@@ -185,6 +185,13 @@ Hardening `AppUnderTest`:
   message rather than wait for a success marker, is R24 already written down.
   Keep the comment; it is the reason a future implementer would otherwise
   remove.
+- **`repoRoot` assumes the adapter lives in the application's own repository,
+  and it will not always.** `../CLAUDE.md` records three deployment shapes.
+  Under the second, the path points at a checkout you built rather than the
+  application's own tree; under the third there is no such path at all. Decide
+  here whether the field becomes optional, is renamed for what it actually
+  points at, or splits from whatever the staleness guard needs, because every
+  later phase builds on whichever answer this phase gives.
 
 Boundary: bookkeeping. The typecheck passes; nothing can run, because there is
 nothing to launch.
