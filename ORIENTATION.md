@@ -24,15 +24,16 @@ summarized here -- read them.
 
 ## 2. Current state
 
-**Scaffold and documentation only.** The repository holds `package.json`,
-`tsconfig.json`, `.gitignore`, the README, this file, `CLAUDE.md` and five
-documents under `docs/`, together about 2,600 lines. There is no engine code
-at all: `src/`, `src/oracles/`, `tests/` and `examples/` contain nothing but
-`.gitkeep`.
+**Documentation, and a toolchain that compiles nothing.** The repository
+holds `package.json`, `tsconfig.json`, `.gitignore`, the README, this file,
+`CLAUDE.md` and five documents under `docs/`. There is no engine code:
+`src/` holds one deliberately empty `index.ts`, and `src/oracles/`, `tests/`
+and `examples/` contain nothing but `.gitkeep`.
 
-`package.json` declares no dependencies. `npm run typecheck` and `npm test`
-are both inert until `typescript` and `@playwright/test` are added, so neither
-is evidence of anything today.
+**Phase 0 is done.** The four dependencies are installed and
+`npm run typecheck` passes, which proves the toolchain exists and nothing
+else. `npm test` reports no tests found, correctly, since the first of this
+engine's own tests arrives in phase 3.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -44,10 +45,11 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: ten phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 0 is the next thing to do, and nothing blocks it.** Add `typescript`,
-`@playwright/test`, `@types/node` and `@electron/asar`, plus an empty
-`src/index.ts` so the typecheck has a file to read. `docs/PLAN.md` says why
-those four and not two.
+**Phase 1 is the next thing to do, and one question sits in front of it.**
+It lifts seven files out of `trickster-tales` and hardens `AppUnderTest`
+around them, and what the interface has to carry is the question
+`docs/OUTSTANDING.md` holds. The hardening is where that answer becomes
+permanent, so it is worth settling rather than guessing past.
 
 `docs/OUTSTANDING.md` holds what is open. Its section 1 gates phase 1 rather
 than phase 0: how much `AppUnderTest` has to carry now the consumers are
@@ -96,9 +98,14 @@ npm run typecheck
 npm test
 ```
 
-**All three currently do nothing useful**, and that is the honest state rather
-than a broken checkout. There are no dependencies to install, no TypeScript
-to check, and no tests to run.
+`npm install` installs four dependencies and `npm run typecheck` passes over
+one empty file. **Neither is evidence about the product**, only that the
+toolchain works. `npm test` reports no tests found, which is correct rather
+than broken: there is nothing to test until phase 3.
+
+Playwright's downloaded browsers are not needed and installing did not fetch
+any. The engine drives an Electron binary through Playwright's own Electron
+support, never one of those browsers.
 
 `tsconfig.json` is `noEmit` with `strict` and `noUncheckedIndexedAccess` on.
 `noUncheckedIndexedAccess` is not tidiness: a traversal engine indexes into

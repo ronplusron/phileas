@@ -25,6 +25,34 @@ re-deriving them would cost it again.
 
 ---
 
+## 2026-09-21: phase 0, and the first thing in this repository that runs
+
+Four dependencies and one empty file. `npm run typecheck` passes, which
+proves the toolchain exists and proves nothing about the product.
+
+Resolved versions, recorded because none was chosen and one is a surprise:
+`typescript` 7.0.2, `@playwright/test` 1.63.0, `@types/node` 26.6.2,
+`@electron/asar` 4.3.0, on Node 25.9.0 against an `engines` floor of 20.
+**TypeScript 7 is the one to notice.** It is a major version the plan never
+named, taken simply because it is what the range resolved to, and an empty
+file exercises none of it. The first real test of that choice is phase 1,
+where 613 lines written against an earlier compiler arrive at once. If they
+produce errors that look nothing like the code's own problems, check the
+compiler before rewriting the code.
+
+**`npm test` reports no tests found, and that is the correct state rather
+than a broken checkout.** Recorded because it reads like a failure and will
+keep reading like one until phase 3, which is the first phase with something
+worth testing. A session that "fixes" it by adding a placeholder test has
+added a test that asserts nothing and a green run that means nothing.
+
+**Playwright downloaded no browsers, confirming what phase 0 predicted.**
+The engine drives an Electron binary through Playwright's own Electron
+support rather than one of the browsers Playwright ships. Checked by looking
+for the browser cache rather than by reading the install output, and it does
+not exist at all. This had already been measured in a scratch directory
+before the plan was written; it is now true of this repository.
+
 ## 2026-09-21: a correction recorded as made, which was never made
 
 The entry below on reading RStudio's suite closes by saying `../CLAUDE.md`

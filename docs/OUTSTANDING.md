@@ -76,25 +76,11 @@ which is the thing the framework reading exists to prevent.
 
 ## 2. Agreed, not built
 
-### 2.1 Dependencies
+### 2.1 The engine
 
-Four, not two. Until they are added, `npm run typecheck` and `npm test` are
-inert and no later work can be verified at all. Nothing blocks this.
+Everything in `PLAN.md` from phase 1 on. None of it started.
 
-- `typescript` and `@playwright/test`, the obvious pair.
-- `@types/node`, because `tsconfig.json` already names the `node` types. The
-  compiler reports that missing before it reports anything else, so leaving it
-  out makes the first typecheck misleading rather than merely failing.
-- `@electron/asar`, because the staleness guard being lifted from the sibling
-  repository reads the packaged archive directly. This one is easy to miss:
-  nothing in the current repository mentions it, and it only surfaces when the
-  guard's own source arrives.
-
-### 2.2 The engine
-
-Everything in `PLAN.md`. None of it started.
-
-### 2.3 An example application with planted bugs
+### 2.2 An example application with planted bugs
 
 `examples/` wants an application with deliberately planted faults and tests
 asserting that a Journey finds each one.
@@ -104,7 +90,7 @@ Every other test in this repository can only show that the parts behave as
 written. This is the only thing that shows the assembled engine does its job,
 and the right way to test a bug-finder is to point it at known bugs.
 
-### 2.4 Wiring a consuming repository
+### 2.3 Wiring a consuming repository
 
 Consume the engine via a `file:` dependency rather than a registry, so imports
 take their eventual shape immediately without anything being published.

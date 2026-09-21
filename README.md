@@ -55,9 +55,10 @@ each one can and cannot catch.
 
 ## Status
 
-**Scaffold only.** There is no engine code. `package.json` declares no
-dependencies, so `npm run typecheck` and `npm test` both have nothing to run,
-and every source file named in `docs/PLAN.md` is planned rather than written.
+**Scaffold and a toolchain.** There is still no engine code: every source
+file named in `docs/PLAN.md` is planned rather than written, and `src/` holds
+one deliberately empty file so the compiler has something to read. What
+exists is the four dependencies and a typecheck that passes over nothing.
 
 ## Building and testing
 
@@ -67,9 +68,11 @@ npm run typecheck
 npm test
 ```
 
-Neither script does anything yet, because `typescript` and `@playwright/test`
-have not been added. Once they are, `npm test` runs Playwright against this
-engine's own tests, not against a consuming application.
+`npm run typecheck` passes. `npm test` reports that it found no tests, which
+is the honest state rather than a broken checkout: this engine's own tests
+arrive with the first thing worth testing, in the phase that adds seeding.
+When they do, `npm test` runs Playwright against them, not against a
+consuming application.
 
 ## Where things are
 
