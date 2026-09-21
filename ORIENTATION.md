@@ -2,8 +2,9 @@
 
 ## 1. What it is
 
-An exploratory testing engine. It walks an Electron application without a
-script, picks its own next move from what the screen actually offers, checks a
+An exploratory testing engine. It travels through an Electron application
+without a script, picks its own next move from what the screen actually offers,
+checks a
 set of invariants after every move, and reports what it found along with the
 exact route it took to get there. It complements a scripted suite rather than
 replacing one: the scripted suite covers the paths someone thought to write
@@ -59,9 +60,9 @@ involves.
 
 **Read that code before designing any of it again.** It covers launching an
 Electron app, refusing to run against a stale build, and waiting for
-readiness. It contains nothing that walks an application: no traversal, no
-seeding, no journal, no invariants. Those are the parts that genuinely do not
-exist yet.
+readiness. It contains nothing that travels through an application: no
+traversal, no seeding, no journal, no invariants. Those are the parts that
+genuinely do not exist yet.
 
 Nothing else from that project is this product's concern. Its adapter, its
 scripted specs and its application-specific expectations stay where they are.

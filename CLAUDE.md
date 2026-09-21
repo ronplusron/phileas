@@ -57,10 +57,11 @@ somebody would reach for the change.
 
 **A Fix, where one is defined, runs at the start of every Route and is never
 cached.** Running it fresh IS the independence guarantee, not merely a way of
-getting a clean state. A cached Fix means route 5 begins from whatever route 4 left behind,
-every route still reports green, and the failures it hides are precisely the
-state-leakage bugs this engine exists to find. Caching it also forecloses
-different Fixes per Route, which was raised as a wanted future option. Stated
+getting a clean state. A cached Fix means route 5 begins from whatever route 4
+left behind, every route still reports green, and the failures it hides are
+precisely the state-leakage bugs this engine exists to find. Caching it also
+forecloses different Fixes per Route, which was raised as a wanted option.
+Stated
 close to verbatim by the user in the originating session: keep the fixes
 running per route, saving ten seconds is not worth losing the functionality.
 
@@ -123,7 +124,7 @@ disappears.
 
 ## Choosing the next candidate is an interface, not a few lines in the loop
 
-`traveler.ts` surveys, chooses, executes, journals and checks. **The choosing
+`route.ts` surveys, chooses, executes, journals and checks. **The choosing
 step is a named seam taking the candidate list and a source of randomness and
 returning one candidate**, even though today there is exactly one
 implementation and it is a seeded draw.
@@ -178,10 +179,29 @@ Names come from *Around the World in Eighty Days* only where one genuinely
 fits, and are never forced:
 
 - **Fix** is Detective Fix, and was already in the original specification by
-  coincidence.
-- **Passepartout** is reserved for the traveler module. Not yet implemented,
-  and `docs/PLAN.md` still calls the file `traveler.ts`.
+  coincidence. It works because "fix" is also an ordinary English word meaning
+  what the thing does, which is the test any further character name has to
+  pass.
 - **Journey**, **Route** and **Hop** are plain travel words and stay that way.
+- **Passepartout** was reserved for the traversal module and has been dropped.
+  `docs/HISTORY.md` records why. Watch for a place it genuinely fits rather
+  than reinstating it as a label.
+
+**The theme is fully spent, and that is deliberate.** Phileas names the
+product, Journey and Route and Hop are plain words, and Fix does double duty.
+A fourth reference buys atmosphere and costs legibility, which is what the
+"never forced" rule above exists to prevent.
+
+**The engine travels through an application.** It does not traverse one, which
+would imply systematic coverage it does not attempt, and it does not walk one
+as a countable noun, because that is what a Route is. Two usages follow from
+that and are easy to get wrong: you **follow a Fix**, because a Fix is fixed in
+advance, and you **retrace a Route** only on a replay, where it already exists.
+A Route is otherwise what traveling produced, never a path laid out to be
+followed.
+
+**Call it the engine, not the tool.** "Tool" reads as a standalone utility
+somebody runs; this is a component consumed by the application under test.
 
 **Wager** was proposed for the terms of a Journey and is parked rather than
 rejected. It failed a use-it-in-a-sentence test: "a journey of 10 routes"
@@ -191,7 +211,7 @@ inaccurate besides. `docs/OUTSTANDING.md` holds it.
 ## Packaging, and what a consuming repository looks like
 
 The engine is a package, `@drugstoresushi/phileas`, consumed from
-`node_modules`. A consuming repository gets one directory named for the tool,
+`node_modules`. A consuming repository gets one directory named for the engine,
 following the `cypress/` and `.storybook/` precedent:
 
 ```

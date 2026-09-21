@@ -78,7 +78,7 @@ take their eventual shape immediately without anything being published.
 ## 3. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
-records of a walk are kept, what happens when one defect is found on several
+journals are kept, what happens when one defect is found on several
 routes -- are in `PRODUCT_REQUIREMENTS.md` under Open questions, and are not
 repeated here.
 
@@ -90,7 +90,7 @@ the meantime, because the cost of adding one later is decided now, not then.
 
 Four places it could go, and they are not equally risky:
 
-- **Summarizing a finding from the record of a walk.** Runs after everything,
+- **Summarizing a finding from a route's journal.** Runs after everything,
   reads the journal, changes nothing about detection. Addable at any point
   without touching the engine.
 - **Helping write an application's own checks.** A tool for whoever wires the

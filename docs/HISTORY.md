@@ -25,6 +25,55 @@ re-deriving them would cost it again.
 
 ---
 
+## 2026-09-21: Passepartout dropped, and the verb settled
+
+The naming entry further down, from the day before, records Passepartout as
+reserved for the traversal module. That was true when written and is left
+standing. This entry supersedes it.
+
+**Passepartout was dropped, on the argument that the theme was already spent.**
+Phileas names the product, Journey and Route and Hop are plain travel words,
+and Fix earns its place by being an ordinary English word meaning what the
+thing does. Passepartout has no second life in English, so a reader who does
+not know the novel learns nothing from it, and a reader who does gets a
+servant hierarchy the code does not have.
+
+Two findings on the way outlast the decision. The literal meaning of
+*passe-partout* is a master key, which would have been a precise name for
+discovery by role -- the mechanism that opens every door without being told
+which doors exist -- and a much weaker one for the sequencing loop it was
+actually reserved for. And translating the whole vocabulary into conventional
+terms, with the theme stripped out, produced an equivalent for every term
+except that one. Everything else named a job; Passepartout named nothing. That
+was the clearest evidence available that it was decoration.
+
+**Kept, against expectation: oracle.** It was nearly replaced with a
+travel-themed name before being checked. "Test oracle" is the standard term in
+testing literature for the component that knows the expected answer, so
+replacing it would have swapped a word every tester recognizes for one only
+this project uses. That is the opposite of the trade the rest of the
+vocabulary makes, where the theme costs nothing because the plain alternatives
+are generic.
+
+**The verb is "travels through".** Rejected: *traverses*, which in computing
+implies systematic and complete coverage of a structure, while this engine
+takes a bounded random sample and claims no coverage at all. *Walks* was the
+most technically precise, since a random walk is exactly what this is, but
+*travels* matches Journey, Route and Hop. The countable noun "a walk" was
+dropped outright, because it was a synonym for Route.
+
+**`traveler.ts` became `route.ts`, exporting `runRoute()`.** The old name
+existed only as a placeholder for Passepartout, and it duplicated the
+product's own role: Phileas Fogg is the traveler, so a traveler module was a
+second traveler inside the first. The convention chosen for the layout is that
+a file is named after its principal export, which is why the set mixes verbs
+and nouns.
+
+**Also settled: "the engine", not "the tool",** which the documents had been
+using interchangeably at 28 to 14. And `PRODUCT_REQUIREMENTS.md` adopted the
+word "journal", which it had never used despite describing the thing in two
+requirements, while the other documents used it 21 times.
+
 ## 2026-09-21: the build plan was written, and corrected two documents
 
 Writing the build order against the code that is to be lifted turned up two
@@ -107,8 +156,9 @@ recorded as the highest-value next step on the understanding that nothing
 existed. The work is extraction and hardening, and the existing interface has
 nothing about the traversal exclusion list that the engine now requires.
 
-What is not there: nothing in that kit walks an application. No traversal, no
-seeding, no journal, no invariant machinery. Those are genuinely unwritten.
+What is not there: nothing in that kit travels through an application. No
+traversal, no seeding, no journal, no invariant machinery. Those are genuinely
+unwritten.
 
 ## 2026-09-21: the repository was published, private, after a full scan
 

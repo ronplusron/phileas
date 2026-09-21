@@ -32,8 +32,8 @@ What is known and decided:
   the total matches. The seven are `app-under-test.ts`, `bundle.ts`,
   `external.ts`, `fixtures.ts`, `index.ts`, `launch.ts` and `menu.ts`.
   Extraction, not design from scratch.
-- Nothing in that code walks an application. Traversal, seeding, the journal
-  and every invariant tier are genuinely unwritten.
+- Nothing in that code travels through an application. Traversal, seeding, the
+  journal and every invariant tier are genuinely unwritten.
 - Dependencies come first, since `npm run typecheck` and `npm test` are inert
   without them and nothing later can be verified at all.
 - `examples/`, an application with planted bugs, is the only checkpoint that
@@ -62,7 +62,7 @@ src/
   journey.ts           the terms of a Journey, and per-Route seed derivation
   random.ts            the seedable generator and the hash; the only source of randomness
   survey.ts            discovery by role, with the exclusion list applied
-  traveler.ts          one Route: Fix, hops, stop rules, stranded
+  route.ts             one Route: Fix, hops, stop rules, stranded; exports runRoute()
   journal.ts           the per-hop record, appended and flushed per hop
   invariants/
     index.ts           the runner: whole set after every Hop, first violation ends the Route
@@ -76,8 +76,10 @@ examples/<app>/        a small Electron application, packaged, with planted defe
 examples/<app>/phileas/  adapter/, journeys/, journey.spec.ts: the consumer layout
 ```
 
-`traveler.ts` keeps that name here; `../CLAUDE.md` reserves Passepartout for
-it. The example application has no name yet.
+Each file is named after its principal export, which is why the set mixes
+verbs and nouns: `launch.ts` exports `launch()`, `survey.ts` exports
+`survey()`, and `route.ts` exports `runRoute()` alongside the Route's own
+shape. The example application has no name yet.
 
 ## Build order
 
@@ -91,9 +93,9 @@ to stop can stop with something.
 Why this order: every later phase needs something to verify with (phase 0) and
 something to launch (phase 2). Seeds come before traversal because the seed
 split is what `../CLAUDE.md` warns is painful to retrofit. The journal lands
-with the first walk rather than after it, because R9 is about the record
-surviving what the first walk will do to the application. App-declared checks
-come after the universal tier because they need a walking engine to hang off.
+with the first route rather than after it, because R9 is about the record
+surviving what the first route will do to the application. App-declared checks
+come after the universal tier because they need a traveling engine to hang off.
 Each planted defect is planted in the phase where its detection path lands,
 and the assembled measure, every defect found by one Journey, is the last real
 point.
@@ -239,7 +241,7 @@ Boundary: bookkeeping, with unit tests worth keeping: the same seed gives the
 same sequence; route k's stream is unaffected by whether the routes before it
 ran; consuming from the Fix stream leaves the traversal stream unchanged. Pure
 functions, no Electron needed. They prove the reproducibility mechanism and
-nothing about walking.
+nothing about traveling.
 
 ### Phase 4: survey, hop, and the journal
 
@@ -255,11 +257,12 @@ candidate list and a source of randomness and returning one candidate; the only
 implementation here draws an index from the traversal stream. `../CLAUDE.md`
 says why the seam exists and `OUTSTANDING.md` says what is expected to use it
 later. Generating a value to type is a second seam, separate from choosing
-which control to act on. `traveler.ts` runs one Route: the Fix from the
-fix stream, then hops until the budget is reached, the survey comes back empty
-(stranded, R5, naming the hop), or, from phase 5, a check fails.
+which control to act on. `route.ts` exports `runRoute()`, which runs one Route:
+the Fix from the fix stream, then hops until the budget is reached, the survey
+comes back empty (stranded, R5, naming the hop), or, from phase 5, a check
+fails.
 
-`journal.ts` lands here rather than with the checks, because a walk that
+`journal.ts` lands here rather than with the checks, because a route that
 leaves no trace can only be observed by watching a visible window, and a phase
 whose output is a person watching is a phase nobody can verify. It writes one
 file per Route, one entry per hop, appended and flushed at each hop before the
@@ -271,10 +274,10 @@ fills it.
 are produced at test end and are therefore absent in exactly the endings R9
 lists.
 
-Boundary: bookkeeping, but not unobservable. A walk over the example
+Boundary: bookkeeping, but not unobservable. A route over the example
 application leaves a readable journal on disk, and the journals of two runs
 from the same seed can be compared file to file. That is the first evidence
-that seeding and walking work together, and it is what R13 is later built on.
+that seeding and traveling work together, and it is what R13 is later built on.
 What is still missing is any notion of something being wrong.
 
 ### Phase 5: the universal tier, and the Route as a test
@@ -336,7 +339,7 @@ the planted defects. Each earlier part is verifiable on its own even though the
 boundary is not reached until the last, and a slip is then a slip with
 something working rather than nothing.
 
-Boundary: **real.** A Journey with a small budget walks the example
+Boundary: **real.** A Journey with a small budget travels through the example
 application and reports, which is the last step of the wiring flow in
 `PRODUCT_REQUIREMENTS.md`. R1 through R11, R14 through R16, and R21 through
 R23 can each be held up and answered. A reader who stops here has an
@@ -350,7 +353,7 @@ run after every hop like the universal tier.
 
 `metamorphic.ts` (R19) is not a per-hop invariant, and treating it as one is
 the easy mistake. A relation compares two states, so the engine has to take
-moves of its own: when the walk has just done the operation a relation names,
+moves of its own: when a hop has just performed the operation a relation names,
 the engine performs the counterpart, compares, and records those hops in the
 journal marked as probe hops. Whether probe hops count against the hop budget
 is undecided and is decided here.
@@ -380,11 +383,11 @@ lands, but nothing new about the assembled engine is shown until phase 8.
 ### Phase 7: reporting, replay, and fitting in
 
 `report/` builds the Journey summary from the journals on disk, not from
-in-memory state: routes run, passed, failed and stranded (apart), hops walked,
+in-memory state: routes run, passed, failed and stranded (apart), hops traveled,
 checks run and which were narrowed, and the seed. The nothing-found case
-reports what it walked, so a green result can be told from a run that did
-nothing. Every failure names its route and seed (R7), and the summary is
-enough to reproduce from (R12).
+reports what it traveled through, so a green result can be told from a run
+that did nothing. Every failure names its route and seed (R7), and the summary
+is enough to reproduce from (R12).
 
 R13 gets its design from R10: replay a reported seed and compare each hop's
 survey against the recorded one. The first divergence is where the seed
@@ -482,7 +485,7 @@ exceed it and be reported as a timeout rather than as whatever it found. The
 Route timeout is set from the budget and the settle wait, never left at the
 default.
 
-**Editing a Fix or the exclusion list changes recorded walks.** Both are inputs
+**Editing a Fix or the exclusion list changes recorded routes.** Both are inputs
 to the draw. The seed split keeps a Fix edit from touching the traversal
 stream, but an exclusion-list edit changes what the traversal draws over. The
 journal's record of what could have been chosen is what lets R13 say a seed
@@ -521,7 +524,7 @@ What each layer of verification proves, from weakest to strongest:
 - Unit tests for `random.ts` and `journey.ts` prove the reproducibility
   mechanism: same seed, same sequence, routes independent, streams separate.
 - The engine's own tests against the example application prove that the parts
-  behave as written: launch, refuse a stale build, walk, record, stop on a
+  behave as written: launch, refuse a stale build, travel, record, stop on a
   violation, strand.
 - The planted defects prove that the engine finds bugs. **This is the only
   layer that says anything about the product**, and it is the reason phases 2,

@@ -13,12 +13,13 @@ likely to be relaxed by someone who never saw it.
 Terms used throughout:
 
 - A **journey** is one run, made of several **routes**.
-- A **route** is a single walk through the application, made of **hops**.
+- A **route** is one pass through the application, made up of **hops**.
 - A **hop** is one interaction.
+- A **journal** is the record a route writes as it goes, one entry per hop.
 - A **fix** is an optional fixed sequence of hops, run at the start of every
   route to put the application into a known state. Its hops are chosen in
   advance and are the same every time, which is what separates them from the
-  hops of the walk itself.
+  hops of the route itself.
 
 A journey has three possible outcomes per route: passed, failed, or
 **stranded**. Stranded means the route ran out of moves before reaching its
@@ -36,15 +37,15 @@ a defect.
   advance.
 - Done by hand it is slow, it is not repeatable, and what the tester did is
   usually lost by the time the bug is filed.
-- Today a team either accepts the gap, or spends a person's time walking the
-  application by hand and writing down what they can remember.
+- Today a team either accepts the gap, or spends a person's time traveling
+  through the application by hand and writing down what they can remember.
 
 ## 2. Users
 
 One team, working on one application, sharing a test suite. Three distinct
 jobs, which may be the same person on different days.
 
-- **The person who wires it up.** Connects the tool to their application once:
+- **The person who wires it up.** Connects the engine to their application once:
   how to start it, how to tell it is ready, and what must never be touched.
   Wants that to be a small, stable piece of work rather than a running cost.
 - **The person who runs a journey.** Starts a run, waits, and wants to know
@@ -73,10 +74,10 @@ jobs, which may be the same person on different days.
   Checking that the paths someone did write down still work is a different
   job, and both are wanted.
 - **Judging whether the application computes the right answers.** Most of what
-  the tool finds is that the application broke, or that it contradicts itself.
+  the engine finds is that the application broke, or that it contradicts itself.
   Neither is the same as knowing the answer on screen is correct. An
   application can close that gap by supplying expected answers worked out
-  independently, but without that the tool has no opinion on whether a number
+  independently, but without that the engine has no opinion on whether a number
   is right -- only on whether it is consistent.
 - **Catching a defect that is consistently wrong, through relationships
   alone.** Checks that compare the application against itself before and after
@@ -91,14 +92,14 @@ jobs, which may be the same person on different days.
   permanent boundary: no other target is supported, and none is promised on a
   date.
 - **Testing native desktop or mobile applications.** Applications built with
-  platform-native interface toolkits cannot be walked by this tool at all,
-  and no adapter will change that.
+  platform-native interface toolkits cannot be traveled through by this engine
+  at all, and no adapter will change that.
 - **Using a language model for anything, in this version.** Every move is
   chosen by a seeded draw over what the application is offering, and every
   judgment is a check somebody wrote. This is a decision about this version
   rather than a permanent one, and it is deliberately reversible: what would
   otherwise make it expensive to reverse is R7 and R8, since a model choosing
-  moves cannot replay from a seed. The record of the walk already names what
+  moves cannot replay from a seed. The journal already names what
   was chosen and what else was available at every hop, so a run made that way
   would replay from the record instead. Anything of the kind is a declared
   mode that the report names, never a default, and never inside the checks
@@ -132,11 +133,11 @@ jobs, which may be the same person on different days.
   ought to be showing, worked out separately from the code that produces it.
   Answers: a result that is wrong the same way every time, which no other
   check here catches.
-- **A written record of the walk.** Every hop is recorded as it happens: what
+- **A written record of the route.** Every hop is recorded as it happens: what
   was chosen, what else was available, and what the checks said. Answers: what
   the tester did being lost by the time the bug is filed.
 - **A budget.** A run is bounded by a number of routes, a limit on hops per
-  route, and a deadline. Answers: an unbounded walk being unusable in
+  route, and a deadline. Answers: an unbounded route being unusable in
   practice.
 
 ## 6. User flows
@@ -146,7 +147,7 @@ jobs, which may be the same person on different days.
 1. State how to start the application and how to tell when it is ready.
 2. List anything that must never be interacted with, such as a control that
    quits the application or a link that leaves it.
-3. Run a journey with a small budget and confirm it walks and reports.
+3. Run a journey with a small budget and confirm it travels through and reports.
 
 **Running a journey**
 
@@ -157,7 +158,7 @@ jobs, which may be the same person on different days.
 **Triaging a finding somebody else produced**
 
 1. Read the reported route, its seed, and the hop the failure happened at.
-2. Read the record of the walk to see how the application reached that state.
+2. Read the journal to see how the application reached that state.
 3. Re-run that one route from its seed and watch the failure happen again.
 
 ## 7. Requirements
@@ -170,7 +171,7 @@ here so the shape is visible in one place. If one of them changes, this list
 changes with it.
 
 - **Checks needing no comparison (R16).** An uncaught error, or a window gone
-  blank, is a defect on its own evidence. These ship with the tool and assume
+  blank, is a defect on its own evidence. These ship with the engine and assume
   nothing about the application.
 - **Two things on screen agreeing with each other (R17).** A count in a
   heading against the rows beneath it. Catches a wrong answer without anyone
@@ -193,7 +194,7 @@ changes with it.
   number of hops per route, and a deadline. Stating those four is enough to
   repeat the run.
 - **R2 (Must)** Routes within a journey are independent. Re-running a single
-  route on its own produces the same walk it produced inside the full journey.
+  route on its own produces the same route it produced inside the full journey.
 - **R3 (Must)** Where a fix is defined, it runs fresh at the start of every
   route rather than once per journey, so no route inherits the state the
   previous route left behind. A journey with no fix is valid, and every route
@@ -205,16 +206,16 @@ changes with it.
   Stranded is its own outcome, distinct from both passed and failed: a dead
   end, an inescapable dialog and a trap are all found this way, and so is a
   perfectly reasonable corner of the application with nothing further to do in
-  it. Calling it a failure would assert a defect the tool has not found.
+  it. Calling it a failure would assert a defect the engine has not found.
 - **R6 (Should)** A journey reports its stranded routes separately from its
-  failures, with enough of the walk to tell the two causes apart.
+  failures, with enough of the journal to tell the two causes apart.
 
 ### Findings and reproducing them
 
 - **R7 (Must)** Every failure names one route and the seed that reproduces
   that route.
 - **R8 (Must)** Re-running a reported seed against an unchanged application
-  reproduces the same walk, hop for hop.
+  reproduces the same route, hop for hop.
 - **R9 (Must)** The record of a route is readable after anything that ends the
   run abruptly, covering every hop completed up to that point. This covers the
   application crashing, the application hanging and being given up on, the run
@@ -226,16 +227,16 @@ changes with it.
   was chosen, what else could have been chosen at that point, and the result
   of every check that ran.
 - **R11 (Must)** A failure in the fix is reported as distinct from a failure
-  found while walking. Ten routes failing on one broken precondition is one
+  found while traveling. Ten routes failing on one broken precondition is one
   problem, not ten, and the fix is fixed, so a failure in it says nothing
-  about the route that was about to be walked.
+  about the route that was about to be traveled.
 - **R12 (Should)** Someone who did not run the journey can reproduce a finding
   from the report alone, without asking whoever ran it.
-- **R13 (Should)** A reported seed that no longer reproduces its walk is
+- **R13 (Should)** A reported seed that no longer reproduces its route is
   flagged as such, rather than silently passing. A seed that stops reproducing
   reads as a fixed bug, which is worse than no record at all. This is also the
   only way anyone finds out that reproducibility itself has broken, whether
-  from a change in how moves are chosen or from an edit to what the tool is
+  from a change in how moves are chosen or from an edit to what the engine is
   allowed to touch, so it is not the optional extra it first appears to be.
 
 ### What gets checked
@@ -264,7 +265,7 @@ changes with it.
   and back returns the same state, applying a filter twice equals applying it
   once.
 - **R20 (Could)** An application can supply expected answers computed
-  independently of the code being tested, and the tool compares them against
+  independently of the code being tested, and the engine compares them against
   what is displayed. Without this, a result that is consistently wrong is
   never caught.
 
@@ -298,7 +299,7 @@ Stated as what must be true for someone using it.
   user would install, not a development server.
 - **C2** Slots into a team's existing browser-automation test run. A team not
   already running one has to adopt it first, which is a real cost of entry.
-- **C3** Everything produced by a run -- results, records of the walk -- stays
+- **C3** Everything produced by a run -- results, journals -- stays
   on the machine that ran it. Nothing is sent anywhere.
 - **C4** Private for now. No public release is promised, and nothing about it
   is stable for outside consumers yet. [inferred: publishing is an eventual
@@ -308,7 +309,7 @@ Stated as what must be true for someone using it.
 
 ## 9. Edge cases and failure states
 
-- **The walk runs out of moves.** Reported as stranded, naming the hop it
+- **The route runs out of moves.** Reported as stranded, naming the hop it
   stopped at. Not a pass, because the route did not do what was asked of it,
   and not a failure, because nothing has been shown to be wrong.
 - **The application ends abruptly mid-route.** Whether it crashed, was killed,
@@ -319,9 +320,9 @@ Stated as what must be true for someone using it.
 - **A dialog cannot be dismissed.** Shows up as stranded, since nothing else
   is reachable. Worth investigating precisely because a user would be stuck
   there too.
-- **Nothing is found.** A journey that finds nothing reports what it walked --
-  how many routes, how many hops, what was checked -- so a green result can be
-  told apart from a run that did nothing.
+- **Nothing is found.** A journey that finds nothing reports what it traveled
+  through -- how many routes, how many hops, what was checked -- so a green
+  result can be told apart from a run that did nothing.
 - **A seed no longer reproduces.** Stated plainly in the report rather than
   passing quietly.
 - **The build is stale.** The run refuses to start rather than testing
@@ -344,7 +345,7 @@ Stated as what must be true for someone using it.
   purpose is wanted, and which kinds apply depends on what the applications
   under test are. Deciding this against one application will be wrong for the
   next.
-- **How long are records of a walk kept, and by whom?** Nobody has said.
+- **How long are journals kept, and by whom?** Nobody has said.
   Relevant because a record names what a run did, and runs may be frequent.
 - **What does a journey do when it finds the same defect on several routes?**
   Reporting it five times and reporting it once are both defensible and
@@ -355,10 +356,10 @@ Stated as what must be true for someone using it.
 ## 12. Assumptions
 
 - The application behaves the same way twice given the same inputs. A seed
-  replays a route only while that holds, which is why the record of the walk
+  replays a route only while that holds, which is why the journal
   exists alongside the seed rather than being redundant with it.
 - The application's controls carry readable names. A control without one
-  cannot be reliably walked to, which is why the tool treats a missing name as
+  cannot be reliably hopped to, which is why the engine treats a missing name as
   a failure rather than working around it.
 - The team already runs an automated browser-based test suite. [inferred from
   the constraint above, not stated]

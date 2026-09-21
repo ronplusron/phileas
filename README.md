@@ -1,8 +1,8 @@
 # Phileas
 
-An exploratory testing engine for Electron apps. It walks an application
-without a script, checking invariants at every step, and reports what it found
-and exactly how it got there.
+An exploratory testing engine for Electron apps. It travels through an
+application without a script, checking invariants at every step, and reports
+what it found and exactly how it got there.
 
 TypeScript and Playwright. It ships as a package and is consumed by the
 application it tests, running alongside that application's scripted suite
@@ -24,9 +24,10 @@ it and what they do today.
 | Term | Meaning |
 |---|---|
 | **Journey** | The top-level run. One or more Routes, one seed, one budget. |
-| **Route** | A single traversal. Executes as one test, with its own verdict. |
+| **Route** | One pass through the application. Executes as one test, with its own verdict. |
 | **Fix** | Optional. A fixed sequence of Hops run at the start of every Route. |
 | **Hop** | The atomic unit: one UI or API interaction. |
+| **Journal** | The record a Route writes as it goes, one entry per Hop. |
 
 Routes within a Journey are independent and know nothing of each other, so any
 Route can be replayed on its own.
@@ -41,7 +42,7 @@ Some ship with the engine and assume nothing about the application: no
 uncaught error, no console error, still responding, still showing something,
 still where it started, every visible control carrying a name. An application
 adds its own on top, and can supply answers worked out independently of the
-code being tested, which is the only way the tool judges whether a value is
+code being tested, which is the only way the engine judges whether a value is
 right rather than merely consistent.
 
 A Route that runs out of moves before spending its budget is reported as
