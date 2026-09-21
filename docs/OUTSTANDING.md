@@ -11,21 +11,25 @@ accumulates is how a section grows until nobody reads it.
 **These headings are judgments.** Placing an item is a decision about what
 kind of thing it is, and worth making deliberately.
 
-`DEFECTS.md` is what is wrong. Nothing is built, so it is empty.
+`DEFECTS.md` is what is wrong. Nothing is built, so it holds no defects yet,
+only the two things most likely to be filed there by mistake.
 
 ## 1. Settle before building on them
 
-### 1.1 Which repositories are actually intended as consumers
+### 1.1 How much the interface has to carry, now that the consumers are known
 
-Two earlier records disagree and neither was reconciled. One names three
-sibling repositories as consumers; an earlier one names a different set of
-five. Confirming which is right is cheap and changes what generality the
-engine has to carry: one consumer justifies far less abstraction than five,
-and the difference lands on `AppUnderTest`.
+The consumers were settled on 2026-09-21 and `HISTORY.md` records them and the
+reasoning. What stays open is the consequence: two small Electron applications
+under the same ownership justify a narrow `AppUnderTest`, and two very large
+external ones justify a broader one. The answer lands in the phase that hardens
+the interface, and every later phase builds on it.
 
-Worth answering before that interface is hardened, not after. `PLAN.md` names
-this at the phase that does the hardening, which is early, rather than at the
-one that eventually wires a second repository up.
+The large candidates pull hardest. Both already run Playwright, so adoption is
+cheap, but their surfaces are hostile in opposite directions -- one may give
+discovery by role almost nothing to work with, the other far more than a hop
+budget can handle, and it changes underfoot. Neither is a reason to narrow the
+interface; both are reasons to measure discovery against a real one before
+phase 4 rather than during it.
 
 ### 1.2 Which deployment shape each candidate consumer uses
 
@@ -54,14 +58,15 @@ application lives inside this repository. One concrete consequence does land
 earlier, in the phase that hardens the interface: `repoRoot` assumes the first
 shape, and `PLAN.md` carries it there.
 
-### 1.3 Three of the seven files being lifted have no planned home
+### 1.3 Whether the proposed homes for three lifted files are accepted
 
-The kit that becomes `src/` has 7 files. The planned layout accounts for
-`app-under-test.ts`, `launch.ts` and `bundle.ts`. It says nothing about the
-remaining three, which cover fixtures, menu handling and external-link
-handling.
+The kit that becomes `src/` has 7 files. Four had an obvious home from the
+start. The other three -- fixtures, menu handling and external-link handling
+-- did not, and `PLAN.md` phase 1 now proposes one for each with its
+reasoning, so the question here is no longer where they go but whether those
+positions are accepted.
 
-Each needs a decision rather than an improvisation at the moment it is moved:
+Each is a decision rather than an improvisation at the moment it is moved:
 part of the engine, part of what a consuming adapter supplies, or dropped.
 Menu handling in particular may be generic traversal machinery or may be
 application-specific, and guessing wrong puts app knowledge inside the engine,

@@ -28,10 +28,12 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Nothing is built, so there is nothing here.** This file exists to hold the
-role rather than to be filled in advance. Writing speculative defects against
-unwritten code would make it a list of worries, which is what
+**No defects are recorded, because nothing is built.** Writing speculative
+ones against unwritten code would make this a list of worries, which is what
 `OUTSTANDING.md` section 1 is for.
+
+What follows is not a list of defects. It is the two things most likely to be
+filed here wrongly, and one hazard to enter the moment it becomes real.
 
 ## Two things that will look like candidates, and are not
 
