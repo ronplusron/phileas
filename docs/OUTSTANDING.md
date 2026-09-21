@@ -120,7 +120,28 @@ routes at random and a red result would stop being worth reading. If a model
 ever judges, it is a separate tier with its own reporting, never mixed with the
 deterministic ones.
 
-### 3.2 Wager, as a name for the terms of a Journey
+### 3.2 Publishing, deferred with an expiry that nothing currently watches
+
+Private for now, and publishing is wanted eventually.
+`PRODUCT_REQUIREMENTS.md` carries this as a constraint and marks it inferred
+rather than stated, and a goal there rests on it. Nothing tracked the decision
+itself until this entry, which is why it is here: a constraint with an expiry
+and no watcher expires quietly.
+
+**What it rests on:** that every consumer is a repository under the same
+ownership, reachable by a `file:` dependency, so nothing outside can be broken
+by a change. That holds today.
+
+**When to revisit:** when a consumer appears that cannot use a `file:`
+dependency, or when anyone outside would be asked to write an adapter. Both
+turn interface stability and adapter ergonomics from preferences into
+requirements, which is a larger change to this document set than to the code.
+
+**What is not deferred:** the engine is already named
+`@drugstoresushi/phileas` and versioned, so the decision is about whether to
+publish rather than about how the package would be identified.
+
+### 3.3 Wager, as a name for the terms of a Journey
 
 Proposed, then parked rather than rejected, on an explicit request to hold on
 to it in case it proves useful. It failed a use-it-in-a-sentence test: "a
@@ -137,13 +158,12 @@ already considered.
 
 Declined 2026-09-20, for two reasons. It is interference rather than learning,
 since nothing has run when the bias is assigned, which makes it stratified
-sampling. And the problem it solves is negligible: measured over eight buttons
-and ten routes, about four pairs collide on the first hop, each diverging with
-probability 7/8 on the next, for a handful of duplicated hops out of roughly
-400.
+sampling. And the problem it solves is negligible, which was measured rather
+than assumed.
 
-`HISTORY.md` has the full reasoning. Reopen only on measurement showing real
-clustering, not on the intuition that ten random walks must overlap.
+`HISTORY.md` has the reasoning and the measurement. Reopen only on measurement
+showing real clustering, not on the intuition that ten random walks must
+overlap.
 
 **The related guard is a standing commitment rather than a declined item:** the
 planner stays a for-loop. If it starts deciding what gets explored rather than

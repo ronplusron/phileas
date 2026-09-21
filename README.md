@@ -13,11 +13,11 @@ Copyright © 2026 Ron Blum. All rights reserved.
 ## Why
 
 A scripted end-to-end suite only ever checks the paths someone thought to
-write down. Phileas covers the rest: it selects its own route through the
-application in real time, within a fixed budget, and verifies at every stop
-that the app still holds together.
+write down. Phileas covers the rest, within a fixed budget, and every run is
+seeded so any failure replays exactly.
 
-Every run is seeded, so any failure replays exactly.
+`docs/PRODUCT_REQUIREMENTS.md` states the problem properly, along with who has
+it and what they do today.
 
 ## Vocabulary
 
@@ -25,33 +25,32 @@ Every run is seeded, so any failure replays exactly.
 |---|---|
 | **Journey** | The top-level run. One or more Routes, one seed, one budget. |
 | **Route** | A single traversal. Executes as one test, with its own verdict. |
-| **Fix** | An optional fixed sequence of Hops, run at the start of every Route to reach a known state. |
+| **Fix** | Optional. A fixed sequence of Hops run at the start of every Route. |
 | **Hop** | The atomic unit: one UI or API interaction. |
 
-A Fix is made of Hops like a Route is, but its Hops are chosen in advance and
-are the same every time. That is the whole difference: the Fix is fixed, the
-Route is not.
+Routes within a Journey are independent and know nothing of each other, so any
+Route can be replayed on its own.
 
-Routes within a Journey are independent. They share a Fix, where one is
-defined, and know nothing of each other, so any Route can be replayed on its
-own.
+`docs/PRODUCT_REQUIREMENTS.md` defines these terms exactly, including what
+separates a Fix from a Route and the three outcomes a Route can have.
 
 ## What it checks
 
-Three tiers, running after every Hop:
+Checks run after every Hop, and a Route stops at the first one that fails.
+Some ship with the engine and assume nothing about the application: no
+uncaught error, no console error, still responding, still showing something,
+still where it started, every visible control carrying a name. An application
+adds its own on top, and can supply answers worked out independently of the
+code being tested, which is the only way the tool judges whether a value is
+right rather than merely consistent.
 
-- **Universal** ship with the engine and assume nothing about the app under
-  test: no uncaught exception, no hang, no white screen, no console error,
-  every visible control reachable by name.
-- **Structural** are declared per app: one view active at a time, a selected
-  row matching the detail beside it, displayed counts matching the source.
-- **Metamorphic** assert relationships rather than values, which is how a
-  traversal with no expected answer still catches wrong behavior. Search then
-  clear returns the original list. Navigating away and back returns the same
-  state. A filter applied twice equals a filter applied once.
+A Route that runs out of moves before spending its budget is reported as
+stranded, which is neither a pass nor a failure. Sometimes that is a dead end
+or a trap, and sometimes it is a corner of the application with nothing more
+to do in it.
 
-Completing the Journey is itself an assertion. A Route that cannot finish its
-hop budget has found a dead end, and no separate check was needed to notice.
+`docs/PRODUCT_REQUIREMENTS.md` has all five ways a defect gets found, and what
+each one can and cannot catch.
 
 ## Status
 

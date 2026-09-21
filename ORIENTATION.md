@@ -51,10 +51,11 @@ the seven files being lifted out of the sibling repository.
 ## 3. Part of this engine already exists, in a sibling repository
 
 The launch and bundle layer was written inside a sibling Electron project's
-Playwright suite and deliberately structured to be lifted out: 613 lines
-across 7 files, including an `AppUnderTest` interface whose own header comment
-states that the directory is meant to become a shared package that sibling
-apps consume. `docs/PLAN.md` says where it is and what moving it involves.
+Playwright suite and deliberately structured to be lifted out, including an
+`AppUnderTest` interface whose own header comment states that the directory is
+meant to become a shared package that sibling apps consume. `docs/HISTORY.md`
+has what was measured; `docs/PLAN.md` says where it is and what moving it
+involves.
 
 **Read that code before designing any of it again.** It covers launching an
 Electron app, refusing to run against a stale build, and waiting for
