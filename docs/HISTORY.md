@@ -25,6 +25,166 @@ re-deriving them would cost it again.
 
 ---
 
+## 2026-09-21: the lineage, and where the Fix came from
+
+Recorded because it is the design's origin and existed nowhere in writing.
+
+The predecessor was **Loki**: an engine about breaking things randomly,
+chaos and discord. No anchoring, no checks, and in practice only the command
+palette -- clicks, dialogs and buttons were never implemented. Late on came
+the idea of anchoring the opening steps so the unpredictable part began
+somewhere known. Those were **Anchors**. Loki could not take them, so the work
+restarted from scratch, semirandom this time, and Anchors became the **Fix**.
+
+The traversal module was called the **explorer** before it was the traveler,
+and the travel framing is what produced the name: a trip that often knows its
+starting point and never knows how it will go. That is Fogg, who knew his
+departure and his deadline and nothing in between.
+
+**Two things follow that the documents had wrong.** The Fix is not setup
+ceremony imported from scripted testing; it is the correction that separated
+the second attempt from the first. And "optional" was leading every definition
+of it, which reads as peripheral -- a Journey without one is valid, but the
+common case is that one is defined.
+
+## 2026-09-21: RStudio's own test suite was read, and it moved several decisions
+
+Four parallel readings of `e2e/rstudio/`, 256 files and 2.6 MB. Read for
+design lessons; nothing was copied, and that repository is AGPL.
+
+**Some of what follows came from the intent behind that code rather than the
+code itself**, which is noted where it matters, because a reader who goes
+looking for the evidence in the files will not always find it there.
+
+### Attaching to a hardened Electron build
+
+**A packaged Electron application may refuse automation entirely.** RStudio
+ships with the fuses `EnableNodeCliInspectArguments` and `RunAsNode` disabled,
+which is Electron's own recommended hardening. Playwright's `electron.launch()`
+attaches through the Node inspector, so it hangs and times out. Measured here
+against the installed build, then confirmed against the documentation rather
+than inferred.
+
+The workaround works and was measured: spawn the binary with
+`--remote-debugging-port`, poll until the endpoint answers, attach with
+`connectOverCDP`. Four refinements from their implementation, each of which
+exists because something went wrong:
+
+- Dial `127.0.0.1` literally, never `localhost`. Electron binds IPv4 only, and
+  `localhost` resolves to `::1` first on some Linux distributions, producing
+  ECONNREFUSED against a perfectly healthy application.
+- Derive the port deterministically from a hash of the checkout path plus the
+  worker index. Random ports collide, and a per-launch "kill whatever owns
+  this port" step then kills a sibling run.
+- Reclaim the port matching LISTEN sockets only. An unqualified match also
+  selects the client end of established connections, killing another run's
+  worker process.
+- Refuse to launch if the port will not free. A socket held by an inherited
+  handle is attributed to a dead process, so killing by owner does nothing,
+  and launching anyway produces an application that can never bind.
+
+**CDP reaches the renderer, not the main process.** That costs four things
+this design currently assumes: stubbing the handler that opens external links,
+hiding windows so runs stay off-screen, checking the main process is alive,
+and reaching native menus. So the third deployment shape loses considerably
+more than the staleness guard, and `../CLAUDE.md` was corrected.
+
+### Does discovery by accessibility role work on a GWT surface
+
+This was the open risk that could have falsified the design, and it was
+measured twice.
+
+Directly, against the running application: 84 elements found by role on the
+resting screen, 80 of them carrying a usable name -- "Save current document",
+"Import Dataset", "Clear objects from the workspace". 5,468 DOM elements, 225
+with a role attribute, 240 with an ARIA name. The names are machine-generated
+from the command registry, where 403 of 670 commands carry a description that
+becomes a title and then a label, so they are not patchy.
+
+Indirectly, and more usefully, by counting what their own authors reach for
+across 728 tests: **semantic locators are 9.5% of 1,772 element references,
+and `getByRole` alone is 4%.** Their stated hierarchy puts stable product IDs
+above roles.
+
+**The correct reading is that the resting screen is a ceiling, not a floor.**
+Role discovery reaches the chrome -- toolbars, menus, dialogs, panes -- and
+every surface with real behavior has no role semantics at all: the console,
+every source tab, the data grid, the visual editor, autocomplete. A Route that
+hops into the editor finds a text area and has nowhere further to go. That is
+not a defect in the engine. It is what stranded means, and it will be right.
+
+Worth knowing: in one place their authors choose a role over an ID
+deliberately, because the accessibility tree filters out ghost dialogs the DOM
+retains. Role discovery works with the grain there rather than against it.
+
+### The settling question, reversed
+
+The first reading suggested the answer was to have the application publish a
+readiness signal, since RStudio exposes one through an automation bridge. The
+later readings reversed it.
+
+That bridge was inherited rather than built for testing. Their own authoring
+guide warns the readiness flag is set before the workbench is finished
+building, so it is the earliest usable signal rather than proof the state has
+settled. And their antipattern audit asks for a layout-settle signal to be
+built into the product, on the grounds that 21 blind sleeps in one file are
+papering over real races -- **that signal was never built.**
+
+**So Phileas cannot require adapters to supply a settle signal.** RStudio is
+the most favourable case available: a bridge already existed, someone knew
+exactly what was needed and wrote down why, and it still did not happen. The
+engine needs a settling strategy that works with no application cooperation,
+and an adapter-supplied signal is an optimization where one happens to exist.
+
+This is harder here than for a scripted suite, not easier. A test can wait for
+the one thing it is about to touch. An explorer does not know what it is about
+to touch until it has surveyed, so whatever it does after a hop must be
+generic.
+
+### Three bugs, and how each was found
+
+These are the argument for the product, and none was found by the scripted
+suite.
+
+- **A plot zoom window left open while quitting raises an uncaught exception
+  in the main process.** Two ordinary actions in an order nobody would script.
+  Found by accident, during a test looking at something else. It is the first
+  universal check firing, and it is in the main process -- so under the
+  binary-only deployment shape the engine would travel straight past it.
+- **Dismissing the data viewer's summary and then paginating brings it back.**
+  Found by hand, with no specification to check against. This is exactly a
+  relation between two states: dismissed then paginated should stay dismissed.
+  The person who found it initially wondered whether it was an annoying
+  feature rather than a defect, which is the human oracle being genuinely
+  unsure where a relation would not have been.
+- **Refreshing the presentation preview crashes on a profile that has never
+  opened that pane.** Nothing on screen, no dialog, nothing in the browser
+  console, a client exception in the session log, and the command greys out
+  afterwards. Silent failure on fresh state -- which is this engine's default
+  condition, since every Route runs from a sandboxed profile with nothing
+  seeded. Catching it requires the adapter to expose where the application
+  writes its logs.
+
+The third was found by Loki. Over several dozen runs it was the only thing
+found, and `OUTSTANDING.md` records why that number may measure reachability
+rather than randomness.
+
+### What this changed in the interface
+
+`AppUnderTest` is missing more than the exclusion list. Their fixtures need,
+and this interface cannot express: environment variables (almost everything
+RStudio needs to be hermetic arrives that way rather than as flags), which
+page is the application rather than a splash, a pre-launch hook to seed
+settings, an application-specific shutdown, where logs are written, and how to
+recognize stray processes for cleanup. `PLAN.md` phase 1 carries these.
+
+**And the exclusion list may need to be conditional rather than flat.** There
+are six ways to quit RStudio, three of which are not buttons -- a console
+command, a keyboard shortcut and menu paths. One of them is worse than a
+static list can express: the shortcut that closes an editor tab closes the
+*application* once no tabs remain. A control that is harmless many times and
+fatal once cannot be excluded by name alone.
+
 ## 2026-09-21: the consumers were settled, and two of them were read
 
 Two earlier records disagreed, one naming three sibling repositories and an

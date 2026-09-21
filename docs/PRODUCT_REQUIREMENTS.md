@@ -16,10 +16,12 @@ Terms used throughout:
 - A **route** is one pass through the application, made up of **hops**.
 - A **hop** is one interaction.
 - A **journal** is the record a route writes as it goes, one entry per hop.
-- A **fix** is an optional fixed sequence of hops, run at the start of every
-  route to put the application into a known state. Its hops are chosen in
-  advance and are the same every time, which is what separates them from the
-  hops of the route itself.
+- A **fix** anchors the start of every route: a fixed sequence of hops, chosen
+  in advance and the same every time, putting the application into a known
+  state before the unpredictable part begins. That anchoring is what makes a
+  journey semirandom rather than random, and most journeys will define one. A
+  journey without a fix is valid, and every route then starts from the
+  application's own initial state.
 
 A journey has three possible outcomes per route: passed, failed, or
 **stranded**. Stranded means the route ran out of moves before reaching its
@@ -325,7 +327,13 @@ and the runner runs all of them after every hop.
   alongside the scripted suite's own.
 - **R26 (Must)** Running a journey never blocks a merge or a push unless a
   team deliberately configures it to.
-- **R27 (Should)** A journey can be started on demand or on a schedule.
+- **R27 (Should)** A journey that could not do what was asked of it says so
+  rather than reporting success. A run where the application never launched,
+  where every route stranded at the first hop, or where zero routes ran at all
+  is not a green run, and a scheduled journey that quietly degrades to nothing
+  is the failure this prevents. A setting makes any such degradation a
+  failure, for runs where the absence of findings is meant to mean something.
+- **R28 (Should)** A journey can be started on demand or on a schedule.
 
 ## 8. Constraints
 

@@ -115,13 +115,10 @@ binary rather than one of the browsers Playwright downloads. The lifted
 fixtures override the `page` fixture for the same reason: the stock one would
 try to launch a Chromium that was never installed.
 
-Checked against Playwright's documentation on 2026-09-21. It states that
-Electron launches an Electron executable, and that traces can be opened without
-the downloaded browsers, including through a hosted viewer. **It nowhere states
-outright that the browser install can be skipped**, so treat this as a reasoned
-expectation rather than a documented guarantee. The first install settles it in
-a minute, and the cost of being wrong is one confusing failure that looks like
-a missing browser rather than anything to do with this engine.
+**Confirmed 2026-09-21.** Installing `@playwright/test` in a scratch
+directory and driving a packaged Electron application through it needed no
+browser download. This was a reasoned expectation until then; it is now a
+measurement.
 
 Boundary: bookkeeping. A passing typecheck on an empty package proves the
 toolchain exists and nothing else. It is still the gate every later phase
@@ -188,6 +185,23 @@ Hardening `AppUnderTest`:
   message rather than wait for a success marker, is R24 already written down.
   Keep the comment; it is the reason a future implementer would otherwise
   remove.
+- **Six members the interface cannot express, found by reading a real
+  fixture for a real application.** `HISTORY.md` records where they came from.
+  Environment variables, because almost everything an application needs to run
+  hermetically arrives that way rather than as flags, and the interface has
+  only `launchArgs`. Page *selection*, because `waitForReady(page)` presumes
+  the engine already picked the right one and an application with a splash has
+  more than one. A pre-launch hook to seed settings, since several settings
+  decide whether automation is possible at all. An application-specific
+  shutdown, because closing a debugging connection does not terminate the
+  process. Where the application writes its logs, since a failure can be
+  invisible on screen and present in a log. And how to recognize the
+  application's own stray processes for cleanup.
+- **The exclusion list may have to be conditional rather than flat.** A real
+  application had six ways to quit, three of which are not buttons, and one
+  that is harmless many times and fatal once: the shortcut closing an editor
+  tab closes the application when no tabs remain. A list of names cannot
+  express that. Decide here whether an exclusion is a name or a predicate.
 - **`repoRoot` assumes the adapter lives in the application's own repository,
   and it will not always.** `../CLAUDE.md` records three deployment shapes.
   Under the second, the path points at a checkout you built rather than the
@@ -262,6 +276,24 @@ comes from the accessibility tree and is deterministic; the hazards below say
 what breaks otherwise.
 
 A hop chooses a candidate, acts on it, and waits for the page to settle.
+
+**Settling is the second difficulty of the project, after `survey`, and the
+engine cannot delegate it.** The obvious design is for the adapter to supply a
+signal meaning the application has stopped moving. `HISTORY.md` records why
+that cannot be *required*: in the most favourable real case available -- an
+application that already shipped an automation bridge, with someone who knew
+exactly what signal was wanted and wrote down why -- it was still never built.
+So the engine needs a strategy that works with no cooperation at all, and an
+adapter-supplied signal is an optimization where one happens to exist.
+
+Harder for an explorer than for a scripted test, not easier. A test waits for
+the one thing it is about to touch. A Route does not know what it is about to
+touch until it has surveyed, so whatever it waits for after a hop is generic
+by necessity. Candidates worth measuring rather than assuming: the survey
+result unchanged across two consecutive reads, no animations in flight, and a
+bounded round trip returning. Record what the chosen one costs, because it
+runs after every hop and multiplies by the budget.
+
 **Choosing is a named seam rather than a line in the loop**, taking the
 candidate list and a source of randomness and returning one candidate; the only
 implementation here draws an index from the traversal stream. `../CLAUDE.md`
@@ -311,6 +343,14 @@ field and nothing else about it changes.
 - A readable name on every visible control: this comes from the survey itself.
   An element with a role and no name is reported by the survey that found it
   and could not hop to it.
+
+**Every check in this tier has to be tested against a broken application, not
+just a working one.** The rule comes from a team that learned it on a real
+suite: pick the signal by asking what a broken build does. A check that reads
+the same on a healthy and a broken application is worse than no check, because
+a Route that ends at the first violation will never end. Each of the six above
+needs a planted defect that makes it fire, which is what phase 5's planting
+step is for, and any that cannot be made to fire does not ship.
 
 The runner executes the whole set after every hop (R15) and ends the Route on
 the first violation (R16). R19 narrowing is declared in the adapter and the
@@ -406,7 +446,7 @@ stopped reproducing, and the report says so instead of passing.
 
 Journeys become their own Playwright project in the consumer's configuration.
 That puts their results in the same run as the scripted suite (R25) and makes
-the project selectable on its own for on-demand and scheduled runs (R26, R27).
+the project selectable on its own for on-demand and scheduled runs (R26, R28).
 R26 is a convention on the consumer's side; the plan's part is making the
 journey project trivial to leave out of any push gate.
 
@@ -462,8 +502,9 @@ read inside each Route's body. The top-level loop needs only the route count.
 identical hop for hop. Order must come from the accessibility tree, never from
 object identity or the iteration order of a map. The survey must be taken from
 a settled page, and Electron offers no network-idle signal to lean on; an
-animation mid-flight changes what is visible. The settling mechanism is
-undecided. Any drift here shows as R13 firing on a replay against an
+animation mid-flight changes what is visible. The mechanism is undecided and
+phase 4 says what is known about choosing one: it has to work without the
+application's help. Any drift here shows as R13 firing on a replay against an
 application with no bug, which is how it will be noticed.
 
 **Attachments and traces are not the journal.** Playwright writes both at test

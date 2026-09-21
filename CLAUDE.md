@@ -26,7 +26,7 @@ costs the whole reporting model:
 | --- | --- | --- |
 | Journey | the run | Holds the seed, the route count, the hop budget, the deadline |
 | Route | a test | The unit with a verdict, the fixture scope, the timeout boundary, the retry unit, the trace boundary |
-| Fix | `beforeEach` | Optional. Where one is defined, it is defined once per Journey and applied at the start of every Route |
+| Fix | `beforeEach` | Anchors every Route's start. Defined once per Journey, applied at the start of each Route. Optional, and usually present |
 | Hop | `test.step` | Hops nest in the trace without each becoming a separate pass or fail |
 
 Journey was claimed to be the test early on and that was wrong. If the Journey
@@ -49,6 +49,35 @@ Otherwise editing a Fix later shifts every subsequent draw, and routes that
 used to fail stop reproducing. A recorded failing seed that no longer
 reproduces is worse than no recording, because it reads as a fixed bug.
 
+## Why a Fix exists at all
+
+This engine has a predecessor. It was called Loki, and it was about breaking
+things randomly: chaos and discord. It walked an application by invoking
+commands at random, with no anchoring and no checks.
+
+**It did not find much, and the diagnosis was that pure randomness was the
+problem.** Late on, the idea arrived of anchoring the opening steps of a run
+so that the unpredictable part started from somewhere known. Those were called
+Anchors. Loki was not built to take them, so the engine was started again from
+scratch, and Anchors became the Fix.
+
+**So the Fix is not setup ceremony borrowed from a scripted suite. It is the
+correction that made the second attempt different from the first,** and it is
+what makes traversal **semirandom** rather than random: a known start, an
+unpredictable continuation. That is also the reason the name fits. Fogg knew
+where he was leaving from and when he had to be back, and nothing in between.
+
+**A Journey with no Fix is still valid, and that is deliberate.** It is the
+unanchored mode Loki was -- pure randomness, starting wherever the application
+starts. It remains available on purpose and is why the Fix is optional at all.
+It is simply the less interesting of the two, and the common case is that a
+Fix is defined. Anyone reading the optional flag as a sign that the Fix is
+peripheral has it backwards.
+
+One measurement is worth carrying, from `docs/HISTORY.md`: unanchored and
+unchecked, over several dozen runs against a large mature application, Loki
+found one real defect. That is not nothing, and it is not much.
+
 ## Two commitments that read as performance wins and are not
 
 Both look like obvious optimizations. Deleting either one removes a guarantee
@@ -61,9 +90,9 @@ getting a clean state. A cached Fix means route 5 begins from whatever route 4
 left behind, every route still reports green, and the failures it hides are
 precisely the state-leakage bugs this engine exists to find. Caching it also
 forecloses different Fixes per Route, which was raised as a wanted option.
-Stated close to verbatim by the user in the originating session: keep the
-fixes running per route, saving ten seconds is not worth losing the
-functionality.
+Decided explicitly, and worth quoting because the trade was weighed rather
+than assumed: keep the fixes running per route, since saving ten seconds is
+not worth losing the functionality.
 
 **The journal flushes after every Hop, not at the end of the Route.** A crash
 is exactly the case where end-of-test reporting never runs, and a crash is
@@ -208,6 +237,15 @@ decision already taken and recorded as declined:
   clothes, and the same rule settles it -- a check earns its place by knowing
   what *should* be true, never by restating what the code already does.
 
+**An application's own automation bridge is the same boundary in a new
+place.** Some applications expose one: a hook installed by a launch flag that
+reports uncaught client exceptions, how many dialogs are showing, whether the
+session is ready. Using it for checks is excellent and is exactly what an
+adapter is for. But such a bridge usually also enumerates every command the
+application has, and choosing hops from that list is the per-application map
+declined above, arriving through a door that looks like instrumentation.
+Invariants may read the bridge. `survey` may not.
+
 The engine reads no source at run time, ever. Everything above that uses
 source happens beforehand, in the adapter or in a build step, and produces
 something the engine consumes without knowing where it came from.
@@ -325,6 +363,11 @@ numbers behind the second.
   because `docs/HISTORY.md` is the record.
 - Nothing is summarized across documents. Point at the other file and say to
   read it; a summary is a second copy, and the copy is what goes stale.
+- **Phileas** is the engine, the traveler going on a Journey. **phileas** in
+  lower case is only ever a package name, a repository name or a directory:
+  `@drugstoresushi/phileas`, `ronplusron/phileas`, `phileas/` in a consuming
+  repository. If a sentence could put "the engine" there instead, it takes
+  the capital.
 - ASCII only in git artifacts: commit messages, branch names, tags.
 - American spelling: license, organization, behavior, analyze.
 - Documents address whoever reads next. No personal names in prose, and no

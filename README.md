@@ -25,7 +25,7 @@ it and what they do today.
 |---|---|
 | **Journey** | The top-level run. One or more Routes, one seed, one budget. |
 | **Route** | One pass through the application. Executes as one test, with its own verdict. |
-| **Fix** | Optional. A fixed sequence of Hops run at the start of every Route. |
+| **Fix** | Anchors the start of every Route. A fixed sequence of Hops, the same every time. Optional, and usually present. |
 | **Hop** | The atomic unit: one UI or API interaction. |
 | **Journal** | The record a Route writes as it goes, one entry per Hop. |
 
