@@ -173,6 +173,16 @@ misreading in the originating session because "app" was doing two jobs in one
 sentence. Say "the adapter" or "the app-specific test code" and the ambiguity
 disappears.
 
+**The same trap sits one level down: prevention and detection must not share
+their evidence.** Where something is both the mechanism that stops a thing
+happening and the only proof that it did not happen, one silent failure takes
+out both at once, and the result reads exactly like success. The measured case
+is the stub that keeps a Route from opening a browser: its recorder is also
+the only evidence none opened, so a stub that never took effect reports
+identically to a Route that never left the application. `docs/DEFECTS.md`
+carries that one. The rule it produced is general -- a check needs a source of
+evidence that does not depend on the guard it is checking having worked.
+
 ## Choosing the next candidate is an interface, not a few lines in the loop
 
 `route.ts` surveys, chooses, executes, journals and checks. **The choosing
@@ -206,6 +216,16 @@ stop this being a framework, which is the trade the project exists to make.
 What the adapter does supply is an exclusion list -- things that must never be
 hopped to, such as Quit and outbound links. That list is a safety rail, not a
 map.
+
+**An exclusion is a name or a predicate, and names stay first-class.** A list
+of names cannot express a control that is harmless many times and fatal once:
+the measured case is a shortcut that closes an editor tab, and closes the
+application once no tabs remain. So a predicate is available for what a list
+cannot say. It is the exception rather than the shape, because only a list of
+names can be derived from the application's source and checked against it,
+which is what the section below is for. A predicate must be deterministic: the
+exclusion list is an input to the seeded draw, so one that answered differently
+on a replay would send every hop after it somewhere else.
 
 ## Source access is useful, and is how two declined decisions come back
 
