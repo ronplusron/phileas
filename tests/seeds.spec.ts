@@ -9,6 +9,7 @@ import {
   resolveSeed,
   generateSeed,
   SEED_VARIABLE,
+  SHORTEST_DEADLINE_MS,
 } from '../src/index';
 
 /**
@@ -28,6 +29,57 @@ function drawMany(seed: string, count: number): number[] {
   const rng = createRng(seed);
   return Array.from({ length: count }, () => rng.next());
 }
+
+/**
+ * Known-answer vectors: the generator's output frozen as literals.
+ *
+ * Every other test in this file compares the implementation against itself in
+ * one process, so all of them pass after any change to the algorithm. Measured
+ * rather than assumed: changing the warm-up count from 12 to 13 and the digest
+ * from 16 characters to 20 left all fourteen of them green. The whole reason
+ * the generator is written in this repository rather than taken as a dependency
+ * is that it must produce the same sequence across machines and Node versions,
+ * and nothing asserted that.
+ *
+ * **These literals pin this implementation; they are not an independent
+ * oracle.** They were generated from the code they now guard, so they cannot
+ * say the algorithm is correct. They say it has not changed, which is the
+ * property R13 actually needs. A seed recorded in a report or in DEFECTS.md
+ * retraces the same route only while these hold.
+ *
+ * If one of these fails, the question is whether the change to the generator
+ * was intended -- not how to make the literal match. Every seed recorded before
+ * the change stops reproducing, and that has to be a decision rather than a
+ * repair.
+ */
+test('the generator produces the sequence it produced when this was written', () => {
+  const rng = createRng('travel');
+  expect([rng.next(), rng.next(), rng.next()]).toEqual([
+    0.003605337580665946, 0.8016686923801899, 0.17208942957222462,
+  ]);
+
+  const ints = createRng('range');
+  expect([ints.int(7), ints.int(7), ints.int(7)]).toEqual([0, 5, 0]);
+});
+
+test('route seeds are derived to the same values they were', () => {
+  expect([0, 1, 2].map((index) => deriveRouteSeed('stability', index))).toEqual([
+    '0321430daf79314e',
+    '1abf7e9d14678865',
+    '667536290b279857',
+  ]);
+});
+
+test('both of a Route\'s streams start where they started', () => {
+  const streams = deriveRouteStreams('split', 0);
+  expect(streams.routeSeed).toBe('8541bf9b5e3f115e');
+  expect([streams.fix.next(), streams.fix.next()]).toEqual([
+    0.035913600819185376, 0.5903206907678396,
+  ]);
+  expect([streams.traversal.next(), streams.traversal.next()]).toEqual([
+    0.9430932917166501, 0.7447453245986253,
+  ]);
+});
 
 test('the same seed gives the same sequence', () => {
   expect(drawMany('travel', 20)).toEqual(drawMany('travel', 20));
@@ -126,6 +178,34 @@ test('a Journey refuses terms that cannot fail', () => {
 test('a Journey registers one index per Route', () => {
   const journey = defineJourney({ routes: 4, hopsPerRoute: 10, deadlineMs: 1000 });
   expect(routeIndices(journey)).toEqual([0, 1, 2, 3]);
+});
+
+test('requireSeed returns the seed that was settled, not a fresh one', () => {
+  const before = process.env[SEED_VARIABLE];
+  try {
+    process.env[SEED_VARIABLE] = 'settled-for-this-run';
+    expect(requireSeed()).toBe('settled-for-this-run');
+
+    // Twice, because a requireSeed that generated on each call would satisfy a
+    // single read against whatever it had just written. Measured: replacing the
+    // return with a freshly generated seed left every test in this file green.
+    expect(requireSeed()).toBe(requireSeed());
+  } finally {
+    if (before === undefined) delete process.env[SEED_VARIABLE];
+    else process.env[SEED_VARIABLE] = before;
+  }
+});
+
+test('a Journey refuses a deadline that is a count rather than a duration', () => {
+  // One millisecond passed the old check, which was the same whole-number test
+  // the two counts use. The Journey's deadline then expires before the first
+  // application has launched: every Route unfinished and nothing wrong.
+  expect(() => defineJourney({ routes: 5, hopsPerRoute: 10, deadlineMs: 1 })).toThrow(
+    /duration in milliseconds/
+  );
+  expect(() =>
+    defineJourney({ routes: 5, hopsPerRoute: 10, deadlineMs: SHORTEST_DEADLINE_MS })
+  ).not.toThrow();
 });
 
 test('a missing seed is an error, never an invented one', () => {

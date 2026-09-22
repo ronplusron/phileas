@@ -16,13 +16,34 @@ import { test, expect } from '@playwright/test';
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const srcDir = path.join(here, '..', 'src');
+const repoRoot = path.join(here, '..');
 
-function typeScriptFilesUnder(dir: string): string[] {
+/**
+ * Everywhere an unseeded draw would destroy replay, and why each one counts.
+ *
+ * `src/` is the engine. `testbed/buggy/phileas/` is the consumer layout, where
+ * an adapter and a Fix live: a Fix drawing unseeded breaks replay exactly as a
+ * draw in the engine would, and it was outside this scan until review. The
+ * application itself is here because assumption 12 of the requirements is that
+ * it behaves the same way twice, and R8 rests on it -- an application that
+ * draws unseeded makes every recorded seed fail to reproduce, and the engine
+ * takes the blame for it.
+ */
+const ROOTS = ['src', path.join('testbed', 'buggy')];
+
+const SKIP = new Set(['node_modules', 'dist', 'test-results']);
+
+// Not only .ts. The application is written in .cjs and .js, which the earlier
+// version of this scan could not see at all, and those are the files where an
+// unseeded draw does the most damage.
+const SOURCE = /\.(ts|cjs|mjs|js)$/;
+
+function sourceFilesUnder(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    if (SKIP.has(entry.name)) return [];
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) return typeScriptFilesUnder(full);
-    return entry.isFile() && entry.name.endsWith('.ts') ? [full] : [];
+    if (entry.isDirectory()) return sourceFilesUnder(full);
+    return entry.isFile() && SOURCE.test(entry.name) ? [full] : [];
   });
 }
 
@@ -33,8 +54,8 @@ function typeScriptFilesUnder(dir: string): string[] {
  */
 const UNSEEDED = /Math\s*\.\s*random/;
 
-test('no file in src/ calls Math.random', () => {
-  const files = typeScriptFilesUnder(srcDir);
+test('nothing the engine depends on calls Math.random', () => {
+  const files = ROOTS.flatMap((root) => sourceFilesUnder(path.join(repoRoot, root)));
 
   // Two positive controls, because a clean zero is worthless until the search
   // is shown to find things, and this search has two ways to report one
@@ -48,7 +69,16 @@ test('no file in src/ calls Math.random', () => {
   expect(files.filter((file) => fs.readFileSync(file, 'utf8').includes('export')).length)
     .toBeGreaterThan(5);
 
+  // ...and that the walk reaches each root, not merely the first one. A scan
+  // that silently covered src/ alone would report the same clean zero.
+  for (const root of ROOTS) {
+    expect(
+      files.filter((file) => file.startsWith(path.join(repoRoot, root))).length,
+      `the walk reached nothing under ${root}`
+    ).toBeGreaterThan(0);
+  }
+
   const offenders = files.filter((file) => UNSEEDED.test(fs.readFileSync(file, 'utf8')));
 
-  expect(offenders.map((file) => path.relative(srcDir, file))).toEqual([]);
+  expect(offenders.map((file) => path.relative(repoRoot, file))).toEqual([]);
 });

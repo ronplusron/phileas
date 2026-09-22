@@ -40,6 +40,15 @@ export interface JourneyTerms {
   deadlineMs: number;
 }
 
+/**
+ * The shortest deadline a Journey may be given.
+ *
+ * A second is not a useful Journey and is not meant to be. It is low enough to
+ * accept anything deliberate and high enough to reject a duration that was
+ * meant to be a count.
+ */
+export const SHORTEST_DEADLINE_MS = 1_000;
+
 /** A Journey whose terms have been checked. */
 export type Journey = Readonly<JourneyTerms>;
 
@@ -55,7 +64,19 @@ export type Journey = Readonly<JourneyTerms>;
 export function defineJourney(terms: JourneyTerms): Journey {
   requireWholeNumberAtLeastOne('routes', terms.routes);
   requireWholeNumberAtLeastOne('hopsPerRoute', terms.hopsPerRoute);
-  requireWholeNumberAtLeastOne('deadlineMs', terms.deadlineMs);
+
+  // A duration, not a count. The same check as the two above would accept one
+  // millisecond, which produces a Journey whose deadline passes before the
+  // first application has launched: every Route unfinished, nothing wrong, and
+  // a report that reads like a catastrophe. R27 asks a Journey that could not
+  // do what was asked of it to say so, and the cheaper answer is refusing terms
+  // that cannot work.
+  if (!Number.isInteger(terms.deadlineMs) || terms.deadlineMs < SHORTEST_DEADLINE_MS) {
+    throw new RangeError(
+      `deadlineMs must be a whole number of at least ${SHORTEST_DEADLINE_MS}, ` +
+        `got ${terms.deadlineMs}. It is a duration in milliseconds, not a count.`
+    );
+  }
 
   if (terms.seed !== undefined && terms.seed.length === 0) {
     throw new RangeError('seed was given as an empty string; leave it out instead');

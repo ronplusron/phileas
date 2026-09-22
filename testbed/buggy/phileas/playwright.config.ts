@@ -2,6 +2,16 @@ import { defineConfig } from '@playwright/test';
 import { exploration } from './journeys/exploration';
 
 /**
+ * What one Hop is allowed, and what a Route is allowed on top of its Hops.
+ *
+ * Both are guesses until phase 4 measures a Hop, and they are written here as
+ * named numbers so that the measurement replaces something visible rather than
+ * being buried in an expression.
+ */
+const MILLISECONDS_PER_HOP = 3_000;
+const ROUTE_OVERHEAD_MS = 30_000;
+
+/**
  * The Journey's own configuration, in the consuming repository rather than the
  * engine's.
  *
@@ -22,6 +32,17 @@ export default defineConfig({
 
   // R4: the Journey's deadline. Work already done is reported when it passes.
   globalTimeout: exploration.deadlineMs,
+
+  /**
+   * The Route timeout, derived from the budget rather than left at the default.
+   *
+   * Playwright's default is thirty seconds. A Route of twenty Hops against a
+   * slow application exceeds that and is reported as a timeout instead of as
+   * whatever it had found, which docs/PLAN.md carries as a hazard and says to
+   * set from the budget and the settle wait. It was left at the default here
+   * until review caught it.
+   */
+  timeout: exploration.hopsPerRoute * MILLISECONDS_PER_HOP + ROUTE_OVERHEAD_MS,
 
   // One application at a time, for the reason the root config gives.
   fullyParallel: false,

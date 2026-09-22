@@ -1,6 +1,9 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { deriveRouteStreams, requireSeed, routeIndices } from '@drugstoresushi/phileas';
 import { exploration } from './journeys/exploration';
+import { seedRecordPath } from './global-setup';
 
 /**
  * The for-loop that registers one test per Route.
@@ -33,14 +36,26 @@ for (const routeIndex of routeIndices(exploration)) {
       { type: 'route-seed', description: streams.routeSeed }
     );
 
-    // The Route's own budget, stated where phase 4 will spend it.
-    expect(exploration.hopsPerRoute).toBeGreaterThan(0);
+    // The assertion this file exists to make: the seed this Route is using is
+    // the one global setup settled for the run.
+    //
+    // Checked against the file rather than against the environment variable,
+    // because requireSeed reads that variable and the two would agree however
+    // wrong they were. The file was written once, before any worker started.
+    //
+    // Two earlier assertions stood here and neither could fail: one restated a
+    // condition defineJourney enforces at construction, and the other compared
+    // a pure function to itself. Measured rather than argued -- replacing
+    // requireSeed's return with a freshly generated seed left every Route green
+    // and every Route reporting a seed that retraced nothing.
+    const here = path.dirname(new URL(import.meta.url).pathname);
+    expect(journeySeed).toBe(fs.readFileSync(seedRecordPath(here), 'utf8'));
 
-    // Deriving twice from the same terms gives the same streams. Weak on its
-    // own, and deliberately so: the real assertions about independence and the
-    // stream split are unit tests in the engine's own suite, where they do not
-    // need an application. What this adds is that the seed actually reached
-    // this worker, which is the failure the unit tests cannot see.
-    expect(deriveRouteStreams(journeySeed, routeIndex).routeSeed).toBe(streams.routeSeed);
+    // And this Route's seed is its own. A derivation that ignored the index
+    // would give every Route the same stream while every Route still passed.
+    const others = routeIndices(exploration)
+      .filter((index) => index !== routeIndex)
+      .map((index) => deriveRouteStreams(journeySeed, index).routeSeed);
+    expect(others).not.toContain(streams.routeSeed);
   });
 }

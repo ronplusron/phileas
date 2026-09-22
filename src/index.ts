@@ -29,6 +29,7 @@ export { stubOpenExternal, openedExternally, clearOpenExternal } from './externa
 export {
   defineJourney,
   routeIndices,
+  SHORTEST_DEADLINE_MS,
   resolveSeed,
   requireSeed,
   generateSeed,
