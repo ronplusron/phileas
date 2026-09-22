@@ -124,9 +124,9 @@ question.
 ### The Electron binary, twice
 
 `npm install` does not run Electron's postinstall in this environment, so the
-types arrive and the binary does not, in both the engine and the example.
-`node node_modules/electron/install.js` fetches it. Observed twice, and
-recorded because the failure looks like a broken checkout and is not.
+types arrive and the binary does not, in both the engine and `buggy`. `node
+node_modules/electron/install.js` fetches it. Observed twice, and recorded
+because the failure looks like a broken checkout and is not.
 
 ## 2026-09-22: phase 1, and the first engine code in this repository
 

@@ -295,9 +295,11 @@ nothing to launch.
 
 ### Phase 2: the testbed application, unbroken
 
-A small Electron application under `testbed/`, packaged into the layout the
-lifted `bundle.ts` expects by default (or an adapter setting `bundleDir`), with
-an adapter in the consumer layout beside it. No planted defects yet.
+A small Electron application under `testbed/`, packaged anywhere its adapter
+points `bundleDir` at, since phase 1 removed the default layout and made that
+field required. An adapter sits beside it in the consumer layout; `journeys/`
+and `journey.spec.ts` join it in phase 3, when there is a Journey to register.
+No planted defects yet.
 
 Its jobs at this point: give the launch layer something to launch, give the
 engine's own tests something to run against, and be the first consumer of the
@@ -351,9 +353,9 @@ Use Node's own hashing for the derivation, which is stable by definition.
 `Math.random` never appears in the engine; a mechanical check for it is cheap
 and belongs in this phase.
 
-`journey.spec.ts` in the example is the for-loop: one registered test per
-Route, from the route count. It reads the Journey seed inside each test body,
-never at the file's top level. The seed hazard below says why.
+`journey.spec.ts` in `buggy` is the for-loop: one registered test per Route,
+from the route count. It reads the Journey seed inside each test body, never
+at the file's top level. The seed hazard below says why.
 
 Boundary: bookkeeping, with unit tests worth keeping: the same seed gives the
 same sequence; route k's stream is unaffected by whether the routes before it
@@ -446,11 +448,11 @@ fills it.
 are produced at test end and are therefore absent in exactly the endings R9
 lists.
 
-Boundary: bookkeeping, but not unobservable. A route over the example
-application leaves a readable journal on disk, and the journals of two runs
-from the same seed can be compared file to file. That is the first evidence
-that seeding and traveling work together, and it is what R13 is later built on.
-What is still missing is any notion of something being wrong.
+Boundary: bookkeeping, but not unobservable. A route over `buggy` leaves a
+readable journal on disk, and the journals of two runs from the same seed can
+be compared file to file. That is the first evidence that seeding and
+traveling work together, and it is what R13 is later built on. What is still
+missing is any notion of something being wrong.
 
 ### Phase 5: the universal tier, and the Route as a test
 
@@ -468,9 +470,10 @@ field and nothing else about it changes.
   first of the three real bugs in `HISTORY.md` is an uncaught exception in
   the main process raised while quitting. So this phase decides what in that
   stream counts as an uncaught error, and the check is not finished while it
-  watches the renderer alone. The interface's `failOnPageError` names the
-  renderer in its own field name, which is part of why the gap is easy to
-  miss; R19's narrowing replaces that flag anyway.
+  watches the renderer alone. The lifted `failOnPageError` named the renderer
+  in its own field name, which is part of why the gap was easy to miss; phase
+  1 replaced it with R19's narrowing, which is neutral about which process
+  raised the error.
 - Still responding: a bounded round trip to the renderer and one to the main
   process. A hang is a failure of the route after a stated wait, never a run
   that hangs.
@@ -545,8 +548,8 @@ Stranded needs a third outcome, and Playwright has pass, fail and skip. The
 encoding is undecided and is decided in this phase. The constraint is R5 and
 R6: stranded never reads as a pass and is never counted among the failures.
 
-Plant the first defects in the example, one per check: a control that throws,
-a control that logs an error, a control that blanks the window, a control that
+Plant the first defects in `buggy`, one per check: a control that throws, a
+control that logs an error, a control that blanks the window, a control that
 leaves the application, a control with no name, a control that fails silently
 on screen and writes the error only to the log, and a dialog with no way out,
 which strands. Add the tests asserting a Journey finds each.
@@ -558,16 +561,16 @@ the planted defects. Each earlier part is verifiable on its own even though the
 boundary is not reached until the last, and a slip is then a slip with
 something working rather than nothing.
 
-Boundary: **real.** A Journey with a small budget travels through the example
-application and reports, which is the last step of the wiring flow in
+Boundary: **real.** A Journey with a small budget travels through `buggy` and
+reports, which is the last step of the wiring flow in
 `PRODUCT_REQUIREMENTS.md`. R1 through R11, R15 through R17, and R22 through
 R24 can each be held up and answered. Two of those are answered by Playwright
 rather than by anything built here: R6 and R7 hold at this boundary only
 because each Route is a test carrying its own outcome and its seed as an
 annotation, which is enough to tell stranded from failed and to name the seed
-that reproduces a failure. The summary that states them deliberately, across
-a whole Journey, is phase 7's, and phase 7 is where they stop depending on
-how a test runner happens to print things. A reader who stops here has an
+that reproduces a failure. The summary that states them deliberately, across a
+whole Journey, is phase 7's, and phase 7 is where they stop depending on how a
+test runner happens to print things. A reader who stops here has an
 exploratory tester that finds the R17 class and strands on traps: the product
 with its shallowest tier only.
 
@@ -654,7 +657,7 @@ counts.
 ### Phase 9: wiring a sibling repository
 
 A `file:` dependency, an adapter, journeys, a spec and a project entry in that
-repository's Playwright configuration, following the example's consumer layout
+repository's Playwright configuration, following `buggy`'s consumer layout
 exactly. This phase repeats a shape phase 2 already proved.
 
 The repository is the confirmed consumer that already has an interface to
@@ -733,9 +736,8 @@ decided.
 
 **What "blank" means.** A window with no visible text and no drawn boxes is
 one definition, and a legitimately empty state trips it. Define it narrowly,
-tune it against the example and then against the first real consumer rather
-than against imagined cases, and remember this is one of the checks R19 exists
-for.
+tune it against `buggy` and then against the first real consumer rather than
+against imagined cases, and remember this is one of the checks R19 exists for.
 
 **The Route timeout.** Playwright's default per-test timeout is thirty
 seconds. A Route with a hop budget of forty against a slow application will
@@ -753,10 +755,12 @@ stopped reproducing rather than letting it pass.
 not become. The check is simple: `journey.spec.ts` derives seeds and registers
 tests, and anything else in it is the planner returning.
 
-**The lifted bundle layer has one platform's shape.** Its default layout is a
-macOS application bundle for one architecture, and its executable path is
-inside `Contents/MacOS`. A Linux runner needs a different layout through
-`bundleDir` and a display server, and running unattended there is unverified.
+**The bundle layer has one platform's shape.** Phase 1 removed the default
+layout, so `bundleDir` now says where the bundle is, but what is inside it is
+still assumed to be a macOS application: the executable is read from
+`Contents/MacOS` and the archive from `Contents/Resources/app.asar`. A Linux
+or Windows runner needs different structure entirely, plus a display server,
+and running unattended there is unverified.
 Windows are kept off the screen by replacing the window's `show` method in the
 main process, which the lifted comment calls a real intrusion into the
 application under test; it is measured there that Electron accepts a headless

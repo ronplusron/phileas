@@ -55,9 +55,9 @@ per-Route seed derivation, all pure functions with unit tests.
 
 **Two things phase 4 must not rediscover**, both measured in phase 2 and
 carried in `docs/PLAN.md`. A hop must not wait for navigation to finish, or a
-single outbound link costs a Route its whole budget. And the example's
-outbound-link test is the positive control for the `external.ts` hazard: keep
-it, because without it an empty recorder and a stub that never took read
+single outbound link costs a Route its whole budget. And `buggy`'s outbound-
+link test is the positive control for the `external.ts` hazard: keep it,
+because without it an empty recorder and a stub that never took read
 identically.
 
 **If `npm test` cannot find Electron:** `npm install` does not run Electron's
@@ -110,9 +110,9 @@ npm test
 ```
 
 `npm run typecheck` passes over the launch layer, and `npm test` runs six
-tests against `testbed/buggy/`. **Neither is evidence that the engine
-finds bugs**, because nothing is planted in the example yet and nothing
-travels through it. They show the launch layer behaves as written.
+tests against `testbed/buggy/`. **Neither is evidence that the engine finds
+bugs**, because nothing is planted in `buggy` yet and nothing travels through
+it. They show the launch layer behaves as written.
 
 The example builds itself:
 
