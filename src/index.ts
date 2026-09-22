@@ -1,10 +1,14 @@
-/**
- * The package surface.
- *
- * Empty on purpose: phase 0 exists so that `npm run typecheck` has a file to
- * read and a toolchain to prove, not so that anything is exported yet. The
- * planned layout of this directory, and what arrives in which phase, is in
- * docs/PLAN.md.
- */
-
-export {};
+export type { AppUnderTest } from './app-under-test';
+export { resolveBundle, assertBundleFresh, type ResolvedBundle } from './bundle';
+export {
+  launchApp,
+  closeApp,
+  resetApp,
+  makeUserDataDir,
+  hideWindows,
+  showWindows,
+  type LaunchedApp,
+} from './launch';
+export { createTest, expect, type KitFixtures, type KitWorkerFixtures } from './fixtures';
+export { clickMenuItem, menuLabels } from './menu';
+export { stubOpenExternal, openedExternally, clearOpenExternal } from './external';

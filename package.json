@@ -18,10 +18,17 @@
   "engines": {
     "node": ">=20"
   },
+  "dependencies": {
+    "@electron/asar": "^4.3.0"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.63.0",
+    "electron": ">=43"
+  },
   "devDependencies": {
-    "@electron/asar": "^4.3.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.2",
+    "electron": "^44.4.3",
     "typescript": "^7.0.2"
   },
   "author": "Drugstore Sushi"
