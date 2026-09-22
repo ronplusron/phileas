@@ -1,0 +1,14 @@
+[
+  { "name": "Carpet bag", "category": "luggage", "grams": 2200 },
+  { "name": "Gladstone bag", "category": "luggage", "grams": 3100 },
+  { "name": "Hat box", "category": "luggage", "grams": 900 },
+  { "name": "Pocket watch", "category": "instruments", "grams": 120 },
+  { "name": "Sextant", "category": "instruments", "grams": 1450 },
+  { "name": "Barometer", "category": "instruments", "grams": 640 },
+  { "name": "Compass", "category": "instruments", "grams": 85 },
+  { "name": "Woollen coat", "category": "clothing", "grams": 1800 },
+  { "name": "Linen shirt", "category": "clothing", "grams": 220 },
+  { "name": "Riding boots", "category": "clothing", "grams": 1600 },
+  { "name": "Silk scarf", "category": "clothing", "grams": 60 },
+  { "name": "Travelling rug", "category": "clothing", "grams": 2400 }
+]

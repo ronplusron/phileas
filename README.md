@@ -55,11 +55,12 @@ each one can and cannot catch.
 
 ## Status
 
-**A launch layer, and nothing that travels.** `src/` can launch a packaged
-Electron build, refuse a stale one, keep its windows off the screen, reach its
-native menu and stub its outbound links, all through the `AppUnderTest`
-interface an application implements. It compiles, and it has never been run
-against an application from inside this repository.
+**A launch layer that runs, and nothing that travels.** `src/` can launch a
+packaged Electron build, refuse a stale one, keep its windows off the screen,
+reach its native menu and stub its outbound links, all through the
+`AppUnderTest` interface an application implements. `testbed/buggy/`
+is a packaged application built to be traveled through, and six tests run
+against it.
 
 Everything that makes this an explorer is still unwritten: traversal, seeding,
 the journal, the checks. `docs/PLAN.md` names the files and the phase each one
@@ -73,11 +74,18 @@ npm run typecheck
 npm test
 ```
 
-`npm run typecheck` passes. `npm test` reports that it found no tests, which
-is the honest state rather than a broken checkout: this engine's own tests
-arrive with the first thing worth testing, in the phase that adds seeding.
-When they do, `npm test` runs Playwright against them, not against a
-consuming application.
+`npm test` needs the testbed application packaged first:
+
+```
+cd testbed/buggy
+npm install
+npm run package
+```
+
+Then `npm test` from the root runs Playwright against that bundle. The tests
+show the launch layer behaves as written. **They are not evidence that the
+engine finds bugs**, and cannot be until `testbed/` holds deliberately
+planted defects and a Journey is shown finding each one.
 
 ## Where things are
 
@@ -93,4 +101,4 @@ consuming application.
 | `src/` | The engine. Its planned file layout is in `docs/PLAN.md`. |
 | `src/oracles/` | The check runner and the implicit tier. |
 | `tests/` | This engine's own tests. |
-| `examples/` | A reference adapter, and an app with planted bugs to point the bug-finder at. |
+| `testbed/` | Applications built to be tested, each broken in one chosen way, with the adapter each needs. |

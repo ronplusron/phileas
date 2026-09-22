@@ -5,5 +5,8 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 /dist/
+# The example application's packaged build. Rebuilt by its own `package`
+# script, and the staleness guard is what notices when it has gone out of date.
+/testbed/*/dist/
 *.log
 .DS_Store

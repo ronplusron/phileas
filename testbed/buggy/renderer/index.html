@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Buggy</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!--
+      Every control carries an accessible name, because survey() rejects an
+      element without one and reports it as a finding. That is the rule this
+      application is here to satisfy rather than to test.
+    -->
+    <header>
+      <h1>Buggy</h1>
+      <nav aria-label="Views">
+        <button id="view-inventory" aria-pressed="true">Inventory</button>
+        <button id="view-summary" aria-pressed="false">Summary</button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="inventory" aria-label="Inventory">
+        <div class="controls">
+          <label for="search">Search items</label>
+          <input id="search" type="search" placeholder="Search items" />
+          <button id="clear">Clear search</button>
+        </div>
+
+        <h2 id="count">0 items</h2>
+        <ul id="items" aria-label="Items"></ul>
+      </section>
+
+      <section id="summary" aria-label="Summary" hidden>
+        <h2>Total weight</h2>
+        <p id="total">0 g</p>
+        <p>
+          <a id="outbound" href="https://example.com/buggy">Read about the journey</a>
+        </p>
+      </section>
+    </main>
+
+    <p id="status" role="status">ready</p>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

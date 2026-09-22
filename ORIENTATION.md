@@ -24,21 +24,21 @@ summarized here -- read them.
 
 ## 2. Current state
 
-**A launch layer, and nothing that travels.** `src/` holds the seven files
-lifted from `trickster-tales` and hardened: launching a packaged build,
+**A launch layer that runs, and nothing that travels.** `src/` holds the seven
+files lifted from `trickster-tales` and hardened: launching a packaged build,
 refusing a stale one, keeping windows off the screen, reaching the native menu,
 stubbing outbound links, and the `AppUnderTest` interface the whole thing talks
-through. `src/oracles/`, `tests/` and `examples/` still contain nothing but
-`.gitkeep`.
+through. `src/oracles/` still contains nothing but `.gitkeep`.
 
 **What is genuinely absent is everything that makes this an explorer.** No
-traversal, no seeding, no journal, no checks. `npm run typecheck` passes over
-what is there, which proves it compiles and nothing else: none of it has been
-run against an application from inside this repository, because there is
-nothing here to launch until phase 2 builds one.
+traversal, no seeding, no journal, no checks.
 
-**Phases 0 and 1 are done.** `npm test` reports no tests found, correctly,
-since the first of this engine's own tests arrives in phase 3.
+**Phases 0, 1 and 2 are done, and the first real boundary is passed.**
+`testbed/buggy/` is a packaged Electron application built to be
+traveled through, and `npm test` runs six tests against it: it launches the
+packaged bundle, refuses a stale one, reports a bad boot in the application's
+own words, keeps every window off the screen, and proves the outbound-link stub
+took effect rather than assuming it. They pass in under two seconds.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -50,16 +50,22 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: ten phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 2 is the next thing to do, and it is the first real boundary.** It
-builds a small Electron application under `examples/`, packaged, with an
-adapter beside it in the consumer layout. That is the first time anything in
-this repository runs end to end, and it is what turns the paragraph above from
-"it compiles" into "it launches a build, refuses a stale one, and stays off the
-screen".
+**Phase 3 is the next thing to do**, and it is the one phase that needs no
+Electron at all: the terms of a Journey, the seedable generator, and the
+per-Route seed derivation, all pure functions with unit tests.
 
-**One thing it will hit in its first minutes:** `electron` installed its types
-but not its binary, which phase 1 did not need and phase 2 does.
-`docs/HISTORY.md` has what was observed.
+**Two things phase 4 must not rediscover**, both measured in phase 2 and
+carried in `docs/PLAN.md`. A hop must not wait for navigation to finish, or a
+single outbound link costs a Route its whole budget. And the example's
+outbound-link test is the positive control for the `external.ts` hazard: keep
+it, because without it an empty recorder and a stub that never took read
+identically.
+
+**If `npm test` cannot find Electron:** `npm install` does not run Electron's
+postinstall in this environment, so the types arrive and the binary does not.
+`node node_modules/electron/install.js` fetches it, in the engine and in
+`testbed/buggy/` separately. It looks like a broken checkout and is
+not.
 
 `docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
 opinion.
@@ -104,10 +110,23 @@ npm run typecheck
 npm test
 ```
 
-`npm run typecheck` passes over the launch layer. **That is not evidence about
-the product**, only that it compiles: none of it has been run against an
-application from inside this repository. `npm test` reports no tests found,
-which is correct rather than broken: there is nothing to test until phase 3.
+`npm run typecheck` passes over the launch layer, and `npm test` runs six
+tests against `testbed/buggy/`. **Neither is evidence that the engine
+finds bugs**, because nothing is planted in the example yet and nothing
+travels through it. They show the launch layer behaves as written.
+
+The example builds itself:
+
+```
+cd testbed/buggy
+npm install
+npm run package
+```
+
+`npm test` from the repository root then runs against the bundle that
+produces. Edit the application without repackaging and the staleness guard
+refuses to run, naming the file that differs, which is the behavior rather
+than a fault.
 
 `@electron/asar` is a dependency; `@playwright/test` and `electron` are peer
 dependencies with dev dependencies alongside. The peers are deliberate: a
@@ -130,17 +149,20 @@ nothing to do.
 
 ## 5. Verification, and its limits
 
-**Nothing has been verified by running it.** The launch layer compiles and its
-origin was exercised inside another project, which says nothing about whether
-it works here: it has never launched an application from this repository,
-because there is nothing here to launch until phase 2. Treat every claim about
-it as inherited rather than checked.
+**The launch layer is verified; the product is not.** Six tests launch a real
+packaged application, refuse a stale bundle, and prove the outbound-link stub
+took effect. That is genuinely checked rather than inherited.
+
+**It says nothing about whether the engine finds bugs.** Nothing travels
+through the application and nothing is planted in it, so a green run here is
+consistent with an engine that checks nothing at all. That stays true until
+phase 8 points one Journey at planted defects and asserts each is found.
 
 **The limit worth knowing before writing any of it:** a bug-finder that passes
 its own tests has demonstrated nothing about whether it finds bugs. Its own
 suite can only show that its parts behave as written. The real evidence is an
 application with deliberately planted bugs, pointed at the engine, asserting
-that each one is found -- which is what `examples/` is for and why it is not
+that each one is found -- which is what `testbed/` is for and why it is not
 an optional extra.
 
 A second limit is inherent rather than a gap to close. Metamorphic checks buy

@@ -56,7 +56,7 @@ answer to it is an independent test oracle rather than a fix.
 
 **A green Journey against a working application is not evidence of a defect
 being absent.** It is consistent with an engine that checks nothing at all.
-Until `examples/` holds an application with planted bugs and a Journey is
+Until `testbed/` holds an application with planted bugs and a Journey is
 demonstrably finding them, the absence of entries in this file carries no
 weight. An absence check needs a positive control, and this file has none
 until that example exists.

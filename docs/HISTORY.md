@@ -25,6 +25,109 @@ re-deriving them would cost it again.
 
 ---
 
+## 2026-09-22: phase 2, and the first thing in this repository that runs
+
+`testbed/buggy/` is a packaged Electron application with a list, a
+count above it, a search box with a clear, two views, a native menu holding
+Quit, an outbound link, and a total derived from a data file it ships. No
+defects are planted yet. Six tests under `tests/` hold up the phase 2 boundary
+and all pass in 1.8 seconds: it launches the packaged bundle, the staleness
+guard runs and says so, it refuses a stale bundle naming the file that
+differs, a broken readiness hook reports the application's own message rather
+than timing out, no window reaches the screen, and the outbound-link stub
+demonstrably took effect.
+
+**The stale-bundle test carries its own positive control.** It edits a
+packaged input, asserts the guard throws naming that file, restores it, and
+asserts the guard passes again. Without the second half, a guard that always
+threw would look identical to one that works.
+
+**The guard then caught a real one, unprompted.** A pass renaming `examples`
+to `testbed` changed a comment in `main.cjs`, and all six tests failed at once
+naming that file. Nothing about the edit was meant to touch the application,
+and the working tree and the bundle had genuinely diverged. That is better
+evidence than the planted case, because nobody arranged it.
+
+### The directory is `testbed/`, not `examples/`
+
+The scaffold called it `examples/` from the start, and that was wrong in a way
+nobody had noticed: `examples/` tells a reader the contents are optional
+sample code, while `OUTSTANDING.md` says this application "is not an optional
+extra and should not be treated as a late nicety" and is the only thing that
+will ever show the engine finds bugs. The name pointed away from the most
+important verification asset in the repository.
+
+What settled it was working out what the directory eventually holds. Not one
+application but several, each deliberately awkward in a different way: a build
+with the Electron fuses disabled, a virtualized list that renders twelve of
+forty rows, a canvas-backed surface with no roles to discover, a dismissed
+widget that still takes keystrokes, a native dialog that blocks the main
+process. None of those is an example of anything. They are apparatus.
+
+`testbed` was taken over `testapps` for two reasons. Each entry holds more
+than an application -- a `phileas/` directory of adapter, journeys and spec,
+which is the consumer layout a real repository gets -- and `testapps` names
+only half of that. And `app` is the word `../CLAUDE.md` already records as
+having caused a real misreading against "the application".
+
+Rejected along the way: `fixtures/`, which collides with `src/fixtures.ts`;
+`controls/`, which collides with the UI controls these documents discuss
+constantly; `checks/`, which collides with the invariants; and `coverage/`,
+which names a stated non-goal.
+
+### The application is `buggy`
+
+Named for the one thing that distinguishes it from every sibling that will
+join it. It is structurally ordinary: plain DOM, one window, every control
+carrying an accessible name, a list that renders all of its rows. The ten
+planted defects go into it, so the claim its tests make is that the engine
+FINDS bugs.
+
+The siblings coming later are the opposite shape. Most are correct
+applications built awkwardly on purpose -- a virtualized list, a canvas
+surface, disabled fuses, a splash window -- and the claim their tests make is
+that the engine COPES without producing a wrong answer. A failure there means
+the engine is wrong; a failure here means the engine missed something.
+
+`Passepartout` was taken first and then dropped within the hour. The argument
+for it was real: the fixture never ships, so the rule in `../CLAUDE.md` that
+the theme is fully spent protects a legibility that was not at stake. What
+killed it was the sibling list. Nine descriptive names and one character
+reference reads as an accident, and the name said nothing about why this
+application is the one holding the defects.
+
+Also considered and rejected: `specimen` and `subjects`, which name what the
+thing is rather than what was done to it; `defective`, which implies an
+application that does not work, when this one runs correctly and merely
+contains faults; and `seeded`, which collides with the seeding machinery in
+every reproducibility requirement the product has.
+
+### Two findings that outlast the phase
+
+**A hop must not wait for navigation.** Clicking the outbound link with an
+ordinary Playwright click hangs for the full thirty seconds. The link
+schedules a navigation, the main process cancels it in `will-navigate`, and
+the click waits forever for something already prevented. `PLAN.md` phase 4
+carries it: one hop would otherwise consume a Route's whole time budget, and
+the Route would report a timeout instead of what it found. It fires only on an
+outbound link the exclusion list missed, which is the case nobody tests for.
+
+**The `file:` dependency works, and the test is weaker than it looks.** The
+example depends on the engine as `file:../..` and imports
+`@drugstoresushi/phileas` by package name; npm symlinks it, and Playwright
+resolves the TypeScript source through the link. That is the shape phase 9
+gives a sibling repository. But the symlink here lands back inside this same
+project, so it says nothing about whether Playwright transpiles a package
+whose source sits outside the consumer's own tree, which is the real phase 9
+question.
+
+### The Electron binary, twice
+
+`npm install` does not run Electron's postinstall in this environment, so the
+types arrive and the binary does not, in both the engine and the example.
+`node node_modules/electron/install.js` fetches it. Observed twice, and
+recorded because the failure looks like a broken checkout and is not.
+
 ## 2026-09-22: phase 1, and the first engine code in this repository
 
 The seven files were lifted from `trickster-tales` `e2e/kit/` byte-identical,

@@ -24,9 +24,9 @@ only the two things most likely to be filed there by mistake.
 
 Everything in `PLAN.md` from phase 1 on. None of it started.
 
-### 1.2 An example application with planted bugs
+### 1.2 A testbed application with planted bugs
 
-`examples/` wants an application with deliberately planted faults and tests
+`testbed/` wants an application with deliberately planted faults and tests
 asserting that a Journey finds each one.
 
 **This is not an optional extra and should not be treated as a late nicety.**

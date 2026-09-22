@@ -391,7 +391,7 @@ Stated as what must be true for someone using it.
 
 ## 10. Success measures
 
-- Every deliberately planted defect in the bundled example application is
+- Every deliberately planted defect in the bundled testbed application is
   found by a journey. This is the measure that matters: a tool that finds bugs
   cannot be validated by its own tests passing.
 - At least one real defect is found in a real application that the scripted

@@ -36,14 +36,14 @@ What is known and decided:
   journal and every invariant tier are genuinely unwritten.
 - Dependencies come first, since `npm run typecheck` and `npm test` are inert
   without them and nothing later can be verified at all.
-- `examples/`, an application with planted bugs, is the only checkpoint that
+- `testbed/`, an application with planted bugs, is the only checkpoint that
   shows the assembled engine does its job. `OUTSTANDING.md` says why it is not
   a late nicety.
 
 The scaffold that exists: `package.json` naming the package
 `@drugstoresushi/phileas`, with `main` and `exports` pointing at
 `src/index.ts`; a strict `tsconfig.json` that includes `src/`, `tests/` and
-`examples/`; and empty directories.
+`testbed/`; and empty directories.
 
 ### The planned layout of `src/`
 
@@ -72,14 +72,20 @@ src/
     specified.ts       the shape of an independently computed answer (R21)
   report/              the Journey summary, with stranded kept apart from failed
 tests/                 the engine's own tests
-examples/<app>/        a small Electron application, packaged, with planted defects
-examples/<app>/phileas/  adapter/, journeys/, journey.spec.ts: the consumer layout
+testbed/buggy/   a small Electron application, packaged, with planted defects
+testbed/buggy/phileas/  adapter/, journeys/, journey.spec.ts: the consumer layout
 ```
 
 Each file is named after its principal export, which is why the set mixes
 verbs and nouns: `launch.ts` exports `launch()`, `survey.ts` exports
 `survey()`, and `route.ts` exports `runRoute()` alongside the Route's own
-shape. The example application has no name yet.
+shape.
+
+The testbed applications are named for the one thing each is awkward about,
+so a directory listing says what a reader is looking at. `buggy` is the
+structurally ordinary one that holds the planted defects; the siblings that
+join it are named for their pathology, and `HISTORY.md` has the shape of the
+set and why the two kinds of application make different claims.
 
 ## Build order
 
@@ -261,7 +267,7 @@ layer states which path it took, and the report names what was consequently
 not checked, through the same mechanism R19 uses for a narrowed check rather
 than a second one beside it, which is C1b. Decide here whether the fallback
 lands in this phase or waits for the first consumer that needs it; if it
-lands here, the example application in phase 2 needs a second variant with
+lands here, the testbed application in phase 2 needs a second variant with
 the fuses disabled, so the path can be verified in this repository rather
 than against somebody else's build.
 
@@ -286,9 +292,9 @@ different answer.
 Boundary: bookkeeping. The typecheck passes; nothing can run, because there is
 nothing to launch.
 
-### Phase 2: an example application, unbroken
+### Phase 2: the testbed application, unbroken
 
-A small Electron application under `examples/`, packaged into the layout the
+A small Electron application under `testbed/`, packaged into the layout the
 lifted `bundle.ts` expects by default (or an adapter setting `bundleDir`), with
 an adapter in the consumer layout beside it. No planted defects yet.
 
@@ -315,11 +321,13 @@ written inside, which is the whole of the hazard below. An absence check needs
 a positive control, and until this test exists an empty recorder is
 indistinguishable from a stub that never took.
 
-The example needs `electron` and a packager as its own dev dependencies. Which
-packager is not decided. The constraints on it: the output must match the
-lifted default layout or the adapter must point at it, and it must produce an
-`app.asar`, because the lifted guard reads the archive and states that
-unpacked builds are not supported.
+The example has `electron` and `@electron/packager` as its own dev
+dependencies. The packager was chosen 2026-09-22 for being the smallest thing
+that produces a real bundle: one command, no configuration file, and an
+`app.asar` by default, which the guard requires because it reads the archive
+and does not understand unpacked builds. Layout no longer constrains the
+choice, since phase 1 made `bundleDir` required and the adapter simply points
+at whatever comes out.
 
 Boundary: **real.** This is the first time anything runs end to end. It
 launches a packaged build (C1), refuses a stale one (R23), waits for ready and
@@ -373,6 +381,21 @@ unmeasured is the opposite failure, which is an application offering more
 candidates than a hop budget can visit.
 
 A hop chooses a candidate, acts on it, and waits for the page to settle.
+
+**A hop must not wait for navigation to finish, and this was measured rather
+than reasoned about.** Clicking the testbed application's outbound link with
+an ordinary Playwright click hangs for the full thirty-second timeout. The
+link schedules a navigation, the main process cancels it in `will-navigate`,
+and from the renderer's side that navigation never resolves, so the click
+waits forever for something that was already prevented. Every application that
+routes external links this way behaves identically, which is all three that
+have been read.
+
+The cost if this is missed: one hop consumes a Route's entire time budget and
+the Route reports a timeout rather than whatever it had found. The exclusion
+list is what should keep a Route off an outbound link in the first place, so
+this fires on the ones a list missed, which is exactly the case nobody tests
+for.
 
 **Settling is the second difficulty of the project, after `survey`, and the
 engine cannot delegate it.** The obvious design is for the adapter to supply a
@@ -618,7 +641,7 @@ Boundary: bookkeeping.
 
 ### Phase 8: every planted defect found by one Journey
 
-One Journey over the example application, with a budget it can find them in,
+One Journey over the testbed application, with a budget it can find them in,
 and a test asserting that each planted defect is found. Then the triage flow
 from `PRODUCT_REQUIREMENTS.md`, done cold: a second session reproduces a
 finding from the report alone.
@@ -791,7 +814,7 @@ What each layer of verification proves, from weakest to strongest:
   is not tidiness.
 - Unit tests for `random.ts` and `journey.ts` prove the reproducibility
   mechanism: same seed, same sequence, routes independent, streams separate.
-- The engine's own tests against the example application prove that the parts
+- The engine's own tests against the testbed application prove that the parts
   behave as written: launch, refuse a stale build, travel, record, stop on a
   violation, strand.
 - The planted defects prove that the engine finds bugs. **This is the only
@@ -805,7 +828,7 @@ them. `PRODUCT_REQUIREMENTS.md` states it as a non-goal, `HISTORY.md` records
 the concession, and the oracle is the remedy, not more tests.
 
 Definitions that depend on real behavior, such as what counts as blank and
-what counts as settled, are tuned against the example application and then
+what counts as settled, are tuned against the testbed application and then
 against the first real consumer, never against imagined cases. The example is
 the real data until a consumer exists.
 

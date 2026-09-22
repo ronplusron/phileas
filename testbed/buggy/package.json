@@ -1,0 +1,18 @@
+{
+  "name": "buggy",
+  "productName": "Buggy",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A structurally ordinary Electron application, seeded with defects the engine must find.",
+  "type": "module",
+  "main": "main.cjs",
+  "author": "Drugstore Sushi",
+  "scripts": {
+    "package": "electron-packager . --overwrite --platform=darwin --arch=arm64 --app-bundle-id=com.drugstoresushi.buggy --app-copyright=\"Copyright (c) 2026 Ron Blum. All rights reserved.\" --out dist --prune=true --ignore=\"^/dist($|/)\" --ignore=\"^/phileas($|/)\" --ignore=\"^/node_modules($|/)\""
+  },
+  "devDependencies": {
+    "@drugstoresushi/phileas": "file:../..",
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.4.3"
+  }
+}
