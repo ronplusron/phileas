@@ -9,18 +9,61 @@ export interface ResolvedBundle {
   asarPath: string;
 }
 
+/**
+ * What the staleness guard did, so the report can say it.
+ *
+ * A guard that did not run must never read like one that passed. There are two
+ * legitimate ways for it not to run -- no sources to compare against (C1a), and
+ * the switch that runs against a stale build deliberately -- and both have to
+ * reach the report, which is why this is returned rather than being a silent
+ * early exit.
+ */
+export type GuardVerdict =
+  | { ran: true }
+  | { ran: false; reason: 'no-sources' | 'skipped-by-switch'; detail: string };
+
+/**
+ * Find the executable inside a macOS application bundle.
+ *
+ * Read rather than derived. The lifted code assumed the executable was named
+ * after productName, which held for the one application it was written inside
+ * and holds for neither confirmed consumer: one renames the bundle after
+ * packaging, and the other declares no product name at all.
+ *
+ * Contents/MacOS holds exactly one executable in an ordinary bundle. More than
+ * one means a layout this does not understand, and guessing which to launch is
+ * how a run ends up testing a helper process.
+ */
+function findExecutable(appDir: string): string {
+  const macOsDir = path.join(appDir, 'Contents', 'MacOS');
+  if (!fs.existsSync(macOsDir)) {
+    throw new Error(
+      `No packaged app found at\n  ${appDir}\n\n` +
+        `Expected a macOS bundle with Contents/MacOS inside it.\n` +
+        `A Journey runs against the packaged build, never the source directory.`
+    );
+  }
+  const entries = fs.readdirSync(macOsDir).filter((name) => !name.startsWith('.'));
+  const [only] = entries;
+  if (entries.length !== 1 || only === undefined) {
+    throw new Error(
+      `Cannot tell which executable to launch in\n  ${macOsDir}\n\n` +
+        `Found ${entries.length}: ${entries.join(', ') || '(none)'}\n` +
+        `An ordinary bundle holds exactly one.`
+    );
+  }
+  return path.join(macOsDir, only);
+}
+
 export function resolveBundle(cfg: AppUnderTest): ResolvedBundle {
-  const appDir =
-    cfg.bundleDir ??
-    path.join(cfg.repoRoot, 'dist', `${cfg.productName}-darwin-arm64`, `${cfg.productName}.app`);
-  const executable = path.join(appDir, 'Contents', 'MacOS', cfg.productName);
+  const appDir = cfg.bundleDir;
+  const executable = findExecutable(appDir);
   const asarPath = path.join(appDir, 'Contents', 'Resources', 'app.asar');
 
   if (!fs.existsSync(executable)) {
     throw new Error(
       `No packaged app found at\n  ${appDir}\n\n` +
-        `This suite tests the packaged bundle, not the source directory.\n` +
-        `Run \`npm run package\` first, or \`npm run verify\` to do both.`
+        `A Journey runs against the packaged build, never the source directory.`
     );
   }
   if (!fs.existsSync(asarPath)) {
@@ -93,24 +136,42 @@ function compareOne(relative: string, onDisk: Buffer, inBundle: Buffer): true | 
  * content, and git cannot see dist/ at all since it is ignored, nor can it see
  * uncommitted edits as anything but "dirty".
  */
-export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): void {
-  if (process.env.E2E_ALLOW_STALE) return;
+export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): GuardVerdict {
+  if (cfg.staleness === undefined) {
+    return {
+      ran: false,
+      reason: 'no-sources',
+      detail:
+        'No sources to compare the bundle against, so staleness was not checked. ' +
+        'This is the shape where the engine is pointed at an installed binary (C1a).',
+    };
+  }
+  if (process.env.PHILEAS_ALLOW_STALE) {
+    return {
+      ran: false,
+      reason: 'skipped-by-switch',
+      detail:
+        'PHILEAS_ALLOW_STALE is set, so staleness was not checked. ' +
+        'Findings from this run may describe code nobody is running.',
+    };
+  }
 
-  const ignore = cfg.ignoreInput ?? (() => false);
+  const { sourceRoot, packagedInputs } = cfg.staleness;
+  const ignore = cfg.staleness.ignoreInput ?? (() => false);
   const problems: string[] = [];
   const seenInBundlePaths = new Set<string>();
 
-  for (const input of cfg.packagedInputs) {
-    const inputAbsolute = path.join(cfg.repoRoot, input);
+  for (const input of packagedInputs) {
+    const inputAbsolute = path.join(sourceRoot, input);
     if (!fs.existsSync(inputAbsolute)) {
       problems.push(`${input}: listed as a packaged input but missing from the working tree`);
       continue;
     }
-    for (const relative of walkFiles(cfg.repoRoot, input)) {
+    for (const relative of walkFiles(sourceRoot, input)) {
       if (ignore(relative)) continue;
       seenInBundlePaths.add('/' + relative);
 
-      const onDisk = fs.readFileSync(path.join(cfg.repoRoot, relative));
+      const onDisk = fs.readFileSync(path.join(sourceRoot, relative));
       let inBundle: Buffer;
       try {
         inBundle = extractFile(asarPath, relative);
@@ -126,7 +187,7 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): void {
   // The other direction: something the bundle still carries that is gone from
   // disk, such as a deleted text record. Without this the guard would pass on a
   // bundle that serves content the corpus no longer has.
-  const inputRoots = cfg.packagedInputs.map((p) => '/' + p.replace(/\/+$/, ''));
+  const inputRoots = packagedInputs.map((p) => '/' + p.replace(/\/+$/, ''));
   for (const bundlePath of listPackage(asarPath, { isPack: false })) {
     const underAnInput = inputRoots.some((r) => bundlePath === r || bundlePath.startsWith(r + '/'));
     if (!underAnInput) continue;
@@ -142,16 +203,16 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): void {
     problems.push(`${relative}: in the bundle but gone from the working tree`);
   }
 
-  if (problems.length === 0) return;
+  if (problems.length === 0) return { ran: true };
 
   const shown = problems.slice(0, 20).map((p) => `  ${p}`).join('\n');
   const more = problems.length > 20 ? `\n  ...and ${problems.length - 20} more` : '';
   throw new Error(
-    `The packaged bundle is STALE relative to the working tree.\n` +
-      `Running the suite against it would test code you are no longer editing.\n\n` +
+    `The packaged bundle is STALE relative to the sources it was built from.\n` +
+      `Running a Journey against it would test code nobody is running any more.\n\n` +
       shown +
       more +
-      `\n\nRun \`npm run package\` (or \`npm run verify\`).\n` +
-      `To run against it anyway, set E2E_ALLOW_STALE=1; the run will say so loudly.`
+      `\n\nRepackage the application, then run again.\n` +
+      `To run against it anyway, set PHILEAS_ALLOW_STALE=1; the run will say so loudly.`
   );
 }

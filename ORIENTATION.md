@@ -24,16 +24,21 @@ summarized here -- read them.
 
 ## 2. Current state
 
-**Documentation, and a toolchain that compiles nothing.** The repository
-holds `package.json`, `tsconfig.json`, `.gitignore`, the README, this file,
-`CLAUDE.md` and five documents under `docs/`. There is no engine code:
-`src/` holds one deliberately empty `index.ts`, and `src/oracles/`, `tests/`
-and `examples/` contain nothing but `.gitkeep`.
+**A launch layer, and nothing that travels.** `src/` holds the seven files
+lifted from `trickster-tales` and hardened: launching a packaged build,
+refusing a stale one, keeping windows off the screen, reaching the native menu,
+stubbing outbound links, and the `AppUnderTest` interface the whole thing talks
+through. `src/oracles/`, `tests/` and `examples/` still contain nothing but
+`.gitkeep`.
 
-**Phase 0 is done.** The four dependencies are installed and
-`npm run typecheck` passes, which proves the toolchain exists and nothing
-else. `npm test` reports no tests found, correctly, since the first of this
-engine's own tests arrives in phase 3.
+**What is genuinely absent is everything that makes this an explorer.** No
+traversal, no seeding, no journal, no checks. `npm run typecheck` passes over
+what is there, which proves it compiles and nothing else: none of it has been
+run against an application from inside this repository, because there is
+nothing here to launch until phase 2 builds one.
+
+**Phases 0 and 1 are done.** `npm test` reports no tests found, correctly,
+since the first of this engine's own tests arrives in phase 3.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -45,13 +50,16 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: ten phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 1 is the next thing to do, and nothing is gating it.** It lifts seven
-files out of `trickster-tales` and hardens `AppUnderTest` around them. The
-three questions that used to sit in front of it -- what the interface carries,
-which deployment shape applies, and where three of the seven files belong --
-were settled on 2026-09-21 against the two confirmed consumers' real builds.
-`docs/HISTORY.md` has each with its measurement, and `docs/PLAN.md` phase 1 is
-the work.
+**Phase 2 is the next thing to do, and it is the first real boundary.** It
+builds a small Electron application under `examples/`, packaged, with an
+adapter beside it in the consumer layout. That is the first time anything in
+this repository runs end to end, and it is what turns the paragraph above from
+"it compiles" into "it launches a build, refuses a stale one, and stays off the
+screen".
+
+**One thing it will hit in its first minutes:** `electron` installed its types
+but not its binary, which phase 1 did not need and phase 2 does.
+`docs/HISTORY.md` has what was observed.
 
 `docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
 opinion.
@@ -64,28 +72,26 @@ require an application to tell it when it has settled: two mature suites were
 examined and neither has such a signal, so the strategy has to work without
 cooperation.
 
-## 3. Part of this engine already exists, in a sibling repository
+## 3. The launch layer was lifted, not designed here
 
-The launch and bundle layer was written inside a sibling Electron project's
-Playwright suite and deliberately structured to be lifted out, including an
-`AppUnderTest` interface whose own header comment states that the directory is
-meant to become a shared package that sibling apps consume. `docs/HISTORY.md`
-has what was measured; `docs/PLAN.md` says what moving it involves.
+`src/` did not start from nothing. The launch and bundle layer was written
+inside a sibling Electron project's Playwright suite, deliberately structured
+to be lifted out, and `e2e/kit/` in `trickster-tales` is still where it came
+from. It arrived on 2026-09-22 byte-identical in one commit, with the hardening
+in the next, so the difference between what was inherited and what was decided
+here is readable in the history rather than only in prose.
 
-**It is `e2e/kit/` in `trickster-tales`, which is a project on hold rather
-than one of the confirmed consumers.** Worth stating, because no document
-said it before and finding it took a search of every checkout on the
-machine. Two things follow. The kit is not going to keep moving underneath
-this work, since the project holding it is not being worked on. And neither
-confirmed consumer has anything like it: the one with a Playwright suite has
-two flat spec files that call `electron.launch` directly, so there is no
-second copy anywhere to reconcile against.
+**Read the origin before redesigning any of it**, because its comments explain
+why several things are the shape they are, and those reasons did not all travel
+into this repository. Two things it never had are worth knowing: nothing that
+travels through an application, and no exclusion list.
 
-**Read that code before designing any of it again.** It covers launching an
-Electron app, refusing to run against a stale build, and waiting for
-readiness. It contains nothing that travels through an application: no
-traversal, no seeding, no journal, no invariants. Those are the parts that
-genuinely do not exist yet.
+**Its justifications are about one application, and that is the trap.**
+`external.ts` explains why stubbing `shell.openExternal` works by describing
+what that project's own `main.js` does. Lifting the file into a framework
+carries the explanation along as an assumption about every application.
+`docs/PLAN.md` holds it as a hazard, and it is the reason two later phases
+carry work nobody would otherwise schedule.
 
 Nothing else from that project is this product's concern. Its adapter, its
 scripted specs and its application-specific expectations stay where they are.
@@ -98,14 +104,23 @@ npm run typecheck
 npm test
 ```
 
-`npm install` installs four dependencies and `npm run typecheck` passes over
-one empty file. **Neither is evidence about the product**, only that the
-toolchain works. `npm test` reports no tests found, which is correct rather
-than broken: there is nothing to test until phase 3.
+`npm run typecheck` passes over the launch layer. **That is not evidence about
+the product**, only that it compiles: none of it has been run against an
+application from inside this repository. `npm test` reports no tests found,
+which is correct rather than broken: there is nothing to test until phase 3.
+
+`@electron/asar` is a dependency; `@playwright/test` and `electron` are peer
+dependencies with dev dependencies alongside. The peers are deliberate: a
+consumer supplies the Electron binary, and a second copy of Playwright in the
+tree would hand that consumer fixtures from the wrong instance.
 
 Playwright's downloaded browsers are not needed and installing did not fetch
 any. The engine drives an Electron binary through Playwright's own Electron
 support, never one of those browsers.
+
+`PHILEAS_SHOW=1` puts the application's windows back on the screen, which is
+useful when working out why something failed. `PHILEAS_ALLOW_STALE=1` runs
+against a stale build, and the run says so rather than passing quietly.
 
 `tsconfig.json` is `noEmit` with `strict` and `noUncheckedIndexedAccess` on.
 `noUncheckedIndexedAccess` is not tidiness: a traversal engine indexes into
@@ -115,7 +130,11 @@ nothing to do.
 
 ## 5. Verification, and its limits
 
-Nothing is verified, because nothing is built.
+**Nothing has been verified by running it.** The launch layer compiles and its
+origin was exercised inside another project, which says nothing about whether
+it works here: it has never launched an application from this repository,
+because there is nothing here to launch until phase 2. Treat every claim about
+it as inherited rather than checked.
 
 **The limit worth knowing before writing any of it:** a bug-finder that passes
 its own tests has demonstrated nothing about whether it finds bugs. Its own

@@ -1,92 +1,82 @@
 import fs from 'node:fs';
 import { test as base, expect, type ElectronApplication, type Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test';
-import { launchApp, closeApp, resetApp, makeUserDataDir, type LaunchedApp } from './launch';
+import { launchApp, closeApp, makeUserDataDir, type LaunchedApp } from './launch';
 import { openedExternally } from './external';
 
-export type KitWorkerFixtures = {
-  /** A disposable userData directory, shared by every test in the worker. */
+export type PhileasFixtures = {
+  /** A disposable userData directory, thrown away when the test ends. */
   userDataDir: string;
-  /** The app process, launched once per worker. Prefer `app` and `page`. */
+  /** The launched application, with what the engine collected from it. */
   launched: LaunchedApp;
-};
-
-export type KitFixtures = {
   app: ElectronApplication;
   page: Page;
-  /** URLs the app tried to hand to shell.openExternal. Nothing actually opened. */
+  /** URLs the application tried to hand to shell.openExternal. Nothing opened. */
   externalUrls: () => Promise<string[]>;
-  /**
-   * An app instance of this test's own, with its own userData directory, closed
-   * when the test ends.
-   *
-   * For the few tests that cannot share the worker's app: ones that break the
-   * main process on purpose, or that need to quit and relaunch to check what
-   * persisted. Reaching for this instead of restoring whatever was broken means
-   * a test that fails halfway still cannot damage the tests after it.
-   *
-   * Lazy, like every fixture: a test that does not ask for it pays nothing.
-   * Tests using it should not also use `page`, which would start the shared app
-   * as well.
-   */
-  freshApp: LaunchedApp;
 };
 
 /**
- * Build a Playwright `test` bound to one app.
+ * Build a Playwright `test` bound to one application.
  *
- * The app is WORKER-scoped: launched once and reused across every test the
- * worker runs, rather than a fresh process per test. That trades roughly half a
- * second per test for having to reset between tests, which resetApp does.
- *
- * What makes this safe rather than merely fast is Playwright's own rule:
- * "Workers are always shutdown after a test failure to guarantee pristine
- * environment for following tests." So a failed test, or one that takes the app
- * down with it, cannot poison the tests after it; the next test gets a new
- * worker and therefore a newly launched app. The cost lands on failing runs,
- * which pay a relaunch per failure.
+ * The application is TEST-scoped: launched fresh for each test, with its own
+ * userData directory, and closed when the test ends. The lifted version reused
+ * one process across every test a worker ran and reset by reloading the
+ * renderer, which saved roughly half a second per test and cost correctness
+ * the engine cannot afford: main-process state survives a reload, so a test
+ * would begin from whatever the previous one left behind. Under the Route
+ * mapping that is the inheritance R3 forbids, and a state-leakage bug is
+ * exactly what this engine exists to find, so it must not be the thing hiding
+ * one.
  *
  * Overriding the built-in `page` fixture is not cosmetic, it is what the rest
- * depends on: the stock one resolves `context`, which resolves `browser`, which
- * would try to launch a Chromium that is not installed here. Fixtures are lazy,
- * so as long as no spec touches `context` or `browser`, they are never built.
+ * depends on: the stock one resolves `context`, which resolves `browser`,
+ * which would try to launch a Chromium that is not installed here. Fixtures
+ * are lazy, so as long as no spec touches `context` or `browser`, they are
+ * never built.
  *
  * House rule that follows: no spec may use the `context` or `browser` fixtures.
+ *
+ * This is not yet the Route fixture. Fix as `beforeEach`, the hop steps, the
+ * Route's own timeout and the stranded outcome arrive with the phase that
+ * makes a Route a test; what is here is the launch and teardown they build on.
  */
 export function createTest(cfg: AppUnderTest) {
-  return base.extend<KitFixtures, KitWorkerFixtures>({
-    userDataDir: [
-      async ({}, use) => {
-        const dir = await makeUserDataDir(cfg);
-        await use(dir);
-        await fs.promises.rm(dir, { recursive: true, force: true });
-      },
-      { scope: 'worker' },
-    ],
+  return base.extend<PhileasFixtures>({
+    userDataDir: async ({}, use) => {
+      const dir = await makeUserDataDir(cfg);
+      await use(dir);
+      await fs.promises.rm(dir, { recursive: true, force: true });
+    },
 
-    launched: [
-      async ({ userDataDir }, use) => {
-        const launched = await launchApp(cfg, userDataDir);
+    launched: async ({ userDataDir }, use) => {
+      const launched = await launchApp(cfg, userDataDir);
+      try {
         await use(launched);
-        await closeApp(launched);
-      },
-      { scope: 'worker' },
-    ],
+      } finally {
+        await closeApp(cfg, launched).catch(() => {});
+      }
+    },
 
     app: async ({ launched }, use) => {
       await use(launched.app);
     },
 
     page: async ({ launched }, use, testInfo) => {
-      // Reset BEFORE the test rather than after. A test that fails partway
-      // leaves the app wherever it stopped, and cleaning up in teardown puts a
-      // possible second failure somewhere much harder to read. Resetting up
-      // front also means the first test in a worker takes the same path as
-      // every other one, instead of being the single case that skips it.
-      const page = await resetApp(cfg, launched);
+      const page = cfg.selectPage
+        ? await cfg.selectPage(launched.app)
+        : await launched.app.firstWindow();
+      await cfg.waitForReady(page);
 
-      // Tracing is per test, started on the shared context after the reset so a
-      // trace holds this test and nothing that ran before it.
+      // The staleness guard not running is not the same as it passing, and a
+      // reader who is told nothing will read it as the second. C1a and the
+      // deliberate skip both land here.
+      if (!launched.guard.ran) {
+        await testInfo.attach('staleness-guard.txt', {
+          body: launched.guard.detail,
+          contentType: 'text/plain',
+        });
+      }
+
       await launched.app.context().tracing.start({ screenshots: true, snapshots: true });
 
       await use(page);
@@ -123,30 +113,33 @@ export function createTest(cfg: AppUnderTest) {
       }
 
       // An uncaught renderer exception fails the test even when every assertion
-      // passed: the app throwing where nothing happens to look is precisely the
-      // failure a green suite would otherwise hide. Skipped when the test
-      // already failed, so the original failure stays the reported one.
-      if ((cfg.failOnPageError ?? true) && launched.pageErrors.length > 0 && !failed) {
-        throw new Error(
-          `The renderer threw during this test:\n\n` +
-            launched.pageErrors.map((error) => error.stack ?? error.message).join('\n\n')
-        );
+      // passed: the application throwing where nothing happens to look is
+      // precisely the failure a green suite would otherwise hide. Skipped when
+      // the test already failed, so the original failure stays the reported one.
+      //
+      // The switch is R19's general narrowing rather than a flag of its own. An
+      // application that declares this check narrowed says why, and the reason
+      // reaches the report instead of being a silent boolean.
+      const narrowed = cfg.narrowedChecks?.['uncaught-error'];
+      if (!failed && launched.pageErrors.length > 0) {
+        const unacceptable = narrowed?.accept
+          ? launched.pageErrors.filter(
+              (error) => !narrowed.accept?.(error.stack ?? error.message)
+            )
+          : narrowed
+            ? []
+            : launched.pageErrors;
+        if (unacceptable.length > 0) {
+          throw new Error(
+            `The renderer threw during this test:\n\n` +
+              unacceptable.map((error) => error.stack ?? error.message).join('\n\n')
+          );
+        }
       }
     },
 
     externalUrls: async ({ app }, use) => {
       await use(() => openedExternally(app));
-    },
-
-    freshApp: async ({}, use) => {
-      const dir = await makeUserDataDir(cfg);
-      const launched = await launchApp(cfg, dir);
-      try {
-        await use(launched);
-      } finally {
-        await closeApp(launched).catch(() => {});
-        await fs.promises.rm(dir, { recursive: true, force: true });
-      }
     },
   });
 }

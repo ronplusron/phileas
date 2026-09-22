@@ -55,10 +55,15 @@ each one can and cannot catch.
 
 ## Status
 
-**Scaffold and a toolchain.** There is still no engine code: every source
-file named in `docs/PLAN.md` is planned rather than written, and `src/` holds
-one deliberately empty file so the compiler has something to read. What
-exists is the four dependencies and a typecheck that passes over nothing.
+**A launch layer, and nothing that travels.** `src/` can launch a packaged
+Electron build, refuse a stale one, keep its windows off the screen, reach its
+native menu and stub its outbound links, all through the `AppUnderTest`
+interface an application implements. It compiles, and it has never been run
+against an application from inside this repository.
+
+Everything that makes this an explorer is still unwritten: traversal, seeding,
+the journal, the checks. `docs/PLAN.md` names the files and the phase each one
+arrives in.
 
 ## Building and testing
 

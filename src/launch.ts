@@ -2,25 +2,66 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
-import type { AppUnderTest } from './app-under-test';
-import { resolveBundle } from './bundle';
+import type { AppUnderTest, UniversalCheck } from './app-under-test';
+import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle';
 import { stubOpenExternal, clearOpenExternal } from './external';
+
+/**
+ * How the engine got into the application.
+ *
+ * 'electron' is Playwright's own Electron launch, which reaches the main
+ * process as well as the renderer, and is what three builds in four allow.
+ * 'debugging-port' is the fallback for a build that refuses it, and it reaches
+ * only the part of the application that draws the screen.
+ *
+ * The fallback is not implemented. This type exists now because the reporting
+ * around it does: a run under a lossy launch has to say which checks it could
+ * not run, and a mechanism added afterwards would touch the launch layer and
+ * the report together. Adding the second path later is then additive.
+ */
+export type LaunchPath = 'electron' | 'debugging-port';
+
+/**
+ * Checks that cannot run under a given launch path, which is constraint C1b.
+ *
+ * Under the debugging-port path the external-link stub records nothing, the
+ * menu offers no candidates, windows cannot be kept off the screen, and the
+ * main-process half of "still responding" cannot run. Every one of those would
+ * otherwise read as a check that found nothing wrong, which is the failure
+ * this exists to prevent.
+ */
+export const UNAVAILABLE_UNDER: Record<LaunchPath, readonly UniversalCheck[]> = {
+  electron: [],
+  'debugging-port': ['no-navigation-away', 'still-responding'],
+};
 
 export interface LaunchedApp {
   app: ElectronApplication;
+  /** Which way in was used, and therefore what the run can claim to have checked. */
+  path: LaunchPath;
+  /** What the staleness guard did, for the report (R23, C1a). */
+  guard: GuardVerdict;
   stderr: string[];
   pageErrors: Error[];
   consoleErrors: string[];
 }
 
 export async function makeUserDataDir(cfg: AppUnderTest): Promise<string> {
-  const slug = cfg.productName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  return fs.promises.mkdtemp(path.join(os.tmpdir(), `${slug}-e2e-`));
+  // productName is optional now, so the slug falls back rather than throwing on
+  // an application that declares no name anywhere. The directory is temporary
+  // and its name is a convenience for whoever reads `ls /tmp`, nothing more.
+  const slug = (cfg.productName ?? 'app').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return fs.promises.mkdtemp(path.join(os.tmpdir(), `phileas-${slug}-`));
 }
 
-/** Whether app windows should be visible on the desktop. Off unless E2E_SHOW is set. */
+/**
+ * Whether application windows should be visible on the desktop.
+ *
+ * Off unless PHILEAS_SHOW is set. A Journey runs unattended (C5), and this is
+ * for watching one when working out why something failed.
+ */
 export function showWindows(): boolean {
-  return Boolean(process.env.E2E_SHOW);
+  return Boolean(process.env.PHILEAS_SHOW);
 }
 
 /**
@@ -44,9 +85,9 @@ export function showWindows(): boolean {
  * out why something fails.
  *
  * The show() replacement is a real intrusion into the app under test and worth
- * knowing about: a test that needs show() to actually work has to run with
- * E2E_SHOW set. Failure screenshots are unaffected, since page.screenshot goes
- * through the compositor over CDP and works fine on a hidden window.
+ * knowing about: a check that needs show() to actually work has to run with
+ * PHILEAS_SHOW set. Failure screenshots are unaffected, since page.screenshot
+ * goes through the compositor over CDP and works fine on a hidden window.
  */
 export async function hideWindows(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ BrowserWindow }) => {
@@ -56,28 +97,33 @@ export async function hideWindows(app: ElectronApplication): Promise<void> {
 }
 
 /**
- * Launch the app with its state redirected somewhere disposable.
+ * Launch the application with its state redirected somewhere disposable.
  *
- * --user-data-dir is what keeps a test run from writing over the real
+ * --user-data-dir is what keeps a run from writing over the real
  * window-state.json in ~/Library/Application Support. Without it, resizing a
- * window in a test changes the size the app opens at tomorrow.
+ * window during a Route changes the size the application opens at tomorrow.
  *
- * Launched once per worker, not once per test. See fixtures.ts for what that
- * buys, and resetApp below for what it costs.
+ * Launched once per Route, not once per worker. A Route that began from state
+ * the previous Route left behind is exactly the inheritance R3 forbids, and a
+ * leak there would be reported against the wrong Route.
+ *
+ * Source mode is deliberately gone. The lifted code could run the working tree
+ * instead of the bundle, for an inner loop where repackaging was too slow; the
+ * staleness guard does not apply to it, so a green run in that mode says
+ * nothing about what ships, which is what C1 exists to prevent.
  */
 export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise<LaunchedApp> {
-  // E2E_TARGET=source runs the working tree instead of the bundle. It exists for
-  // the inner loop only, when repackaging between every edit is too slow to
-  // bear. It is never the default, and the staleness guard does not apply to it,
-  // so a green run in this mode says nothing about what ships.
-  const target =
-    process.env.E2E_TARGET === 'source'
-      ? { args: [cfg.repoRoot] }
-      : { executablePath: resolveBundle(cfg).executable, args: [] as string[] };
+  const bundle = resolveBundle(cfg);
+  const guard = assertBundleFresh(cfg, bundle.asarPath);
+
+  // Settings that decide whether automation is possible at all have to be on
+  // disk before the process starts, not after it.
+  await cfg.beforeLaunch?.(userDataDir);
 
   const app = await electron.launch({
-    ...target,
-    args: [...target.args, `--user-data-dir=${userDataDir}`, ...(cfg.launchArgs ?? [])],
+    executablePath: bundle.executable,
+    args: [`--user-data-dir=${userDataDir}`, ...(cfg.launchArgs ?? [])],
+    env: { ...process.env, ...(cfg.env ?? {}) } as Record<string, string>,
     timeout: 20_000,
   });
 
@@ -85,16 +131,23 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
   // and, for an app that defers display, before anything has been drawn.
   if (!showWindows()) await hideWindows(app);
 
-  const launched: LaunchedApp = { app, stderr: [], pageErrors: [], consoleErrors: [] };
+  const launched: LaunchedApp = {
+    app,
+    path: 'electron',
+    guard,
+    stderr: [],
+    pageErrors: [],
+    consoleErrors: [],
+  };
 
   app.process().stderr?.on('data', (chunk) => launched.stderr.push(String(chunk)));
 
   await stubOpenExternal(app);
 
-  // Attached once, to the one page that lives for the whole worker. Reloading
-  // between tests does not replace the Page object, so these listeners survive.
-  // The arrays are emptied per test in resetApp instead.
-  const page = await app.firstWindow();
+  // Which page is the application, rather than which window appeared first: an
+  // application with a splash has more than one, and firstWindow() would hand
+  // back the splash.
+  const page = cfg.selectPage ? await cfg.selectPage(app) : await app.firstWindow();
   page.on('pageerror', (error) => launched.pageErrors.push(error));
   page.on('console', (message) => {
     if (message.type() === 'error') launched.consoleErrors.push(message.text());
@@ -104,28 +157,27 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
 }
 
 /**
- * Put the shared app back into the state a freshly launched one would be in.
+ * Reload the renderer and clear what the engine collected.
  *
- * This is the price of reusing one process across a worker's tests. The app
- * keeps `filters`, `query` and `compare` in module-level state that no
- * navigation clears, which this suite's own browse and search specs pin as real
- * behaviour. Left alone, one test's leftover search term quietly narrows the
- * next test's library and fails an assertion that has nothing to do with the
- * bug.
+ * NOT the per-Route reset, and deliberately not exported as one. A reload
+ * rebuilds renderer state and leaves main-process state exactly where it was,
+ * so a Route beginning this way would inherit whatever the previous Route left
+ * in the main process. That is the inheritance R3 forbids, and a leak there
+ * would be reported against the Route that found it rather than the Route that
+ * caused it. launchApp is the per-Route reset.
  *
- * A reload is the honest reset: it re-runs the renderer's boot function and
- * rebuilds that state from scratch. Reaching in and setting fields back by hand
- * would work until someone adds a field and forgets this list.
+ * Kept for the one case that can show a reload reaches its initial state, and
+ * for an inner loop where relaunching is too slow to bear. The lifted comments
+ * measured the saving at roughly half a second per test.
  */
-export async function resetApp(cfg: AppUnderTest, launched: LaunchedApp): Promise<Page> {
-  const page = await launched.app.firstWindow();
+export async function reloadRenderer(cfg: AppUnderTest, launched: LaunchedApp): Promise<Page> {
+  const page = cfg.selectPage ? await cfg.selectPage(launched.app) : await launched.app.firstWindow();
 
   await page.reload();
   await cfg.waitForReady(page);
 
   // Main-process state outlives a renderer reload, so it gets cleared here.
-  // Skipping this makes the second outbound-link assertion see the first test's
-  // URL alongside its own.
+  // Skipping this leaves one pass's recorded URLs visible to the next.
   await clearOpenExternal(launched.app);
 
   launched.pageErrors.length = 0;
@@ -135,6 +187,15 @@ export async function resetApp(cfg: AppUnderTest, launched: LaunchedApp): Promis
   return page;
 }
 
-export async function closeApp(launched: LaunchedApp): Promise<void> {
+/**
+ * Close the application.
+ *
+ * An application-specific shutdown runs first where one is supplied, because
+ * closing the connection does not always terminate the process. At one launch
+ * per Route, a shutdown that leaks costs one stray process per Route rather
+ * than one per run.
+ */
+export async function closeApp(cfg: AppUnderTest, launched: LaunchedApp): Promise<void> {
+  if (cfg.shutdown) await cfg.shutdown(launched.app);
   await launched.app.close();
 }

@@ -1,54 +1,259 @@
-import type { Page } from '@playwright/test';
+import type { ElectronApplication, Page } from '@playwright/test';
 
 /**
- * The whole contract between the reusable kit and one particular app.
+ * The whole contract between the engine and one particular application.
  *
- * Everything else in e2e/kit/ depends only on this interface and Playwright.
- * Nothing in here knows a selector, a view name, or anything about a corpus.
- * That is deliberate: this directory is meant to be lifted out into a shared
- * package that the sibling Electron apps consume, each supplying its own
- * implementation of this interface and nothing else.
+ * Everything else in src/ depends only on this interface and Playwright.
+ * Nothing in here knows a selector, a view name, or anything about what the
+ * application is for. That is deliberate: an adapter that enumerated an
+ * application's controls would be more precise and would stop this being a
+ * framework, which is the trade the project exists to make. docs/PLAN.md has
+ * the rest of that reasoning.
  */
-export interface AppUnderTest {
+
+/**
+ * One thing the traversal could act on next.
+ *
+ * Minimal on purpose. survey() is what produces these, and it may add to this
+ * shape; what is here is only what an exclusion predicate needs in order to
+ * decide.
+ */
+export interface Candidate {
+  /** The accessibility role, or 'menuitem' for an entry in the native menu. */
+  role: string;
+
   /**
-   * Must match `productName` in package.json. Both the dist directory and the
-   * executable inside Contents/MacOS/ are named after it.
+   * The accessible name. Never empty: an element without one is reported as a
+   * finding rather than offered as a candidate, because it cannot be reliably
+   * hopped to.
    */
-  productName: string;
+  name: string;
 
-  /** Absolute path to the repo root. */
-  repoRoot: string;
+  /** Whether it came from the page's accessibility tree or the native menu. */
+  source: 'page' | 'menu';
+
+  /** For a menu entry, the label path from the application menu root. */
+  menuPath?: string[];
+}
+
+/**
+ * What must never be hopped to.
+ *
+ * Two forms, because they are not interchangeable. A list of names can be
+ * DERIVED from the application's source and checked against it, which is what
+ * keeps it from going stale the day upstream adds another way out of the
+ * application. A predicate cannot be derived, so it is the exception rather
+ * than the shape.
+ *
+ * This is a safety rail, not a map. It says what the traversal may not touch.
+ * It never says what the traversal may touch, which is survey()'s job.
+ */
+export interface Exclusions {
+  /** Accessible names that must never be hopped to, however they are reached. */
+  names?: string[];
+
+  /** Menu label paths that must never be clicked, such as ['File', 'Quit']. */
+  menuPaths?: string[][];
 
   /**
-   * Override when the packager output is laid out differently. Default is
-   * dist/<productName>-darwin-arm64/<productName>.app
+   * For an exclusion a list of names cannot express.
+   *
+   * The case this exists for, measured on a real application: the keyboard
+   * shortcut that closes an editor tab closes the whole application once no
+   * tabs remain. A control that is harmless many times and fatal once cannot
+   * be excluded by name.
+   *
+   * Must be deterministic given the page it is handed. The exclusion list is
+   * an input to the seeded draw, so a predicate that answered differently on a
+   * replay would send every hop after it somewhere else.
    */
-  bundleDir?: string;
+  exclude?(candidate: Candidate, page: Page): boolean | Promise<boolean>;
+}
+
+/**
+ * What the staleness guard needs, which exists only where the sources the
+ * build came from do.
+ *
+ * Grouped rather than left as three loose fields because they arrive and
+ * depart together. Absent means there are no sources to compare against: the
+ * guard cannot run, and the run says so rather than reporting it as passed.
+ * That is constraint C1a, written here so that a half-configured guard cannot
+ * be expressed in the first place.
+ */
+export interface StalenessGuard {
+  /**
+   * Absolute path to the checkout the packaged build was made from.
+   *
+   * Named for what it points at rather than for a repository root, because
+   * under the common deployment shape it is a checkout of somebody else's
+   * application that you built yourself, not your own tree.
+   */
+  sourceRoot: string;
 
   /**
-   * Repo-relative files and directories that the packager copies into app.asar
-   * and the app actually loads. This drives the staleness guard, so anything
-   * omitted here can drift out of date without the suite noticing. Keep it in
-   * sync with the --ignore flags in the package script.
+   * Paths under sourceRoot that the packager copies into app.asar and the
+   * application actually loads. This drives the comparison, so anything
+   * omitted here can drift out of date without the guard noticing. Keep it in
+   * step with whatever the package script excludes.
    */
   packagedInputs: string[];
 
-  /** Return true to skip a path under packagedInputs (caches, .DS_Store, and so on). */
-  ignoreInput?: (relativePath: string) => boolean;
+  /** Return true to skip a path under packagedInputs (caches, .DS_Store). */
+  ignoreInput?(relativePath: string): boolean;
+}
+
+/**
+ * A check that ships with the engine and assumes nothing about any
+ * application. R17 in docs/PRODUCT_REQUIREMENTS.md names the set.
+ */
+export type UniversalCheck =
+  | 'uncaught-error'
+  | 'console-error'
+  | 'still-responding'
+  | 'window-showing-content'
+  | 'no-navigation-away'
+  | 'no-unexpected-dialog'
+  | 'named-controls';
+
+/**
+ * Switching off or narrowing a built-in check, with the reason recorded.
+ *
+ * R19 exists because an application that writes to the console in normal
+ * operation is otherwise unusable with this engine, and weakening the check
+ * for everyone is the wrong answer. The reason is required rather than
+ * optional, because the report states what was narrowed and "narrowed" with no
+ * reason tells a reader nothing they can act on.
+ *
+ * This replaces the lifted failOnPageError flag. A private switch for one
+ * check is what R19 generalizes, and keeping both invites the two to disagree
+ * about the same check.
+ */
+export interface Narrowing {
+  /** Why this application cannot run the check as it ships. */
+  reason: string;
 
   /**
-   * Resolve once the app is usable.
+   * Omit to switch the check off entirely. Supply a predicate to keep the
+   * check and narrow what counts: return true for an observation this
+   * application considers acceptable.
    *
-   * Must THROW, with the app's own message, when the app booted into an error
-   * state. An implementation that only waits for a success marker turns a clear
-   * failure into a timeout, which reports as "did not appear" and says nothing
-   * about why.
+   * Must be deterministic. A Route ends at the first violation, so a verdict
+   * that cannot be reproduced would end Routes at random and make a red result
+   * not worth reading.
+   */
+  accept?(observation: string): boolean;
+}
+
+export interface AppUnderTest {
+  /**
+   * A readable name for the application, for reports and for naming temporary
+   * directories.
+   *
+   * Optional, and deliberately carries nothing. The lifted interface required
+   * it and derived both the dist directory and the executable name from it.
+   * One confirmed consumer declares no product name anywhere in package.json,
+   * so its adapter would have been inventing a value to feed two derivations
+   * that were wrong for it regardless.
+   */
+  productName?: string;
+
+  /**
+   * Absolute path to the packaged application bundle.
+   *
+   * Required, and not an escape hatch. Two confirmed consumers package into
+   * two different layouts and neither matches what the lifted code assumed, so
+   * there is no default worth keeping. The executable inside is read from the
+   * bundle rather than assumed from a product name.
+   */
+  bundleDir: string;
+
+  /**
+   * The sources the bundle was built from, for the staleness guard (R23).
+   *
+   * Absent where there are none, which is the shape where the engine is
+   * pointed at an installed binary. The guard then cannot run at all, and the
+   * run reports that rather than passing quietly.
+   */
+  staleness?: StalenessGuard;
+
+  /** What the traversal must never act on. */
+  exclusions: Exclusions;
+
+  /**
+   * Resolve once the application is usable.
+   *
+   * Must THROW, with the application's own message, when it booted into an
+   * error state. An implementation that only waits for a success marker turns
+   * a clear failure into a timeout, which reports as "did not appear" and says
+   * nothing about why. That is R24, and it is the reason a future implementer
+   * would otherwise remove this comment.
    */
   waitForReady(page: Page): Promise<void>;
+
+  /**
+   * Choose which page is the application.
+   *
+   * waitForReady(page) presumes the engine already picked the right one, and
+   * an application with a splash window has more than one. Defaults to the
+   * first window.
+   */
+  selectPage?(app: ElectronApplication): Promise<Page>;
 
   /** Extra command-line arguments added to every launch. */
   launchArgs?: string[];
 
-  /** Whether an uncaught renderer exception fails the test. Defaults to true. */
-  failOnPageError?: boolean;
+  /**
+   * Environment variables for every launch.
+   *
+   * Almost everything an application needs in order to run hermetically
+   * arrives this way rather than as a flag, and one confirmed consumer cannot
+   * launch without one.
+   */
+  env?: Record<string, string>;
+
+  /**
+   * Run before each launch, to seed settings on disk.
+   *
+   * Several settings decide whether automation is possible at all, and they
+   * have to be in place before the process starts rather than after it.
+   */
+  beforeLaunch?(userDataDir: string): Promise<void>;
+
+  /**
+   * Shut the application down, where closing the connection is not enough.
+   *
+   * Closing a debugging connection does not terminate the process. This
+   * matters more than it first looks: a Route relaunches rather than
+   * reloading, so a shutdown that leaks costs one stray process per Route.
+   */
+  shutdown?(app: ElectronApplication): Promise<void>;
+
+  /**
+   * Absolute paths to logs the application writes.
+   *
+   * A failure can be invisible on screen, raise no dialog, write nothing to
+   * the renderer console, and leave an exception in a log. An adapter naming
+   * none gets no log check, and the report says so rather than leaving the
+   * absence to be inferred from silence.
+   */
+  logPaths?: string[];
+
+  /**
+   * Recognize a process belonging to this application.
+   *
+   * Two readers. Cleanup, which is what it was found for. And the check that
+   * nothing else launched: a foreign process appearing after a hop is evidence
+   * that the traversal left the application, and that evidence does not depend
+   * on the external-link stub having taken effect. docs/PLAN.md says why a
+   * second source is not redundant with the stub's own recorder.
+   */
+  isOwnProcess?(command: string): boolean;
+
+  /**
+   * Built-in checks this application cannot run as they ship (R19).
+   *
+   * Every entry appears in the report. A check narrowed quietly is
+   * indistinguishable from one that passed.
+   */
+  narrowedChecks?: Partial<Record<UniversalCheck, Narrowing>>;
 }

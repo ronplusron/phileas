@@ -25,6 +25,92 @@ re-deriving them would cost it again.
 
 ---
 
+## 2026-09-22: phase 1, and the first engine code in this repository
+
+The seven files were lifted from `trickster-tales` `e2e/kit/` byte-identical,
+verified with `cmp`, in a commit of their own so the hardening reads as a
+change against the original rather than being mixed into the move.
+`AppUnderTest` went from 54 lines to an interface carrying the six missing
+members, the exclusion list and R19's narrowing. `npm run typecheck` passes
+over all of it.
+
+### The lift found two bugs in `package.json`
+
+**`electron` was missing entirely.** `menu.ts` uses the `Electron.MenuItem`
+ambient namespace, which ships with the `electron` package, so the lifted code
+could not compile. Phase 0 installed four dependencies and the plan scoped
+`electron` to phase 2's example application, which was wrong: the engine needs
+it in `src/` at compile time. The compiler was checked first, since a major
+version nobody named had been installed, and it was not the cause: both
+repositories are on TypeScript 7.0.2 and the same code compiles in the origin.
+
+**Two runtime imports were filed as dev dependencies.** `bundle.ts` imports
+`@electron/asar` and `fixtures.ts` imports `@playwright/test` as values.
+Measured rather than assumed: a scratch consumer with a `file:` dependency on
+this package installed `@drugstoresushi` and nothing else, so `bundle.ts` would
+have failed at run time in phase 2, which is the phase that makes the example
+the first such consumer.
+
+`@electron/asar` moved to `dependencies`. `@playwright/test` and `electron`
+became peer dependencies with dev dependencies alongside, because a second copy
+of Playwright in the tree would hand a consumer fixtures from the wrong
+instance, and because the consumer supplies the Electron binary.
+
+### What the hardening decided
+
+**An exclusion is a name or a predicate, and names stay first-class.** A
+derived list can only ever be names, so keeping them primary preserves the
+derive-and-check property that stops a hand-written list going stale. The
+predicate is the exception, for the case a list cannot express: the shortcut
+that closes an editor tab closes the application once no tabs remain.
+
+**The fallback launch path is deferred and its reporting is not.** Neither
+confirmed consumer needs the path, so building an untested one now would carry
+dead code through six phases. But C1b was a stated constraint with no
+mechanism, which is how a constraint quietly stops being true, so `LaunchedApp`
+now records which path it took and `UNAVAILABLE_UNDER` says what each path
+cannot check. The second implementation is then additive.
+
+**The staleness guard returns a verdict rather than exiting quietly.** It had
+two silent early exits, and a guard that did not run must never read like one
+that passed. Both reasons now reach the caller: no sources to compare against,
+which is C1a, and the switch that runs against a stale build deliberately.
+
+**Source mode is gone rather than carried.** The lifted launch could run the
+working tree instead of the bundle, and the guard does not apply to it, so a
+green run in that mode says nothing about what ships. `resetApp` became
+`reloadRenderer` and is no longer the per-Route reset, because main-process
+state survives a reload and a Route starting that way inherits what the last
+one left.
+
+**The `E2E_` environment variables became `PHILEAS_`.** A consumer has an
+end-to-end suite of its own, and a variable named for the category rather than
+for the engine is one they cannot safely reason about.
+
+### The install-timing measurement, and its control
+
+The hazard recorded on 2026-09-21 would close at its source if the
+external-link stub could be installed before the application's own main script
+runs, because a handler that captured the function rather than the object would
+then capture the recorder.
+
+`NODE_OPTIONS=--require` does not reach a packaged Electron main process. A
+preload that runs under plain `node` did not run under a packaged build
+launched with the same variable, while the application launched normally. The
+control ran the same preload and the same variable under plain `node`, and it
+ran, which is what makes the absence a measurement rather than a clean zero.
+
+**One route against one build, not every route.** So the net stays: the derived
+exclusion list, the positive control in phase 2, and evidence in phase 5 that
+does not come from the stub's own recorder.
+
+### One thing phase 2 will hit immediately
+
+`electron` installed its types but not its binary: `electron.d.ts` is present
+and `dist/` is not, with no `ELECTRON_*` variable set to explain it. Phase 1
+needs only the types, so nothing here is blocked. Phase 2 launches a real
+Electron and will need the binary.
+
 ## 2026-09-21: the three questions gating phase 1, settled against real builds
 
 All three were answered by measuring the two confirmed consumers and reading

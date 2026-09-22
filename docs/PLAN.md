@@ -265,16 +265,23 @@ lands here, the example application in phase 2 needs a second variant with
 the fuses disabled, so the path can be verified in this repository rather
 than against somebody else's build.
 
-**Measure whether the `external.ts` stub can be installed before the
-application's main script runs, rather than assuming either answer.** The
-lifted code installs it at `launch.ts:92`, which is after Playwright's launch
-resolves and therefore after the application has already wired up its own
-handlers. Installing earlier would close the hazard below at its source
-instead of netting it, because a handler that captured the function rather
-than the object would capture the recorder. Electron restricts what can be
-injected into a packaged application's main process, and the current answer
-is not known here: it is a measurement this phase takes, and a finding either
-way is worth recording.
+**Measured 2026-09-22: the `external.ts` stub cannot be installed before the
+application's main script runs, by the obvious route.** The lifted code
+installs it after Playwright's launch resolves, which is after the application
+has already wired up its own handlers. Installing earlier would close the
+hazard below at its source rather than netting it, because a handler that
+captured the function rather than the object would capture the recorder.
+
+`NODE_OPTIONS=--require` was the candidate, and it does not reach a packaged
+Electron main process. A preload that runs under plain `node` did not run under
+a packaged build launched with the same variable, while the application itself
+launched normally. The control is what makes that readable rather than a clean
+zero: the same preload and the same variable under plain `node`, and it ran.
+
+**That rules out one route against one build, not every route.** So the net is
+what remains, and it is the three items already scheduled rather than anything
+further. `HISTORY.md` records the measurement so nobody re-runs it expecting a
+different answer.
 
 Boundary: bookkeeping. The typecheck passes; nothing can run, because there is
 nothing to launch.
@@ -764,12 +771,13 @@ applications nobody has read. Three items close it: the derived exclusion list
 and the install-timing measurement in phase 1, the positive control in phase 2,
 and the independent evidence in phase 5.
 
-**Source mode bypasses the staleness guard.** The lifted launch can run the
-working tree instead of the packaged build, for an inner loop where
-repackaging is too slow. The guard does not apply to it, so a green run in
-that mode says nothing about what ships, which is what C1 exists to prevent. It
-is never a Journey option; if it survives at all it is for the engine's own
-inner loop and the report says so.
+**Source mode bypassed the staleness guard, and was removed in phase 1 rather
+than kept.** The lifted launch could run the working tree instead of the
+packaged build, for an inner loop where repackaging was too slow. The guard
+does not apply to it, so a green run in that mode said nothing about what
+ships, which is what C1 exists to prevent. Kept here because the reason is what
+stops it being reintroduced the first time repackaging feels slow: the saving
+is real, and it buys a run whose result cannot be trusted.
 
 **The oracle sharing logic with what it judges.** `../CLAUDE.md` records the
 failure. Phase 6 makes it mechanical.
@@ -808,19 +816,22 @@ visible-window switch to watch a run when working out why something fails.
 
 ## Deliberately not carried over
 
-From the lifted kit, with the reason each stays behind:
+From the lifted kit, all four settled in phase 1, with the reason each stays
+behind:
 
-- **Process reuse across tests as the default.** The kit launches once per
-  worker and resets by reload. R3 outranks the half second it saves, and phase
-  5 says why a reload is not enough. It stays available as an optimization to
-  measure, not as the default.
+- **Process reuse across tests as the default.** The kit launched once per
+  worker and reset by reload. R3 outranks the half second it saved, and a
+  reload leaves main-process state untouched. `resetApp` became
+  `reloadRenderer` and is explicitly not the per-Route reset; it stays for the
+  application that can show a reload reaches its initial state.
 - **The per-application flag for uncaught renderer exceptions.** Replaced by
-  R19's general narrowing, so one check has no private switch that the report
-  does not know about.
+  R19's general narrowing, so one check has no private switch the report does
+  not know about.
 - **End-of-test attachments as the record.** Kept as attachments on failure,
   which are useful; not kept as the journal, which they cannot be.
-- **Source mode as a Journey option.** A Journey runs against the packaged
-  build (C1). The hazards say what remains of it, if anything.
+- **Source mode, entirely.** Not narrowed to an inner loop, removed. A Journey
+  runs against the packaged build (C1), and the hazard above says why the
+  saving is not worth what it costs.
 
 From earlier design records, each already recorded where it belongs and named
 here only so nobody reintroduces it through this document:
