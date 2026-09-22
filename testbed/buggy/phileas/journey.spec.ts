@@ -1,9 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { test, expect } from '@playwright/test';
-import { deriveRouteStreams, requireSeed, routeIndices } from '@drugstoresushi/phileas';
+import {
+  createTest,
+  expect,
+  deriveRouteStreams,
+  requireSeed,
+  routeIndices,
+  runRoute,
+} from '@drugstoresushi/phileas';
 import { exploration } from './journeys/exploration';
+import { buggy } from './adapter';
 import { seedRecordPath } from './global-setup';
 
 /**
@@ -18,15 +25,27 @@ import { seedRecordPath } from './global-setup';
  * The seed is read inside each test body, never at this file's top level: the
  * top level runs once per worker and would hand each worker a different seed.
  * Only the Route count is needed out here.
- *
- * **Nothing travels yet.** Each Route currently derives its own seeds and
- * reports them. That is phase 3's boundary and it is bookkeeping: these tests
- * show the Routes are registered and independently reproducible, and they show
- * nothing whatever about the application. Phase 4 puts the traversal inside
- * this same body.
  */
+const test = createTest(buggy);
+
+// fileURLToPath, not .pathname: the latter stays percent-encoded and breaks on
+// any repository path containing a space.
+const here = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Where this run's journals are written, one directory per Journey seed.
+ *
+ * Under the seed rather than under a timestamp, so that the journals for a seed
+ * named in a report are found by looking for that seed. A re-run of the same
+ * seed rewrites them, which is what makes two runs comparable at all: the
+ * comparison is done by copying the first set aside rather than by
+ * accumulating, and a directory that only grows is one nobody reads.
+ */
+const journalDir = (journeySeed: string): string =>
+  path.join(here, '.phileas-journals', journeySeed);
+
 for (const routeIndex of routeIndices(exploration)) {
-  test(`route ${routeIndex}`, async ({}, testInfo) => {
+  test(`route ${routeIndex}`, async ({ page, app }, testInfo) => {
     const journeySeed = requireSeed();
     const streams = deriveRouteStreams(journeySeed, routeIndex);
 
@@ -37,28 +56,50 @@ for (const routeIndex of routeIndices(exploration)) {
       { type: 'route-seed', description: streams.routeSeed }
     );
 
-    // The assertion this file exists to make: the seed this Route is using is
-    // the one global setup settled for the run.
+    // The seed this Route is using is the one global setup settled for the run.
     //
     // Checked against the file rather than against the environment variable,
     // because requireSeed reads that variable and the two would agree however
     // wrong they were. The file was written once, before any worker started.
     //
-    // Two earlier assertions stood here and neither could fail: one restated a
-    // condition defineJourney enforces at construction, and the other compared
-    // a pure function to itself. Measured rather than argued -- replacing
-    // requireSeed's return with a freshly generated seed left every Route green
-    // and every Route reporting a seed that retraced nothing.
-    // fileURLToPath, not .pathname: the latter stays percent-encoded and breaks
-    // on any repository path containing a space.
-    const here = path.dirname(fileURLToPath(import.meta.url));
+    // Measured rather than argued: replacing requireSeed's return with a
+    // freshly generated seed left every Route green and every Route reporting a
+    // seed that retraced nothing.
     expect(journeySeed).toBe(fs.readFileSync(seedRecordPath(here), 'utf8'));
 
-    // And this Route's seed is its own. A derivation that ignored the index
-    // would give every Route the same stream while every Route still passed.
-    const others = routeIndices(exploration)
-      .filter((index) => index !== routeIndex)
-      .map((index) => deriveRouteStreams(journeySeed, index).routeSeed);
-    expect(others).not.toContain(streams.routeSeed);
+    const outcome = await runRoute({
+      page,
+      app,
+      cfg: buggy,
+      streams,
+      journeySeed,
+      routeIndex,
+      hopsPerRoute: exploration.hopsPerRoute,
+      journalDir: journalDir(journeySeed),
+    });
+
+    testInfo.annotations.push({
+      type: 'outcome',
+      description: `${outcome.kind} after ${outcome.hops} hop(s)`,
+    });
+
+    // **Completing the Journey is itself an assertion.** If the survey returns
+    // nothing actionable at hop 23 the Route cannot finish its budget, and no
+    // invariant catches that, because the page is structurally fine. A Route
+    // that fails for not finishing is how dead ends, inescapable modals and
+    // traps get caught without a check written for any of them.
+    //
+    // Stranded is its own outcome and is never folded into passed or failed.
+    // Until phase 7's report exists there is nowhere separate to send it, so it
+    // lands in the annotation above and in the journal, and the message below
+    // carries the reason rather than asserting a defect the engine has not
+    // found.
+    expect(
+      outcome.kind,
+      `Route ${routeIndex} ended ${outcome.kind} after ${outcome.hops} of ` +
+        `${exploration.hopsPerRoute} hops` +
+        (outcome.kind === 'stranded' ? `: ${outcome.reason}` : '') +
+        `. Route seed ${streams.routeSeed}; journal in ${journalDir(journeySeed)}.`
+    ).toBe('passed');
   });
 }

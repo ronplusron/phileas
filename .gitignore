@@ -15,3 +15,6 @@ node_modules/
 *.log
 .DS_Store
 .phileas-seed
+# A Route's journal. Evidence from one run against one build, written per hop so
+# it survives an abrupt ending; it is not a record of what the code should do.
+.phileas-journals/

@@ -24,7 +24,13 @@ export {
   type LaunchPath,
 } from './launch';
 export { createTest, expect, type PhileasFixtures } from './fixtures';
-export { clickMenuItem, menuLabels } from './menu';
+export {
+  clickMenuItem,
+  menuLabels,
+  menuEntries,
+  hasFocusedWindow,
+  type MenuEntry,
+} from './menu';
 export { stubOpenExternal, openedExternally, clearOpenExternal } from './external';
 export {
   defineJourney,
@@ -44,3 +50,46 @@ export {
   type Rng,
   type RouteStreams,
 } from './random';
+export {
+  survey,
+  takesTypedValue,
+  toCandidate,
+  createExclusionTally,
+  neverMatched,
+  NondeterministicExclusion,
+  HOPPABLE_ROLES,
+  type SurveyedCandidate,
+  type PageCandidate,
+  type MenuCandidate,
+  type SurveyResult,
+  type MenuSourceVerdict,
+  type UnnamedElement,
+  type ExcludedCandidate,
+  type ExclusionTally,
+} from './survey';
+export {
+  Journal,
+  readJournal,
+  journalPath,
+  type JournalEntry,
+  type OpeningEntry,
+  type HopEntry,
+  type NoteEntry,
+  type ClosingEntry,
+  type JournaledCandidate,
+  type JournaledCheck,
+} from './journal';
+export {
+  runRoute,
+  settle,
+  seededChooser,
+  seededValues,
+  FixFailure,
+  PageUnreachable,
+  type Chooser,
+  type ValueGenerator,
+  type Fix,
+  type FixContext,
+  type RouteOutcome,
+  type RunRouteOptions,
+} from './route';

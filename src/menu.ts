@@ -56,3 +56,76 @@ export function menuLabels(app: ElectronApplication, labels: string[]): Promise<
     return items.map((item) => item.label);
   }, labels);
 }
+
+/**
+ * One clickable entry in the application menu, with the path that reaches it.
+ *
+ * Leaves only. A submenu is a way to more entries rather than something to hop
+ * to, and separators are not entries at all.
+ */
+export interface MenuEntry {
+  /** The label path from the menu root, which is what clickMenuItem walks. */
+  readonly path: readonly string[];
+  readonly label: string;
+  readonly enabled: boolean;
+}
+
+/**
+ * Every clickable entry in the application menu, in menu order.
+ *
+ * Order comes from the menu template, so it is the same on every read of an
+ * unchanged menu. R8 rests on that: a candidate list that reordered between two
+ * runs of one seed would send the draw somewhere else from the first menu hop
+ * onward.
+ *
+ * Hidden and separator items are dropped. Disabled ones are kept and marked, so
+ * that a caller can tell "there is no such entry" from "the entry is there and
+ * cannot be used", which are different findings.
+ */
+export function menuEntries(app: ElectronApplication): Promise<MenuEntry[]> {
+  return app.evaluate(({ Menu }) => {
+    const entries: { path: string[]; label: string; enabled: boolean }[] = [];
+
+    const walk = (items: Electron.MenuItem[], prefix: string[]): void => {
+      for (const item of items) {
+        if (item.type === 'separator' || !item.visible) continue;
+        const path = [...prefix, item.label];
+        const submenu = item.submenu?.items ?? [];
+        if (submenu.length) walk(submenu, path);
+        else entries.push({ path, label: item.label, enabled: item.enabled });
+      }
+    };
+
+    walk(Menu.getApplicationMenu()?.items ?? [], []);
+    return entries;
+  });
+}
+
+/**
+ * Whether any of the application's windows currently holds focus.
+ *
+ * This is not idle curiosity, it is the one thing that decides whether a menu
+ * hop means anything. Electron hands a menu item's click handler the FOCUSED
+ * window, and the ordinary handler shape is `(item, win) => win.webContents
+ * .send(...)`. With no focused window, `win` is undefined and the handler does
+ * nothing at all, while `clickMenuItem` walks to the item, clicks it, and
+ * returns success. A hop journaled as executed that did nothing corrupts the
+ * journal and the seeded replay together, against an application that is not
+ * broken.
+ *
+ * **The engine causes the condition itself**, by keeping windows off the screen
+ * so a Journey can run unattended. Measured on 2026-09-22 against the testbed:
+ * with windows hidden, `getFocusedWindow()` returns null; calling `focus()` on a
+ * hidden window does not change that; and replacing `getFocusedWindow` in the
+ * main process does not help either, because Electron resolves the focused
+ * window for a menu click natively rather than through that binding. The
+ * positive control was the testbed's own View menu, whose handler falls back to
+ * the first window: it toggled the view under exactly the same conditions, so
+ * the menu walk is sound and the focus is what is missing.
+ *
+ * So there is no repair available to the engine, and detection is the answer.
+ * survey() declines to offer menu candidates when this is false, and says so.
+ */
+export function hasFocusedWindow(app: ElectronApplication): Promise<boolean> {
+  return app.evaluate(({ BrowserWindow }) => BrowserWindow.getFocusedWindow() !== null);
+}

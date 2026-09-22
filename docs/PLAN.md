@@ -18,7 +18,7 @@ They are stable and meant to be cited. Nothing else is cited by number, because
 
 Written 2026-09-21, when nothing was built and no dependency was installed.
 **This document is the plan, not a status report.** A phase described below in
-the future tense may already be done: phases 0, 1 and 2 are, and where one of
+the future tense may already be done: phases 0 through 4 are, and where one of
 them recorded a measurement the passage says so. `../ORIENTATION.md` is the
 current state and is the file to check rather than this one.
 
@@ -400,6 +400,21 @@ the Route reports a timeout rather than whatever it had found. The exclusion
 list is what should keep a Route off an outbound link in the first place, so
 this fires on the ones a list missed, which is exactly the case nobody tests
 for.
+
+**Phase 4 measured this to be larger than the paragraph above, and bounding the
+click alone does not fix it.** Every locator call waits for a pending
+navigation, so the blocking outlives the hop that caused it: snapshots were
+still blocked 8.8 seconds after an abandoned click, with `page.evaluate` still
+answering in 7ms. A Route that reaches an outbound link is poisoned for every
+hop after it. `HISTORY.md` has the measurement and what the engine does about
+it.
+
+**Settling was decided in this phase, by measurement, and what shipped is the
+first candidate below:** read the accessibility tree twice with a frame
+between, and stop when two consecutive reads agree. `HISTORY.md` has the
+numbers, including what it costs per Hop. The reasoning that chose it is left
+standing below, because it is what a later change to the strategy has to
+answer to.
 
 **Settling is the second difficulty of the project, after `survey`, and the
 engine cannot delegate it.** The obvious design is for the adapter to supply a

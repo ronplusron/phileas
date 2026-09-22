@@ -25,6 +25,150 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-22: phase 4, the first code that travels
+
+`survey.ts`, `route.ts` and `journal.ts`. A Route now surveys the running
+application, draws a candidate from its seed, acts on it, waits for the page to
+stop moving, and writes down what it did and what else it could have done.
+Engine tests went from 46 to 67.
+
+**The phase boundary was met and is worth stating as a measurement.** Two runs
+of the seed `deadbeef1234`, five Routes of twenty Hops each, produced journals
+identical file to file once timestamps and durations were stripped. The
+positive control for that comparison was Route 0 against Route 1 of the same
+run, which differ from hop 0 onward, so the comparison can tell journals apart
+and the identical result means something.
+
+### Discovery by role, and the handle that was rejected
+
+Three mechanisms were measured against the testbed on Playwright 1.63 and
+Electron 44. `element.computedRole` and `computedName` do not exist in that
+renderer. `page.accessibility.snapshot()` no longer exists in that Playwright.
+What works is `locator.ariaSnapshotJSON()`, which returns roles, accessible
+names and state in document order with anything invisible already filtered out.
+
+That snapshot also offers an opaque per-element handle under a `mode: 'ai'`
+option, resolvable as `page.locator('aria-ref=e6')`, and clicking one was
+measured to work. **It was rejected anyway, for two reasons that are
+independent of each other.**
+
+It is not stable API: it appears zero times in `playwright-core`'s published
+types, where the same search finds `data-testid` nine times and `aria-label`
+thirteen; it is absent from the documented selector engines; and it resolves
+only against the single most recent snapshot in that frame, so any other
+snapshot taken in between silently invalidates every handle. Playwright is a
+peer dependency here, so the consumer picks the version and the engine cannot
+pin around a break.
+
+The second reason decides it on its own. **A journal needs an identifier that
+means something when it is read later.** `button "Summary" #0` can be found by
+a person retracing a Route a week afterwards; `e6` cannot, so the handle could
+never have replaced what the record has to carry regardless. So the triple of
+role, accessible name and position among controls sharing both is used for
+both jobs, and the action goes through Playwright's own documented
+`getByRole(...).nth()`. Verified against two buttons sharing one name, planted
+for the test because the testbed has no duplicate: `nth: 0` and `nth: 1`
+reached the two different buttons.
+
+### The menu-hop defect closed by detection, after a repair was tried and failed
+
+`DEFECTS.md` carried it from 2026-09-22: Electron hands a menu item's click
+handler the focused window, an automated run has no focused window because the
+engine hides them on purpose, and `clickMenuItem` reports success either way.
+
+**A repair was attempted first, and measured not to work.** The engine already
+intrudes into the main process to hide windows, so replacing
+`BrowserWindow.getFocusedWindow` there to return the first window is the same
+kind of intrusion and would have repaired the exact consequence the first
+intrusion causes. It has no effect: Electron resolves the focused window for a
+menu click natively rather than through that binding. Calling `focus()` on a
+hidden window does not give it focus either.
+
+The positive control matters here, because "clicked and nothing happened" is
+also what a broken test harness produces. The testbed's own `Show Summary`,
+whose handler falls back to the first window, toggled the view under exactly
+the same conditions, and `Show Inventory` toggled it back. So the menu walk is
+sound and the focus is genuinely what is missing.
+
+So the cheap form in `DEFECTS.md` is what shipped: `survey` asks whether any
+window holds focus, and withholds menu candidates with a stated reason when
+none does. **The cost is real and is not hidden.** Under an ordinary run the
+menu source is unavailable, so `menuPaths` exclusions never fire either; the
+journal records the withholding once per Route so that it cannot be mistaken
+for an application with no menu. `PHILEAS_SHOW=1` brings both back. The fuller
+answer, whether a hop changed anything at all, is phase 5's and is worth more
+than a menu-specific one.
+
+### Settling, decided by measurement
+
+`PLAN.md` named three candidates and no favorite, and said the engine cannot
+require an application to tell it when it has settled. The wait is bounded and
+so is every snapshot inside it, for the reason the section below gives. What shipped is the
+first of the three: read the accessibility tree twice with a frame between, and
+stop when two consecutive reads agree. It measures the thing the traversal
+actually depends on, which is the survey being stable, rather than a proxy for
+it.
+
+Measured over 100 Hops against the testbed: median 17ms, minimum 8, maximum 23,
+1.67 seconds in total, and no Hop failed to settle. The wait is bounded and
+returns unsettled rather than throwing, because a page that keeps moving is a
+finding for the checks to make rather than a reason to abandon a Hop. **The
+verdict is written into the journal**, which it was not in the first draft:
+computing it and dropping it would have left an application that never settles
+invisible, which is the prevention-and-detection shape this project keeps
+finding in its own work.
+
+### The navigation hazard is bigger than the plan recorded, and was measured
+
+`PLAN.md` carried it as "a hop must not wait for navigation to finish, or a
+single outbound link costs a Route its whole budget", measured in phase 2 from
+a click that hung for a full default timeout. Bounding the click was the
+obvious fix and it is not sufficient, which a test written for the measured
+case is what found.
+
+**Every Playwright locator call waits for any pending navigation to finish.**
+An application that routes external links through `will-navigate` and calls
+`preventDefault` leaves a navigation that never finishes. Measured against the
+testbed on 2026-09-22: after a click abandoned at 705ms, snapshots were still
+blocked at 8.8 seconds with no sign of clearing, while `page.evaluate` answered
+in 7ms throughout. So the page is alive and the barrier is Playwright's, and a
+Route that reaches an outbound link is poisoned for every hop after it rather
+than for one.
+
+What shipped: every snapshot the traversal takes is bounded, in `survey` and in
+`settle` both, and a survey that cannot be taken after a Hop ends the Route as
+`PageUnreachable`, naming the hop and what it acted on. It is deliberately not
+stranded, because moves were available and the traversal took one; stranded
+would assert a dead end in an application that has none. The exclusion list
+remains the first defense and this is the second, for the entries a list
+missed.
+
+### Two items from the review, closed
+
+The determinism control for the `exclude` predicate ended up in `survey` rather
+than in the choosing seam where `OUTSTANDING.md` expected it. The reason is
+that exclusions are applied before the draw, so that the draw is over what may
+actually be hopped to, which means `survey` is where the predicate is
+consulted. It runs the predicate twice for one candidate per Hop, rotating by
+hop index so a Route of twenty covers twenty different candidates rather than
+one candidate twenty times, and throws when the two answers differ.
+
+The never-matched counter for exclusion names is per Route and lands in the
+journal's closing entry, because Routes are independent and may run in separate
+processes; rolling it up across a Journey is the report's job in phase 7. It
+already earned itself on the first run: `menuPaths: Buggy > Quit Buggy` matched
+nothing, correctly, because the menu source was withheld.
+
+### One test was written, found to be a fake, and replaced
+
+A test named for the value stream advancing on every Hop compared one generator
+against itself. It would have passed against exactly the conditional draw it
+was written to rule out, which is the same trap the previous session's review
+found twice in `journey.spec.ts`. The replacement drives a real Route with a
+chooser that never picks a control accepting typed input, and asserts a value
+was generated on every Hop regardless. **A test that cannot fail is worse than
+no test, because it reads as coverage.**
+
 ## 2026-09-22: a full review, and what reading alone could not find
 
 Eight agent reports over the whole repository, in two rounds. About 106

@@ -23,29 +23,32 @@ summarized here -- read them.
 
 ## 2. Current state
 
-**A launch layer that runs, a seed that reproduces, and nothing that
-travels.** `src/` holds the seven files lifted from `trickster-tales` and
-hardened: launching a packaged build, refusing a stale one, keeping windows off
-the screen, reaching the native menu, stubbing outbound links, and the
-`AppUnderTest` interface the whole thing talks through. `journey.ts` and
-`random.ts` joined them in phase 3: the four terms of a Journey, a seedable
-generator, and the per-Route seed derivation. `src/oracles/` still contains
-nothing but `.gitkeep`.
+**It travels, it writes down where it went, and it judges nothing.** `src/`
+holds the seven files lifted from `trickster-tales` and hardened: launching a
+packaged build, refusing a stale one, keeping windows off the screen, reaching
+the native menu, stubbing outbound links, and the `AppUnderTest` interface the
+whole thing talks through. `journey.ts` and `random.ts` joined them in phase 3.
+`survey.ts`, `route.ts` and `journal.ts` joined them in phase 4: discovery by
+accessibility role, one Route's traversal with the choosing and value seams,
+and the per-Hop record. `src/oracles/` still contains nothing but `.gitkeep`.
 
-**What is genuinely absent is everything that makes this an explorer.** No
-traversal, no journal, no checks.
+**What is genuinely absent is every check.** Nothing yet decides whether
+anything a Route walked past is wrong, so a green Journey today is consistent
+with an engine that checks nothing at all.
 
-**Phases 0 through 3 are done, and the first real boundary is passed.**
+**Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs forty-six tests. Seven launch it, refuse a stale
+through, and `npm test` runs sixty-seven tests. Seven launch it, refuse a stale
 bundle, report a bad boot in the application's own words, keep every window off
 the screen, and prove the outbound-link stub took effect rather than assuming
 it. Twenty prove the reproducibility mechanism without launching anything,
 including known-answer vectors that pin the generator's output. Nine record
 what `buggy` correctly does, so a defect planted later can be told apart from
 an accidental one. Seven assert that a guard refuses rather than answering when
-it has no evidence. The last three cover the fixture layer and the types, the
-type ones being compile-time assertions that `npm run typecheck` enforces.
+it has no evidence. Fourteen travel through the application, and seven cover
+the journal, including one cut off mid-write. The last three cover the fixture
+layer and the types, the type ones being compile-time assertions that
+`npm run typecheck` enforces.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -57,17 +60,30 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: ten phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 4 is the next thing to do**: `survey.ts`, `route.ts` and `journal.ts`,
-which is the first code that travels. `testbed/buggy/phileas/` already holds
-the whole consumer layout for it, and `journey.spec.ts` already registers one
-test per Route; phase 4 puts the traversal inside those bodies.
+**Phase 5 is the next thing to do**: the universal tier of checks, and the
+point where a Route can fail for a reason rather than only for not finishing.
+`docs/PLAN.md` has its shape. `journal.ts` already carries an empty
+`checks` field on every Hop for it to fill.
 
-**Two things phase 4 must not rediscover**, both measured in phase 2 and
-carried in `docs/PLAN.md`. A hop must not wait for navigation to finish, or a
-single outbound link costs a Route its whole budget. And `buggy`'s outbound-
-link test is the positive control for the `external.ts` hazard: keep it,
-because without it an empty recorder and a stub that never took read
-identically.
+**Read `docs/DEFECTS.md` before writing any of it.** One defect is open and
+phase 5 is what closes it: the external-link stub can install successfully and
+do nothing, and it stays open until a second source of evidence exists that
+does not depend on the stub having worked. That file holds what is wrong,
+confirmed by reading the code, and nothing here restates it.
+
+**Two things phase 5 must not undo**, both measured earlier and carried in
+`docs/PLAN.md`. A hop must not wait for navigation to finish, or a single
+outbound link costs a Route its whole budget; `route.ts` bounds every action
+for that reason. And `buggy`'s outbound-link test is the positive control for
+the `external.ts` hazard: keep it, because without it an empty recorder and a
+stub that never took read identically.
+
+**One thing phase 4 left standing, deliberately.** The menu source is
+unavailable under an ordinary run, because a menu click with no focused window
+reaches a handler with no window and does nothing while reporting success. That
+is detection rather than repair, a repair was measured and does not exist, and
+`docs/HISTORY.md` has both. The consequence is that `menuPaths` exclusions do
+not fire either. `PHILEAS_SHOW=1` brings the menu source back.
 
 **If `npm test` cannot find Electron:** `npm install` does not run Electron's
 postinstall in this environment, so the types arrive and the binary does not.
@@ -75,7 +91,8 @@ postinstall in this environment, so the types arrive and the binary does not.
 `testbed/buggy/` separately. It looks like a broken checkout and is not.
 
 `docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
-opinion.
+opinion. `docs/DEFECTS.md` holds what is wrong. Both carry items that phase 4
+closes.
 
 **Two research readings are recorded in `docs/HISTORY.md` and worth knowing
 before designing anything.** Discovery by accessibility role was measured
@@ -118,11 +135,16 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own forty-six tests against `testbed/buggy/`.
+`npm test` runs the engine's own sixty-seven tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
-Route and, until phase 4, does nothing inside them but derive seeds. It prints
-the Journey seed; set `PHILEAS_SEED` to replay one.
+Route and now travels inside them. It prints the Journey seed; set
+`PHILEAS_SEED` to replay one.
+
+Each Route writes a journal to
+`testbed/buggy/phileas/.phileas-journals/<journey seed>/`, one JSON Lines file
+per Route, flushed per Hop. Re-running a seed rewrites that directory, so
+comparing two runs means copying the first set aside first.
 
 **None of it is evidence that the engine finds bugs**, because nothing is
 planted in `buggy` yet and nothing travels through it. They show the launch
@@ -162,12 +184,14 @@ nothing to do.
 
 ## 5. Verification, and its limits
 
-**The launch layer is verified; the product is not.** Six tests launch a real
-packaged application, refuse a stale bundle, and prove the outbound-link stub
-took effect. That is genuinely checked rather than inherited.
+**The launch layer and the traversal are verified; the product is not.** Tests
+launch a real packaged application, refuse a stale bundle, prove the
+outbound-link stub took effect, travel through the application, and show that
+one seed retraces one Route hop for hop. That is genuinely checked rather than
+inherited.
 
-**It says nothing about whether the engine finds bugs.** Nothing travels
-through the application and nothing is planted in it, so a green run here is
+**It says nothing about whether the engine finds bugs.** Nothing is planted in
+the application and nothing yet checks anything, so a green run here is
 consistent with an engine that checks nothing at all. That stays true until
 phase 8 points one Journey at planted defects and asserts each is found.
 

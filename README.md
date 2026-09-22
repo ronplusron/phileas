@@ -55,18 +55,20 @@ each one can and cannot catch.
 
 ## Status
 
-**A launch layer that runs, a seed that reproduces, and nothing that
-travels.** `src/` can launch a packaged Electron build, refuse a stale one,
-keep its windows off the screen, reach its native menu and stub its outbound
-links, all through the `AppUnderTest` interface an application implements. It
-can also state the terms of a Journey and derive each Route's seeds from them,
-so a run is reproducible before there is anything to reproduce.
-`testbed/buggy/` is a packaged application built to be traveled through, and
-forty-six tests run against it.
+**It travels, it writes down where it went, and it judges nothing.** `src/`
+can launch a packaged Electron build, refuse a stale one, keep its windows off
+the screen, reach its native menu and stub its outbound links, all through the
+`AppUnderTest` interface an application implements. It states the terms of a
+Journey and derives each Route's seeds from them. And it now travels: a Route
+finds what the screen offers by accessibility role, draws its next move from
+its seed, acts, waits for the page to stop moving, and writes a journal entry
+per Hop. `testbed/buggy/` is a packaged application built to be traveled
+through, and sixty-seven tests run against it.
 
-Everything that makes this an explorer is still unwritten: traversal, the
-journal, the checks. `docs/PLAN.md` names the files and the phase each one
-arrives in.
+What is still unwritten is every check. Nothing yet decides whether anything a
+Route walked past is wrong, so the engine can currently report only that a
+Route finished, ran out of moves, or threw. `docs/PLAN.md` names the files and
+the phase each one arrives in.
 
 ## Building and testing
 
@@ -86,9 +88,10 @@ npm run package
 
 Then `npm test` from the root runs Playwright against that bundle, and
 `npm run journey` runs the Journey from the application's own config. The tests
-show the launch layer behaves as written and that a seed reproduces. **They are
-not evidence that the engine finds bugs**, and cannot be until `testbed/` holds
-deliberately planted defects and a Journey is shown finding each one.
+show the launch layer and the traversal behave as written, and that one seed
+retraces one Route hop for hop. **They are not evidence that the engine finds
+bugs**, and cannot be until `testbed/` holds deliberately planted defects and a
+Journey is shown finding each one.
 
 ## Where things are
 

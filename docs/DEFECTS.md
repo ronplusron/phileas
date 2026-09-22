@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Two defects are recorded.** The launch layer landed in phase 1, so this file
+**One defect is recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the entry below arrived.
 
-What follows is two defects, then the two things most likely to be filed here
+What follows is one defect, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -85,43 +85,6 @@ sound for an application nobody has read, which is the whole hazard.
 **This entry leaves when phase 5's second evidence source exists**, and on
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
-
-## A menu hop can do nothing, and report that it did something
-
-**Filed 2026-09-22, found by writing the testbed's first menu test.** Electron
-hands a menu item's click handler the FOCUSED window. An automated run has no
-focused window: the application is not frontmost, and this engine keeps its
-windows off the screen on purpose. So an application whose handlers follow the
-ordinary `(item, win) => win.webContents.send(...)` pattern does nothing at all
-when the engine clicks a menu item.
-
-`clickMenuItem` cannot see it. It walks to the item, calls `click()`, and
-returns success; whether the handler then did anything is invisible from where
-it stands. The measurement: `buggy`'s View menu was written that way, the click
-succeeded, and the view did not change. `buggy`'s handler now falls back to the
-first window, which is what a real application should do. That fixes one
-application and nothing else.
-
-**Why it is a defect and not a limit.** Phase 4 makes menu items `survey`'s
-second candidate source. A hop that did nothing, journaled as executed,
-corrupts the journal and the seeded replay together, against an application
-that is not broken. And the engine causes the condition itself by hiding
-windows, then cannot detect what it caused, which is the prevention-and-
-detection shape the entry above is also an instance of.
-
-**When it has to be closed: phase 4, at the point `survey` first offers a menu
-candidate.** Not before, because nothing hops yet. Not later, because the first
-Journey to hop to a menu starts writing entries that are not true. It must be
-closed before phase 8 claims any planted defect was found, since a Journey
-whose menu hops silently did nothing found less than its journal says.
-
-**What would close it.** The engine cannot fix another application's handlers,
-so the answer is detection. The cheap form is to check for a focused window
-before a menu hop and declare menu candidates unreliable when there is none, in
-the shape `UNAVAILABLE_UNDER` already uses for a lossy launch path. The fuller
-form is the general question of whether a hop changed anything, which is phase
-5's ground and is worth more than a menu-specific answer. Either closes this;
-the second closes more.
 
 ## Two things that will look like candidates, and are not
 

@@ -16,17 +16,18 @@ accumulates is how a section grows until nobody reads it.
 kind of thing it is, and worth making deliberately.
 
 `DEFECTS.md` is what is wrong. It holds one entry, filed when the launch
-layer landed with a known hazard still open.
+layer landed with a known hazard still open; a second closed in phase 4.
 
 ## 1. Agreed, not built
 
 ### 1.1 The engine
 
-Everything in `PLAN.md` from phase 4 on. Phases 0 through 3 are done and
+Everything in `PLAN.md` from phase 5 on. Phases 0 through 4 are done and
 `HISTORY.md` records them: the toolchain, the launch layer lifted and
-hardened, a packaged application it can launch, and the seeds that make a run
-reproducible. What is unwritten is everything that makes this an explorer --
-traversal, the journal and every check.
+hardened, a packaged application it can launch, the seeds that make a run
+reproducible, and the traversal that travels through it and writes down where
+it went. What is unwritten is every check: nothing yet judges whether anything
+the traversal found is wrong.
 
 ### 1.2 Planted defects, and the applications still to build
 
@@ -56,25 +57,12 @@ sits outside the consumer's own tree. Phase 9 is where that is found out, and
 the answer decides whether the engine must be built before it can be
 consumed.
 
-### 1.4 Five things the review scheduled rather than fixed
+### 1.4 Three things the review scheduled rather than fixed
 
 Each was found by the review on 2026-09-22, each is agreed, and each was
 deliberately not done then because the phase that gives it its shape has not
-arrived. `HISTORY.md` records the review itself.
-
-**A determinism control for the `exclude` predicate**, in phase 4. The
-interface says the predicate must be deterministic and nothing checks it, and
-the failure is silent by construction: an exclusion that answered differently
-on a replay sends every hop after it somewhere else. It cannot be a compile-
-time guarantee, but it can have a positive control -- call the predicate twice
-for one candidate per hop and end the Route when the answers differ. It belongs
-in the choosing seam, which is where the predicate is consulted.
-
-**A never-matched counter for exclusion names**, in phase 4. An exclusion list
-is pure input today, so the engine has nowhere to say that an entry matched
-nothing all Journey. An entry that never matched is almost certainly stale, and
-the cost is one counter per entry. Deciding now whether that reaches the report
-is cheap; adding it after consumers exist changes the shape they wrote against.
+arrived. `HISTORY.md` records the review itself. Two more stood here and closed
+in phase 4.
 
 **An application that throws on purpose, and an adapter that narrows it**, in
 phase 5. The R19 narrowing branch in `fixtures.ts` has three paths and only the
