@@ -166,7 +166,7 @@ export function createTest(cfg: AppUnderTest) {
 
       if (failed) {
         // page.screenshot goes through the compositor over CDP, so it works on
-        // a machine that grants no Screen Recording permission.
+        // a machine that grants no screen-recording permission at all.
         //
         // The reason a diagnostic is missing is itself a diagnostic: a
         // screenshot that fails because the renderer is hung says something

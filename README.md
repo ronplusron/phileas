@@ -62,7 +62,7 @@ links, all through the `AppUnderTest` interface an application implements. It
 can also state the terms of a Journey and derive each Route's seeds from them,
 so a run is reproducible before there is anything to reproduce.
 `testbed/buggy/` is a packaged application built to be traveled through, and
-twenty-one tests run against it.
+forty-six tests run against it.
 
 Everything that makes this an explorer is still unwritten: traversal, the
 journal, the checks. `docs/PLAN.md` names the files and the phase each one

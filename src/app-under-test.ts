@@ -7,8 +7,9 @@ import type { ElectronApplication, Page } from '@playwright/test';
  * Nothing in here knows a selector, a view name, or anything about what the
  * application is for. That is deliberate: an adapter that enumerated an
  * application's controls would be more precise and would stop this being a
- * framework, which is the trade the project exists to make. docs/PLAN.md has
- * the rest of that reasoning.
+ * framework, which is the trade the project exists to make. That decline is
+ * recorded in docs/OUTSTANDING.md section 3.2, and ../CLAUDE.md carries it as a
+ * standing commitment.
  */
 
 /**

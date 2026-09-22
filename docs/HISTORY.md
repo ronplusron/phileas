@@ -25,6 +25,66 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-22: a full review, and what reading alone could not find
+
+Eight agent reports over the whole repository, in two rounds. About 106
+findings against roughly 1,500 lines of source, which is a high rate and mostly
+reflects a codebase that states its intentions in prose: a claim can be checked
+against the code beside it, so most findings are a comment or a document being
+falsified rather than a style opinion.
+
+**Three agents found the same defect by three different routes**, which is the
+strongest signal the review produced. The reference adapter could not deliver
+R24: `index.html` shipped its readiness marker already reading "ready", so
+`waitForReady` sampled it once, read success, and fell through to a ten-second
+wait on a list a failed boot never renders. Reading comments against code,
+hunting evidence that depends on its own guard, and asking what a string type
+can represent all arrived at it.
+
+**Two findings existed only because an agent broke the code and watched the
+suite stay green.** Changing the generator's warm-up count and digest length
+left all fourteen seed tests passing, and replacing `requireSeed`'s return with
+a freshly generated seed left every test and every Route green while each Route
+reported a seed that retraced nothing. Neither was reachable by reading. That
+mutation testing was not asked for and happened on a clean working tree, which
+is worth recording alongside what it found: the reviewing session had put
+"do not modify anything" into only one of six agent prompts, and another agent
+overwrote the repository's own `package.json` by running `asar extract-file`
+from the repository root, then reported the overwrite as a mystery it had ruled
+itself out of.
+
+**Two agents were given a narrower scope than the user had asked for**, through
+habit rather than reasoning: "focus on src/" and "focus on the four spec
+files", against a request for the whole repository. Re-running those two with
+the real scope produced twenty-three further findings, including the largest
+one in the review.
+
+**That largest finding was an absence.** `buggy` had no recorded baseline.
+Phases 5, 6 and 8 plant defects into it and assert a Journey finds each one,
+and nothing said what it does when it is working -- so a failing Route could
+not have been attributed to a planted defect rather than an accidental one, and
+the first success measure in `PRODUCT_REQUIREMENTS.md` section 10 was not a
+claim anyone could check.
+
+**Writing that baseline found a defect no agent found.** Electron hands a menu
+click the focused window; an automated run has no focused window, because the
+application is not frontmost and this engine hides its windows on purpose. So
+`buggy`'s View menu clicked successfully and did nothing. `DEFECTS.md` carries
+it, because `clickMenuItem` reports success either way and phase 4 makes menu
+items a candidate source.
+
+**One fix was proven not to work before it was believed.** The rewritten R24
+test passed against the old broken adapter as well as the new one, because the
+injected failure arrived before anything looked at the marker. The defect is a
+race, and a test built on an instant failure cannot see it. The fault switch
+now takes 750ms, and reverting the adapter confirms the test fails against the
+old logic and passes against the new.
+
+**What the review cost to act on**: six commits, 46 engine tests where there
+were 22, and five new spec files. What it did not cover: the eight markdown
+documents, 3,200 lines, which every agent was told to read as reference rather
+than as a subject.
+
 ## 2026-09-22: phase 3, the reproducibility mechanism
 
 `src/random.ts` and `src/journey.ts` landed, with fifteen unit tests that need

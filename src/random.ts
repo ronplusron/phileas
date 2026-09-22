@@ -23,7 +23,8 @@ export interface Rng {
   /** The next draw, in [0, 1). */
   next(): number;
 
-  /** An integer in [0, maxExclusive). Throws if maxExclusive is not >= 1. */
+  /** An integer in [0, maxExclusive). Throws unless maxExclusive is a whole
+   * number of at least 1. */
   int(maxExclusive: number): number;
 
   /** One item, drawn uniformly. Throws on an empty list. */
@@ -76,8 +77,12 @@ function sfc32(a: number, b: number, c: number, d: number): () => number {
 }
 
 /**
- * A separator that cannot occur inside a seed or a route index, so that the
- * parts ('ab', 1) and ('a', 'b1') cannot hash to the same digest.
+ * A separator no realistic seed contains, so that the parts ('ab', 1) and
+ * ('a', 'b1') cannot hash to the same digest.
+ *
+ * An assumption rather than a guarantee: a seed is arbitrary text and nothing
+ * rejects one holding a NUL. defineJourney would be the place if that ever
+ * matters.
  *
  * Written as an escape rather than typed literally: a raw control character in
  * a source file makes git treat it as binary and hides it from every search.

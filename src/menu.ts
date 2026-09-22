@@ -5,12 +5,17 @@ import type { ElectronApplication } from '@playwright/test';
  *
  * Playwright cannot press a native accelerator, so this is the closest thing to
  * a real user's action available. It is deliberately not "send the IPC message
- * the menu would have sent": that would skip the menu wiring entirely and keep
- * passing if the menu were deleted, which is exactly the regression worth
- * catching.
+ * the menu would have sent": that would skip the menu wiring entirely, and a
+ * hop is meant to do what a person would do rather than to arrange the result
+ * a person would have got.
  *
- * Labels are walked rather than looked up by id because the menu items do not
- * set ids.
+ * Why the engine reaches the menu at all: menu items live in the main process
+ * and never appear in a page's accessibility tree, so survey by role alone
+ * would never see them -- and an exclusion list naming Quit is meaningless
+ * unless the traversal can reach Quit. docs/PLAN.md has the rest.
+ *
+ * Labels are walked rather than looked up by id because ids are optional in an
+ * Electron menu template and many applications omit them.
  */
 export async function clickMenuItem(app: ElectronApplication, labels: string[]): Promise<void> {
   // An empty path used to walk nothing, click nothing, and report success. No

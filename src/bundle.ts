@@ -92,10 +92,12 @@ function* walkFiles(root: string, relative: string): Generator<string> {
  * Compare one packaged file against its copy on disk.
  *
  * Byte equality for everything except package.json, which the packager rewrites
- * rather than copies: it keeps only the fields the runtime needs (name,
- * productName, version, description, main, author) and drops scripts and
- * devDependencies. So the bundled copy is a subset by design, and a byte
- * comparison on it can never pass.
+ * rather than copies: it keeps a subset chosen by the packager and drops
+ * scripts and devDependencies. The exact subset is the packager's behavior and
+ * will drift, so it is not enumerated here -- an enumeration that went stale
+ * would read as "the packager drops that field" when it does not. So the
+ * bundled copy is a subset by design, and a byte comparison on it can never
+ * pass.
  *
  * Comparing the keys the bundle kept is the honest check. A field the packager
  * drops cannot go stale in the running app, because the running app never sees
@@ -124,10 +126,12 @@ function compareOne(relative: string, onDisk: Buffer, inBundle: Buffer): true | 
 }
 
 /**
- * Throws unless every packaged input on disk is byte-identical to its copy
- * inside app.asar.
+ * Returns a verdict saying whether the guard ran, and throws when it ran and
+ * found a difference. It does not run when there are no sources to compare
+ * against, or when the skip switch is set, and package.json is compared by the
+ * keys the bundle kept rather than byte for byte, for the reason above.
  *
- * This is the single most important piece of the suite. Testing a stale bundle
+ * This is the single most important piece of the engine. Testing a stale bundle
  * is worse than having no tests: it reports green for code nobody is running
  * any more, and it does so silently.
  *

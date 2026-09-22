@@ -367,8 +367,8 @@ nothing about traveling.
 ### Phase 4: survey, hop, and the journal
 
 `survey.ts` finds candidates by role: visible, enabled, carrying an accessible
-name, with menu items as a second source -- that second source being phase 1's
-position on where `menu.ts` belongs, which is not yet accepted. The exclusion
+name, with menu items as a second source, which phase 1 accepted on 2026-09-21
+along with `menu.ts` being engine at all. The exclusion
 list is applied before the draw, so the draw is over what may actually be
 hopped to. Candidate order comes from the accessibility tree and is
 deterministic; the hazards below say what breaks otherwise.

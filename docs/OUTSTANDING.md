@@ -56,6 +56,62 @@ sits outside the consumer's own tree. Phase 9 is where that is found out, and
 the answer decides whether the engine must be built before it can be
 consumed.
 
+### 1.4 Five things the review scheduled rather than fixed
+
+Each was found by the review on 2026-09-22, each is agreed, and each was
+deliberately not done then because the phase that gives it its shape has not
+arrived. `HISTORY.md` records the review itself.
+
+**A determinism control for the `exclude` predicate**, in phase 4. The
+interface says the predicate must be deterministic and nothing checks it, and
+the failure is silent by construction: an exclusion that answered differently
+on a replay sends every hop after it somewhere else. It cannot be a compile-
+time guarantee, but it can have a positive control -- call the predicate twice
+for one candidate per hop and end the Route when the answers differ. It belongs
+in the choosing seam, which is where the predicate is consulted.
+
+**A never-matched counter for exclusion names**, in phase 4. An exclusion list
+is pure input today, so the engine has nowhere to say that an entry matched
+nothing all Journey. An entry that never matched is almost certainly stale, and
+the cost is one counter per entry. Deciding now whether that reaches the report
+is cheap; adding it after consumers exist changes the shape they wrote against.
+
+**An application that throws on purpose, and an adapter that narrows it**, in
+phase 5. The R19 narrowing branch in `fixtures.ts` has three paths and only the
+"no narrowing" one is exercised, because nothing in the testbed throws and no
+adapter declares a narrowing. `fixtures.ts` is reshaped in phase 5 anyway, and
+a second deliberately awkward application is the cheapest way to cover it.
+
+**Branded seed strings**, in phase 7. A journey seed, a route seed and a stream
+seed are all bare `string`, so `deriveRouteStreams(streams.routeSeed, 0)`
+compiles and produces a plausible, wrong stream. Real, and currently
+theoretical: the seams still move, and phase 7 is when seeds start crossing
+into a report and back out of one.
+
+**Per-check observation types for `Narrowing.accept`**, in phase 6. Every check
+shares one `accept(observation: string)`, but a `console-error` observation is
+message text and a `named-controls` observation is not. An adapter author
+writes a predicate against a string whose shape the interface never states.
+The right shape is only knowable once app-declared checks exist.
+
+### 1.5 The testbed's own contract, unchecked by anything
+
+`tsconfig.json` compiles only TypeScript, so `main.cjs`, `preload.cjs` and
+`renderer/renderer.js` are outside every static check. Two channel names and
+two payload shapes are written out three times across those files with nothing
+relating them, and `window.buggy` is untyped in the renderer.
+
+It matters more than a testbed usually would. That directory is what a
+consuming repository copies, and phase 2's whole job is to be the unbroken
+version against which planted defects are measured -- a channel rename or a
+payload change is a defect nobody planted, and the engine finding its own
+testbed's accidental bugs is not the measurement anyone wants.
+
+A `channels.d.ts` declaring the channel-to-payload map, referenced from all
+three sides, expresses it without changing any runtime shape. Left as its own
+change rather than folded into the review fixes, because turning on `checkJs`
+will surface more than it fixes.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

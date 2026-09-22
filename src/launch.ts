@@ -107,14 +107,14 @@ export function showWindows(): boolean {
  * So this does it in two parts, because either alone leaves a gap:
  *
  *   1. Replace show() on the prototype, so nothing can reveal a window later.
- *      Apps that create a window hidden and reveal it on 'ready-to-show' (which
- *      this one does, and which is the right pattern) never draw at all.
+ *      Apps that create a window hidden and reveal it on 'ready-to-show',
+ *      which is the common pattern and the right one, never draw at all.
  *   2. Hide whatever is already visible, for an app that shows its window
  *      immediately on creation. That one still flashes briefly; it just does not
  *      stay up.
  *
- * Set E2E_SHOW=1 to watch a run instead, which is genuinely useful when working
- * out why something fails.
+ * Set PHILEAS_SHOW=1 to watch a run instead, which is genuinely useful when
+ * working out why something fails.
  *
  * The show() replacement is a real intrusion into the app under test and worth
  * knowing about: a check that needs show() to actually work has to run with
@@ -131,9 +131,9 @@ export async function hideWindows(app: ElectronApplication): Promise<void> {
 /**
  * Launch the application with its state redirected somewhere disposable.
  *
- * --user-data-dir is what keeps a run from writing over the real
- * window-state.json in ~/Library/Application Support. Without it, resizing a
- * window during a Route changes the size the application opens at tomorrow.
+ * --user-data-dir is what keeps a run from writing over the application's real
+ * user data, wherever the platform puts it. Without it, resizing a window
+ * during a Route changes the size the application opens at tomorrow.
  *
  * Launched once per Route, not once per worker. A Route that began from state
  * the previous Route left behind is exactly the inheritance R3 forbids, and a

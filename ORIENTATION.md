@@ -37,11 +37,15 @@ traversal, no journal, no checks.
 
 **Phases 0 through 3 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs twenty-one tests: six launch it, refuse a stale
+through, and `npm test` runs forty-six tests. Seven launch it, refuse a stale
 bundle, report a bad boot in the application's own words, keep every window off
 the screen, and prove the outbound-link stub took effect rather than assuming
-it; fifteen more prove the reproducibility mechanism without launching
-anything.
+it. Twenty prove the reproducibility mechanism without launching anything,
+including known-answer vectors that pin the generator's output. Nine record
+what `buggy` correctly does, so a defect planted later can be told apart from
+an accidental one. Seven assert that a guard refuses rather than answering when
+it has no evidence. The last three cover the fixture layer and the types, the
+type ones being compile-time assertions that `npm run typecheck` enforces.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -114,7 +118,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own twenty-one tests against `testbed/buggy/`.
+`npm test` runs the engine's own forty-six tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and, until phase 4, does nothing inside them but derive seeds. It prints
