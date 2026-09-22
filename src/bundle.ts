@@ -19,7 +19,7 @@ export interface ResolvedBundle {
  * early exit.
  */
 export type GuardVerdict =
-  | { ran: true }
+  | { ran: true; filesCompared: number }
   | { ran: false; reason: 'no-sources' | 'skipped-by-switch'; detail: string };
 
 /**
@@ -157,8 +157,23 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): GuardVer
   }
 
   const { sourceRoot, packagedInputs } = cfg.staleness;
+
+  // A guard that compared nothing returned the same affirmative verdict as one
+  // that compared four hundred files. Two ways to reach it, both measured
+  // against a real bundle: an empty packagedInputs, and an ignoreInput broader
+  // than its author meant, which is applied in both directions and so can
+  // switch the whole guard off. Refusing here is what keeps ran:true meaning
+  // something.
+  if (packagedInputs.length === 0) {
+    throw new Error(
+      'staleness.packagedInputs is empty, so the guard would compare nothing and ' +
+        'report that it ran. Name the files and directories that go into the bundle, ' +
+        'or leave staleness out entirely to say there are no sources to compare against.'
+    );
+  }
   const ignore = cfg.staleness.ignoreInput ?? (() => false);
   const problems: string[] = [];
+  let filesCompared = 0;
   const seenInBundlePaths = new Set<string>();
 
   for (const input of packagedInputs) {
@@ -179,6 +194,7 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): GuardVer
         problems.push(`${relative}: on disk but not in the bundle`);
         continue;
       }
+      filesCompared += 1;
       const verdict = compareOne(relative, onDisk, inBundle);
       if (verdict !== true) problems.push(verdict);
     }
@@ -203,7 +219,16 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): GuardVer
     problems.push(`${relative}: in the bundle but gone from the working tree`);
   }
 
-  if (problems.length === 0) return { ran: true };
+  if (filesCompared === 0) {
+    throw new Error(
+      'The staleness guard compared no files, so it can say nothing about whether the ' +
+        'bundle is current. Either every packaged input is missing from the working ' +
+        'tree, or ignoreInput is excluding all of them. Both are configuration faults ' +
+        'rather than a clean bundle.'
+    );
+  }
+
+  if (problems.length === 0) return { ran: true, filesCompared };
 
   const shown = problems.slice(0, 20).map((p) => `  ${p}`).join('\n');
   const more = problems.length > 20 ? `\n  ...and ${problems.length - 20} more` : '';

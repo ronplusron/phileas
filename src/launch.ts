@@ -120,6 +120,18 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
   // disk before the process starts, not after it.
   await cfg.beforeLaunch?.(userDataDir);
 
+  // An adapter's own --user-data-dir would be appended after the engine's, and
+  // which one Chromium honors is not something this should rest on. The
+  // guarantee above is that a Journey never writes over the application's real
+  // state, and an argument list is not the place to negotiate it.
+  const ownUserDataDir = (cfg.launchArgs ?? []).find((arg) => arg.startsWith('--user-data-dir'));
+  if (ownUserDataDir) {
+    throw new Error(
+      `launchArgs sets ${ownUserDataDir}, which the engine supplies itself so that a run ` +
+        `cannot write over the application's real user data. Remove it from launchArgs.`
+    );
+  }
+
   const app = await electron.launch({
     executablePath: bundle.executable,
     args: [`--user-data-dir=${userDataDir}`, ...(cfg.launchArgs ?? [])],

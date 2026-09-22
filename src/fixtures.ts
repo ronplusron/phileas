@@ -48,12 +48,58 @@ export function createTest(cfg: AppUnderTest) {
       await fs.promises.rm(dir, { recursive: true, force: true });
     },
 
-    launched: async ({ userDataDir }, use) => {
+    launched: async ({ userDataDir }, use, testInfo) => {
       const launched = await launchApp(cfg, userDataDir);
+
+      // The staleness guard not running is not the same as it passing, and a
+      // reader who is told nothing will read it as the second. C1a and the
+      // deliberate skip both land here.
+      //
+      // Attached where the application is launched rather than where a page is
+      // resolved. It used to live in the `page` fixture, which made reporting
+      // the verdict a property of which fixture a spec happened to touch: a
+      // spec using `launched` or `app` and never `page` produced no attachment
+      // at all, and this engine's own suite is written exactly that way.
+      if (!launched.guard.ran) {
+        await testInfo.attach('staleness-guard.txt', {
+          body: launched.guard.detail,
+          contentType: 'text/plain',
+        });
+      }
+
       try {
         await use(launched);
       } finally {
-        await closeApp(cfg, launched).catch(() => {});
+        // Attached in the teardown that always runs, rather than after the test
+        // body. A boot failure is the likeliest way for a Route to end early
+        // and the one whose reason is almost always in main-process stderr,
+        // and it was the one case that discarded it.
+        if (launched.stderr.length) {
+          await testInfo.attach('main-stderr.txt', {
+            body: launched.stderr.join(''),
+            contentType: 'text/plain',
+          });
+        }
+        if (launched.consoleErrors.length) {
+          await testInfo.attach('renderer-console-errors.txt', {
+            body: launched.consoleErrors.join('\n'),
+            contentType: 'text/plain',
+          });
+        }
+
+        // A shutdown that throws is a finding, not noise: an application that
+        // hangs on exit is a defect class this engine exists to find, and at
+        // one launch per Route a leak costs one stray process per Route. It
+        // must not replace the test's own failure, so it is reported rather
+        // than thrown.
+        try {
+          await closeApp(cfg, launched);
+        } catch (error) {
+          await testInfo.attach('teardown-failure.txt', {
+            body: error instanceof Error ? (error.stack ?? error.message) : String(error),
+            contentType: 'text/plain',
+          });
+        }
       }
     },
 
@@ -65,32 +111,84 @@ export function createTest(cfg: AppUnderTest) {
       const page = cfg.selectPage
         ? await cfg.selectPage(launched.app)
         : await launched.app.firstWindow();
-      await cfg.waitForReady(page);
 
-      // The staleness guard not running is not the same as it passing, and a
-      // reader who is told nothing will read it as the second. C1a and the
-      // deliberate skip both land here.
-      if (!launched.guard.ran) {
-        await testInfo.attach('staleness-guard.txt', {
-          body: launched.guard.detail,
+      // Started before readiness is waited on, not after. A boot failure used
+      // to happen outside the trace entirely, so the one ending whose reason is
+      // hardest to guess was the one with no recording of it.
+      await launched.app.context().tracing.start({ screenshots: true, snapshots: true });
+
+      let thrown: unknown;
+      try {
+        await cfg.waitForReady(page);
+        await use(page);
+      } catch (error) {
+        // Held rather than allowed to propagate, so that the evidence below is
+        // collected first, and rethrown unchanged once it has been.
+        thrown = error;
+      }
+
+      // The renderer-exception verdict is reached BEFORE the trace is stopped.
+      // It used to be decided afterwards, so the one failure the check exists
+      // for -- the application throwing where nothing happens to look -- was
+      // the one that reached the report with the trace already discarded.
+      const narrowed = cfg.narrowedChecks?.['uncaught-error'];
+      const unacceptable = narrowed
+        ? narrowed.accept
+          ? launched.pageErrors.filter(
+              (error) => !narrowed.accept?.(error.stack ?? error.message)
+            )
+          : []
+        : launched.pageErrors;
+
+      // R19: every narrowing reaches the report, whatever the outcome. The
+      // interface states that as a contract and nothing read `reason`, so a
+      // check switched off was indistinguishable from one that passed -- which
+      // is the thing the contract was written to prevent.
+      if (narrowed) {
+        const suppressed = launched.pageErrors.filter((error) => !unacceptable.includes(error));
+        await testInfo.attach('narrowed-checks.txt', {
+          body:
+            `uncaught-error was narrowed for this run.\n\nReason: ${narrowed.reason}\n\n` +
+            (narrowed.accept ? '' : 'No accept predicate, so the check is off entirely.\n\n') +
+            (suppressed.length
+              ? `Suppressed by it:\n\n${suppressed
+                  .map((error) => error.stack ?? error.message)
+                  .join('\n\n')}`
+              : 'Nothing was suppressed by it during this test.'),
           contentType: 'text/plain',
         });
       }
 
-      await launched.app.context().tracing.start({ screenshots: true, snapshots: true });
-
-      await use(page);
-
-      const failed = testInfo.status !== testInfo.expectedStatus;
+      const failed =
+        testInfo.status !== testInfo.expectedStatus || thrown !== undefined || unacceptable.length > 0;
 
       if (failed) {
-        // page.screenshot goes through the compositor over CDP. It needs no
-        // Screen Recording permission, which is withheld on this machine on
-        // purpose.
-        const shot = await page.screenshot().catch(() => null);
-        if (shot) await testInfo.attach('window.png', { body: shot, contentType: 'image/png' });
-        const html = await page.content().catch(() => null);
-        if (html) await testInfo.attach('dom.html', { body: html, contentType: 'text/html' });
+        // page.screenshot goes through the compositor over CDP, so it works on
+        // a machine that grants no Screen Recording permission.
+        //
+        // The reason a diagnostic is missing is itself a diagnostic: a
+        // screenshot that fails because the renderer is hung says something
+        // about the application, and a report that simply lacks the file does
+        // not distinguish that from a page that had already closed.
+        const shot = await page.screenshot().catch((error: Error) => error);
+        if (Buffer.isBuffer(shot)) {
+          await testInfo.attach('window.png', { body: shot, contentType: 'image/png' });
+        } else {
+          await testInfo.attach('window-png-failed.txt', {
+            body: shot.stack ?? shot.message,
+            contentType: 'text/plain',
+          });
+        }
+
+        const html = await page.content().catch((error: Error) => error);
+        if (typeof html === 'string') {
+          await testInfo.attach('dom.html', { body: html, contentType: 'text/html' });
+        } else {
+          await testInfo.attach('dom-html-failed.txt', {
+            body: html.stack ?? html.message,
+            contentType: 'text/plain',
+          });
+        }
       }
 
       const tracePath = testInfo.outputPath('trace.zip');
@@ -99,42 +197,16 @@ export function createTest(cfg: AppUnderTest) {
         await testInfo.attach('trace', { path: tracePath, contentType: 'application/zip' });
       }
 
-      if (launched.stderr.length) {
-        await testInfo.attach('main-stderr.txt', {
-          body: launched.stderr.join(''),
-          contentType: 'text/plain',
-        });
-      }
-      if (launched.consoleErrors.length) {
-        await testInfo.attach('renderer-console-errors.txt', {
-          body: launched.consoleErrors.join('\n'),
-          contentType: 'text/plain',
-        });
-      }
+      if (thrown !== undefined) throw thrown;
 
       // An uncaught renderer exception fails the test even when every assertion
       // passed: the application throwing where nothing happens to look is
-      // precisely the failure a green suite would otherwise hide. Skipped when
-      // the test already failed, so the original failure stays the reported one.
-      //
-      // The switch is R19's general narrowing rather than a flag of its own. An
-      // application that declares this check narrowed says why, and the reason
-      // reaches the report instead of being a silent boolean.
-      const narrowed = cfg.narrowedChecks?.['uncaught-error'];
-      if (!failed && launched.pageErrors.length > 0) {
-        const unacceptable = narrowed?.accept
-          ? launched.pageErrors.filter(
-              (error) => !narrowed.accept?.(error.stack ?? error.message)
-            )
-          : narrowed
-            ? []
-            : launched.pageErrors;
-        if (unacceptable.length > 0) {
-          throw new Error(
-            `The renderer threw during this test:\n\n` +
-              unacceptable.map((error) => error.stack ?? error.message).join('\n\n')
-          );
-        }
+      // precisely the failure a green suite would otherwise hide.
+      if (testInfo.status === testInfo.expectedStatus && unacceptable.length > 0) {
+        throw new Error(
+          `The renderer threw during this test:\n\n` +
+            unacceptable.map((error) => error.stack ?? error.message).join('\n\n')
+        );
       }
     },
 

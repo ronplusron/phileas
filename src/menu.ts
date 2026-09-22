@@ -13,6 +13,15 @@ import type { ElectronApplication } from '@playwright/test';
  * set ids.
  */
 export async function clickMenuItem(app: ElectronApplication, labels: string[]): Promise<void> {
+  // An empty path used to walk nothing, click nothing, and report success. No
+  // caller passes one today, and phase 4 builds these paths from Candidate's
+  // optional menuPath, where nothing in the type prevents it. A hop journaled
+  // as executed that did nothing corrupts the journal and the seeded replay
+  // together.
+  if (labels.length === 0) {
+    throw new Error('clickMenuItem needs at least one label, and was given none.');
+  }
+
   const found = await app.evaluate(({ Menu }, labels) => {
     let items = Menu.getApplicationMenu()?.items ?? [];
     let item: Electron.MenuItem | undefined;
