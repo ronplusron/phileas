@@ -3,12 +3,11 @@
 ## 1. What it is
 
 An exploratory testing engine. It travels through an Electron application
-without a script, picks its own next move from what the screen actually offers,
-checks a
-set of invariants after every move, and reports what it found along with the
-exact route it took to get there. It complements a scripted suite rather than
-replacing one: the scripted suite covers the paths someone thought to write
-down, and this covers the rest.
+without a script, picks its own next move from what the screen actually
+offers, checks a set of invariants after every move, and reports what it found
+along with the exact route it took to get there. It complements a scripted
+suite rather than replacing one: the scripted suite covers the paths someone
+thought to write down, and this covers the rest.
 
 **The framework is the deliverable, not any one application's test coverage.**
 Decisions that look like over-engineering for a single app are correct when
@@ -34,11 +33,11 @@ through. `src/oracles/` still contains nothing but `.gitkeep`.
 traversal, no seeding, no journal, no checks.
 
 **Phases 0, 1 and 2 are done, and the first real boundary is passed.**
-`testbed/buggy/` is a packaged Electron application built to be
-traveled through, and `npm test` runs six tests against it: it launches the
-packaged bundle, refuses a stale one, reports a bad boot in the application's
-own words, keeps every window off the screen, and proves the outbound-link stub
-took effect rather than assuming it. They pass in under two seconds.
+`testbed/buggy/` is a packaged Electron application built to be traveled
+through, and `npm test` runs six tests against it: it launches the packaged
+bundle, refuses a stale one, reports a bad boot in the application's own
+words, keeps every window off the screen, and proves the outbound-link stub
+took effect rather than assuming it.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.

@@ -112,8 +112,8 @@ carries it: one hop would otherwise consume a Route's whole time budget, and
 the Route would report a timeout instead of what it found. It fires only on an
 outbound link the exclusion list missed, which is the case nobody tests for.
 
-**The `file:` dependency works, and the test is weaker than it looks.** The
-example depends on the engine as `file:../..` and imports
+**The `file:` dependency works, and the test is weaker than it looks.**
+`testbed/buggy` depends on the engine as `file:../..` and imports
 `@drugstoresushi/phileas` by package name; npm symlinks it, and Playwright
 resolves the TypeScript source through the link. That is the shape phase 9
 gives a sibling repository. But the symlink here lands back inside this same

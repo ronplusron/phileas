@@ -587,8 +587,7 @@ is undecided and is decided here.
 source of truth and compares it to the screen. `../CLAUDE.md` records the
 trap: a specified oracle must not share logic with what it judges. Make that
 mechanical in this phase with a check that the adapter's oracle module imports
-nothing from the
-application's source. Prose alone will not hold it.
+nothing from the application's source. Prose alone will not hold it.
 
 **Be honest in the document and in the check's own message about what that
 check does not cover.** It catches sharing by import, which is the easy and
@@ -777,14 +776,13 @@ application only because the application looks the function up on that object
 at click time, which is what `trickster-tales` does: `main.js:1` destructures
 `shell` out of the module, and `main.js:110` calls `shell.openExternal(url)`
 inside the helper both its link handlers go through. Had that helper captured
-the function instead --
-`const { openExternal } = shell` at startup, then `openExternal(url)` -- the
-assignment would still succeed, the handler would still call Electron's real
-one, and a browser would open on the machine running the Journey. The recorder
-stays empty, so "no navigation away" reports clean: not because nothing
-navigated, but because the evidence went somewhere else. On an unattended run
-that breaks C5 silently -- every route green, and a browser window per hop
-left on the machine.
+the function instead -- `const { openExternal } = shell` at startup, then
+`openExternal(url)` -- the assignment would still succeed, the handler would
+still call Electron's real one, and a browser would open on the machine
+running the Journey. The recorder stays empty, so "no navigation away" reports
+clean: not because nothing navigated, but because the evidence went somewhere
+else. On an unattended run that breaks C5 silently, with every route green and
+a browser window per hop left on the machine.
 
 Measured on 2026-09-21: `trickster-tales:110`, `613-mitzvot/main.js:39` and
 `editor/src/main/index.ts:55` all write `shell.openExternal(url)`, so three

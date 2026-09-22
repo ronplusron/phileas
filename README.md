@@ -58,9 +58,9 @@ each one can and cannot catch.
 **A launch layer that runs, and nothing that travels.** `src/` can launch a
 packaged Electron build, refuse a stale one, keep its windows off the screen,
 reach its native menu and stub its outbound links, all through the
-`AppUnderTest` interface an application implements. `testbed/buggy/`
-is a packaged application built to be traveled through, and six tests run
-against it.
+`AppUnderTest` interface an application implements. `testbed/buggy/` is a
+packaged application built to be traveled through, and six tests run against
+it.
 
 Everything that makes this an explorer is still unwritten: traversal, seeding,
 the journal, the checks. `docs/PLAN.md` names the files and the phase each one
