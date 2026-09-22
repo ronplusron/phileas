@@ -8,5 +8,9 @@ node_modules/
 # Each testbed application's packaged build. Rebuilt by its own `package`
 # script, and the staleness guard is what notices when it has gone out of date.
 /testbed/*/dist/
+# A Journey runs from the consuming application's own config, so its output
+# lands beside that application rather than at the repository root.
+/testbed/*/test-results/
+/testbed/*/playwright-report/
 *.log
 .DS_Store

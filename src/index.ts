@@ -26,3 +26,20 @@ export {
 export { createTest, expect, type PhileasFixtures } from './fixtures';
 export { clickMenuItem, menuLabels } from './menu';
 export { stubOpenExternal, openedExternally, clearOpenExternal } from './external';
+export {
+  defineJourney,
+  routeIndices,
+  resolveSeed,
+  requireSeed,
+  generateSeed,
+  SEED_VARIABLE,
+  type Journey,
+  type JourneyTerms,
+} from './journey';
+export {
+  createRng,
+  deriveRouteSeed,
+  deriveRouteStreams,
+  type Rng,
+  type RouteStreams,
+} from './random';

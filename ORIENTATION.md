@@ -23,21 +23,25 @@ summarized here -- read them.
 
 ## 2. Current state
 
-**A launch layer that runs, and nothing that travels.** `src/` holds the seven
-files lifted from `trickster-tales` and hardened: launching a packaged build,
-refusing a stale one, keeping windows off the screen, reaching the native menu,
-stubbing outbound links, and the `AppUnderTest` interface the whole thing talks
-through. `src/oracles/` still contains nothing but `.gitkeep`.
+**A launch layer that runs, a seed that reproduces, and nothing that
+travels.** `src/` holds the seven files lifted from `trickster-tales` and
+hardened: launching a packaged build, refusing a stale one, keeping windows off
+the screen, reaching the native menu, stubbing outbound links, and the
+`AppUnderTest` interface the whole thing talks through. `journey.ts` and
+`random.ts` joined them in phase 3: the four terms of a Journey, a seedable
+generator, and the per-Route seed derivation. `src/oracles/` still contains
+nothing but `.gitkeep`.
 
 **What is genuinely absent is everything that makes this an explorer.** No
-traversal, no seeding, no journal, no checks.
+traversal, no journal, no checks.
 
-**Phases 0, 1 and 2 are done, and the first real boundary is passed.**
+**Phases 0 through 3 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs six tests against it: it launches the packaged
-bundle, refuses a stale one, reports a bad boot in the application's own
-words, keeps every window off the screen, and proves the outbound-link stub
-took effect rather than assuming it.
+through, and `npm test` runs twenty-one tests: six launch it, refuse a stale
+bundle, report a bad boot in the application's own words, keep every window off
+the screen, and prove the outbound-link stub took effect rather than assuming
+it; fifteen more prove the reproducibility mechanism without launching
+anything.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -49,9 +53,10 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: ten phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 3 is the next thing to do**, and it is the one phase that needs no
-Electron at all: the terms of a Journey, the seedable generator, and the
-per-Route seed derivation, all pure functions with unit tests.
+**Phase 4 is the next thing to do**: `survey.ts`, `route.ts` and `journal.ts`,
+which is the first code that travels. `testbed/buggy/phileas/` already holds
+the whole consumer layout for it, and `journey.spec.ts` already registers one
+test per Route; phase 4 puts the traversal inside those bodies.
 
 **Two things phase 4 must not rediscover**, both measured in phase 2 and
 carried in `docs/PLAN.md`. A hop must not wait for navigation to finish, or a
@@ -106,12 +111,18 @@ scripted specs and its application-specific expectations stay where they are.
 npm install
 npm run typecheck
 npm test
+npm run journey
 ```
 
-`npm run typecheck` passes over the launch layer, and `npm test` runs six
-tests against `testbed/buggy/`. **Neither is evidence that the engine finds
-bugs**, because nothing is planted in `buggy` yet and nothing travels through
-it. They show the launch layer behaves as written.
+`npm test` runs the engine's own twenty-one tests against `testbed/buggy/`.
+`npm run journey` runs the Journey from the consumer's own config at
+`testbed/buggy/phileas/playwright.config.ts`, which registers one test per
+Route and, until phase 4, does nothing inside them but derive seeds. It prints
+the Journey seed; set `PHILEAS_SEED` to replay one.
+
+**None of it is evidence that the engine finds bugs**, because nothing is
+planted in `buggy` yet and nothing travels through it. They show the launch
+layer behaves as written and that a seed reproduces.
 
 The testbed application builds itself:
 

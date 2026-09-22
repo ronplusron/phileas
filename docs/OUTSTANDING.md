@@ -22,11 +22,11 @@ layer landed with a known hazard still open.
 
 ### 1.1 The engine
 
-Everything in `PLAN.md` from phase 3 on. Phases 0, 1 and 2 are done and
+Everything in `PLAN.md` from phase 4 on. Phases 0 through 3 are done and
 `HISTORY.md` records them: the toolchain, the launch layer lifted and
-hardened, and a packaged application it can launch. What is unwritten is
-everything that makes this an explorer -- seeding, traversal, the journal and
-every check.
+hardened, a packaged application it can launch, and the seeds that make a run
+reproducible. What is unwritten is everything that makes this an explorer --
+traversal, the journal and every check.
 
 ### 1.2 Planted defects, and the applications still to build
 

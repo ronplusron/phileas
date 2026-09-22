@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "playwright test"
+    "test": "playwright test",
+    "journey": "playwright test -c testbed/buggy/phileas/playwright.config.ts"
   },
   "engines": {
     "node": ">=20"

@@ -55,15 +55,17 @@ each one can and cannot catch.
 
 ## Status
 
-**A launch layer that runs, and nothing that travels.** `src/` can launch a
-packaged Electron build, refuse a stale one, keep its windows off the screen,
-reach its native menu and stub its outbound links, all through the
-`AppUnderTest` interface an application implements. `testbed/buggy/` is a
-packaged application built to be traveled through, and six tests run against
-it.
+**A launch layer that runs, a seed that reproduces, and nothing that
+travels.** `src/` can launch a packaged Electron build, refuse a stale one,
+keep its windows off the screen, reach its native menu and stub its outbound
+links, all through the `AppUnderTest` interface an application implements. It
+can also state the terms of a Journey and derive each Route's seeds from them,
+so a run is reproducible before there is anything to reproduce.
+`testbed/buggy/` is a packaged application built to be traveled through, and
+twenty-one tests run against it.
 
-Everything that makes this an explorer is still unwritten: traversal, seeding,
-the journal, the checks. `docs/PLAN.md` names the files and the phase each one
+Everything that makes this an explorer is still unwritten: traversal, the
+journal, the checks. `docs/PLAN.md` names the files and the phase each one
 arrives in.
 
 ## Building and testing
@@ -82,10 +84,11 @@ npm install
 npm run package
 ```
 
-Then `npm test` from the root runs Playwright against that bundle. The tests
-show the launch layer behaves as written. **They are not evidence that the
-engine finds bugs**, and cannot be until `testbed/` holds deliberately
-planted defects and a Journey is shown finding each one.
+Then `npm test` from the root runs Playwright against that bundle, and
+`npm run journey` runs the Journey from the application's own config. The tests
+show the launch layer behaves as written and that a seed reproduces. **They are
+not evidence that the engine finds bugs**, and cannot be until `testbed/` holds
+deliberately planted defects and a Journey is shown finding each one.
 
 ## Where things are
 

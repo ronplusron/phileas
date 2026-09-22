@@ -74,7 +74,8 @@ src/
   report/              the Journey summary, with stranded kept apart from failed
 tests/                 the engine's own tests
 testbed/buggy/   a small Electron application, packaged, with planted defects
-testbed/buggy/phileas/  adapter/, journeys/, journey.spec.ts: the consumer layout
+testbed/buggy/phileas/  adapter/, journeys/, journey.spec.ts, global setup and
+                        a Playwright config: the whole consumer layout
 ```
 
 Each file is named after its principal export, which is why the set mixes

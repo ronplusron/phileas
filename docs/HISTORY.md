@@ -25,6 +25,60 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-22: phase 3, the reproducibility mechanism
+
+`src/random.ts` and `src/journey.ts` landed, with fifteen unit tests that need
+no Electron. The engine can now state the terms of a Journey and derive a
+Route's seeds from them. Nothing travels yet.
+
+**The generator is written in the repository rather than taken as a
+dependency.** It has to produce the same sequence across machines and Node
+versions, and a dependency's algorithm can change under a version bump. That
+would be R13's failure arriving from outside the code: recorded seeds quietly
+ceasing to reproduce, while every run still passes. It is sfc32, four lines of
+integer arithmetic, chosen for being short enough to check by eye, since the
+whole reproducibility guarantee rests on it. The derivation uses Node's
+SHA-256, which is stable by definition.
+
+**The unit tests assert the three properties that cannot be seen later.** The
+same seed gives the same sequence; route 3's stream is identical whether or not
+routes 0 through 2 drew first; and consuming thirty-seven draws from the Fix
+stream leaves the traversal stream exactly where it was. Each failure they
+catch is invisible in a run: the Journey passes, the report names a seed, and
+the seed retraces nothing.
+
+**`Math.random` is now checked for rather than merely forbidden**, by a test
+that scans `src/`. It carries two positive controls, because the scan has two
+ways to report a false zero: the pattern is shown to match a real call, and the
+file walk is shown to reach real files. A clean zero from an untested search is
+worth nothing, and this one could not be proven the direct way, since deleting
+a temporary file inside `src/` is not available in this environment.
+
+**The seed is settled in global setup, not in a spec file's top level.**
+Playwright's workers are separate processes, so top-level code runs once per
+worker and would hand each one a different seed: every Route would report a
+seed that retraces nothing and every Route would still pass. `resolveSeed`
+settles it once and puts it in the environment; `requireSeed` reads it inside a
+Route's body and throws rather than inventing one. A seed pinned in a journey
+definition wins over both, which is how a replay is asked for.
+
+**`testbed/buggy/phileas/` now holds the whole consumer layout**: `adapter/`,
+`journeys/`, `journey.spec.ts`, a `global-setup.ts` and a Playwright config of
+its own. The config lives with the application rather than in the engine's
+root, because that is the shape a real consumer ends up with. `npm run journey`
+from the root runs it, which is a convenience for developing the engine and not
+part of what a consumer copies.
+
+**The spec file is a for-loop and nothing else.** It reads the Route count,
+registers one test per Route, and reads the seed inside each body. Anything
+else appearing in it is the planner growing back, which is the one thing that
+file is watched for.
+
+**Phase 3's boundary is bookkeeping and says so.** Twenty-one tests pass,
+and not one of them shows the engine finds a defect. They show that a seed
+reproduces, which is the thing every later finding depends on and the thing no
+later phase would reveal on its own.
+
 ## 2026-09-22: phase 2, and the first thing in this repository that runs
 
 `testbed/buggy/` is a packaged Electron application with a list, a
