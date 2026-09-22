@@ -74,7 +74,11 @@ export function createTest(cfg: AppUnderTest) {
         // body. A boot failure is the likeliest way for a Route to end early
         // and the one whose reason is almost always in main-process stderr,
         // and it was the one case that discarded it.
-        if (launched.stderr.length) {
+        // Narrowed rather than read through an optional. Under the
+        // debugging-port path there is no process to have written anything, and
+        // an empty attachment there would say "the application printed nothing"
+        // when the truth is that nobody could have seen it.
+        if (launched.path === 'electron' && launched.stderr.length) {
           await testInfo.attach('main-stderr.txt', {
             body: launched.stderr.join(''),
             contentType: 'text/plain',
@@ -132,13 +136,11 @@ export function createTest(cfg: AppUnderTest) {
       // for -- the application throwing where nothing happens to look -- was
       // the one that reached the report with the trace already discarded.
       const narrowed = cfg.narrowedChecks?.['uncaught-error'];
-      const unacceptable = narrowed
-        ? narrowed.accept
-          ? launched.pageErrors.filter(
-              (error) => !narrowed.accept?.(error.stack ?? error.message)
-            )
-          : []
-        : launched.pageErrors;
+      const unacceptable = !narrowed
+        ? launched.pageErrors
+        : narrowed.kind === 'off'
+          ? []
+          : launched.pageErrors.filter((error) => !narrowed.accept(error.stack ?? error.message));
 
       // R19: every narrowing reaches the report, whatever the outcome. The
       // interface states that as a contract and nothing read `reason`, so a
@@ -149,7 +151,7 @@ export function createTest(cfg: AppUnderTest) {
         await testInfo.attach('narrowed-checks.txt', {
           body:
             `uncaught-error was narrowed for this run.\n\nReason: ${narrowed.reason}\n\n` +
-            (narrowed.accept ? '' : 'No accept predicate, so the check is off entirely.\n\n') +
+            (narrowed.kind === 'off' ? 'The check is off entirely for this run.\n\n' : '') +
             (suppressed.length
               ? `Suppressed by it:\n\n${suppressed
                   .map((error) => error.stack ?? error.message)

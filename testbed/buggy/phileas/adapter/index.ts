@@ -32,10 +32,21 @@ export const buggy: AppUnderTest = {
   },
 
   exclusions: {
-    // Two ways out of the application, both named rather than derived. A
-    // derived list is what a real consumer should build; this one is small
-    // enough to state, and stating it is what the engine is handed either way.
-    names: ['Quit Buggy', 'Read about the journey'],
+    // One exclusion of each kind, covering two different things, which is what
+    // a reference implementation should show. It used to cover Quit twice --
+    // once by name and once by path -- leaving a copier unable to tell which
+    // entry did the work or whether both were needed.
+    //
+    // The outbound link is a page element and is excluded by name. Quit is a
+    // menu entry and is excluded by its path, which is the form that survives
+    // a page control later appearing with the same label.
+    //
+    // Both are written by hand rather than derived from the application's
+    // source. A derived list is what keeps a rail from going stale the day
+    // another way out appears, and docs/DEFECTS.md carries that it is not
+    // built; tests/testbed-baseline.spec.ts at least fails when an entry stops
+    // naming anything real.
+    names: ['Read about the journey'],
     menuPaths: [['Buggy', 'Quit Buggy']],
   },
 

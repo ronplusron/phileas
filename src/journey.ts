@@ -49,8 +49,24 @@ export interface JourneyTerms {
  */
 export const SHORTEST_DEADLINE_MS = 1_000;
 
-/** A Journey whose terms have been checked. */
-export type Journey = Readonly<JourneyTerms>;
+declare const checked: unique symbol;
+
+/**
+ * A Journey whose terms have been checked.
+ *
+ * Branded, so that `defineJourney` is the only way to make one. TypeScript's
+ * types are structural and `readonly` does not affect assignability, so
+ * `Readonly<JourneyTerms>` alone let a hand-written object typecheck as a
+ * Journey and skip every check below: `{ routes: 0, hopsPerRoute: 0,
+ * deadlineMs: 0 }` compiled, registered no tests at all, and reported green
+ * having travelled nowhere. That is the failure the comment on `defineJourney`
+ * calls the one this engine is least able to notice about itself, and the
+ * validation guarding against it was entirely optional.
+ *
+ * The brand is a compile-time marker and nothing exists at run time. Taken
+ * deliberately as an API decision while no consumer writes a Journey by hand.
+ */
+export type Journey = Readonly<JourneyTerms> & { readonly [checked]: true };
 
 /**
  * Check a Journey's terms and freeze them.
@@ -82,7 +98,7 @@ export function defineJourney(terms: JourneyTerms): Journey {
     throw new RangeError('seed was given as an empty string; leave it out instead');
   }
 
-  return Object.freeze({ ...terms });
+  return Object.freeze({ ...terms }) as Journey;
 }
 
 function requireWholeNumberAtLeastOne(name: string, value: number): void {

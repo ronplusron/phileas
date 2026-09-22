@@ -18,23 +18,32 @@ import type { ElectronApplication, Page } from '@playwright/test';
  * shape; what is here is only what an exclusion predicate needs in order to
  * decide.
  */
-export interface Candidate {
+export type Candidate = {
   /** The accessibility role, or 'menuitem' for an entry in the native menu. */
-  role: string;
+  readonly role: string;
 
   /**
    * The accessible name. Never empty: an element without one is reported as a
    * finding rather than offered as a candidate, because it cannot be reliably
    * hopped to.
    */
-  name: string;
-
-  /** Whether it came from the page's accessibility tree or the native menu. */
-  source: 'page' | 'menu';
-
-  /** For a menu entry, the label path from the application menu root. */
-  menuPath?: string[];
-}
+  readonly name: string;
+} & (
+  | { readonly source: 'page' }
+  | {
+      readonly source: 'menu';
+      /**
+       * The label path from the application menu root.
+       *
+       * Required for a menu entry rather than optional across both. The rail
+       * that keeps a Route off Quit is `Exclusions.menuPaths`, and it can only
+       * match against this: a menu candidate produced without one escaped that
+       * rail silently, which is the worst direction for a guard to fail. Fixed
+       * while `survey` does not exist yet and it costs nothing.
+       */
+      readonly menuPath: readonly string[];
+    }
+);
 
 /**
  * What must never be hopped to.
@@ -68,6 +77,21 @@ export interface Exclusions {
    * replay would send every hop after it somewhere else.
    */
   exclude?(candidate: Candidate, page: Page): boolean | Promise<boolean>;
+
+  /**
+   * Whether `names` also excludes menu entries, or only page elements.
+   *
+   * Stated rather than left to be inferred. A menu entry carries a `name` like
+   * any other candidate, so a list naming "Quit Buggy" already covers it and a
+   * `menuPaths` entry for the same item adds nothing -- which is what the
+   * reference adapter used to demonstrate, leaving a copier unable to tell
+   * which of the two was doing the work.
+   *
+   * Defaults to true, matching how `names` reads. Set false where an
+   * application has a page control and a menu entry with the same label and
+   * only one of them should be excluded.
+   */
+  namesCoverMenuEntries?: boolean;
 }
 
 /**
@@ -128,21 +152,28 @@ export type UniversalCheck =
  * check is what R19 generalizes, and keeping both invites the two to disagree
  * about the same check.
  */
-export interface Narrowing {
-  /** Why this application cannot run the check as it ships. */
-  reason: string;
+export type Narrowing =
+  | {
+      /** The check does not run for this application at all. */
+      readonly kind: 'off';
+      /** Why this application cannot run the check as it ships. */
+      readonly reason: string;
+    }
+  | {
+      /** The check runs, and this application accepts some of what it sees. */
+      readonly kind: 'narrowed';
+      /** Why this application cannot run the check as it ships. */
+      readonly reason: string;
 
-  /**
-   * Omit to switch the check off entirely. Supply a predicate to keep the
-   * check and narrow what counts: return true for an observation this
-   * application considers acceptable.
-   *
-   * Must be deterministic. A Route ends at the first violation, so a verdict
-   * that cannot be reproduced would end Routes at random and make a red result
-   * not worth reading.
-   */
-  accept?(observation: string): boolean;
-}
+      /**
+       * Return true for an observation this application considers acceptable.
+       *
+       * Must be deterministic. A Route ends at the first violation, so a
+       * verdict that cannot be reproduced would end Routes at random and make a
+       * red result not worth reading.
+       */
+      accept(observation: string): boolean;
+    };
 
 export interface AppUnderTest {
   /**

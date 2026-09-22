@@ -24,27 +24,59 @@ export type LaunchPath = 'electron' | 'debugging-port';
 /**
  * Checks that cannot run under a given launch path, which is constraint C1b.
  *
- * Under the debugging-port path the external-link stub records nothing, the
- * menu offers no candidates, windows cannot be kept off the screen, and the
- * main-process half of "still responding" cannot run. Every one of those would
- * otherwise read as a check that found nothing wrong, which is the failure
- * this exists to prevent.
+ * Under the debugging-port path the external-link stub records nothing and the
+ * main-process half of "still responding" cannot run. Two further things are
+ * lost that are not checks and so cannot appear here -- the menu offers no
+ * candidates, and windows cannot be kept off the screen -- and they are
+ * reported elsewhere rather than being missing from this map. An earlier
+ * version of this comment listed all four, which invited a later reader to
+ * "fix" the map by adding two names that are not UniversalCheck values.
+ *
+ * Each entry would otherwise read as a check that found nothing wrong, which
+ * is the failure this exists to prevent.
+ *
+ * `as const` rather than a mutable Record: a consumer could otherwise assign
+ * `UNAVAILABLE_UNDER['debugging-port'] = []` and turn exactly that failure
+ * back on.
  */
-export const UNAVAILABLE_UNDER: Record<LaunchPath, readonly UniversalCheck[]> = {
+export const UNAVAILABLE_UNDER = {
   electron: [],
   'debugging-port': ['no-navigation-away', 'still-responding'],
-};
+} as const satisfies Record<LaunchPath, readonly UniversalCheck[]>;
 
-export interface LaunchedApp {
+/**
+ * A launched application, and what the way in allows it to carry.
+ *
+ * A union on the path rather than a flat record, because the two paths cannot
+ * collect the same evidence. `stderr` comes from the application's own process,
+ * which the debugging-port path never reaches: as a shared field it would be
+ * present and permanently empty there, and a check reading it could not tell
+ * "the application wrote nothing" from "this path cannot see what it wrote".
+ * That is the failure UNAVAILABLE_UNDER exists to prevent, one level below
+ * where it was stated.
+ *
+ * Absent rather than empty, so a check that needs it fails to compile instead
+ * of reading clean. Done while the second path does not exist and there are no
+ * consumers, which is the cheapest it will ever be.
+ */
+export type LaunchedApp = {
   app: ElectronApplication;
-  /** Which way in was used, and therefore what the run can claim to have checked. */
-  path: LaunchPath;
   /** What the staleness guard did, for the report (R23, C1a). */
   guard: GuardVerdict;
-  stderr: string[];
   pageErrors: Error[];
   consoleErrors: string[];
-}
+} & (
+  | {
+      /** Launched as a process, so everything the engine can collect is here. */
+      path: 'electron';
+      /** The application's own standard error. */
+      stderr: string[];
+    }
+  | {
+      /** Attached over the debugging protocol, which reaches no process. */
+      path: 'debugging-port';
+    }
+);
 
 export async function makeUserDataDir(cfg: AppUnderTest): Promise<string> {
   // productName is optional now, so the slug falls back rather than throwing on
@@ -194,7 +226,7 @@ export async function reloadRenderer(cfg: AppUnderTest, launched: LaunchedApp): 
 
   launched.pageErrors.length = 0;
   launched.consoleErrors.length = 0;
-  launched.stderr.length = 0;
+  if (launched.path === 'electron') launched.stderr.length = 0;
 
   return page;
 }
