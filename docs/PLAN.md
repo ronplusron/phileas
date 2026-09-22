@@ -16,10 +16,11 @@ They are stable and meant to be cited. Nothing else is cited by number, because
 
 ## Context
 
-Written 2026-09-21. **Nothing is built and no dependency is installed.**
-Everything below is work that has not started, and nothing in it is a report
-that something works. `../ORIENTATION.md` is the current state and is the file
-to check rather than this one.
+Written 2026-09-21, when nothing was built and no dependency was installed.
+**This document is the plan, not a status report.** A phase described below in
+the future tense may already be done: phases 0, 1 and 2 are, and where one of
+them recorded a measurement the passage says so. `../ORIENTATION.md` is the
+current state and is the file to check rather than this one.
 
 What is known and decided:
 

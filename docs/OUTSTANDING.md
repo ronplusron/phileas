@@ -15,29 +15,46 @@ accumulates is how a section grows until nobody reads it.
 **These headings are judgments.** Placing an item is a decision about what
 kind of thing it is, and worth making deliberately.
 
-`DEFECTS.md` is what is wrong. Nothing is built, so it holds no defects yet,
-only the two things most likely to be filed there by mistake.
+`DEFECTS.md` is what is wrong. It holds one entry, filed when the launch
+layer landed with a known hazard still open.
 
 ## 1. Agreed, not built
 
 ### 1.1 The engine
 
-Everything in `PLAN.md` from phase 1 on. None of it started.
+Everything in `PLAN.md` from phase 3 on. Phases 0, 1 and 2 are done and
+`HISTORY.md` records them: the toolchain, the launch layer lifted and
+hardened, and a packaged application it can launch. What is unwritten is
+everything that makes this an explorer -- seeding, traversal, the journal and
+every check.
 
-### 1.2 A testbed application with planted bugs
+### 1.2 Planted defects, and the applications still to build
 
-`testbed/` wants an application with deliberately planted faults and tests
-asserting that a Journey finds each one.
+`testbed/buggy` exists and is structurally ordinary on purpose. **No defects
+are planted in it yet**, and until they are, nothing here shows the engine
+finds anything. `PLAN.md` plants them across phases 5, 6 and 8.
+
+The siblings are also unbuilt, and each makes a different claim: a build with
+the Electron fuses disabled, a virtualized list, a canvas-backed surface, a
+dismissed widget that still takes keystrokes, a native dialog that blocks the
+main process, a splash window, an application noisy on the console, and one
+that fails only into a log. Those test that the engine copes rather than that
+it finds.
 
 **This is not an optional extra and should not be treated as a late nicety.**
 Every other test in this repository can only show that the parts behave as
 written. This is the only thing that shows the assembled engine does its job,
 and the right way to test a bug-finder is to point it at known bugs.
 
-### 1.3 Wiring a consuming repository
+### 1.3 Wiring a consuming repository in another checkout
 
-Consume the engine via a `file:` dependency rather than a registry, so imports
-take their eventual shape immediately without anything being published.
+`testbed/buggy` already consumes the engine as a `file:` dependency and
+imports it by package name, so the shape is proved. **What is not proved is
+the case that matters**, because that symlink lands back inside this
+repository: whether Playwright transpiles a package whose TypeScript source
+sits outside the consumer's own tree. Phase 9 is where that is found out, and
+the answer decides whether the engine must be built before it can be
+consumed.
 
 ## 2. Undecided
 

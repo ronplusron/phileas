@@ -28,18 +28,56 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**No defects are recorded, because nothing is built.** Writing speculative
-ones against unwritten code would make this a list of worries, and a worry
-belongs in `OUTSTANDING.md`.
+**One defect is recorded.** The launch layer landed in phase 1, so this file
+is no longer empty for the reason it used to be empty.
 
-**A hazard in code that has not been lifted here yet is neither.** It is not
-a defect, because the file is not in this repository; it is not a worry, if
-what to do about it is already decided. `PLAN.md` carries those as hazards
-and schedules the work against the phases that close them. The entry belongs
-here on the day the file lands with the hazard still open.
+**A hazard in code that has not been lifted here yet is neither a defect nor
+a worry.** It is not a defect, because the file is not in this repository; it
+is not a worry, if what to do about it is already decided. `PLAN.md` carries
+those as hazards and schedules the work against the phases that close them.
+The entry belongs here on the day the file lands with the hazard still open,
+which is how the entry below arrived.
 
-What follows is not a list of defects. It is the two things most likely to be
-filed here wrongly, and two hazards to enter the moment each becomes real.
+What follows is one defect, then the two things most likely to be filed here
+wrongly, and one hazard to enter the moment it becomes real.
+
+## The external-link stub can install successfully and do nothing
+
+**Filed 2026-09-22, when `src/external.ts` landed with the hazard still
+open.** `PLAN.md` carries the mechanism in full; the short version is that
+`stubOpenExternal` replaces `shell.openExternal` on the module object, which
+reaches the application only if the application looks the function up at call
+time. An application that captured it at startup keeps Electron's real one.
+The assignment still succeeds. A browser opens on the machine running the
+Journey, the recorder stays empty, and "no navigation away" reports clean
+because its evidence went somewhere else rather than because nothing left.
+
+**Why it is a defect and not a limit.** It produces a bad answer while every
+test passes, which is exactly what this file is for, and it is invisible from
+outside: a clean report is what both the working case and the broken case look
+like.
+
+**What is done, and what is not.** Three items were scheduled to close it.
+The install-timing measurement is done and came back negative:
+`NODE_OPTIONS=--require` does not reach a packaged Electron main process, so
+the stub cannot be installed ahead of the application's own handlers, and the
+hazard cannot be closed at its source that way. The positive control is done:
+`testbed/buggy` hops its outbound link and asserts the recorder caught it.
+**The other two are not built.** The exclusion list is hand-written rather
+than derived from source, so it goes stale silently the day an application
+adds another way out. And the independent evidence in phase 5, a check that no
+foreign process appeared, does not exist, so the recorder is still both the
+prevention and the only proof of it.
+
+**What the positive control does and does not cover.** It proves the technique
+works against one application whose `main.js` was read. Three of three
+applications measured write `shell.openExternal(url)` as a property lookup, so
+nothing found so far is affected. That is not the same as the technique being
+sound for an application nobody has read, which is the whole hazard.
+
+**This entry leaves when the exclusion list is derived and phase 5's second
+evidence source exists.** Not when the next application also turns out to be
+unaffected.
 
 ## Two things that will look like candidates, and are not
 
@@ -56,12 +94,12 @@ answer to it is an independent test oracle rather than a fix.
 
 **A green Journey against a working application is not evidence of a defect
 being absent.** It is consistent with an engine that checks nothing at all.
-Until `testbed/` holds an application with planted bugs and a Journey is
-demonstrably finding them, the absence of entries in this file carries no
-weight. An absence check needs a positive control, and this file has none
-until that example exists.
+Until `testbed/buggy` holds planted defects and a Journey is demonstrably
+finding them, this file being short carries no weight. An absence check needs
+a positive control, and the one entry above was filed by reading code rather
+than by any run discovering it.
 
-## Two hazards to record the moment each becomes real
+## One hazard to record the moment it becomes real
 
 **The oracle sharing logic with the code it judges.** It produces a bad answer
 while every test passes, which is exactly what this file is for, and it is
@@ -70,12 +108,3 @@ not an entry yet because no oracle exists. `../CLAUDE.md` carries it as a
 standing commitment so it does not get built that way in the first place, and
 if it ever is built that way, the entry belongs here rather than being
 reasoned about as a design preference.
-
-**The external-link stub installing successfully and doing nothing.** The same
-shape one level down: the recorder that stops a browser opening is also the
-only evidence that none did, so a stub that never took reports exactly like a
-Route that never left the application. It is not an entry yet because
-`external.ts` has not been lifted. `PLAN.md` has the mechanism, the
-measurement showing no application yet found is affected, and the three items
-across phases 1, 2 and 5 that close it. It becomes an entry here if the file
-lands with any of those three still missing.

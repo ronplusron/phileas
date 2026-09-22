@@ -19,9 +19,9 @@ anything a session needs in order to run the software, which belongs in
 target: its items are renumbered when neighbors close and deleted outright
 when they are settled. Name what the question was, not where it was filed.
 
-**Most of what follows is reasoning rather than shipped code**, because almost
-nothing is built. The design decisions below each cost a real argument, and
-re-deriving them would cost it again.
+**The early entries are reasoning rather than shipped code**, because for the
+first few days almost nothing was built. Those decisions each cost a real
+argument, and re-deriving them would cost it again.
 
 ---
 
