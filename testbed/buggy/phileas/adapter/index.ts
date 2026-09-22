@@ -45,17 +45,27 @@ export const buggy: AppUnderTest = {
    * Throws with the application's own message when it booted into an error
    * state, which is R24: waiting for the success marker alone would turn a
    * clear failure into a timeout that says nothing about why.
+   *
+   * **Waits for either terminal state rather than sampling one.** An earlier
+   * version waited for #status to be attached and read it once. The element
+   * ships in the static HTML, so that resolved at parse time, always read the
+   * initial value, and could never see a failure written later -- delivering
+   * the timeout R24 exists to prevent, from the code that claims to prevent it.
+   * One selector matching both terminal values is what removes the ordering
+   * from the question.
+   *
+   * A boot that never reaches either state, because the renderer script never
+   * ran at all, still ends as a timeout. That case has no message to report,
+   * so a timeout is the honest outcome rather than a missed one.
    */
   async waitForReady(page: Page): Promise<void> {
+    const settled = page.locator('#status[data-boot="ready"], #status[data-boot="failed"]');
+    await settled.waitFor({ state: 'attached', timeout: 10_000 });
+
     const status = page.locator('#status');
-    await status.waitFor({ state: 'attached', timeout: 10_000 });
-
-    const text = await status.textContent();
-    if (text?.startsWith('failed:')) {
-      throw new Error(`Buggy booted into an error state: ${text}`);
+    if ((await status.getAttribute('data-boot')) === 'failed') {
+      throw new Error(`Buggy booted into an error state: ${await status.textContent()}`);
     }
-
-    await page.locator('#items li').first().waitFor({ timeout: 10_000 });
   },
 };
 

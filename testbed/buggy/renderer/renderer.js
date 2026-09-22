@@ -41,34 +41,58 @@ function showView(view) {
   el('view-summary').setAttribute('aria-pressed', String(!inventory));
 }
 
-el('search').addEventListener('input', (event) => {
-  query = event.target.value;
-  render();
-});
+/**
+ * Report a boot failure in the application's own words.
+ *
+ * Defined before anything that can throw, and reached from both a synchronous
+ * throw during setup and a rejected items request. An earlier version installed
+ * the failure path last, as the .catch on the items promise: a throw while
+ * registering the listeners below aborted the module before that handler
+ * existed, so a broken boot presented as a page that simply never finished, and
+ * the adapter waiting on it reported a timeout saying nothing about why.
+ *
+ * Handles a non-Error rejection, which otherwise produced the message
+ * "failed: undefined" -- an error state carrying no information about itself.
+ */
+function reportBootFailure(error) {
+  const status = el('status');
+  if (!status) return;
+  status.dataset.boot = 'failed';
+  status.textContent = `failed: ${error?.message ?? String(error)}`;
+}
 
-el('clear').addEventListener('click', () => {
-  query = '';
-  el('search').value = '';
-  render();
-});
-
-el('view-inventory').addEventListener('click', () => showView('inventory'));
-el('view-summary').addEventListener('click', () => showView('summary'));
-
-window.buggy.onShowView(showView);
-
-window.buggy
-  .items()
-  .then((items) => {
-    all = items;
+try {
+  el('search').addEventListener('input', (event) => {
+    query = event.target.value;
     render();
-    // The readiness marker the adapter waits for. It says the data arrived,
-    // not merely that a window exists.
-    el('status').textContent = 'ready';
-  })
-  .catch((error) => {
-    // Fail loudly and in the application's own words. An adapter that waited
-    // for a success marker alone would turn this into a timeout, which reports
-    // as "did not appear" and says nothing about why.
-    el('status').textContent = `failed: ${error.message}`;
   });
+
+  el('clear').addEventListener('click', () => {
+    query = '';
+    el('search').value = '';
+    render();
+  });
+
+  el('view-inventory').addEventListener('click', () => showView('inventory'));
+  el('view-summary').addEventListener('click', () => showView('summary'));
+
+  // Throws when the preload bridge is missing, which is a boot failure and is
+  // now reported as one rather than aborting the module in silence.
+  window.buggy.onShowView(showView);
+
+  window.buggy
+    .items()
+    .then((items) => {
+      all = items;
+      render();
+      // Set after render, so the marker means the data arrived and is on the
+      // screen. That is what lets the adapter stop here rather than waiting for
+      // a list item, which would never appear for an empty inventory.
+      const status = el('status');
+      status.dataset.boot = 'ready';
+      status.textContent = 'Ready';
+    })
+    .catch(reportBootFailure);
+} catch (error) {
+  reportBootFailure(error);
+}

@@ -44,8 +44,11 @@ function createWindow() {
     return { action: 'deny' };
   });
 
+  // Electron does not emit will-navigate for in-page navigation -- an anchor
+  // link or a hash change -- so there is nothing here to let through. A guard
+  // for that case was removed in review: it could never fire, and had it fired
+  // it would have swallowed the navigation silently.
   win.webContents.on('will-navigate', (event, url) => {
-    if (url === win.webContents.getURL()) return; // in-page anchor
     event.preventDefault();
     openExternally(url);
   });
@@ -53,7 +56,23 @@ function createWindow() {
   return win;
 }
 
-ipcMain.handle('items:all', () => items);
+// A deliberate fault-injection switch. It exists so that a test can drive a
+// real boot failure through the application's own path, rather than writing the
+// failure marker in by hand and proving only that string comparison works.
+const failItems = process.argv.includes('--buggy-fail-items');
+
+ipcMain.handle('items:all', async () => {
+  if (failItems) {
+    // The delay is the point, not padding. A failure that lands before anything
+    // looks is caught even by an adapter that samples the marker once, so a test
+    // built on an instant failure passes against a broken adapter and proves
+    // nothing -- measured, not assumed. Real boot failures arrive after a wait,
+    // and this reproduces that ordering.
+    await new Promise((resolve) => setTimeout(resolve, 750));
+    throw new Error('the trunk could not be opened');
+  }
+  return items;
+});
 
 function buildMenu() {
   // Quit lives here on purpose: the exclusion list exists for exactly this,

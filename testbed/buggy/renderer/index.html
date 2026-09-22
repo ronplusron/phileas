@@ -40,7 +40,13 @@
       </section>
     </main>
 
-    <p id="status" role="status">ready</p>
+    <!--
+      The boot state, as an attribute with three named values rather than as
+      text. Shipping it as "ready" would make "not booted yet" and "booted
+      successfully" identical to anything reading it, which is how an adapter
+      comes to miss a failure it is watching for.
+    -->
+    <p id="status" role="status" data-boot="pending">Starting</p>
 
     <script src="renderer.js"></script>
   </body>

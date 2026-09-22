@@ -73,20 +73,38 @@ test('it refuses a stale bundle, naming the file that differs', async () => {
   expect(assertBundleFresh(buggy, bundle.asarPath).ran).toBe(true);
 });
 
-test('a broken readiness hook reports the application own message, not a timeout', async () => {
+test("a real boot failure reports the application's own message, not a timeout", async () => {
+  // The application is told to fail its own items request, and everything after
+  // that is its own code path: the handler throws, the renderer's catch writes
+  // the marker, and the adapter reads it.
+  //
+  // The earlier version of this test set the marker itself with page.evaluate,
+  // after a successful boot. It passed against an adapter that could never see
+  // a real failure, because it supplied the state it was checking for. R24 is
+  // about the ordering a real boot produces, so the test has to produce one.
+  const failing: AppUnderTest = { ...buggy, launchArgs: ['--buggy-fail-items'] };
+
+  await withApp(failing, async (launched) => {
+    const page = await launched.app.firstWindow();
+
+    const started = Date.now();
+    await expect(failing.waitForReady(page)).rejects.toThrow(/the trunk could not be opened/);
+
+    // It reported rather than waited. Without this the test would also pass on
+    // an adapter that timed out and happened to mention the right text, which
+    // is the distinction R24 is entirely about.
+    expect(Date.now() - started).toBeLessThan(5_000);
+  });
+});
+
+test('a healthy boot reaches the ready state, not merely an attached marker', async () => {
+  // The positive control for the test above. An adapter that always threw would
+  // satisfy that one, and this is what says the two outcomes differ.
   await withApp(buggy, async (launched) => {
     const page = await launched.app.firstWindow();
     await buggy.waitForReady(page);
 
-    // Drive the application into the error state its own code reports, then
-    // check the adapter throws with that text rather than waiting. R24 exists
-    // because a timeout says "did not appear" and nothing about why.
-    await page.evaluate(() => {
-      const status = document.getElementById('status');
-      if (status) status.textContent = 'failed: the trunk could not be opened';
-    });
-
-    await expect(buggy.waitForReady(page)).rejects.toThrow(/the trunk could not be opened/);
+    await expect(page.locator('#status')).toHaveAttribute('data-boot', 'ready');
   });
 });
 
