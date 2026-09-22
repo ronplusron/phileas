@@ -25,6 +25,101 @@ re-deriving them would cost it again.
 
 ---
 
+## 2026-09-21: the three questions gating phase 1, settled against real builds
+
+All three were answered by measuring the two confirmed consumers and reading
+the kit, rather than by reasoning from the documents. `OUTSTANDING.md` lost the
+section that held them.
+
+### How much `AppUnderTest` carries: all six members, every one optional
+
+The plan had filed six missing members as the measure of what the two large
+external candidates would additionally need. Measuring the confirmed consumers
+moved two of them forward and added a seventh problem.
+
+**Environment variables have a confirmed consumer today.** `editor`'s own
+suite launches with `EDITOR_HEADLESS=1` and cannot run hermetically without
+it. The interface has only `launchArgs`.
+
+**Page selection is not an additive field.** It changes `waitForReady(page)`'s
+contract, because the engine has to choose a page before it can call it.
+Adding it later rewrites every adapter that exists by then, which is the
+reason the whole set goes in now while no adapter exists at all. The other
+four cost a few lines either way.
+
+**`productName` is required and is wrong.** Its comment says it must match
+`productName` in package.json. `editor` has no such field: the name lives in
+`electron-builder.yml`. Its adapter would have to invent a value to feed two
+derivations -- the dist directory and the executable name -- that are wrong
+for it regardless. It stops being required and stops being the source for
+either.
+
+**Both bundle layouts were confirmed against built output**, not read from a
+configuration file. `613-mitzvot` produces
+`dist/613 Mitzvot-darwin-arm64/Mitzvot.app`, where the directory matches the
+lifted default and the bundle does not, because `scripts/postbuild.sh` renames
+it. `editor` produces `dist/mac-arm64/Bobolink Editor.app`, matching in
+neither part. `bundleDir` is day one for both.
+
+### Deployment shape: the second, and the guard's members group together
+
+Default to adapters in a repository of your own, pointed at a checkout you
+build. It is the only shape available for every candidate without anyone's
+permission, and it keeps the staleness guard working. Approaching an external
+project to accept a phileas directory is a conversation worth having after the
+engine has found something.
+
+The consequence for the interface came from reading what `repoRoot` actually
+does, which is three separate jobs, two of them already being removed. It is
+the base for the default bundle path, which `bundleDir` overrides on day one
+for both consumers. It is the source-mode launch target, and source mode is
+not carried over. And it is the base the staleness guard resolves
+`packagedInputs` against, which is the only surviving job and is exactly what
+C1a says is absent under the third shape.
+
+So the three guard-only members become one optional object, named for the
+checkout it points at. Absent means the guard cannot run and the run says so,
+which turns C1a from a rule in prose into a property of the type and makes a
+half-configured guard unrepresentable. Neither confirmed consumer has an
+adapter yet, so the restructuring costs no migration.
+
+### The three unplaced files are all engine, and one carries a hazard
+
+`external.ts` and `menu.ts` were read rather than reasoned about: both import
+nothing but Playwright's Electron types and hold no selector, view name or
+other application knowledge. `menu.ts` earns its place on the argument already
+in `../CLAUDE.md` -- the exclusion list exists for things like Quit, Quit is a
+menu item, and an exclusion list naming one is meaningless unless traversal can
+reach the menu. `editor`'s own suite reads `Menu.getApplicationMenu()` the same
+way.
+
+`fixtures.ts` is engine too, but "lifted, reshaped" understates it. Worker
+launch becomes per-Route relaunch, the `page` fixture becomes the Route
+fixture, `failOnPageError` dissolves into R19, and `freshApp` becomes the
+default path. Almost every line changes, so phase 1's move-unchanged-first step
+buys least there.
+
+**Reading `external.ts` found a way for it to fail silently**, and `PLAN.md`
+carries it as a hazard with the work that closes it scheduled across phases 1,
+2 and 5. The stub reaches the application only because the application looks
+`openExternal` up on the `shell` object at click time. An application that
+captured the function at startup instead would keep Electron's real one, the
+assignment would still succeed, a browser would open, and the recorder would
+stay empty -- so "no navigation away" reports clean because its evidence went
+somewhere else rather than because nothing left.
+
+Measured before recording it: `trickster-tales:110`, `613-mitzvot/main.js:39`
+and `editor/src/main/index.ts:55` all write `shell.openExternal(url)`. Three
+of three are unaffected, so the technique is not broken. What is wrong is that
+`external.ts` justifies itself by reading one `main.js`, and lifting it into a
+framework carries that justification to applications nobody has read.
+
+**The general rule it produced:** prevention and detection must not share
+their evidence. The recorder was both the mechanism stopping a browser opening
+and the only proof that none did. That is `../CLAUDE.md`'s oracle trap one
+level down -- there a check must not share logic with what it judges, here it
+must not share its evidence source.
+
 ## 2026-09-21: phase 0, and the first thing in this repository that runs
 
 Four dependencies and one empty file. `npm run typecheck` passes, which

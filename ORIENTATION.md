@@ -45,16 +45,16 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: ten phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 1 is the next thing to do, and one question sits in front of it.**
-It lifts seven files out of `trickster-tales` and hardens `AppUnderTest`
-around them, and what the interface has to carry is the question
-`docs/OUTSTANDING.md` holds. The hardening is where that answer becomes
-permanent, so it is worth settling rather than guessing past.
+**Phase 1 is the next thing to do, and nothing is gating it.** It lifts seven
+files out of `trickster-tales` and hardens `AppUnderTest` around them. The
+three questions that used to sit in front of it -- what the interface carries,
+which deployment shape applies, and where three of the seven files belong --
+were settled on 2026-09-21 against the two confirmed consumers' real builds.
+`docs/HISTORY.md` has each with its measurement, and `docs/PLAN.md` phase 1 is
+the work.
 
-`docs/OUTSTANDING.md` holds what is open. Its section 1 gates phase 1 rather
-than phase 0: how much `AppUnderTest` has to carry now the consumers are
-known, which deployment shape each consumer uses, and whether the plan's
-proposed homes for three lifted files are accepted.
+`docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
+opinion.
 
 **Two research readings are recorded in `docs/HISTORY.md` and worth knowing
 before designing anything.** Discovery by accessibility role was measured

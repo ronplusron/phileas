@@ -130,39 +130,44 @@ Move the seven files under `src/` unchanged first, so the diff against their
 origin is a rename and every later change is visible as a change. Then three
 placements and one hardening pass.
 
-Three of the seven have no recorded home; `OUTSTANDING.md` holds the question.
-**These are the plan's positions, with reasons, and the question stays open
-there until they are accepted:**
+Three of the seven had no recorded home. **All three are engine, accepted
+2026-09-21 after reading them rather than reasoning about them.** `external.ts`
+and `menu.ts` import nothing but Playwright's Electron types and hold no
+selector, view name or other application knowledge.
 
-- `external.ts` is engine. It stubs Electron's own `shell.openExternal` in the
-  main process and records what would have opened. Nothing in it knows the
-  application. It makes an outbound link safe to hop and detectable when
-  hopped, which serves R17's "no navigation away" from the main-process side,
-  alongside the exclusion list.
-- `menu.ts` is engine, and becomes a second candidate source for `survey`. The
-  reason is `../CLAUDE.md`'s own example: the exclusion list exists for things
-  like Quit, and Quit is a menu item. An exclusion list naming a menu item only
-  makes sense if the traversal can reach the menu. Menu items live in the main
+- `external.ts` stubs Electron's own `shell.openExternal` in the main process
+  and records what would have opened. It makes an outbound link safe to hop
+  and detectable when hopped, which serves R17's "no navigation away" from the
+  main-process side, alongside the exclusion list. **It also carries a way to
+  fail silently, which the hazards below state and which three items in this
+  phase, phase 2 and phase 5 exist to close.**
+- `menu.ts` becomes a second candidate source for `survey`. The reason is
+  `../CLAUDE.md`'s own example: the exclusion list exists for things like Quit,
+  and Quit is a menu item. An exclusion list naming a menu item only makes
+  sense if the traversal can reach the menu. Menu items live in the main
   process and never appear in the page's accessibility tree, so `survey` by
-  role alone would never see them.
-- `fixtures.ts` is engine and is the file that changes shape most. Today it
-  launches once per worker and resets before each test. Under the
-  Route-is-the-test mapping it becomes the Route fixture: Fix as `beforeEach`,
-  the Route's own verdict, trace and timeout. Its existing fixture that gives a
-  test a process of its own is the per-Route relaunch path used in phase 5.
+  role alone would never see them. `editor`'s own suite reads the menu the
+  same way, through `Menu.getApplicationMenu()`.
+- `fixtures.ts` changes shape most, and "lifted, reshaped" understates it:
+  worker-scoped launch becomes per-Route relaunch, the `page` fixture becomes
+  the Route fixture, `failOnPageError` dissolves into R19, and `freshApp`
+  becomes the default path. Almost every line changes, so the move-unchanged
+  step above buys least here. Under the Route-is-the-test mapping it carries
+  Fix as `beforeEach` and the Route's own verdict, trace and timeout.
 
-**The consumers are known, and what is in front of this phase is the question
-they leave behind: how much the interface has to carry.** `HISTORY.md` records
-them. Two small Electron applications under the same ownership justify a narrow
-`AppUnderTest`, and two large external candidates, both already driving
-themselves with Playwright, justify a broader one. `OUTSTANDING.md` holds the
-question and says why the answer belongs here rather than in the phase that
-eventually wires a second repository up.
+**How much the interface has to carry was settled on 2026-09-21: all six
+members below, every one of them optional.** `HISTORY.md` records the decision
+and what was measured to reach it. The hardening is where that becomes
+permanent, and every later phase builds on it.
 
-The hardening below is where the answer becomes permanent, and every later
-phase builds on it. Harden for the two confirmed consumers, and read the six
-members below as the measure of what the external pair would additionally
-need, since that is where they came from.
+Two of the six carried the decision on their own. Environment variables have a
+confirmed consumer today rather than only the external pair: `editor`'s own
+suite cannot launch hermetically without one. And page selection changes
+`waitForReady(page)`'s contract rather than adding a field, since the engine
+must choose a page before it can call it, so retrofitting it rewrites every
+adapter that exists by then. The other four are cheap either way, and shutdown
+and stray-process cleanup both carry more once phase 5 makes relaunch-per-Route
+the default.
 
 Hardening `AppUnderTest`:
 
@@ -170,7 +175,11 @@ Hardening `AppUnderTest`:
   lifted interface has nothing for it. Where the application's source is
   available, prefer deriving the list from it and checking it, rather than
   writing it out by hand: a hand-written list goes stale the day upstream adds
-  another way out of the application, and does so silently.
+  another way out of the application, and does so silently. **Outbound links
+  are part of what it derives, not only ways to quit.** The exclusion list is
+  the primary defense against a Route leaving the application; the
+  `external.ts` stub is the net under it, and the hazards below say why a net
+  is not enough on its own.
 - Fold the per-application flag for whether an uncaught renderer exception
   fails the test into R19's general narrowing. A special-case field for one
   check is what R19 generalizes, and keeping both invites them to disagree.
@@ -184,42 +193,60 @@ Hardening `AppUnderTest`:
   message rather than wait for a success marker, is R24 already written down.
   Keep the comment; it is the reason a future implementer would otherwise
   remove.
-- **Six members the interface cannot express, found by reading a real
-  fixture for a real application.** `HISTORY.md` records where they came from.
-  Environment variables, because almost everything an application needs to run
-  hermetically arrives that way rather than as flags, and the interface has
-  only `launchArgs`. Page *selection*, because `waitForReady(page)` presumes
-  the engine already picked the right one and an application with a splash has
-  more than one. A pre-launch hook to seed settings, since several settings
-  decide whether automation is possible at all. An application-specific
-  shutdown, because closing a debugging connection does not terminate the
-  process. Where the application writes its logs, since a failure can be
-  invisible on screen and present in a log. And how to recognize the
-  application's own stray processes for cleanup.
+- **Add the six members the interface cannot express, all optional.** Found by
+  reading a real fixture for a real application, and `HISTORY.md` records where
+  they came from. Environment variables, because almost everything an
+  application needs to run hermetically arrives that way rather than as flags,
+  and the interface has only `launchArgs`. Page *selection*, because
+  `waitForReady(page)` presumes the engine already picked the right one and an
+  application with a splash has more than one. A pre-launch hook to seed
+  settings, since several settings decide whether automation is possible at
+  all. An application-specific shutdown, because closing a debugging connection
+  does not terminate the process. Where the application writes its logs, since
+  a failure can be invisible on screen and present in a log. And how to
+  recognize the application's own stray processes for cleanup, which phase 5
+  reads a second time for evidence the `external.ts` stub cannot supply.
+- **`productName` stops being the source for both derivations, and stops being
+  required.** The lifted field is required, and its comment says it must match
+  `productName` in package.json. `editor` has no such field: its name lives in
+  `electron-builder.yml`, so its adapter would be inventing a value to feed two
+  derivations that are wrong for it anyway. The bundle path comes from
+  `bundleDir` and the executable name is read from the bundle rather than
+  assumed from a product name.
 - **`bundleDir` is needed on day one, not as an escape hatch.** The lifted
   default expects `dist/<productName>-darwin-arm64/<productName>.app`. Neither
-  confirmed consumer matches it: one builds a directory named for its product
-  but a bundle named something shorter, and the other declares no product name
-  at all and uses a different packager's layout entirely. Two consumers, two
-  layouts, neither the default. Treat the default as a convenience for one
-  packager rather than as the shape.
+  confirmed consumer matches it, confirmed against both built bundles on
+  2026-09-21: `613-mitzvot` packages to
+  `dist/613 Mitzvot-darwin-arm64/Mitzvot.app`, where the directory matches and
+  the bundle does not, and `editor` packages to
+  `dist/mac-arm64/Bobolink Editor.app`, which matches in neither part. Two
+  consumers, two layouts, neither the default. Treat the default as a
+  convenience for one packager rather than as the shape.
 - **The exclusion list may have to be conditional rather than flat.** A real
   application had six ways to quit, three of which are not buttons, and one
   that is harmless many times and fatal once: the shortcut closing an editor
   tab closes the application when no tabs remain. A list of names cannot
   express that. Decide here whether an exclusion is a name or a predicate.
-- **`repoRoot` assumes the adapter lives in the application's own repository,
-  and it will not always.** `../CLAUDE.md` records three deployment shapes.
-  Under the second, the path points at a checkout you built rather than the
-  application's own tree; under the third there is no such path at all. Decide
-  here whether the field becomes optional, is renamed for what it actually
-  points at, or splits from whatever the staleness guard needs, because every
-  later phase builds on whichever answer this phase gives. The default is the
-  second shape: it is the only one available for every candidate without
-  anyone's permission and it keeps the staleness guard working, and
-  `OUTSTANDING.md` has the reasoning. So the field points at a checkout, which
-  for the two confirmed consumers happens to be the application's own
-  repository, and it is absent only under the third shape, which is C1a.
+- **`repoRoot` goes, and the staleness guard's three members become one
+  optional object.** Settled 2026-09-21, with the second deployment shape as
+  the default: it is the only one available for every candidate without
+  anyone's permission and it keeps the guard working. `HISTORY.md` has the
+  reasoning and `../CLAUDE.md` records all three shapes.
+
+  The field did three jobs in the lifted code and two of them are already
+  being removed. It was the base for the default bundle path, which dies the
+  moment `bundleDir` is set, and `bundleDir` is now day one for both consumers.
+  It was the source-mode launch target, and source mode is not carried over.
+  What survives is the guard resolving `packagedInputs` against a checkout,
+  which is exactly what C1a says is absent under the third shape.
+
+  So the three guard-only members -- the checkout path, `packagedInputs` and
+  `ignoreInput` -- move into one optional object, and the checkout path is
+  named for what it points at rather than for a repository root. Absent means
+  no sources, which means the guard cannot run and the run says so. That makes
+  C1a a property of the type rather than a rule in prose, and it makes a
+  half-configured guard unrepresentable. Neither confirmed consumer has an
+  adapter yet, so this costs no migration.
 
 **`launch.ts` needs a second way in, and it is a fallback rather than the
 default.** `HISTORY.md` records that one build in four refuses Playwright's own
@@ -237,6 +264,17 @@ lands in this phase or waits for the first consumer that needs it; if it
 lands here, the example application in phase 2 needs a second variant with
 the fuses disabled, so the path can be verified in this repository rather
 than against somebody else's build.
+
+**Measure whether the `external.ts` stub can be installed before the
+application's main script runs, rather than assuming either answer.** The
+lifted code installs it at `launch.ts:92`, which is after Playwright's launch
+resolves and therefore after the application has already wired up its own
+handlers. Installing earlier would close the hazard below at its source
+instead of netting it, because a handler that captured the function rather
+than the object would capture the recorder. Electron restricts what can be
+injected into a packaged application's main process, and the current answer
+is not known here: it is a measurement this phase takes, and a finding either
+way is worth recording.
 
 Boundary: bookkeeping. The typecheck passes; nothing can run, because there is
 nothing to launch.
@@ -261,6 +299,14 @@ ships. That last one is what gives the specified oracle in phase 6 a source of
 truth to compute its own answer from, and `HISTORY.md` records, of a candidate
 that lacks one, that it is the hardest thing to retrofit into an application
 later.
+
+**The outbound link earns a positive control here, not just a planted defect
+in phase 5.** Hop it deliberately and assert two things: that the recorder
+caught the URL, and that no browser process appeared. That proves the
+`external.ts` technique against an application other than the one it was
+written inside, which is the whole of the hazard below. An absence check needs
+a positive control, and until this test exists an empty recorder is
+indistinguishable from a stub that never took.
 
 The example needs `electron` and a packager as its own dev dependencies. Which
 packager is not decided. The constraints on it: the output must match the
@@ -400,7 +446,16 @@ field and nothing else about it changes.
 - Window still showing content: needs a definition, and the definition is a
   hazard below.
 - No navigation away: the page's URL is still the application's, and
-  `external.ts` recorded nothing.
+  `external.ts` recorded nothing. **That second half needs evidence of its
+  own, and this is where it gets it.** The recorder is both the mechanism that
+  stops a browser opening and the only proof that none did, so one silent
+  failure takes out the prevention and the detection together. Add a second
+  source that does not depend on the stub having worked: no foreign
+  application process appeared since the last hop, read through the
+  stray-process member phase 1 adds to the interface. It runs after every hop,
+  so measure what it costs before adopting it, and expect it to be
+  macOS-shaped work first. Do not delete it later as redundant with the
+  recorder; the hazards below say why it is not.
 - No unexpected dialog: renderer dialogs through Playwright's dialog event.
   Native main-process dialogs are a hazard below.
 - A readable name on every visible control: this comes from the survey itself.
@@ -574,10 +629,9 @@ exactly. This phase repeats a shape phase 2 already proved.
 
 The repository is the confirmed consumer that already has an interface to
 travel through; the second follows once its own migration gives it one.
-`HISTORY.md` names both. What `OUTSTANDING.md` still holds about consumers is
-upstream of this phase and does its real damage in phase 1, which is where it
-is stated; by the time this phase runs, the interface it affects has already
-been hardened one way or the other.
+`HISTORY.md` names both, and records the deployment shape settled for them.
+Nothing about consumers is open by the time this phase runs: the interface was
+hardened in phase 1, which is where that question did its real work.
 
 What the first real adapter discovers about the seam goes back into
 `AppUnderTest`. `HISTORY.md` records that the second adapter is what finds
@@ -685,6 +739,30 @@ offers nothing, windows cannot be kept off the screen, and the main-process
 half of "still responding" cannot run. Every one of those reads as a check
 that found nothing wrong. `HISTORY.md` records what is lost and phase 1 says
 what the launch layer and the report have to state about it.
+
+**The external-link stub can install successfully and do nothing.** It
+replaces `shell.openExternal` on the object Electron exports. That reaches the
+application only because the application looks the function up on that object
+at click time, which is what `trickster-tales` does: `main.js:1` destructures
+`shell` out of the module, and `main.js:110` calls `shell.openExternal(url)`
+inside the helper both its link handlers go through. Had that helper captured
+the function instead --
+`const { openExternal } = shell` at startup, then `openExternal(url)` -- the
+assignment would still succeed, the handler would still call Electron's real
+one, and a browser would open on the machine running the Journey. The recorder
+stays empty, so "no navigation away" reports clean: not because nothing
+navigated, but because the evidence went somewhere else. On an unattended run
+that breaks C5 silently -- every route green, and a browser window per hop
+left on the machine.
+
+Measured on 2026-09-21: `trickster-tales:110`, `613-mitzvot/main.js:39` and
+`editor/src/main/index.ts:55` all write `shell.openExternal(url)`, so three
+applications out of three are unaffected today. The hazard is not that the
+technique is broken. It is that `external.ts` justifies itself by reading one
+`main.js`, and lifting the file into a framework carries that justification to
+applications nobody has read. Three items close it: the derived exclusion list
+and the install-timing measurement in phase 1, the positive control in phase 2,
+and the independent evidence in phase 5.
 
 **Source mode bypasses the staleness guard.** The lifted launch can run the
 working tree instead of the packaged build, for an inner loop where

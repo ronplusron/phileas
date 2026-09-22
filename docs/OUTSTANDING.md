@@ -1,8 +1,12 @@
 # Phileas -- what is outstanding
 
 Everything not settled that is not itself a defect: what is agreed and
-unbuilt, what waits on a person, what nobody has decided, and what was
-declined.
+unbuilt, what nobody has decided, and what was declined.
+
+**Nothing currently waits on an opinion**, so there is no section for it.
+The three questions that gated phase 1 were settled on 2026-09-21, and
+`HISTORY.md` records each with the measurement behind it. A section comes
+back when something needs one.
 
 **An item leaves this file when it closes.** It is not marked done and it is
 not kept for the record, because `HISTORY.md` is the record. A file that only
@@ -14,73 +18,13 @@ kind of thing it is, and worth making deliberately.
 `DEFECTS.md` is what is wrong. Nothing is built, so it holds no defects yet,
 only the two things most likely to be filed there by mistake.
 
-## 1. Settle before building on them
+## 1. Agreed, not built
 
-### 1.1 How much the interface has to carry, now that the consumers are known
-
-The consumers were settled on 2026-09-21 and `HISTORY.md` records them and the
-reasoning. What stays open is the consequence: two small Electron applications
-under the same ownership justify a narrow `AppUnderTest`, and two very large
-external ones justify a broader one. The answer lands in the phase that hardens
-the interface, and every later phase builds on it.
-
-The large candidates pull hardest. Both already run Playwright, so adoption is
-cheap, but their surfaces are hostile in opposite directions. **That
-measurement has since been taken against both**, and `HISTORY.md` has it: the
-first gives discovery by role considerably more than feared, and the limit is
-rendering technique rather than a generated interface. So only half of the
-worry survives, and it is the second half -- an application offering more
-candidates than a hop budget can visit, changing underfoot between one survey
-and the next. Neither half is a reason to narrow the interface.
-
-### 1.2 Which deployment shape each candidate consumer uses
-
-`../CLAUDE.md` records three shapes: adapters in the application's own
-repository, adapters in a repository of your own pointed at a source checkout
-you build, or adapters pointed at an installed binary. The first is cheapest
-and the third is the most limited, since the staleness guard cannot run there.
-
-For the applications under your own ownership the first shape applies and
-nothing is open. For the two large external candidates it is genuinely
-undecided, and the answer is not entirely yours: their maintainers may accept
-a directory upstream, which would make the first shape available. If they do
-not, both are public repositories that can be cloned and built, so the second
-shape is always available as a fallback and no candidate is forced into the
-third.
-
-**The plan's position is to default to the second shape and not wait on this.**
-It is the only one available for every candidate without anyone's permission,
-it keeps the staleness guard working, and it makes the first shape an upgrade
-to be earned rather than a decision to be made now. Asking an external project
-to accept a phileas directory is a conversation better had after the engine
-has found something than before it exists.
-
-Nothing in phases 0 through 8 depends on the answer, since the example
-application lives inside this repository. One concrete consequence does land
-earlier, in the phase that hardens the interface: `repoRoot` assumes the first
-shape, and `PLAN.md` carries it there.
-
-### 1.3 Whether the proposed homes for three lifted files are accepted
-
-The kit that becomes `src/` has 7 files. Four had an obvious home from the
-start. The other three -- fixtures, menu handling and external-link handling
--- did not, and `PLAN.md` phase 1 now proposes one for each with its
-reasoning, so the question here is no longer where they go but whether those
-positions are accepted.
-
-Each is a decision rather than an improvisation at the moment it is moved:
-part of the engine, part of what a consuming adapter supplies, or dropped.
-Menu handling in particular may be generic traversal machinery or may be
-application-specific, and guessing wrong puts app knowledge inside the engine,
-which is the thing the framework reading exists to prevent.
-
-## 2. Agreed, not built
-
-### 2.1 The engine
+### 1.1 The engine
 
 Everything in `PLAN.md` from phase 1 on. None of it started.
 
-### 2.2 An example application with planted bugs
+### 1.2 An example application with planted bugs
 
 `examples/` wants an application with deliberately planted faults and tests
 asserting that a Journey finds each one.
@@ -90,19 +34,19 @@ Every other test in this repository can only show that the parts behave as
 written. This is the only thing that shows the assembled engine does its job,
 and the right way to test a bug-finder is to point it at known bugs.
 
-### 2.3 Wiring a consuming repository
+### 1.3 Wiring a consuming repository
 
 Consume the engine via a `file:` dependency rather than a registry, so imports
 take their eventual shape immediately without anything being published.
 
-## 3. Undecided
+## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
 journals are kept, what happens when one defect is found on several
 routes -- are in `PRODUCT_REQUIREMENTS.md` under Open questions, and are not
 repeated here.
 
-### 3.1 A language model, deferred rather than undecided
+### 2.1 A language model, deferred rather than undecided
 
 Not in this version, and wanted eventually. `PRODUCT_REQUIREMENTS.md` states it
 as a non-goal of this version. This entry exists to keep the seams honest in
@@ -140,7 +84,7 @@ routes at random and a red result would stop being worth reading. If a model
 ever judges, it is a separate tier with its own reporting, never mixed with the
 deterministic ones.
 
-### 3.2 Publishing, deferred with an expiry that nothing currently watches
+### 2.2 Publishing, deferred with an expiry that nothing currently watches
 
 Private for now, and publishing is wanted eventually.
 `PRODUCT_REQUIREMENTS.md` carries this as a constraint and marks it inferred
@@ -169,7 +113,7 @@ nobody has asked yet, rather than of a date.
 `@drugstoresushi/phileas` and versioned, so the decision is about whether to
 publish rather than about how the package would be identified.
 
-### 3.3 Wager, as a name for the terms of a Journey
+### 2.3 Wager, as a name for the terms of a Journey
 
 Proposed, then parked rather than rejected, on an explicit request to hold on
 to it in case it proves useful. It failed a use-it-in-a-sentence test: "a
@@ -180,9 +124,9 @@ Kept here rather than under Declined because parking it was deliberate. If
 the terms of a Journey ever need a collective noun, this is the candidate
 already considered.
 
-## 4. Declined
+## 3. Declined
 
-### 4.1 Planner-assigned route bias
+### 3.1 Planner-assigned route bias
 
 Declined 2026-09-20, for two reasons. It is interference rather than learning,
 since nothing has run when the bias is assigned, which makes it stratified
@@ -197,7 +141,7 @@ overlap.
 planner stays a for-loop. If it starts deciding what gets explored rather than
 how many Routes there are, this decision has been reversed under another name.
 
-### 4.2 A per-application enumeration of controls
+### 3.2 A per-application enumeration of controls
 
 Declined as the basis for discovery. An adapter listing every control would be
 more precise than discovery by accessibility role, and would stop this being a
@@ -207,13 +151,13 @@ Not declined: the adapter-supplied exclusion list of things that must never be
 hopped to, such as Quit and outbound links. That is a safety rail, not a map,
 and it stays.
 
-### 4.3 The name Fogg
+### 3.3 The name Fogg
 
 Declined 2026-09-20 in favor of Phileas. "Fog" reads as obscurity, wrong for a
 tool built to reveal things, and "Fogg" invites the one-g misspelling on every
 install.
 
-### 4.4 The directory names `kit` and `app`
+### 3.4 The directory names `kit` and `app`
 
 Declined 2026-09-20. Both non-standard, and `app` actively harmful because it
 collides with "the application" -- it caused a real misreading during the
