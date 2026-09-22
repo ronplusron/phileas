@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test, expect, type Page } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import { launchApp, closeApp, makeUserDataDir, menuLabels, clickMenuItem } from '../src/index';
@@ -28,8 +29,12 @@ import type { AppUnderTest } from '../src/index';
  * edits the file by mistake.
  */
 
+// fileURLToPath rather than reading .pathname, which stays percent-encoded: a
+// repository under a directory with a space in its name becomes Present%20
+// Folders and every read fails. It passed in a worktree whose path had no
+// spaces and failed the moment it reached the real checkout.
 const dataFile = path.join(
-  path.dirname(new URL(import.meta.url).pathname),
+  path.dirname(fileURLToPath(import.meta.url)),
   '..',
   'testbed',
   'buggy',

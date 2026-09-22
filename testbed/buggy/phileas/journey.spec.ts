@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 import { deriveRouteStreams, requireSeed, routeIndices } from '@drugstoresushi/phileas';
 import { exploration } from './journeys/exploration';
@@ -48,7 +49,9 @@ for (const routeIndex of routeIndices(exploration)) {
     // a pure function to itself. Measured rather than argued -- replacing
     // requireSeed's return with a freshly generated seed left every Route green
     // and every Route reporting a seed that retraced nothing.
-    const here = path.dirname(new URL(import.meta.url).pathname);
+    // fileURLToPath, not .pathname: the latter stays percent-encoded and breaks
+    // on any repository path containing a space.
+    const here = path.dirname(fileURLToPath(import.meta.url));
     expect(journeySeed).toBe(fs.readFileSync(seedRecordPath(here), 'utf8'));
 
     // And this Route's seed is its own. A derivation that ignored the index
