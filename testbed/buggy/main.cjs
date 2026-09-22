@@ -74,6 +74,24 @@ ipcMain.handle('items:all', async () => {
   return items;
 });
 
+/**
+ * Send a view change to a window, falling back when none is focused.
+ *
+ * Electron hands a menu click the FOCUSED window, and an automated run has no
+ * focused window: the application is not frontmost, and this engine keeps its
+ * windows off the screen on purpose. The original handler was
+ * `win?.webContents.send(...)`, so under automation the optional chain turned
+ * every menu click into nothing at all. The menu rendered, the click succeeded,
+ * and the application did not move.
+ *
+ * Falling back to the first window is what a real application should do here
+ * too, and it is why this is a fix rather than a test accommodation.
+ */
+function showViewIn(win, view) {
+  const target = win ?? BrowserWindow.getAllWindows()[0];
+  target?.webContents.send('view:show', view);
+}
+
 function buildMenu() {
   // Quit lives here on purpose: the exclusion list exists for exactly this,
   // and an exclusion naming a menu item is meaningless unless the traversal
@@ -99,8 +117,8 @@ function buildMenu() {
     {
       label: 'View',
       submenu: [
-        { label: 'Show Inventory', click: (_item, win) => win?.webContents.send('view:show', 'inventory') },
-        { label: 'Show Summary', click: (_item, win) => win?.webContents.send('view:show', 'summary') },
+        { label: 'Show Inventory', click: (_item, win) => showViewIn(win, 'inventory') },
+        { label: 'Show Summary', click: (_item, win) => showViewIn(win, 'summary') },
       ],
     },
   ];
