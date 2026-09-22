@@ -324,7 +324,7 @@ written inside, which is the whole of the hazard below. An absence check needs
 a positive control, and until this test exists an empty recorder is
 indistinguishable from a stub that never took.
 
-The example has `electron` and `@electron/packager` as its own dev
+The testbed application has `electron` and `@electron/packager` as its own dev
 dependencies. The packager was chosen 2026-09-22 for being the smallest thing
 that produces a real bundle: one command, no configuration file, and an
 `app.asar` by default, which the guard requires because it reads the archive
@@ -793,9 +793,11 @@ Measured on 2026-09-21: `trickster-tales:110`, `613-mitzvot/main.js:39` and
 applications out of three are unaffected today. The hazard is not that the
 technique is broken. It is that `external.ts` justifies itself by reading one
 `main.js`, and lifting the file into a framework carries that justification to
-applications nobody has read. Three items close it: the derived exclusion list
-and the install-timing measurement in phase 1, the positive control in phase 2,
-and the independent evidence in phase 5.
+applications nobody has read. Four items were scheduled against it: the
+derived exclusion list and the install-timing measurement in phase 1, the
+positive control in phase 2, and the independent evidence in phase 5. Only the
+last of those closes it, decided 2026-09-22 and recorded in `DEFECTS.md`. The
+other three are each worth doing and each leave the hazard standing.
 
 **Source mode bypassed the staleness guard, and was removed in phase 1 rather
 than kept.** The lifted launch could run the working tree instead of the
@@ -832,8 +834,8 @@ the concession, and the oracle is the remedy, not more tests.
 
 Definitions that depend on real behavior, such as what counts as blank and
 what counts as settled, are tuned against the testbed application and then
-against the first real consumer, never against imagined cases. The example is
-the real data until a consumer exists.
+against the first real consumer, never against imagined cases. The testbed
+application is the real data until a consumer exists.
 
 On the machine this is developed on, the launch layer keeps windows off the
 screen, and screenshots go through the compositor over the debugging protocol,

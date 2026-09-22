@@ -63,8 +63,7 @@ identically.
 **If `npm test` cannot find Electron:** `npm install` does not run Electron's
 postinstall in this environment, so the types arrive and the binary does not.
 `node node_modules/electron/install.js` fetches it, in the engine and in
-`testbed/buggy/` separately. It looks like a broken checkout and is
-not.
+`testbed/buggy/` separately. It looks like a broken checkout and is not.
 
 `docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
 opinion.
@@ -114,7 +113,7 @@ tests against `testbed/buggy/`. **Neither is evidence that the engine finds
 bugs**, because nothing is planted in `buggy` yet and nothing travels through
 it. They show the launch layer behaves as written.
 
-The example builds itself:
+The testbed application builds itself:
 
 ```
 cd testbed/buggy

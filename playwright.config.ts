@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 /**
- * The engine's own tests, run against the example application.
+ * The engine's own tests, run against the testbed application.
  *
  * Not a Journey. These are the tests that show the engine's parts behave as
  * written; the Journey that shows the assembled engine finds planted defects

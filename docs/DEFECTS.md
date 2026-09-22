@@ -69,15 +69,22 @@ adds another way out. And the independent evidence in phase 5, a check that no
 foreign process appeared, does not exist, so the recorder is still both the
 prevention and the only proof of it.
 
+**Only one of those two closes this entry, decided 2026-09-22.** Deriving an
+adapter's exclusion list keeps that one application's list current as the
+application changes, which is worth doing and is scheduled in `PLAN.md`. It
+says nothing about an application nobody has read, and that is the hazard
+here. Crediting it as a closer repeats the mistake the paragraph below
+identifies in the positive control.
+
 **What the positive control does and does not cover.** It proves the technique
 works against one application whose `main.js` was read. Three of three
 applications measured write `shell.openExternal(url)` as a property lookup, so
 nothing found so far is affected. That is not the same as the technique being
 sound for an application nobody has read, which is the whole hazard.
 
-**This entry leaves when the exclusion list is derived and phase 5's second
-evidence source exists.** Not when the next application also turns out to be
-unaffected.
+**This entry leaves when phase 5's second evidence source exists**, and on
+nothing else. Not when the exclusion list is derived, and not when the next
+application also turns out to be unaffected.
 
 ## Two things that will look like candidates, and are not
 

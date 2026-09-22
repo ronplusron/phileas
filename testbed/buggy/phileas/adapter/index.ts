@@ -4,17 +4,17 @@ import type { AppUnderTest } from '@drugstoresushi/phileas';
 import type { Page } from '@playwright/test';
 
 /**
- * The adapter for the example application.
+ * The adapter for the testbed application.
  *
  * This is the reference implementation of `AppUnderTest`, and the shape a
  * consuming repository copies. It says how to start the application, how to
  * tell it is ready, and what must never be touched. It says nothing about what
  * the application means, and it judges nothing.
  *
- * It imports the engine by relative path rather than by package name, because
- * this example lives inside the engine's own repository. A real consumer
- * imports `@drugstoresushi/phileas` from a `file:` or registry dependency;
- * everything else about this file is what theirs looks like.
+ * It imports the engine by package name through a `file:` dependency, which is
+ * what a real consumer does. The symlink lands back inside the engine's own
+ * repository because this adapter lives there, so nothing here says whether
+ * Playwright transpiles a package whose source sits outside the consumer.
  */
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, '..', '..');
