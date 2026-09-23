@@ -25,6 +25,31 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: a map, allowed and never required
+
+A per-application list of controls had been recorded as declined since the
+project began, on the grounds that an adapter listing every control would be
+more precise and would stop this being a framework. **That reasoning holds
+only for a map that is required**, and it had been applied to any map at all.
+Reopened on 2026-09-23, in these terms: discovery relies on nothing handed to
+it and stays the ordinary case, and someone who knows the application may give
+the engine a map, full or partial, with discovery covering whatever it leaves
+out. It is R29, a Could.
+
+It is phase 10, after the current last phase, and both reasons are about
+evidence. Phase 8 has to show that discovery alone finds every planted
+defect, which a map present by then would blur. Phase 9 is the first real
+application, and where discovery actually fails there should decide what a
+map entry does. So the design is recorded as open rather than guessed: what
+an entry does, what happens to one that is stale, where a map comes from, and
+how a journal marks what a map supplied.
+
+The two routes by which the old decline said a map would sneak back in -- read
+from the application's source, or from its automation bridge -- are now
+legitimate ways to build one, beforehand. What `CLAUDE.md` still rules out is
+discovery coming to depend on either: the engine reads no source at run time,
+and `survey` does not read a bridge.
+
 ## 2026-09-23: optional deadlines, and one glossary
 
 **Both deadlines are optional, and leaving one out means no limit.** A Journey

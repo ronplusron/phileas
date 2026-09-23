@@ -312,6 +312,10 @@ and the runner runs all of them after every hop.
 - **R24 (Should)** A setup that is wrong reports what is missing, rather than
   waiting and reporting that something did not appear. A timeout says nothing
   about why.
+- **R29 (Could)** An application can hand the engine a map of itself, full or
+  partial, and exploration uses it alongside what it discovers. A map is never
+  required: an application with none is explored exactly as well, and
+  discovery covers whatever a partial map leaves out.
 
 ### Fitting into existing work
 

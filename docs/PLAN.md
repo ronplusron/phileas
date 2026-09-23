@@ -91,8 +91,8 @@ set and why the two kinds of application make different claims.
 
 ## Build order
 
-Ten phases, numbered from zero. **Three phase boundaries are real verification
-points; the other seven are bookkeeping.** The real ones close phases 2, 5 and
+Eleven phases, numbered from zero. **Three phase boundaries are real
+verification points; the other eight are bookkeeping.** The real ones close phases 2, 5 and
 8. A bookkeeping boundary is where one piece of work ends and the next begins;
 stopping there leaves nothing new that can be shown to work. A real point is
 one where a claim about the product can be demonstrated, so a reader who has
@@ -106,7 +106,7 @@ surviving what the first route will do to the application. App-declared checks
 come after the universal tier because they need a traveling engine to hang off.
 Each planted defect is planted in the phase where its detection path lands,
 and the assembled measure, every defect found by one Journey, is the last real
-point.
+point. The optional map comes after all of it, for the reason phase 10 gives.
 
 ### Phase 0: dependencies, and a package that typechecks
 
@@ -698,6 +698,28 @@ changes rather than only configuration.
 
 Boundary: bookkeeping for this repository. The consumer's first Journey is a
 real point, and it belongs to that repository.
+
+### Phase 10: an optional map
+
+A map, full or partial, that someone who knows the application can hand the
+engine (R29). **Never required**: an application with no map is explored exactly as
+before, and that stays the ordinary case. Recorded as declined until
+2026-09-23, on reasoning that held only for a map that was required.
+
+**It comes last on purpose, and both reasons are about evidence.** Phase 8 has
+to show that discovery alone finds every planted defect; a map present by then
+would blur whether discovery or the map found them. Phase 9 points the engine
+at a real application for the first time, and the places discovery actually
+fails there -- a canvas surface, a virtualized list, a keyboard shortcut -- are
+what should decide what a map entry does, rather than a guess made now.
+
+The design questions are open and are in `OUTSTANDING.md`: what an entry does,
+what happens to one that is stale, where a map comes from, and how a journal
+marks what a map supplied so that replay can tell a map edit from an
+application change. Whatever builds a map runs before the Journey; the engine
+still reads no source at run time.
+
+Boundary: bookkeeping, until the design is settled.
 
 ## Hazards known in advance
 

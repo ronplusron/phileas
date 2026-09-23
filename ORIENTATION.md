@@ -11,10 +11,10 @@ thought to write down, and this covers the rest.
 
 **The framework is the deliverable, not any one application's test coverage.**
 Decisions that look like over-engineering for a single app are correct when
-the engine is the product. That reading settles arguments: an adapter
-enumerating every control in one application would be more precise and would
-stop this being a framework, so generic discovery wins even where it costs
-accuracy. `CLAUDE.md` records the commitments this produced.
+the engine is the product. That reading settles arguments: an engine that
+required every application to list its controls would be more precise and
+would stop being a framework, so discovery comes first even where it costs
+accuracy. A map is allowed from phase 10, and never required. `CLAUDE.md` records the commitments this produced.
 
 `docs/GLOSSARY.md` defines every term, once. `docs/PRODUCT_REQUIREMENTS.md`
 says what the product must do, apart from how

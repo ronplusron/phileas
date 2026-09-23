@@ -5,11 +5,12 @@ import type { ElectronApplication, Page } from '@playwright/test';
  *
  * Everything else in src/ depends only on this interface and Playwright.
  * Nothing in here knows a selector, a view name, or anything about what the
- * application is for. That is deliberate: an adapter that enumerated an
- * application's controls would be more precise and would stop this being a
- * framework, which is the trade the project exists to make. That decline is
- * recorded in docs/OUTSTANDING.md section 3.2, and ../CLAUDE.md carries it as a
- * standing commitment.
+ * application is for. That is deliberate: an engine that required an adapter to
+ * list the application's controls would be more precise and would stop being a
+ * framework, which is the trade the project exists to make. An optional map,
+ * full or partial, is agreed for phase 10 and is never required;
+ * docs/OUTSTANDING.md has what is open about it, and ../CLAUDE.md carries the
+ * commitment.
  */
 
 /**
@@ -56,7 +57,8 @@ export type Candidate = {
  * than the shape.
  *
  * This is a safety rail, not a map. It says what a Route may not touch. It
- * never says what a Route may touch, which is survey()'s job.
+ * never says what a Route may touch, which is survey()'s job, and in phase 10
+ * a map's as well where one is given.
  */
 export interface Exclusions {
   /** Accessible names that must never be hopped to, however they are reached. */

@@ -30,6 +30,7 @@ phases are marked by number.
 | Survey | Finding what the page offers right now by reading its controls' accessibility roles and names, plus the native menu. Nobody lists an application's controls for it. |
 | Candidate | One thing a Hop could act on: a visible, enabled control with an accessible name, or a menu entry. |
 | Exclusion list | What a Route must never touch, such as Quit or outbound links, supplied by the adapter. A safety rail, not a map. |
+| Map | What someone who knows the application can hand the engine about it, full or partial. Never required; discovery covers whatever it leaves out (R29). *Planned, phase 10*; what an entry does is still open. |
 | Menu source | Menu entries as candidates. Withheld when no window has focus, because a menu click would then do nothing while reporting success. |
 | Pool | The candidates at one moment, after exclusions. The draw is made over it, and the journal writes each distinct pool once. |
 | Chooser | The named seam that picks a target from the pool. Today it's always the seeded draw. |

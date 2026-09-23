@@ -5,12 +5,13 @@ import { hasFocusedWindow, menuEntries } from './menu';
 /**
  * What a Route could act on next, found from the running application.
  *
- * **Discovery is by role, and consults no enumeration of the application's
- * controls.** An adapter listing every control would be more precise and would
- * stop this being a framework, which is the trade the project exists to make;
- * docs/OUTSTANDING.md section 3.2 records the decline and ../CLAUDE.md carries
- * it as a standing commitment. What an adapter supplies is the exclusion list,
- * which says what must never be touched and never says what may be.
+ * **Discovery is by role, and needs nothing handed to it.** An engine that
+ * required a list of every control would be more precise and would stop being
+ * a framework, which is the trade the project exists to make. A map, full or
+ * partial, may be given in phase 10 and is never required, so this has to keep
+ * working exactly as it does with none; docs/OUTSTANDING.md has what is open
+ * about it. What an adapter supplies today is the exclusion list, which says
+ * what must never be touched and never says what may be.
  *
  * **The risk that discovery by role finds too little was measured and
  * retired.** docs/HISTORY.md has the two censuses. The limit is rendering

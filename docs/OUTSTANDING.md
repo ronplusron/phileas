@@ -136,6 +136,46 @@ When a Hop does press a key, the journal records it as a `press` action,
 which is planned rather than built: `action` today is `click`, `fill` or
 `menu-click`, and a key press will need to record which key as well.
 
+### 1.7 An optional map, in phase 10
+
+**Reversed on 2026-09-23.** A per-application list of controls was recorded as
+declined, on the grounds that an adapter listing every control would stop this
+being a framework. That reasoning holds for a map that is *required*, and it
+was wrongly applied to one that is merely allowed. What is agreed now:
+
+- **Discovery stays primary, and a map is never required (R29).** An application
+  with no map is explored exactly as today, and that remains the ordinary case.
+- **A map may be full or partial.** Someone who knows the application can hand
+  the engine what they know, and leave the rest to discovery.
+- **It lands in phase 10, after the current last phase.** Phase 8 has to show
+  that discovery alone finds every planted defect, and a map present by then
+  would blur what found them. Phase 9 points the engine at a real application
+  for the first time, and the places discovery actually fails there are the
+  evidence the design below should be settled from.
+
+Four questions are open, and are recorded rather than answered because phase 9
+is what answers them:
+
+- **What a map entry does.** It could add candidates discovery cannot find --
+  a canvas surface, the rows a virtualized list is not rendering, a keyboard
+  shortcut, which would also answer the discovery question in 1.6. It could
+  annotate candidates discovery already found. Or it could steer the draw,
+  which would be a new chooser behind the choosing seam rather than a change
+  to the hop loop. The third needs care: steering is what planner-assigned
+  route bias, 3.1, was declined for.
+- **What happens to a stale entry.** A map entry that is not on the page could
+  be skipped in silence or reported, the way an exclusion that matched nothing
+  is. A map, like a hand-written exclusion list, goes stale the day the
+  application changes.
+- **Where a map comes from.** Written by hand, derived from the source
+  beforehand, or read from an application's own automation bridge. The engine
+  still reads no source at run time; whatever builds a map runs before the
+  Journey and hands over the result.
+- **How replay stays honest.** A map is an input to the draw, like the
+  exclusion list, so editing one changes where Routes go. The journal should
+  mark candidates a map supplied, so that R14 can tell a map edit from an
+  application change.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -239,23 +279,13 @@ overlap.
 planner stays a for-loop. If it starts deciding what gets explored rather than
 how many Routes there are, this decision has been reversed under another name.
 
-### 3.2 A per-application enumeration of controls
-
-Declined as the basis for discovery. An adapter listing every control would be
-more precise than discovery by accessibility role, and would stop this being a
-framework, which is the trade the project exists to make.
-
-Not declined: the adapter-supplied exclusion list of things that must never be
-hopped to, such as Quit and outbound links. That is a safety rail, not a map,
-and it stays.
-
-### 3.3 The name Fogg
+### 3.2 The name Fogg
 
 Declined 2026-09-20 in favor of Phileas. "Fog" reads as obscurity, wrong for a
 tool built to reveal things, and "Fogg" invites the one-g misspelling on every
 install.
 
-### 3.4 The directory names `kit` and `app`
+### 3.3 The directory names `kit` and `app`
 
 Declined 2026-09-20. Both non-standard, and `app` actively harmful because it
 collides with "the application" -- it caused a real misreading during the

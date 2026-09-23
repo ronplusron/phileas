@@ -207,16 +207,23 @@ seed.
 the first violation, so a check whose verdict cannot be reproduced would end
 Routes at random and make a red result not worth reading.
 
-## Discovery is generic, with an adapter-supplied exclusion list
+## Discovery comes first, and a map is optional
 
 `survey` finds candidates by role: visible, enabled, and carrying an
-accessible name. It does not consult an enumeration of the application's
-controls. An adapter listing every control would be more precise and would
-stop this being a framework, which is the trade the project exists to make.
+accessible name. That is how the engine explores, and it never needs to be
+told what an application contains. An engine that required a list of every
+control would be more precise and would stop being a framework, which is the
+trade the project exists to make.
 
-What the adapter does supply is an exclusion list -- things that must never be
-hopped to, such as Quit and outbound links. That list is a safety rail, not a
-map.
+**A map is allowed, and never required.** Someone who knows the application
+may hand the engine a map, full or partial, and discovery covers whatever it
+leaves out. It was recorded as declined until 2026-09-23, on reasoning that
+holds only for a map that is required. It lands in phase 10, and what a map
+entry does is still open; `docs/OUTSTANDING.md` has the questions.
+
+Separately from any map, the adapter supplies an exclusion list -- things that
+must never be hopped to, such as Quit and outbound links. That list is a
+safety rail, not a map.
 
 **An exclusion is a name or a predicate, and names stay first-class.** A list
 of names cannot express a control that is harmless many times and fatal once:
@@ -228,7 +235,7 @@ which is what the section below is for. A predicate must be deterministic: the
 exclusion list is an input to the seeded draw, so one that answered differently
 on a replay would send every hop after it somewhere else.
 
-## Source access is useful, and is how two declined decisions come back
+## Source access is useful, and brings two temptations
 
 Most deployment shapes give you the source, and several things depend on it:
 the staleness guard needs it by definition, a test oracle usually needs the
@@ -243,14 +250,14 @@ day upstream adds a new way out of the application. A derived one fails
 instead, which is the difference between a guard and a note.
 
 **Now the part that matters.** Source access makes both of the following
-easier, cheaper and more tempting than they have ever been, and each is a
-decision already taken and recorded as declined:
+easier, cheaper and more tempting than they have ever been. The first is
+allowed in one form only, and the second stays declined:
 
-- **Reading the source to enumerate what can be hopped to.** It is precise, it
-  is tractable, and it is the per-application enumeration that
-  `docs/OUTSTANDING.md` records as declined, arriving by a route nobody
-  recognizes as the same idea. `survey` finds candidates by role, from the
-  running application, and consults no source.
+- **Reading the source to enumerate what can be hopped to.** Allowed as a way
+  of building a map beforehand, which is then handed to the engine like any
+  other map, and optional like any other map. What stays out is the engine
+  depending on one: `survey` finds candidates by role, from the running
+  application, whether or not a map exists, and it reads no source.
 - **Deriving checks from the implementation rather than from intent.** A
   structural check asserting that a heading's count matches what the code
   computes is a tautology: it passes whatever the code does, including when
@@ -262,10 +269,11 @@ decision already taken and recorded as declined:
 place.** Some applications expose one: a hook installed by a launch flag that
 reports uncaught client exceptions, how many dialogs are showing, whether the
 session is ready. Using it for checks is excellent and is exactly what an
-adapter is for. But such a bridge usually also enumerates every command the
-application has, and choosing hops from that list is the per-application map
-declined above, arriving through a door that looks like instrumentation.
-Invariants may read the bridge. `survey` may not.
+adapter is for. Such a bridge usually also enumerates every command the
+application has, and that list is one way a map could be built, beforehand and
+optionally. What must not happen is discovery coming to depend on it, through
+a door that looks like instrumentation: an application with no bridge has to
+be explored just as well. Invariants may read the bridge. `survey` may not.
 
 The engine reads no source at run time, ever. Everything above that uses
 source happens beforehand, in the adapter or in a build step, and produces
@@ -386,13 +394,13 @@ release, and a finding should say which one it came from.
 | Language | TypeScript | The engine is consumed as a typed seam; `AppUnderTest` is the product's main surface and wants a compiler behind it |
 | Runner | Playwright | Already drives Electron, and its test/step/fixture model is what Route/Hop/Fix map onto |
 | Distribution | A package consumed from `node_modules` | Keeps engine and adapter separable; a copied directory would let them drift per consumer |
-| Discovery | Accessibility roles | The only mechanism that works without an enumeration of each app's controls |
+| Discovery | Accessibility roles | Works on any application with nothing handed to it; an optional map adds to it in phase 10 |
 
-Rejected, and why, so neither returns as a fresh idea: a per-app enumeration
-of controls, on the grounds that it is precise and is not a framework; and
-planner-assigned route bias, on the grounds that it is interference rather
-than learning and solves a negligible problem. `docs/OUTSTANDING.md` has the
-numbers behind the second.
+Rejected, and why, so it does not return as a fresh idea: planner-assigned
+route bias, on the grounds that it is interference rather than learning and
+solves a negligible problem. `docs/OUTSTANDING.md` has the numbers. A
+per-application list of controls was rejected alongside it and reversed on
+2026-09-23 for the optional form only; a required one stays out.
 
 ## Conventions
 
