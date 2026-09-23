@@ -258,7 +258,7 @@ export const HOP_DELAY_VARIABLE = 'PHILEAS_HOP_DELAY_MS';
  * and no verdict: the same seed retraces the same Route with any delay, because
  * the delay consumes nothing from either stream.
  *
- * Named for its units. `deadlineMs` carries a comment about a duration being
+ * Named for its units. The deadlines carry a comment about a duration being
  * mistaken for a count, and a bare `PHILEAS_HOP_DELAY` invites exactly that.
  *
  * **It is not free of consequences, and they are both timeouts.** The pause

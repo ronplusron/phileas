@@ -341,10 +341,11 @@ kit was in its origin and is now consumable.
 
 ### Phase 3: the terms of a Journey, and seeds
 
-`journey.ts` holds the four terms of R1: seed, routes, Trip length,
-deadline. `random.ts` holds a small seedable generator and the per-Route
-derivation `routeSeed = hash(journeySeed, routeIndex)`, split into a Fix stream
-and a Trip stream, exactly as `../CLAUDE.md` decides.
+`journey.ts` holds what defines a Journey under R1: seed, routes, Trip length,
+and the optional Journey and Route deadlines. `random.ts` holds a small
+seedable generator and the per-Route derivation
+`routeSeed = hash(journeySeed, routeIndex)`, split into a Fix stream and a Trip
+stream, exactly as `../CLAUDE.md` decides.
 
 **Write the generator in the repository rather than taking a dependency.** It
 has to reproduce across machines and Node versions, and a dependency's
@@ -763,11 +764,13 @@ one definition, and a legitimately empty state sets it off. Define it narrowly,
 tune it against `buggy` and then against the first real consumer rather than
 against imagined cases, and remember this is one of the checks R19 exists for.
 
-**The Route timeout.** Playwright's default per-test timeout is thirty
+**The Route deadline.** Playwright's default per-test timeout is thirty
 seconds. A Route with a Trip length of forty against a slow application will
 exceed it and be reported as a timeout rather than as whatever it found. The
-Route timeout is set from the Trip length and the settle wait, never left at the
-default.
+Route deadline is whatever the Journey states, or no limit when it states none,
+and reaches Playwright through `playwrightTimeouts`, never as the default.
+Deriving it from the Trip length was tried and dropped on 2026-09-23: how long
+a Hop takes depends on the application, and the formula guessed.
 
 **Editing a Fix or the exclusion list changes recorded routes.** Both are inputs
 to the draw. The seed split keeps a Fix edit from touching the Trip stream,

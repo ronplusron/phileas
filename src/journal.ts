@@ -61,6 +61,9 @@ export interface JournaledCheck {
  * typing: it sets the whole value at once and presses no keys, so a defect in a
  * key handler is out of its reach, and a reader seeing a typed value would
  * otherwise assume keystrokes.
+ *
+ * `press` is planned, for when a Hop can press a key; `docs/OUTSTANDING.md`
+ * section 1.6 has what has to be settled first.
  */
 export type HopAction = 'click' | 'fill' | 'menu-click';
 

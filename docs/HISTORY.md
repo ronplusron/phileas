@@ -25,6 +25,34 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: optional deadlines, and one glossary
+
+**Both deadlines are optional, and leaving one out means no limit.** A Journey
+used to require a deadline, and each Route's time limit was calculated in the
+consumer's Playwright configuration as three seconds per hop plus thirty. The
+common case turned out to be neither: a Journey takes as long as its Routes
+take, which is still bounded by the number of Routes and their Trip length, and
+every Trip hop already has its own time limits. The part a Route deadline
+guards is the Fix, which is the Journey's author's own code.
+
+So a Journey states `journeyDeadlineMs` and `routeDeadlineMs` if it wants them,
+named as a pair, and the calculated Route timeout is gone, because how long a
+Hop takes depends on the application and the formula guessed. Both reach
+Playwright through `playwrightTimeouts`, which exists for one trap: leaving
+Playwright's per-test `timeout` unset does not mean no limit, it means thirty
+seconds, so an unset Route deadline has to arrive as an explicit zero. Zero is
+refused in a Journey's definition for the same reason in reverse, so that no
+limit is only ever said by leaving the deadline out.
+
+**`docs/GLOSSARY.md` became the one place terms are defined.** The README had
+a vocabulary table and the requirements a list of terms, each a second copy of
+the other and of the glossary. Both now point at the glossary, following the
+convention that nothing is summarized across documents. Assembling it surfaced
+several definitions that had drifted or were wrong: the Fix described in terms
+of steps rather than hops, a Trip hop defined without the Trip, a separate
+"budget" term that only renamed the Journey's settings, and a class name,
+`PageUnreachable`, listed as though it were a term.
+
 ## 2026-09-23: Trip length
 
 The setting that bounds a Route was called `hopsPerRoute` in a Journey's terms

@@ -132,9 +132,9 @@ The three questions:
   Quit by its menu path and leaving Cmd+Q reachable would be a rail with a gap
   in it that no test notices.
 
-When a Hop does press a key, the journal has to say so. It records no action
-today: whether a Hop clicked or filled is inferred from the role, and a
-keypress would have nothing to be inferred from.
+When a Hop does press a key, the journal records it as a `press` action,
+which is planned rather than built: `action` today is `click`, `fill` or
+`menu-click`, and a key press will need to record which key as well.
 
 ## 2. Undecided
 

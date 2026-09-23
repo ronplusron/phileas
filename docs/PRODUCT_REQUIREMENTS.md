@@ -12,26 +12,11 @@ seeding, recording and checking is not. Where a requirement exists because
 something specific went wrong, the failure is named, since those are the ones
 most likely to be relaxed by someone who never saw it.
 
-Terms used throughout:
-
-- A **journey** is one run, made of several **routes**.
-- A **route** is one pass through the application, made up of **hops**.
-- A **hop** is one interaction.
-- A **journal** is the record a route writes as it goes, including one entry
-  per hop.
-- A **fix** anchors the start of every route: a fixed sequence of hops, chosen
-  in advance and the same every time, putting the application into a known
-  state before the unpredictable part begins. That anchoring is what makes a
-  journey semirandom rather than random, and most journeys will define one. A
-  journey without a fix is valid, and every route then starts from the
-  application's own initial state.
-- A **trip** is the unpredictable part of a route: the hops after the fix,
-  each one decided at the moment it is taken. A route with no fix is all trip.
-
-A journey has three possible outcomes per route: passed, failed, or
-**stranded**. Stranded means the route ran out of moves before completing its
-trip. It is reported and is worth investigating, but it is not by itself
-a defect.
+The terms used here -- journey, route, fix, trip, hop, journal, and a route's
+three outcomes of passed, failed and **stranded** -- are defined in
+`GLOSSARY.md`, which is the one place they are defined. Stranded matters most
+to read before the rest: a route that ran out of moves before completing its
+trip is neither a pass nor a failure.
 
 ## 1. Problem
 
@@ -143,9 +128,9 @@ jobs, which may be the same person on different days.
 - **A written record of the route.** Every hop is recorded as it happens: what
   was chosen, what else was available, and what the checks said. Answers: what
   the tester did being lost by the time the bug is filed.
-- **A budget.** A run is bounded by a number of routes, the length of each
-  route's trip, and a deadline. Answers: an unbounded route being unusable in
-  practice.
+- **A budget.** A run is bounded by a number of routes and the length of each
+  route's trip, and optionally by a deadline for the whole journey, for each
+  route, or both. Answers: an unbounded route being unusable in practice.
 
 ## 6. User flows
 
@@ -159,7 +144,7 @@ jobs, which may be the same person on different days.
 **Running a journey**
 
 1. Choose a seed, or let one be generated and recorded.
-2. Start the run and wait for it to finish or hit its deadline.
+2. Start the run and wait for it to finish, or to hit a deadline if one is set.
 3. Read the result: how many routes ran, how many passed, what was found.
 
 **Triaging a finding somebody else produced**
@@ -222,16 +207,18 @@ and the runner runs all of them after every hop.
 ### Running a journey
 
 - **R1 (Must)** A journey is defined by a seed, a number of routes, the length
-  of each route's trip in hops, and a deadline. Stating those four is enough to
-  repeat the run.
+  of each route's trip in hops, and optionally a deadline for the whole journey
+  and one for each route. Stating these is enough to repeat the run. Without
+  deadlines, a journey takes as long as its routes take.
 - **R2 (Must)** Routes within a journey are independent. Re-running a single
   route on its own produces the same route it produced inside the full journey.
 - **R3 (Must)** Where a fix is defined, it runs fresh at the start of every
   route rather than once per journey, so no route inherits the state the
   previous route left behind. A journey with no fix is valid, and every route
   then starts from the application's own initial state.
-- **R4 (Must)** When the deadline passes, the journey stops and reports the
-  routes that finished. Work already done is never discarded.
+- **R4 (Must)** When a journey's deadline passes, the journey stops and reports
+  the routes that finished; when a route's deadline passes, that route is cut
+  off. Work already done is never discarded.
 - **R5 (Should)** A route that runs out of available moves before completing
   its trip is reported as stranded, naming the hop where it ran out.
   Stranded is its own outcome, distinct from both passed and failed: a dead

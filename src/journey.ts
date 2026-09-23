@@ -15,10 +15,9 @@
 /**
  * What a Journey is defined by.
  *
- * `deadlineMs` is a duration from the start of the run rather than a moment in
- * time, because the four terms have to be repeatable. A wall-clock deadline
- * would describe one afternoon and nothing else. It becomes Playwright's global
- * timeout when the Route becomes a test.
+ * Both deadlines are durations rather than moments in time, because a Journey's
+ * definition has to be repeatable. A wall-clock deadline would describe one
+ * afternoon and nothing else.
  */
 export interface JourneyTerms {
   /**
@@ -44,14 +43,34 @@ export interface JourneyTerms {
    */
   tripLength: number;
 
-  /** How long the whole Journey may take, in milliseconds from its start. */
-  deadlineMs: number;
+  /**
+   * How long the whole Journey may run, in milliseconds from its start.
+   *
+   * Optional, and left out means no limit, which is the common case: a Journey
+   * takes as long as its Routes take. That is still bounded, by the number of
+   * Routes and their Trip length, just not by the clock. When one is set and
+   * passes, the Routes that finished are reported, the one running is cut off,
+   * and the rest never start (R4).
+   */
+  journeyDeadlineMs?: number;
+
+  /**
+   * How long one Route may run, in milliseconds from its start.
+   *
+   * Optional, and left out means no limit. Stated rather than derived from the
+   * Trip length, because how long a Hop takes depends on the application, and a
+   * formula guessing it cut Routes off as timeouts instead of reporting what
+   * they found. Every Trip hop is already bounded by its own action and settle
+   * limits; the part a Route deadline guards is the Fix, which is the Journey
+   * author's own code and can wait on anything.
+   */
+  routeDeadlineMs?: number;
 }
 
 /**
- * The shortest deadline a Journey may be given.
+ * The shortest deadline either the Journey or a Route may be given.
  *
- * A second is not a useful Journey and is not meant to be. It is low enough to
+ * A second is not a useful Journey or Route and is not meant to be. It is low enough to
  * accept anything deliberate and high enough to reject a duration that was
  * meant to be a count.
  */
@@ -65,11 +84,11 @@ declare const checked: unique symbol;
  * Branded, so that `defineJourney` is the only way to make one. TypeScript's
  * types are structural and `readonly` does not affect assignability, so
  * `Readonly<JourneyTerms>` alone let a hand-written object typecheck as a
- * Journey and skip every check below: `{ routes: 0, tripLength: 0,
- * deadlineMs: 0 }` compiled, registered no tests at all, and reported green
- * having traveled nowhere. That is the failure the comment on `defineJourney`
- * calls the one this engine is least able to notice about itself, and the
- * validation guarding against it was entirely optional.
+ * Journey and skip every check below: `{ routes: 0, tripLength: 0 }` compiled,
+ * registered no tests at all, and reported green having traveled nowhere. That
+ * is the failure the comment on `defineJourney` calls the one this engine is
+ * least able to notice about itself, and the validation guarding against it was
+ * entirely optional.
  *
  * The brand is a compile-time marker and nothing exists at run time. Taken
  * deliberately as an API decision while no consumer writes a Journey by hand.
@@ -89,24 +108,58 @@ export function defineJourney(terms: JourneyTerms): Journey {
   requireWholeNumberAtLeastOne('routes', terms.routes);
   requireWholeNumberAtLeastOne('tripLength', terms.tripLength);
 
-  // A duration, not a count. The same check as the two above would accept one
-  // millisecond, which produces a Journey whose deadline passes before the
-  // first application has launched: every Route unfinished, nothing wrong, and
-  // a report that reads like a catastrophe. R27 asks a Journey that could not
-  // do what was asked of it to say so, and the cheaper answer is refusing terms
-  // that cannot work.
-  if (!Number.isInteger(terms.deadlineMs) || terms.deadlineMs < SHORTEST_DEADLINE_MS) {
-    throw new RangeError(
-      `deadlineMs must be a whole number of at least ${SHORTEST_DEADLINE_MS}, ` +
-        `got ${terms.deadlineMs}. It is a duration in milliseconds, not a count.`
-    );
-  }
+  requireDeadlineIfGiven('journeyDeadlineMs', terms.journeyDeadlineMs);
+  requireDeadlineIfGiven('routeDeadlineMs', terms.routeDeadlineMs);
 
   if (terms.seed !== undefined && terms.seed.length === 0) {
     throw new RangeError('seed was given as an empty string; leave it out instead');
   }
 
   return Object.freeze({ ...terms }) as Journey;
+}
+
+/**
+ * Check a deadline, where one was given.
+ *
+ * A duration, not a count. The same check as the two above would accept one
+ * millisecond, which produces a deadline that passes before the first
+ * application has launched: every Route unfinished, nothing wrong, and a report
+ * that reads like a catastrophe. R27 asks a Journey that could not do what was
+ * asked of it to say so, and the cheaper answer is refusing terms that cannot
+ * work.
+ *
+ * Zero is refused too, although Playwright reads zero as no limit. No limit is
+ * said by leaving the deadline out, and a zero that meant it would be one value
+ * with two meanings: a reader could not tell no limit from a mistake.
+ */
+function requireDeadlineIfGiven(name: string, value: number | undefined): void {
+  if (value === undefined) return;
+  if (!Number.isInteger(value) || value < SHORTEST_DEADLINE_MS) {
+    throw new RangeError(
+      `${name} must be a whole number of at least ${SHORTEST_DEADLINE_MS}, got ${value}. ` +
+        `It is a duration in milliseconds, not a count; leave it out for no limit.`
+    );
+  }
+}
+
+/**
+ * The two deadlines, in the shape Playwright's configuration takes them.
+ *
+ * Spread into the consumer's Playwright configuration. Playwright reads the
+ * Route deadline as its per-test `timeout` and the Journey deadline as its
+ * `globalTimeout`, and in both, zero means no limit.
+ *
+ * **This exists because leaving `timeout` out of a configuration does not mean
+ * no limit.** It means Playwright's default of thirty seconds, which cuts a long
+ * Route off and reports a timeout instead of whatever it found. A Journey with
+ * no Route deadline has to be translated into an explicit zero, and every
+ * consumer remembering that on their own is how one of them eventually does not.
+ */
+export function playwrightTimeouts(journey: Journey): { timeout: number; globalTimeout: number } {
+  return {
+    timeout: journey.routeDeadlineMs ?? 0,
+    globalTimeout: journey.journeyDeadlineMs ?? 0,
+  };
 }
 
 function requireWholeNumberAtLeastOne(name: string, value: number): void {

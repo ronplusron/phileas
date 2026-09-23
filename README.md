@@ -21,20 +21,12 @@ it and what they do today.
 
 ## Vocabulary
 
-| Term | Meaning |
-|---|---|
-| **Journey** | The top-level run. One or more Routes, one seed, one budget. |
-| **Route** | One pass through the application. Executes as one test, with its own verdict. |
-| **Fix** | Anchors the start of every Route. A fixed sequence of Hops, the same every time. Optional, and usually present. |
-| **Trip** | The rest of a Route after its Fix: Hops drawn from the seed. Without a Fix, the whole Route is its Trip. |
-| **Hop** | The atomic unit: one UI or API interaction. |
-| **Journal** | The record a Route writes as it goes, including one entry per Hop. |
+A **Journey** is one run, made of **Routes**. Each Route follows a **Fix**, a
+fixed opening, and then takes a **Trip** of **Hops** drawn from a seed, writing
+a **Journal** as it goes. Routes within a Journey are independent and know
+nothing of each other, so any Route can be replayed on its own.
 
-Routes within a Journey are independent and know nothing of each other, so any
-Route can be replayed on its own.
-
-`docs/PRODUCT_REQUIREMENTS.md` defines these terms exactly, including what
-separates a Fix from a Route and the three outcomes a Route can have.
+`docs/GLOSSARY.md` defines every term, and is the one place they are defined.
 
 ## What it checks
 
@@ -64,7 +56,7 @@ Journey and derives each Route's seeds from them. And it now travels: a Route
 finds what the screen offers by accessibility role, draws its next move from
 its seed, acts, waits for the page to stop moving, and writes a journal entry
 per Hop. `testbed/buggy/` is a packaged application built to be traveled
-through, and eighty-two tests run against it.
+through, and eighty-five tests run against it.
 
 What is still unwritten is every check. Nothing yet decides whether anything a
 Route walked past is wrong, so the engine can currently report only that a
@@ -99,6 +91,7 @@ Journey is shown finding each one.
 | Path | What it holds |
 | --- | --- |
 | `docs/PRODUCT_REQUIREMENTS.md` | What the product must do, apart from how it gets built. Read first. |
+| `docs/GLOSSARY.md` | Every term, defined once. |
 | `docs/PLAN.md` | Build order, and the reasoning behind the technical decisions. |
 | `CLAUDE.md` | Standing commitments, so they do not get relitigated. |
 | `ORIENTATION.md` | The brief for a session starting work. |

@@ -18,7 +18,7 @@ import type { Candidate, Journey, Narrowing } from '../src/index';
 // object used to typecheck, register no tests at all, and report green having
 // traveled nowhere.
 // @ts-expect-error a Journey cannot be written by hand
-const handWritten: Journey = { routes: 0, tripLength: 0, deadlineMs: 0 };
+const handWritten: Journey = { routes: 0, tripLength: 0 };
 void handWritten;
 
 // A menu candidate carries the path the exclusion rail matches against. Without
@@ -76,5 +76,5 @@ test('the shapes that should compile also behave', () => {
 
   // And the runtime check is still the one that catches a bad number, since a
   // brand says who built the object and nothing about what is in it.
-  expect(() => defineJourney({ routes: 0, tripLength: 10, deadlineMs: 60_000 })).toThrow();
+  expect(() => defineJourney({ routes: 0, tripLength: 10 })).toThrow();
 });

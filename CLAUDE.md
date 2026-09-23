@@ -16,6 +16,7 @@ there.
 `ORIENTATION.md` is the brief for a session starting work. `docs/PLAN.md` is
 the build order and the reasoning. `docs/OUTSTANDING.md` is what is open,
 `docs/DEFECTS.md` is what is wrong, and `docs/HISTORY.md` is the record.
+`docs/GLOSSARY.md` defines every term, and is the only place terms are defined.
 
 ## The Route is the test, not the Journey
 
@@ -24,7 +25,7 @@ costs the whole reporting model:
 
 | Phileas | Playwright | Why it has to be this one |
 | --- | --- | --- |
-| Journey | the run | Holds the seed, the route count, the Trip length, the deadline |
+| Journey | the run | Holds the seed, the route count, the Trip length, and the optional Journey and Route deadlines |
 | Route | a test | The unit with a verdict, the fixture scope, the timeout boundary, the retry unit, the trace boundary |
 | Fix | `beforeEach` | Anchors every Route's start. Defined once per Journey, applied at the start of each Route. Optional, and usually present |
 | Hop | `test.step` | Hops nest in the trace without each becoming a separate pass or fail |

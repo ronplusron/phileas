@@ -1,15 +1,6 @@
 import { defineConfig } from '@playwright/test';
+import { playwrightTimeouts } from '@drugstoresushi/phileas';
 import { exploration } from './journeys/exploration';
-
-/**
- * What one Hop is allowed, and what a Route is allowed on top of its Hops.
- *
- * Both are guesses until phase 4 measures a Hop, and they are written here as
- * named numbers so that the measurement replaces something visible rather than
- * being buried in an expression.
- */
-const MILLISECONDS_PER_HOP = 3_000;
-const ROUTE_OVERHEAD_MS = 30_000;
 
 /**
  * The Journey's own configuration, in the consuming repository rather than the
@@ -30,19 +21,18 @@ export default defineConfig({
   // Where the seed is settled, once, before any worker starts.
   globalSetup: './global-setup.ts',
 
-  // R4: the Journey's deadline. Work already done is reported when it passes.
-  globalTimeout: exploration.deadlineMs,
-
   /**
-   * The Route timeout, derived from the Trip length rather than left at the default.
+   * Both deadlines, as the Journey states them: the Journey deadline becomes
+   * Playwright's global timeout (R4) and the Route deadline its per-test one.
    *
-   * Playwright's default is thirty seconds. A Route of twenty Hops against a
-   * slow application exceeds that and is reported as a timeout instead of as
-   * whatever it had found, which docs/PLAN.md carries as a hazard and says to
-   * set from the Trip length and the settle wait. It was left at the default here
-   * until review caught it.
+   * Through the helper rather than written out, because a deadline left out
+   * means no limit and Playwright needs that said as zero. Leaving `timeout`
+   * out of this file would not mean no limit; it would mean Playwright's default
+   * of thirty seconds, which cuts a Route off and reports a timeout instead of
+   * whatever it found. That default was once left in place here until review
+   * caught it, and then replaced by a formula that guessed how long a Hop takes.
    */
-  timeout: exploration.tripLength * MILLISECONDS_PER_HOP + ROUTE_OVERHEAD_MS,
+  ...playwrightTimeouts(exploration),
 
   // One application at a time, for the reason the root config gives.
   fullyParallel: false,

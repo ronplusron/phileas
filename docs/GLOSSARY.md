@@ -1,0 +1,87 @@
+# Phileas -- glossary
+
+Every term the engine, its journal and its documents use, grouped by what it
+belongs to. **This is the one place terms are defined**; other documents point
+here rather than defining them again, because a second copy is the one that
+goes stale. Anything decided but not built yet is marked *planned*; later
+phases are marked by number.
+
+## The run
+
+| Term | Meaning |
+|---|---|
+| Journey | One run of the engine, defined by a seed, a number of Routes, a Trip length, and optionally a Journey deadline and a Route deadline. |
+| Route | One pass through the application, and one Playwright test with its own verdict, deadline and trace. Routes know nothing of each other. |
+| Fix | The fixed opening of every Route: a sequence of fix hops, written in advance by the Journey's author and the same every time. |
+| Trip | The unpredictable rest of a Route after its Fix. A Route with no Fix is all Trip. |
+| Hop | One interaction with the application. Numbered from 1 within the Fix and within the Trip separately. |
+| Fix hop | A Hop of the Fix. |
+| Trip hop | A Hop of the Trip, drawn from the seed. |
+| Trip length | How many Hops each Route's Trip takes, as `tripLength`; fix hops don't count. A Route is meant to complete its Trip, and one that doesn't strands. |
+| Journey deadline | How long, in clock time, the whole Journey may run, as `journeyDeadlineMs`. Optional, with no limit when unset, which is the common case. When it passes, finished Routes are reported, the running one is cut off, and the rest never start. |
+| Route deadline | How long, in clock time, one Route may run, as `routeDeadlineMs`. Optional, with no limit when unset. A Route that reaches it is cut off. |
+| Passed / failed / stranded | A Route's three outcomes. Stranded means it ran out of moves before completing its Trip; that is neither a pass nor a failure. |
+
+## Choosing a move
+
+| Term | Meaning |
+|---|---|
+| Page | The contents of the application's window, which Electron draws as a web page. The native menu is not part of it. |
+| Survey | Finding what the page offers right now by reading its controls' accessibility roles and names, plus the native menu. Nobody lists an application's controls for it. |
+| Candidate | One thing a Hop could act on: a visible, enabled control with an accessible name, or a menu entry. |
+| Exclusion list | What a Route must never touch, such as Quit or outbound links, supplied by the adapter. A safety rail, not a map. |
+| Menu source | Menu entries as candidates. Withheld when no window has focus, because a menu click would then do nothing while reporting success. |
+| Pool | The candidates at one moment, after exclusions. The draw is made over it, and the journal writes each distinct pool once. |
+| Chooser | The named seam that picks a target from the pool. Today it's always the seeded draw. |
+| Draw | The number from the seeded stream that picked the target, recorded as a raw 32-bit integer. |
+| Target | What a Hop acted on, or tried to. |
+| Action | What was done to the target: `click`, `fill` or `menu-click`, with `press` planned. `fill` sets a value without pressing keys. |
+| Value | The text a `fill` put in, from a second seam separate from the chooser. |
+| Settle | What the page does when it stops changing after a Hop. The engine waits for it, up to a limit, by reading the page until two reads agree. |
+
+## Seeds and replay
+
+| Term | Meaning |
+|---|---|
+| Journey seed | The one seed a run is defined by, settled once before any Route starts. Setting `PHILEAS_SEED` replays it. |
+| Route seed | Derived from the Journey seed and the Route's index, so any Route can be replayed on its own. |
+| Fix stream / Trip stream | Two separate seeded streams of numbers per Route, so editing the Fix never shifts the Trip's draws. |
+| Replay | Re-running a recorded seed to retrace a Route hop for hop. Only meaningful against the same build. |
+
+## Recording
+
+| Term | Meaning |
+|---|---|
+| Journal | One file per Route, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. |
+| Line kinds | `route` (the opening line), `pool`, `fix-hop`, `trip-hop`, `note` (such as the menu being withheld), `outcome` (the closing line, absent if the Route died). |
+| Abandoned | A trip hop whose action timed out. It's still recorded, and the Route continues. |
+
+## Checking (phase 5 onward)
+
+| Term | Meaning |
+|---|---|
+| Check | A test of the application run after every Hop, fix hops included. The first failure ends the Route. |
+| Universal checks | Checks that assume nothing about the application: no uncaught error, still responding, still showing something, no navigation away, every control named. The requirements call this tier **implicit** (R17). |
+| Structural check | Two things on the page agreeing with each other, such as a count matching its list (R18). Phase 6. |
+| Metamorphic check | The application agreeing with itself over time, such as search then clear restoring the list (R20). Phase 6. |
+| Specified check, or oracle | An expected result computed independently of the application and compared against what the page shows (R21). It must never share logic with what it judges. |
+| Narrowing | An adapter switching off or loosening one universal check for its own application, with a required reason that reaches the report (R19). |
+| Fix failure | A broken Fix step, reported apart from a failed Route, since ten Routes failing on one broken step is one problem (R11). |
+
+## Setup
+
+| Term | Meaning |
+|---|---|
+| Journey's author | Whoever defines a Journey: its settings and its Fix. |
+| Adapter | The application-specific code implementing `AppUnderTest`: how to launch, how to tell it's ready, what to exclude. It judges nothing itself. |
+| Staleness guard | Refuses to run when a file in the packaged build differs in content from the source it was built from, naming each file (R23). Without source it can't run at all, and the run says so. |
+| Testbed | Applications built to be tested. `buggy` is the ordinary one, where defects are planted in later phases. |
+
+## Settings
+
+| Term | Meaning |
+|---|---|
+| `PHILEAS_SEED` | Replays a Journey with a given seed. |
+| `PHILEAS_SHOW` | `hidden` (default), `back` (shown behind), `front` (shown and activated), or `top` (always on top). |
+| `PHILEAS_HOP_DELAY_MS` | Pauses after each Hop so a Route can be watched. It changes no draw. |
+| `PHILEAS_ALLOW_STALE` | Runs even when the staleness guard finds a mismatch, and the run says the guard was overridden. |

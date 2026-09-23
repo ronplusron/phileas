@@ -41,6 +41,7 @@ export {
   defineJourney,
   routeIndices,
   SHORTEST_DEADLINE_MS,
+  playwrightTimeouts,
   resolveSeed,
   requireSeed,
   generateSeed,

@@ -10,6 +10,7 @@ import {
   generateSeed,
   SEED_VARIABLE,
   SHORTEST_DEADLINE_MS,
+  playwrightTimeouts,
 } from '../src/index';
 
 /**
@@ -172,18 +173,13 @@ test('a route seed refuses an index that is not a route', () => {
 });
 
 test('a Journey refuses terms that cannot fail', () => {
-  expect(() => defineJourney({ routes: 0, tripLength: 10, deadlineMs: 1000 })).toThrow(/routes/);
-  expect(() => defineJourney({ routes: 5, tripLength: 0, deadlineMs: 1000 })).toThrow(
-    /tripLength/
-  );
-  expect(() => defineJourney({ routes: 5, tripLength: 10, deadlineMs: 0 })).toThrow(/deadlineMs/);
-  expect(() => defineJourney({ routes: 5, tripLength: 10, deadlineMs: 1000, seed: '' })).toThrow(
-    /empty string/
-  );
+  expect(() => defineJourney({ routes: 0, tripLength: 10 })).toThrow(/routes/);
+  expect(() => defineJourney({ routes: 5, tripLength: 0 })).toThrow(/tripLength/);
+  expect(() => defineJourney({ routes: 5, tripLength: 10, seed: '' })).toThrow(/empty string/);
 });
 
 test('a Journey registers one index per Route', () => {
-  const journey = defineJourney({ routes: 4, tripLength: 10, deadlineMs: 1000 });
+  const journey = defineJourney({ routes: 4, tripLength: 10 });
   expect(routeIndices(journey)).toEqual([0, 1, 2, 3]);
 });
 
@@ -203,16 +199,58 @@ test('requireSeed returns the seed that was settled, not a fresh one', () => {
   }
 });
 
-test('a Journey refuses a deadline that is a count rather than a duration', () => {
-  // One millisecond passed the old check, which was the same whole-number test
-  // the two counts use. The Journey's deadline then expires before the first
+test('both deadlines are optional, and leaving them out means no limit', () => {
+  // The common case: a Journey takes as long as its Routes take.
+  const unbounded = defineJourney({ routes: 5, tripLength: 10 });
+  expect(unbounded.journeyDeadlineMs).toBeUndefined();
+  expect(unbounded.routeDeadlineMs).toBeUndefined();
+});
+
+test('a deadline that is a count rather than a duration is refused, for either', () => {
+  // One millisecond passed the original check, which was the same whole-number
+  // test the two counts use. The deadline then expires before the first
   // application has launched: every Route unfinished and nothing wrong.
-  expect(() => defineJourney({ routes: 5, tripLength: 10, deadlineMs: 1 })).toThrow(
-    /duration in milliseconds/
-  );
-  expect(() =>
-    defineJourney({ routes: 5, tripLength: 10, deadlineMs: SHORTEST_DEADLINE_MS })
-  ).not.toThrow();
+  for (const name of ['journeyDeadlineMs', 'routeDeadlineMs'] as const) {
+    expect(() => defineJourney({ routes: 5, tripLength: 10, [name]: 1 })).toThrow(
+      /duration in milliseconds/
+    );
+    expect(() =>
+      defineJourney({ routes: 5, tripLength: 10, [name]: SHORTEST_DEADLINE_MS })
+    ).not.toThrow();
+  }
+});
+
+test('a zero deadline is refused rather than read as no limit', () => {
+  // Playwright reads zero as no limit, and allowing it here would give one value
+  // two meanings: a reader could not tell no limit from a mistake. No limit is
+  // said by leaving the deadline out, and the refusal says so.
+  for (const name of ['journeyDeadlineMs', 'routeDeadlineMs'] as const) {
+    expect(() => defineJourney({ routes: 5, tripLength: 10, [name]: 0 })).toThrow(
+      /leave it out for no limit/
+    );
+  }
+});
+
+test('an unset deadline reaches Playwright as zero, never as its default', () => {
+  // The case the helper exists for. A Route deadline left out of a Playwright
+  // configuration means Playwright's thirty-second default, which cuts long
+  // Routes off; it has to arrive as an explicit zero to mean no limit.
+  expect(playwrightTimeouts(defineJourney({ routes: 1, tripLength: 1 }))).toEqual({
+    timeout: 0,
+    globalTimeout: 0,
+  });
+
+  // And a stated one reaches the right setting, not the other.
+  expect(
+    playwrightTimeouts(
+      defineJourney({
+        routes: 1,
+        tripLength: 1,
+        journeyDeadlineMs: 600_000,
+        routeDeadlineMs: 90_000,
+      })
+    )
+  ).toEqual({ timeout: 90_000, globalTimeout: 600_000 });
 });
 
 test('a missing seed is an error, never an invented one', () => {

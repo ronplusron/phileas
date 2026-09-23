@@ -16,7 +16,8 @@ enumerating every control in one application would be more precise and would
 stop this being a framework, so generic discovery wins even where it costs
 accuracy. `CLAUDE.md` records the commitments this produced.
 
-`docs/PRODUCT_REQUIREMENTS.md` says what the product must do, apart from how
+`docs/GLOSSARY.md` defines every term, once. `docs/PRODUCT_REQUIREMENTS.md`
+says what the product must do, apart from how
 it gets built, and is the one to read first. Standing commitments live in
 `CLAUDE.md` and the build order in `docs/PLAN.md`. None of the three is
 summarized here -- read them.
@@ -38,19 +39,18 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs eighty-two tests. Seven launch it, refuse a stale
+through, and `npm test` runs eighty-five tests. Seven launch it, refuse a stale
 bundle, report a bad boot in the application's own words, keep every window off
 the screen, and prove the outbound-link stub took effect rather than assuming
-it. Twenty prove the reproducibility mechanism without launching anything,
-including known-answer vectors that pin the generator's output. Nine record
-what `buggy` correctly does, so a defect planted later can be told apart from
-an accidental one. Seven assert that a guard refuses rather than answering when
-it has no evidence. Fifteen travel through the application, and nine cover the
-journal, including one cut off mid-write. Ten cover the window modes and the
-hop delay, and two keep every source file searchable. The last three cover the
-fixture
-layer and the types, the type ones being compile-time assertions that
-`npm run typecheck` enforces.
+it. Twenty-three prove the reproducibility mechanism and a Journey's terms
+without launching anything, including known-answer vectors that pin the
+generator's output. Nine record what `buggy` correctly does, so a defect
+planted later can be told apart from an accidental one. Seven assert that a
+guard refuses rather than answering when it has no evidence. Fifteen travel
+through the application, and nine cover the journal, including one cut off
+mid-write. Ten cover the window modes and the hop delay, and two keep every
+source file searchable. The last three cover the fixture layer and the types,
+the type ones being compile-time assertions that `npm run typecheck` enforces.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -138,7 +138,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own eighty-two tests against `testbed/buggy/`.
+`npm test` runs the engine's own eighty-five tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them. It prints the Journey seed; set
@@ -195,7 +195,7 @@ window is fine.
 can be watched at all: a Route otherwise travels twenty Hops in about a second,
 and showing windows is pointless if what they show is a blur. It changes no
 draw and no verdict, so a seed retraces the same Route with any delay, but it
-does land inside the Route timeout and the Journey deadline. `PHILEAS_ALLOW_STALE=1` runs
+does land inside the Route deadline and the Journey deadline, where either is set. `PHILEAS_ALLOW_STALE=1` runs
 against a stale build, and the run says so rather than passing quietly.
 
 `tsconfig.json` is `noEmit` with `strict` and `noUncheckedIndexedAccess` on.
