@@ -16,6 +16,6 @@ import { defineJourney } from '@drugstoresushi/phileas';
  */
 export const exploration = defineJourney({
   routes: 5,
-  hopsPerRoute: 20,
+  tripLength: 20,
   deadlineMs: 10 * 60 * 1000,
 });

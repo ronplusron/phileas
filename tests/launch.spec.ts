@@ -140,7 +140,7 @@ test('the outbound-link stub took effect, and nothing opened', async () => {
     // will-navigate, so from the renderer's side it never resolves. An
     // ordinary click waits for it and times out after thirty seconds. Phase 4
     // has to hop without waiting for navigation, or every outbound link an
-    // exclusion list missed costs a Route its whole budget in one hop.
+    // exclusion list missed costs a Route the rest of its Trip in one hop.
     await page.locator('#outbound').click({ noWaitAfter: true });
 
     await expect

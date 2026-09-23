@@ -341,7 +341,7 @@ kit was in its origin and is now consumable.
 
 ### Phase 3: the terms of a Journey, and seeds
 
-`journey.ts` holds the four terms of R1: seed, routes, hops per route,
+`journey.ts` holds the four terms of R1: seed, routes, Trip length,
 deadline. `random.ts` holds a small seedable generator and the per-Route
 derivation `routeSeed = hash(journeySeed, routeIndex)`, split into a Fix stream
 and a Trip stream, exactly as `../CLAUDE.md` decides.
@@ -382,7 +382,7 @@ ones. So a Route that hops into a code editor's text layer or a terminal
 finds one text area and has nowhere further to go, and that is stranded
 working correctly rather than a defect in `survey`. What remains genuinely
 unmeasured is the opposite failure, which is an application offering more
-candidates than a hop budget can visit.
+candidates than a Trip can visit.
 
 A hop chooses a candidate, acts on it, and waits for the page to settle.
 
@@ -431,7 +431,7 @@ touch until it has surveyed, so whatever it waits for after a hop is generic
 by necessity. Candidates worth measuring rather than assuming: the survey
 result unchanged across two consecutive reads, no animations in flight, and a
 bounded round trip returning. Record what the chosen one costs, because it
-runs after every hop and multiplies by the budget.
+runs after every hop and multiplies by the Trip length.
 
 **What mature suites do instead is worth knowing, even though the engine
 cannot require it.** Neither application examined has a global settle signal.
@@ -448,7 +448,7 @@ implementation here draws an index from the Trip stream. `../CLAUDE.md`
 says why the seam exists and `OUTSTANDING.md` says what is expected to use it
 later. Generating a value to type is a second seam, separate from choosing
 which control to act on. `route.ts` exports `runRoute()`, which runs one Route:
-the Fix from the fix stream, then hops until the budget is reached, the survey
+the Fix from the fix stream, then hops until the Trip is complete, the survey
 comes back empty (stranded, R5, naming the hop), or, from phase 5, a check
 fails.
 
@@ -607,7 +607,7 @@ run after every hop like the universal tier.
 the easy mistake. A relation compares two states, so the engine has to take
 moves of its own: when a hop has just performed the operation a relation names,
 the engine performs the counterpart, compares, and records those hops in the
-journal marked as probe hops. Whether probe hops count against the hop budget
+journal marked as probe hops. Whether probe hops count toward the Trip length
 is undecided and is decided here.
 
 `specified.ts` (R21) takes an expected value the adapter computed from a
@@ -764,9 +764,9 @@ tune it against `buggy` and then against the first real consumer rather than
 against imagined cases, and remember this is one of the checks R19 exists for.
 
 **The Route timeout.** Playwright's default per-test timeout is thirty
-seconds. A Route with a hop budget of forty against a slow application will
+seconds. A Route with a Trip length of forty against a slow application will
 exceed it and be reported as a timeout rather than as whatever it found. The
-Route timeout is set from the budget and the settle wait, never left at the
+Route timeout is set from the Trip length and the settle wait, never left at the
 default.
 
 **Editing a Fix or the exclusion list changes recorded routes.** Both are inputs

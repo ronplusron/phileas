@@ -245,7 +245,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   // One candidate per survey gets the predicate run twice, rotating by hop so
   // that a Route covers a different one each time. Every candidate would be a
   // truer control and would double the cost of user code that may touch the
-  // page, on every hop, against a budget of tens.
+  // page, on every hop, against a Trip of tens.
   const control = found.length ? found[hopIndex % found.length] : undefined;
 
   const candidates: SurveyedCandidate[] = [];

@@ -33,8 +33,16 @@ export interface JourneyTerms {
   /** How many Routes to register. Each is a test, with its own verdict. */
   routes: number;
 
-  /** The Hop budget for each Route. A Route that spends it has finished. */
-  hopsPerRoute: number;
+  /**
+   * How many Hops each Route's Trip takes, counted in hops, not time.
+   *
+   * The Trip only: Fix hops come first and do not count toward it, so a Route
+   * with a three-step Fix and a Trip length of 20 takes 23 hops. A Route that
+   * completes its Trip has finished. One that runs out of moves first is
+   * stranded, which is why this is a length the Route is meant to reach rather
+   * than a ceiling it may stop short of.
+   */
+  tripLength: number;
 
   /** How long the whole Journey may take, in milliseconds from its start. */
   deadlineMs: number;
@@ -57,7 +65,7 @@ declare const checked: unique symbol;
  * Branded, so that `defineJourney` is the only way to make one. TypeScript's
  * types are structural and `readonly` does not affect assignability, so
  * `Readonly<JourneyTerms>` alone let a hand-written object typecheck as a
- * Journey and skip every check below: `{ routes: 0, hopsPerRoute: 0,
+ * Journey and skip every check below: `{ routes: 0, tripLength: 0,
  * deadlineMs: 0 }` compiled, registered no tests at all, and reported green
  * having traveled nowhere. That is the failure the comment on `defineJourney`
  * calls the one this engine is least able to notice about itself, and the
@@ -72,14 +80,14 @@ export type Journey = Readonly<JourneyTerms> & { readonly [checked]: true };
  * Check a Journey's terms and freeze them.
  *
  * The checks are deliberately unforgiving. A Journey of zero Routes, or a Route
- * with a budget of zero Hops, passes every test it registers by doing nothing,
+ * with a Trip length of zero, passes every test it registers by doing nothing,
  * and reads in a report exactly like a Journey that traveled and found nothing.
  * A run that cannot fail is the failure mode this engine is least able to
  * notice about itself.
  */
 export function defineJourney(terms: JourneyTerms): Journey {
   requireWholeNumberAtLeastOne('routes', terms.routes);
-  requireWholeNumberAtLeastOne('hopsPerRoute', terms.hopsPerRoute);
+  requireWholeNumberAtLeastOne('tripLength', terms.tripLength);
 
   // A duration, not a count. The same check as the two above would accept one
   // millisecond, which produces a Journey whose deadline passes before the

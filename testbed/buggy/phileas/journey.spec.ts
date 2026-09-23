@@ -74,7 +74,7 @@ for (const routeIndex of routeIndices(exploration)) {
       streams,
       journeySeed,
       routeIndex,
-      hopsPerRoute: exploration.hopsPerRoute,
+      tripLength: exploration.tripLength,
       journalDir: journalDir(journeySeed),
     });
 
@@ -84,7 +84,7 @@ for (const routeIndex of routeIndices(exploration)) {
     });
 
     // **Completing the Journey is itself an assertion.** If the survey returns
-    // nothing actionable at hop 23 the Route cannot finish its budget, and no
+    // nothing actionable at hop 23 the Route cannot complete its Trip, and no
     // invariant catches that, because the page is structurally fine. A Route
     // that fails for not finishing is how dead ends, inescapable modals and
     // traps get caught without a check written for any of them.
@@ -97,7 +97,7 @@ for (const routeIndex of routeIndices(exploration)) {
     expect(
       outcome.kind,
       `Route ${routeIndex} ended ${outcome.kind} after ${outcome.hops} of ` +
-        `${exploration.hopsPerRoute} hops` +
+        `${exploration.tripLength} hops` +
         (outcome.kind === 'stranded' ? `: ${outcome.reason}` : '') +
         `. Route seed ${streams.routeSeed}; journal in ${journalDir(journeySeed)}.`
     ).toBe('passed');

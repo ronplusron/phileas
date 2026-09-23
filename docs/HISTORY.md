@@ -25,6 +25,26 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: Trip length
+
+The setting that bounds a Route was called `hopsPerRoute` in a Journey's terms
+and `hopBudget` in the journal, two names for one number, and both were wrong
+about its scope. It counts Trip hops only: the Fix runs first on its own
+counter, so a Route with a three-step Fix and a length of 20 takes 23 hops.
+R1 said "a maximum number of hops per route", which the code never did.
+
+It is now `tripLength` everywhere, and R1 says "the length of each route's
+trip in hops". Chosen over `tripBudget` and `tripHopBudget` from a list of ten
+words for the amount, on one test: the number is meant to be reached, since a
+Route that falls short strands, and pure ceiling words such as cap or limit
+lose that. Its documented unit covers the catch that "length" could mean time.
+
+"Budget" now means only the whole run's bound, the routes, Trip length and
+deadline together, as the requirements already used it, and a settle wait's
+time allowance. The journal's definition in the requirements and README also
+stopped saying "one entry per hop", since it holds pools, notes and the
+opening and closing lines too.
+
 ## 2026-09-23: the journal format, and the Trip
 
 Every line a Route writes changed shape, decided one member at a time by

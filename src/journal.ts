@@ -178,7 +178,7 @@ export interface OpeningEntry {
   readonly journeySeed: string;
   readonly routeSeed: string;
   readonly routeIndex: number;
-  readonly hopBudget: number;
+  readonly tripLength: number;
   readonly startedAt: string;
 }
 
@@ -202,7 +202,7 @@ export interface NoteEntry {
 export interface ClosingEntry {
   readonly kind: 'outcome';
   readonly outcome: 'passed' | 'stranded' | 'failed';
-  /** Trip hops completed, which is not the budget unless the Route spent it. */
+  /** Trip hops completed, which is short of the Trip length unless the Route finished. */
   readonly hops: number;
   /** Why, for stranded and failed. */
   readonly reason?: string;
@@ -293,7 +293,7 @@ export class Journal {
     // fsync, not just write. A synchronous write survives this process dying,
     // which covers the application crashing and the run being stopped by hand.
     // It does not survive the machine dying, and R9 names that ending too. The
-    // cost is one flush per hop against a budget of tens, which is why it is
+    // cost is one flush per hop against a Trip of tens, which is why it is
     // affordable here and would not be per candidate.
     fs.fsyncSync(this.fd);
   }

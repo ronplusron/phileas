@@ -75,7 +75,7 @@ confirmed by reading the code, and nothing here restates it.
 
 **Two things phase 5 must not undo**, both measured earlier and carried in
 `docs/PLAN.md`. A hop must not wait for navigation to finish, or a single
-outbound link costs a Route its whole budget; `route.ts` bounds every action
+outbound link costs a Route its whole timeout; `route.ts` bounds every action
 for that reason. And `buggy`'s outbound-link test is the positive control for
 the `external.ts` hazard: keep it, because without it an empty recorder and a
 stub that never took read identically.

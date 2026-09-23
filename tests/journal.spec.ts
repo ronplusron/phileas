@@ -27,7 +27,7 @@ const opening = {
   journeySeed: 'abc123',
   routeSeed: 'def456',
   routeIndex: 3,
-  hopBudget: 5,
+  tripLength: 5,
 };
 
 function hop(index: number) {
@@ -73,7 +73,7 @@ test('the opening entry is written before the Route does anything', () => {
   // never traveled.
   const entries = readJournal(journalPath(dir, opening.routeIndex, opening.routeSeed));
   expect(entries).toHaveLength(1);
-  expect(entries[0]).toMatchObject({ kind: 'route', routeSeed: 'def456', hopBudget: 5 });
+  expect(entries[0]).toMatchObject({ kind: 'route', routeSeed: 'def456', tripLength: 5 });
 
   journal.abandon();
 });

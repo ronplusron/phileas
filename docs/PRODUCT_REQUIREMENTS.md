@@ -17,7 +17,8 @@ Terms used throughout:
 - A **journey** is one run, made of several **routes**.
 - A **route** is one pass through the application, made up of **hops**.
 - A **hop** is one interaction.
-- A **journal** is the record a route writes as it goes, one entry per hop.
+- A **journal** is the record a route writes as it goes, including one entry
+  per hop.
 - A **fix** anchors the start of every route: a fixed sequence of hops, chosen
   in advance and the same every time, putting the application into a known
   state before the unpredictable part begins. That anchoring is what makes a
@@ -28,8 +29,8 @@ Terms used throughout:
   each one decided at the moment it is taken. A route with no fix is all trip.
 
 A journey has three possible outcomes per route: passed, failed, or
-**stranded**. Stranded means the route ran out of moves before reaching its
-hop budget. It is reported and is worth investigating, but it is not by itself
+**stranded**. Stranded means the route ran out of moves before completing its
+trip. It is reported and is worth investigating, but it is not by itself
 a defect.
 
 ## 1. Problem
@@ -142,8 +143,8 @@ jobs, which may be the same person on different days.
 - **A written record of the route.** Every hop is recorded as it happens: what
   was chosen, what else was available, and what the checks said. Answers: what
   the tester did being lost by the time the bug is filed.
-- **A budget.** A run is bounded by a number of routes, a limit on hops per
-  route, and a deadline. Answers: an unbounded route being unusable in
+- **A budget.** A run is bounded by a number of routes, the length of each
+  route's trip, and a deadline. Answers: an unbounded route being unusable in
   practice.
 
 ## 6. User flows
@@ -220,8 +221,8 @@ and the runner runs all of them after every hop.
 
 ### Running a journey
 
-- **R1 (Must)** A journey is defined by a seed, a number of routes, a maximum
-  number of hops per route, and a deadline. Stating those four is enough to
+- **R1 (Must)** A journey is defined by a seed, a number of routes, the length
+  of each route's trip in hops, and a deadline. Stating those four is enough to
   repeat the run.
 - **R2 (Must)** Routes within a journey are independent. Re-running a single
   route on its own produces the same route it produced inside the full journey.
@@ -231,8 +232,8 @@ and the runner runs all of them after every hop.
   then starts from the application's own initial state.
 - **R4 (Must)** When the deadline passes, the journey stops and reports the
   routes that finished. Work already done is never discarded.
-- **R5 (Should)** A route that runs out of available moves before reaching its
-  hop budget is reported as stranded, naming the hop where it ran out.
+- **R5 (Should)** A route that runs out of available moves before completing
+  its trip is reported as stranded, naming the hop where it ran out.
   Stranded is its own outcome, distinct from both passed and failed: a dead
   end, an inescapable dialog and a trap are all found this way, and so is a
   perfectly reasonable corner of the application with nothing further to do in

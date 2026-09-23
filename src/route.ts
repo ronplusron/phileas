@@ -14,7 +14,7 @@ import {
 } from './survey';
 
 /**
- * One Route: the Fix, then hops until the budget is spent or there is nowhere
+ * One Route: the Fix, then hops until the Trip is complete or there is nowhere
  * left to go.
  *
  * The Route is the test, not the Journey. That mapping is what gives a Route
@@ -156,7 +156,7 @@ export class FixFailure extends Error {
  * still blocked 8.8 seconds after the click with no sign of clearing.
  *
  * So the Route is over, and the honest thing is to say so once rather than to
- * spend the remaining budget on Hops that will each time out. This is not
+ * spend the rest of the Trip on Hops that will each time out. This is not
  * stranded: moves were available and the Route took one. It is a finding,
  * and phase 5 is where it becomes a named check rather than an error.
  *
@@ -175,7 +175,7 @@ export class PageUnreachable extends Error {
         `Every locator call waits for a pending navigation to finish, and a navigation ` +
         `an application prevents in will-navigate never finishes, so the page stays alive ` +
         `while nothing can be surveyed. The Route ends here rather than spending the rest ` +
-        `of its budget on hops that would each time out. If this was an outbound link, the ` +
+        `of its Trip on hops that would each time out. If this was an outbound link, the ` +
         `adapter's exclusion list is what should have kept the Route off it.`
     );
     this.name = 'PageUnreachable';
@@ -203,7 +203,7 @@ export interface RunRouteOptions {
   readonly streams: RouteStreams;
   readonly journeySeed: string;
   readonly routeIndex: number;
-  readonly hopsPerRoute: number;
+  readonly tripLength: number;
   /** Where this Route's journal file is written. */
   readonly journalDir: string;
   readonly fix?: Fix;
@@ -235,7 +235,7 @@ export interface RunRouteOptions {
  * external links this way behaves identically, which is all three that have
  * been read.
  *
- * The cost if this is missed is that one Hop consumes a Route's entire budget
+ * The cost if this is missed is that one Hop consumes a Route's entire timeout
  * and the Route reports a timeout rather than whatever it had found. The
  * exclusion list is what should keep a Route off an outbound link in the first
  * place, so this fires on the ones a list missed, which is exactly the case
@@ -263,7 +263,7 @@ export const HOP_DELAY_VARIABLE = 'PHILEAS_HOP_DELAY_MS';
  *
  * **It is not free of consequences, and they are both timeouts.** The pause
  * lands inside the Route's own timeout and inside the Journey's deadline, so a
- * delay of a second against a budget of twenty Hops adds twenty seconds to
+ * delay of a second against a Trip of twenty Hops adds twenty seconds to
  * every Route. A watched run that reports a timeout is usually this rather than
  * the application.
  */
@@ -290,7 +290,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     streams,
     journeySeed,
     routeIndex,
-    hopsPerRoute,
+    tripLength,
     journalDir,
     fix,
     chooser = seededChooser,
@@ -306,7 +306,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     journeySeed,
     routeSeed: streams.routeSeed,
     routeIndex,
-    hopBudget: hopsPerRoute,
+    tripLength: tripLength,
   });
 
   const tally = createExclusionTally(cfg.exclusions);
@@ -318,7 +318,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
     let lastTarget: string | undefined;
 
-    while (hops < hopsPerRoute) {
+    while (hops < tripLength) {
       let found: SurveyResult;
       try {
         found = await survey({
@@ -383,7 +383,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // A bounded action that ran out of time ends the Hop, not the Route. The
       // measured case is an outbound link: the click schedules a navigation the
       // main process cancels, so from the renderer's side it never resolves.
-      // Letting that end the Route would throw away every Hop the budget still
+      // Letting that end the Route would throw away every Hop the Trip still
       // had, which is the cost the bound exists to prevent in the first place.
       // Whether an action that never returns is itself a finding is phase 5's
       // question, and it needs the Route alive to ask it.

@@ -172,18 +172,18 @@ test('a route seed refuses an index that is not a route', () => {
 });
 
 test('a Journey refuses terms that cannot fail', () => {
-  expect(() => defineJourney({ routes: 0, hopsPerRoute: 10, deadlineMs: 1000 })).toThrow(/routes/);
-  expect(() => defineJourney({ routes: 5, hopsPerRoute: 0, deadlineMs: 1000 })).toThrow(
-    /hopsPerRoute/
+  expect(() => defineJourney({ routes: 0, tripLength: 10, deadlineMs: 1000 })).toThrow(/routes/);
+  expect(() => defineJourney({ routes: 5, tripLength: 0, deadlineMs: 1000 })).toThrow(
+    /tripLength/
   );
-  expect(() => defineJourney({ routes: 5, hopsPerRoute: 10, deadlineMs: 0 })).toThrow(/deadlineMs/);
-  expect(() => defineJourney({ routes: 5, hopsPerRoute: 10, deadlineMs: 1000, seed: '' })).toThrow(
+  expect(() => defineJourney({ routes: 5, tripLength: 10, deadlineMs: 0 })).toThrow(/deadlineMs/);
+  expect(() => defineJourney({ routes: 5, tripLength: 10, deadlineMs: 1000, seed: '' })).toThrow(
     /empty string/
   );
 });
 
 test('a Journey registers one index per Route', () => {
-  const journey = defineJourney({ routes: 4, hopsPerRoute: 10, deadlineMs: 1000 });
+  const journey = defineJourney({ routes: 4, tripLength: 10, deadlineMs: 1000 });
   expect(routeIndices(journey)).toEqual([0, 1, 2, 3]);
 });
 
@@ -207,11 +207,11 @@ test('a Journey refuses a deadline that is a count rather than a duration', () =
   // One millisecond passed the old check, which was the same whole-number test
   // the two counts use. The Journey's deadline then expires before the first
   // application has launched: every Route unfinished and nothing wrong.
-  expect(() => defineJourney({ routes: 5, hopsPerRoute: 10, deadlineMs: 1 })).toThrow(
+  expect(() => defineJourney({ routes: 5, tripLength: 10, deadlineMs: 1 })).toThrow(
     /duration in milliseconds/
   );
   expect(() =>
-    defineJourney({ routes: 5, hopsPerRoute: 10, deadlineMs: SHORTEST_DEADLINE_MS })
+    defineJourney({ routes: 5, tripLength: 10, deadlineMs: SHORTEST_DEADLINE_MS })
   ).not.toThrow();
 });
 

@@ -34,15 +34,15 @@ export default defineConfig({
   globalTimeout: exploration.deadlineMs,
 
   /**
-   * The Route timeout, derived from the budget rather than left at the default.
+   * The Route timeout, derived from the Trip length rather than left at the default.
    *
    * Playwright's default is thirty seconds. A Route of twenty Hops against a
    * slow application exceeds that and is reported as a timeout instead of as
    * whatever it had found, which docs/PLAN.md carries as a hazard and says to
-   * set from the budget and the settle wait. It was left at the default here
+   * set from the Trip length and the settle wait. It was left at the default here
    * until review caught it.
    */
-  timeout: exploration.hopsPerRoute * MILLISECONDS_PER_HOP + ROUTE_OVERHEAD_MS,
+  timeout: exploration.tripLength * MILLISECONDS_PER_HOP + ROUTE_OVERHEAD_MS,
 
   // One application at a time, for the reason the root config gives.
   fullyParallel: false,

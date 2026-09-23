@@ -24,7 +24,7 @@ costs the whole reporting model:
 
 | Phileas | Playwright | Why it has to be this one |
 | --- | --- | --- |
-| Journey | the run | Holds the seed, the route count, the hop budget, the deadline |
+| Journey | the run | Holds the seed, the route count, the Trip length, the deadline |
 | Route | a test | The unit with a verdict, the fixture scope, the timeout boundary, the retry unit, the trace boundary |
 | Fix | `beforeEach` | Anchors every Route's start. Defined once per Journey, applied at the start of each Route. Optional, and usually present |
 | Hop | `test.step` | Hops nest in the trace without each becoming a separate pass or fail |
@@ -133,7 +133,7 @@ accessibility fault and something a Route cannot reliably hop to.
 ## A Route has three outcomes, and stranded is the third
 
 Passed, failed, and **stranded**: the Route ran out of available moves before
-spending its hop budget. Stranded is reported separately and is never folded
+completing its Trip. Stranded is reported separately and is never folded
 into either of the others.
 
 **It is not a failure**, because nothing has been shown to be wrong. A dead
@@ -145,8 +145,8 @@ the Route did not do what was asked of it.
 
 ## Completing the Journey is itself an assertion
 
-If `survey` returns nothing actionable at hop 23, the Route cannot finish its
-budget. No invariant catches that, because the page is structurally fine. A
+If `survey` returns nothing actionable at hop 23, the Route cannot complete its
+Trip. No invariant catches that, because the page is structurally fine. A
 Route that fails for not finishing means dead ends, inescapable modals and
 traps get caught without a check written for any of them.
 

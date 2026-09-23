@@ -28,7 +28,7 @@ it and what they do today.
 | **Fix** | Anchors the start of every Route. A fixed sequence of Hops, the same every time. Optional, and usually present. |
 | **Trip** | The rest of a Route after its Fix: Hops drawn from the seed. Without a Fix, the whole Route is its Trip. |
 | **Hop** | The atomic unit: one UI or API interaction. |
-| **Journal** | The record a Route writes as it goes, one entry per Hop. |
+| **Journal** | The record a Route writes as it goes, including one entry per Hop. |
 
 Routes within a Journey are independent and know nothing of each other, so any
 Route can be replayed on its own.
@@ -46,7 +46,7 @@ adds its own on top, and can supply answers worked out independently of the
 code being tested. That is the only way the engine judges whether a value is
 right rather than merely consistent, as opposed to self-consistent.
 
-A Route that runs out of moves before spending its budget is reported as
+A Route that runs out of moves before completing its Trip is reported as
 stranded, which is neither a pass nor a failure. Sometimes that is a dead end
 or a trap, and sometimes it is a corner of the application with nothing more
 to do in it.

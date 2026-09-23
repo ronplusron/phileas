@@ -195,7 +195,7 @@ test('menu candidates are withheld, with a reason, when no window has focus', as
   expect(found.candidates.every((candidate) => candidate.source === 'page')).toBe(true);
 });
 
-test('a Route spends its budget and journals every hop', async ({ page, app }) => {
+test('a Route completes its Trip and journals every hop', async ({ page, app }) => {
   const dir = scratch();
   const streams = deriveRouteStreams('test-seed', 0);
 
@@ -206,7 +206,7 @@ test('a Route spends its budget and journals every hop', async ({ page, app }) =
     streams,
     journeySeed: 'test-seed',
     routeIndex: 0,
-    hopsPerRoute: 6,
+    tripLength: 6,
     journalDir: dir,
   });
 
@@ -256,7 +256,7 @@ test('every target is the pool entry its draw points at, from the file alone', a
     streams,
     journeySeed: 'consistency-seed',
     routeIndex: 0,
-    hopsPerRoute: 12,
+    tripLength: 12,
     journalDir: dir,
   });
 
@@ -289,7 +289,7 @@ test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
       streams,
       journeySeed: 'replay-seed',
       routeIndex: 2,
-      hopsPerRoute: 8,
+      tripLength: 8,
       journalDir: dir,
     });
     return readJournal(path.join(dir, `route-002-${streams.routeSeed}.jsonl`))
@@ -335,7 +335,7 @@ test('a Route with nowhere to go is stranded, not failed, and names the hop', as
     streams: deriveRouteStreams('stranded-seed', 0),
     journeySeed: 'stranded-seed',
     routeIndex: 0,
-    hopsPerRoute: 10,
+    tripLength: 10,
     journalDir: dir,
   });
 
@@ -372,7 +372,7 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
     streams: deriveRouteStreams('fix-seed', 0),
     journeySeed: 'fix-seed',
     routeIndex: 0,
-    hopsPerRoute: 5,
+    tripLength: 5,
     journalDir: dir,
     fix: async ({ step }) => {
       await step('open the summary', async () => {
@@ -429,7 +429,7 @@ test('a value is drawn on every hop, including hops that never type it', async (
     streams: deriveRouteStreams('unconditional-draw', 0),
     journeySeed: 'unconditional-draw',
     routeIndex: 0,
-    hopsPerRoute: 5,
+    tripLength: 5,
     journalDir: scratch(),
     chooser: {
       choose: (candidates) => {
@@ -472,7 +472,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
     streams: deriveRouteStreams('abandon-seed', 0),
     journeySeed: 'abandon-seed',
     routeIndex: 0,
-    hopsPerRoute: 3,
+    tripLength: 3,
     journalDir: dir,
     hopTimeoutMs: 700,
     chooser: {
@@ -487,7 +487,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
   // Measured, and it decides the shape of this test: the prevented navigation
   // never resolves, so every locator call after the click stays blocked. The
   // Route cannot continue, and the requirement is that it says so once rather
-  // than spending its remaining budget on hops that each time out.
+  // than spending the rest of its Trip on hops that each time out.
   await expect(outcome).rejects.toThrow(PageUnreachable);
   await expect(outcome).rejects.toThrow(/stopped answering after hop 1\b/);
   await expect(outcome).rejects.toThrow(/exclusion list/);
