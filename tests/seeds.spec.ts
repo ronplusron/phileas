@@ -76,8 +76,15 @@ test('both of a Route\'s streams start where they started', () => {
   expect([streams.fix.next(), streams.fix.next()]).toEqual([
     0.035913600819185376, 0.5903206907678396,
   ]);
-  expect([streams.traversal.next(), streams.traversal.next()]).toEqual([
-    0.9430932917166501, 0.7447453245986253,
+  // Changed on 2026-09-23, deliberately: the second stream was renamed from
+  // 'traversal' to 'trip', and its name is hashed into its seed. These values
+  // were not copied from what the engine produced after the change. They were
+  // computed by a separate implementation of the same algorithm, written in
+  // another language and sharing no code with src/random.ts, which first had to
+  // reproduce every value pinned in this file before the rename. The Fix
+  // stream's values above did not move, and that is part of the check.
+  expect([streams.trip.next(), streams.trip.next()]).toEqual([
+    0.2970382689964026, 0.29075332870706916,
   ]);
 });
 
@@ -114,7 +121,7 @@ test("route k's stream is unaffected by whether the routes before it ran", () =>
 
   // Route 3 drawn on its own, as a replay of one Route would.
   const alone = deriveRouteStreams(journeySeed, 3);
-  const aloneDraws = Array.from({ length: 10 }, () => alone.traversal.next());
+  const aloneDraws = Array.from({ length: 10 }, () => alone.trip.next());
 
   // Route 3 drawn after routes 0 through 2 have each spent draws, as it would
   // be inside a full Journey. One shared stream across Routes would make these
@@ -122,35 +129,35 @@ test("route k's stream is unaffected by whether the routes before it ran", () =>
   for (let index = 0; index < 3; index += 1) {
     const earlier = deriveRouteStreams(journeySeed, index);
     for (let draw = 0; draw < 50; draw += 1) {
-      earlier.traversal.next();
+      earlier.trip.next();
       earlier.fix.next();
     }
   }
   const inJourney = deriveRouteStreams(journeySeed, 3);
-  const inJourneyDraws = Array.from({ length: 10 }, () => inJourney.traversal.next());
+  const inJourneyDraws = Array.from({ length: 10 }, () => inJourney.trip.next());
 
   expect(inJourneyDraws).toEqual(aloneDraws);
 });
 
-test('consuming from the Fix stream leaves the traversal stream unchanged', () => {
+test('consuming from the Fix stream leaves the Trip stream unchanged', () => {
   const untouched = deriveRouteStreams('split', 0);
-  const expected = Array.from({ length: 10 }, () => untouched.traversal.next());
+  const expected = Array.from({ length: 10 }, () => untouched.trip.next());
 
   // A Fix edited to make one more draw is the case this protects: without the
-  // split, every traversal draw after it shifts, and a recorded failing seed
+  // split, every Trip draw after it shifts, and a recorded failing seed
   // stops reproducing while reading as a fixed bug.
   const consumed = deriveRouteStreams('split', 0);
   for (let i = 0; i < 37; i += 1) consumed.fix.next();
-  const after = Array.from({ length: 10 }, () => consumed.traversal.next());
+  const after = Array.from({ length: 10 }, () => consumed.trip.next());
 
   expect(after).toEqual(expected);
 });
 
-test('the Fix and traversal streams are not the same stream', () => {
+test('the Fix and Trip streams are not the same stream', () => {
   const streams = deriveRouteStreams('split', 0);
   const fix = Array.from({ length: 10 }, () => streams.fix.next());
-  const traversal = Array.from({ length: 10 }, () => streams.traversal.next());
-  expect(fix).not.toEqual(traversal);
+  const trip = Array.from({ length: 10 }, () => streams.trip.next());
+  expect(fix).not.toEqual(trip);
 });
 
 test('each route index gets its own seed, stable across runs', () => {

@@ -25,6 +25,98 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: the journal format, and the Trip
+
+Every line a Route writes changed shape, decided one member at a time by
+reading real journals rather than by designing in the abstract.
+
+**The unpredictable part of a Route has a name: the Trip.** "Traversal" was
+used throughout phase 4 and is wrong for this engine, because traversal in
+computer science means systematic coverage and a seeded draw over whatever
+the screen offers is not that; `../CLAUDE.md` already said the engine travels
+rather than traverses. The noun it left missing is Trip, chosen over "trek",
+which fixed Trip's two catches but sounds larger than the Route it sits
+inside. The catch accepted with it: "trip" is also a verb for a check that
+fires, so the project avoids that use.
+
+**The rename changed every seed.** A stream's name is hashed into its seed, so
+renaming 'traversal' to 'trip' moved every draw of every Route, and every seed
+recorded before it stopped reproducing. Done deliberately while no recorded
+seed mattered. The known-answer test pinning that stream was not updated by
+copying what the engine produced afterwards, which is the oracle drift
+`../CLAUDE.md` warns about. A separate implementation of the generator in
+another language, sharing no code with `src/random.ts`, first reproduced every
+value pinned before the change, and then computed the new ones.
+
+**What a journal line holds now**, each change from reading one:
+
+- `kind` is `fix-hop` or `trip-hop`. The separate `phase` member is gone: it
+  was a classification, not a period of time, and its value was the
+  forbidden word.
+- A Fix hop has its own shape. The old one reused a Trip hop's and three
+  members were fictions on it: a role invented as `fix-step`, a `chosen` that
+  nothing chose, and an always-empty candidate list. It holds only what is
+  true of a Fix step, and a step that fails now gets its own line with the
+  error on it; before, R11's "which step broke" survived only as a sentence
+  inside the outcome's reason.
+- `chosen` became `target`, which stays true when the action failed and makes
+  no claim about how the thing was selected.
+- `action` records `click`, `fill` or `menu-click`. It used to be inferred
+  from the role by a rule that lives only in the source. `fill` is not typing:
+  it sets the value without pressing keys.
+- Hop numbers count from 1, because a person reads them, and the Fix and the
+  Trip are numbered separately, so editing the Fix does not renumber the Trip.
+- Candidate lists are written once, as `pool` lines keyed by a digest of the
+  list in order, and each hop names its pool. Twenty hops over eleven
+  candidates had been several hundred lines of mostly the same menu. A pool is
+  always flushed before the first hop that names it, so a file cut off
+  mid-write never holds a hop pointing at a missing list.
+- Each Trip hop records its `draw`, the generator's raw 32-bit integer. A
+  replay then names the hop where the seeded sequence broke even when the
+  broken draw lands on the same target by chance, about one time in eleven
+  over eleven candidates. It also makes the file checkable with nothing
+  launched: the target must be the pool entry the draw points at.
+  `tests/route.spec.ts` checks exactly that, and was shown to fail on a
+  mutated chooser that acted on the first candidate while reporting its draw.
+
+**Decided here for phase 5**, recorded in `PLAN.md`: checks run after Fix hops
+too, and one that fails there is a Fix failure.
+
+**Also fixed on the way:** `FixFailure`'s documentation had been separated
+from its class when `PageUnreachable` was inserted between them in phase 4,
+and the test counts quoted in `../ORIENTATION.md` and `../README.md` had not
+been updated when the window modes merged.
+
+## 2026-09-23: a run that can be watched
+
+`PHILEAS_SHOW` became four modes: `hidden`, `back`, `front` and `top`. A person
+running with the old `PHILEAS_SHOW=1` saw nothing, and every reading from
+inside the process said the window was fine: visible, not minimized, fully
+opaque, 900 by 640 in the middle of the display. **Showing a window does not
+activate the application.** A process launched from a terminal does not
+become frontmost on macOS, so the window was drawn behind whatever the viewer
+was looking at. Confirmed by a person watching the screen, which is the only
+evidence available here, since the tests can observe visibility and
+always-on-top but not activation.
+
+`back` keeps the old behavior on purpose and is what `1` still means, because
+a run that does not take the screen away is the useful default for watching.
+`top` exists because it costs one line, and is the mode that was measured by
+trapping a viewer who could not switch away from it.
+
+`PHILEAS_HOP_DELAY_MS` pauses after each hop, because a Route spends twenty
+hops in about a second and a visible blur is not watchable. It consumes no
+draw and stays out of the recorded hop cost: a Route watched at a 1000ms delay
+recorded a median hop of 27ms.
+
+**A literal NUL character sat in `src/survey.ts` from phase 4**, where an
+escape was meant. `grep` treats such a file as binary and skips it in silence,
+so every search against it returned a clean zero for a whole session. A
+positive control is what caught it: a search for a string known to be in the
+file came back empty. `random.ts` had already documented this hazard and
+avoided it. `tests/no-control-characters.spec.ts` now fails on any control
+character in the source, and was checked by planting one.
+
 ## 2026-09-22: phase 4, the first code that travels
 
 `survey.ts`, `route.ts` and `journal.ts`. A Route now surveys the running

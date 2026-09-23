@@ -3,7 +3,7 @@ import type { Candidate, Exclusions } from './app-under-test';
 import { hasFocusedWindow, menuEntries } from './menu';
 
 /**
- * What the traversal could act on next, found from the running application.
+ * What a Route could act on next, found from the running application.
  *
  * **Discovery is by role, and consults no enumeration of the application's
  * controls.** An adapter listing every control would be more precise and would
@@ -60,7 +60,7 @@ export function takesTypedValue(candidate: SurveyedCandidate): boolean {
 }
 
 /**
- * A page candidate, with what the traversal needs in order to act on it.
+ * A page candidate, with what a Hop needs in order to act on it.
  *
  * Identified by role, accessible name and position among the controls sharing
  * both, in document order. That triple is used for two things at once and is
@@ -110,7 +110,7 @@ export function toCandidate(candidate: SurveyedCandidate): Candidate {
  * Reported rather than offered. This does double duty, which is why it is
  * collected here in phase 4 before any check exists to read it: an element with
  * no accessible name is an accessibility fault, and it is also something the
- * traversal cannot reliably hop to, since there is nothing to name it by in a
+ * Route cannot reliably hop to, since there is nothing to name it by in a
  * journal or in a replay.
  */
 export interface UnnamedElement {
@@ -227,7 +227,7 @@ export interface SurveyOptions {
 }
 
 /**
- * What the traversal may act on right now.
+ * What a Route may act on right now.
  *
  * The exclusion list is applied BEFORE the result is returned, so the draw a
  * caller makes is over what may actually be hopped to. Filtering afterwards
@@ -400,7 +400,7 @@ async function surveyPage(
 
   // Disabled controls are found and then dropped from the draw. Hopping to one
   // does nothing, which would be journaled as a Hop that happened; the check
-  // that cares about them is the accessibility one, not the traversal.
+  // that cares about them is the accessibility one, not the Route.
   return { candidates: candidates.filter((candidate) => !candidate.disabled), unnamed };
 }
 

@@ -1,11 +1,12 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
 /**
  * The record one Route writes as it goes.
  *
- * It lands in phase 4 with the first traversal rather than later with the
- * checks, because a Route that leaves no trace can only be observed by watching
+ * It landed in phase 4 with the first code that travels rather than later with
+ * the checks, because a Route that leaves no trace can only be observed by watching
  * a window, and a phase whose output is a person watching is a phase nobody can
  * verify.
  *
@@ -20,12 +21,12 @@ import path from 'node:path';
 /**
  * One candidate, as the record names it.
  *
- * Deliberately plain data rather than anything the traversal can act on. A
- * journal is read long after the run, often by someone who did not make it, so
- * every field here has to mean something on its own. `nth` is what separates
- * two controls that share a role and a name, and it is the same triple the
- * traversal uses to act, so a reader retracing a Route by hand is following
- * what actually happened rather than an approximation of it.
+ * Deliberately plain data rather than anything a Route can act on. A journal is
+ * read long after the run, often by someone who did not make it, so every field
+ * here has to mean something on its own. `nth` is what separates two controls
+ * that share a role and a name, and it is the same triple a Hop uses to act, so
+ * a reader retracing a Route by hand is following what actually happened
+ * rather than an approximation of it.
  */
 export interface JournaledCandidate {
   readonly source: 'page' | 'menu';
@@ -51,32 +52,106 @@ export interface JournaledCheck {
   readonly observation?: string;
 }
 
-/** What one Hop did, and what it could have done instead (R10). */
-export interface HopEntry {
-  readonly kind: 'hop';
-  /** Position in the Route, counting from zero. */
-  readonly hop: number;
-  /** Whether this Hop was part of the Fix or part of the traversal (R11). */
-  readonly phase: 'fix' | 'traversal';
-  readonly chosen: JournaledCandidate;
-  /**
-   * Every candidate the draw was made over, this one included.
-   *
-   * R10 asks for what else could have been chosen, and R14 is what makes it
-   * more than bookkeeping: comparing this against what is available now is the
-   * only way to answer whether a seed stopped reproducing because the
-   * application changed or because the outcome did.
-   */
+/**
+ * What a Trip hop did to its target.
+ *
+ * Recorded rather than left to be inferred from the role. The rule that turns a
+ * role into an action lives in the engine's source, and a journal read after
+ * that rule changes would be silently misread. `fill` in particular is not
+ * typing: it sets the whole value at once and presses no keys, so a defect in a
+ * key handler is out of its reach, and a reader seeing a typed value would
+ * otherwise assume keystrokes.
+ */
+export type HopAction = 'click' | 'fill' | 'menu-click';
+
+/**
+ * A candidate list, written once and referred to by id.
+ *
+ * R10 asks what else could have been chosen at every Hop, and R14 needs that
+ * exact list, in its order, to say whether a seed stopped reproducing because
+ * the application changed. Writing the whole list on every line satisfied both
+ * and made the file unreadable: twenty Hops over eleven candidates, most of them
+ * a menu that never changed. A list changes only when the screen does, so it is
+ * written the first time it appears and every Hop drawn over it names its id.
+ *
+ * **It is always written before the first Hop that names it.** A file cut off
+ * mid-write then never holds a Hop pointing at a list that is not there, which
+ * is the ending R9 is about.
+ */
+export interface PoolEntry {
+  readonly kind: 'pool';
+  /** Derived from the contents, so the same list always has the same id. */
+  readonly id: string;
   readonly candidates: readonly JournaledCandidate[];
-  /** What was typed, where the Hop generated a value. */
+}
+
+/**
+ * One step of the Fix.
+ *
+ * Its own shape rather than a Trip hop's with fields bent to fit. A Fix is
+ * fixed: nothing is drawn, there is no list it was drawn from, and the step is
+ * a piece of the Journey author's code rather than something discovered on the
+ * screen, so it has no role. Every field below is true of a Fix step, which is
+ * the test the earlier shape failed on three counts.
+ */
+export interface FixHopEntry {
+  readonly kind: 'fix-hop';
+  /** Position within the Fix, counting from 1. */
+  readonly hop: number;
+  /** The label the Journey's author gave this step, not an accessible name. */
+  readonly name: string;
+  /**
+   * Why the step failed, on the step that did.
+   *
+   * R11 wants a broken Fix told apart from a failed Route, and that means
+   * saying which step broke. It used to survive only as a sentence inside the
+   * outcome's reason, with no line of its own.
+   */
+  readonly error?: string;
+  readonly startedAt: string;
+  readonly durationMs: number;
+  /**
+   * Empty until phase 5, which runs the checks after Fix hops too. A check
+   * failing here is a Fix failure, for the same reason as `error`.
+   */
+  readonly checks: readonly JournaledCheck[];
+}
+
+/** What one Trip hop did, and what it could have done instead (R10). */
+export interface TripHopEntry {
+  readonly kind: 'trip-hop';
+  /**
+   * Position within the Trip, counting from 1.
+   *
+   * From 1 because a person reads it: "stranded at hop 12 of 20" has to mean the
+   * twelfth. Counted separately from the Fix, so that editing the Fix does not
+   * renumber every Trip hop recorded before the edit.
+   */
+  readonly hop: number;
+  /** What the Hop acted on, or tried to. */
+  readonly target: JournaledCandidate;
+  readonly action: HopAction;
+  /** The id of the pool the target was drawn from. Its line comes earlier. */
+  readonly pool: string;
+  /**
+   * The raw 32-bit draw that selected the target, where a seeded draw did.
+   *
+   * The target should always be the pool entry at floor(draw / 2^32 x pool
+   * size), which a reader can check from the file alone. On a replay, a draw
+   * that differs names the hop where the sequence broke, even when the broken
+   * draw lands on the same target by chance. Absent for a chooser that does not
+   * draw.
+   */
+  readonly draw?: number;
+  /** What was filled in, where the action was `fill`. */
   readonly value?: string;
   /**
    * Why the action was given up on, where it did not complete in time.
    *
    * The Hop still happened and is still recorded: something was chosen and
-   * acted on, and the Route went on to its next Hop. Dropping it from the
-   * record would leave a gap that reads like a Hop that never occurred, and a
-   * replay comparing journals would diverge at it for no visible reason.
+   * acted on. Dropping it from the record would leave a gap that reads like a
+   * Hop that never occurred, and a replay comparing journals would diverge at
+   * it for no visible reason.
    */
   readonly abandoned?: string;
   readonly startedAt: string;
@@ -84,12 +159,11 @@ export interface HopEntry {
   /**
    * Whether the page stopped moving within the settle budget after this Hop.
    *
-   * Recorded rather than only acted on. The settle wait computes this verdict
-   * and it would otherwise be dropped on the floor, which would leave an
-   * application that never settles invisible: every Hop would look ordinary,
-   * and the survey it produced would be taken from a page still in motion.
-   * R8 rests on the candidate list being identical hop for hop, so an unsettled
-   * Hop is the first place a seed stops reproducing.
+   * Recorded rather than only acted on. An application that never settles would
+   * otherwise be invisible: every Hop would look ordinary, and the survey it
+   * produced would be taken from a page still in motion. R8 rests on the
+   * candidate list being identical hop for hop, so an unsettled Hop is the first
+   * place a seed stops reproducing.
    */
   readonly settled: boolean;
   /** How long the settle wait took, which is the cost paid on every Hop. */
@@ -118,6 +192,7 @@ export interface OpeningEntry {
  */
 export interface NoteEntry {
   readonly kind: 'note';
+  /** The Trip hop about to be taken when this was noted, counting from 1. */
   readonly hop: number;
   readonly note: string;
   readonly at: string;
@@ -127,7 +202,7 @@ export interface NoteEntry {
 export interface ClosingEntry {
   readonly kind: 'outcome';
   readonly outcome: 'passed' | 'stranded' | 'failed';
-  /** Hops completed, which is not the budget unless the Route spent it. */
+  /** Trip hops completed, which is not the budget unless the Route spent it. */
   readonly hops: number;
   /** Why, for stranded and failed. */
   readonly reason?: string;
@@ -144,7 +219,13 @@ export interface ClosingEntry {
   readonly endedAt: string;
 }
 
-export type JournalEntry = OpeningEntry | HopEntry | NoteEntry | ClosingEntry;
+export type JournalEntry =
+  | OpeningEntry
+  | PoolEntry
+  | FixHopEntry
+  | TripHopEntry
+  | NoteEntry
+  | ClosingEntry;
 
 /**
  * Where a Route's journal is written.
@@ -167,6 +248,9 @@ export function journalPath(directory: string, routeIndex: number, routeSeed: st
  */
 export class Journal {
   private fd: number | undefined;
+
+  /** The pools already in this file, so each is written exactly once. */
+  private readonly pools = new Set<string>();
 
   private constructor(readonly file: string) {}
 
@@ -212,6 +296,25 @@ export class Journal {
     // cost is one flush per hop against a budget of tens, which is why it is
     // affordable here and would not be per candidate.
     fs.fsyncSync(this.fd);
+  }
+
+  /**
+   * The id for a candidate list, writing the list first if this file has not
+   * seen it.
+   *
+   * Called before the Hop line that names the id, which is what keeps a file
+   * cut off mid-write from ever holding a Hop that points at a missing pool.
+   * The id is a digest of the list in order, because order is part of what a
+   * replay compares: a list that merely reordered sends the same draw to a
+   * different position.
+   */
+  pool(candidates: readonly JournaledCandidate[]): string {
+    const id = createHash('sha256').update(JSON.stringify(candidates)).digest('hex').slice(0, 12);
+    if (!this.pools.has(id)) {
+      this.write({ kind: 'pool', id, candidates });
+      this.pools.add(id);
+    }
+    return id;
   }
 
   /** Record how the Route ended, and close. */

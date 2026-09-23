@@ -13,7 +13,7 @@ import type { AppUnderTest } from '../src/index';
  * launches a packaged build (C1), refuses a stale one (R23), reports what is
  * missing rather than timing out (R24), and stays off the screen (C5).
  *
- * Nothing here travels through the application. There is no traversal yet.
+ * Nothing here travels through the application; tests/route.spec.ts does.
  */
 
 async function withApp(cfg: AppUnderTest, body: (launched: Awaited<ReturnType<typeof launchApp>>) => Promise<void>) {

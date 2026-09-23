@@ -1,7 +1,7 @@
 import type { ElectronApplication, Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test';
 import type { Rng, RouteStreams } from './random';
-import { Journal, type JournaledCandidate } from './journal';
+import { Journal, type HopAction, type JournaledCandidate } from './journal';
 import { clickMenuItem } from './menu';
 import {
   createExclusionTally,
@@ -18,9 +18,9 @@ import {
  * left to go.
  *
  * The Route is the test, not the Journey. That mapping is what gives a Route
- * its own verdict, its own timeout and its own trace, and it is why ten
- * traversals do not share one result where a single failure would take the
- * other nine with it.
+ * its own verdict, its own timeout and its own trace, and it is why ten Routes
+ * do not share one result where a single failure would take the other nine
+ * with it.
  */
 
 /**
@@ -28,22 +28,38 @@ import {
  *
  * There is exactly one implementation and it is a seeded draw, so this reads as
  * ceremony around a single line. It is not. It is what lets a different chooser
- * be added later without the traversal loop being rewritten around it, and
+ * be added later without the hop loop being rewritten around it, and
  * docs/OUTSTANDING.md section 2.1 records what that later chooser is expected
  * to be. Inlining it is the specific change that turns a cheap addition into an
  * expensive one, which is why ../CLAUDE.md names it at the point somebody would
  * reach for the simplification.
  */
 export interface Chooser {
-  choose(
-    candidates: readonly SurveyedCandidate[],
-    rng: Rng
-  ): SurveyedCandidate | Promise<SurveyedCandidate>;
+  choose(candidates: readonly SurveyedCandidate[], rng: Rng): Choice | Promise<Choice>;
+}
+
+/**
+ * What a chooser returns: the target, and the draw that selected it if a draw
+ * did.
+ *
+ * The draw is optional because only a seeded chooser has one. It is recorded in
+ * the journal so a replay can name the hop where the seeded sequence broke,
+ * including when a broken draw happens to land on the same target, and so the
+ * file can be checked on its own: the target is always the pool entry the draw
+ * points at. A chooser that is not a seeded draw has nothing to put here, and
+ * leaves it out rather than inventing one.
+ */
+export interface Choice {
+  readonly target: SurveyedCandidate;
+  readonly draw?: number;
 }
 
 /** The only chooser there is today: one candidate, drawn from the seed. */
 export const seededChooser: Chooser = {
-  choose: (candidates, rng) => rng.pick(candidates),
+  choose: (candidates, rng) => {
+    const { item, draw } = rng.pickWithDraw(candidates);
+    return { target: item, draw };
+  },
 };
 
 /**
@@ -58,12 +74,12 @@ export interface ValueGenerator {
 }
 
 /**
- * Values a Hop types, drawn from the traversal stream.
+ * Values a Hop fills in, drawn from the Trip stream.
  *
  * Small and ordinary on purpose. Hostile input belongs to fault injection,
  * which is a later phase with its own reporting; a value generator that reached
  * for it now would make every Route's failures about the input rather than
- * about the application, and bury what traversal itself finds.
+ * about the application, and bury what the Route itself finds.
  */
 const VALUE_CORPUS = ['', 'a', 'travel', 'Carpet', '0', '  ', 'x'.repeat(200)] as const;
 
@@ -81,7 +97,7 @@ export const seededValues: ValueGenerator = {
 export interface FixContext {
   readonly page: Page;
   readonly app: ElectronApplication;
-  /** Draws made while following the Fix. Never the traversal's stream. */
+  /** Draws made while following the Fix. Never the Trip's stream. */
   readonly rng: Rng;
   /** Record one step of the Fix, and run it. */
   step(name: string, action: () => Promise<void>): Promise<void>;
@@ -111,44 +127,6 @@ export type Fix = (context: FixContext) => Promise<void>;
  * broken setup step would look like a catastrophic morning and bury whatever
  * else the Journey found.
  */
-/**
- * Thrown when the page stops answering the traversal after a Hop.
- *
- * **The measured case is an outbound link, and the shape is worth knowing
- * before it is met again.** Every Playwright locator call waits for any pending
- * navigation to finish. An application that routes external links through
- * `will-navigate` and calls `preventDefault` leaves a navigation that never
- * finishes, so the page stays alive and answers `evaluate` in milliseconds
- * while every locator call blocks: measured against the testbed on 2026-09-22,
- * still blocked 8.8 seconds after the click with no sign of clearing.
- *
- * So the Route is over, and the honest thing is to say so once rather than to
- * spend the remaining budget on Hops that will each time out. This is not
- * stranded: moves were available and the traversal took one. It is a finding,
- * and phase 5 is where it becomes a named check rather than an error.
- *
- * **The exclusion list is the first defense and this is the second.** A Route
- * should not reach an outbound link at all; docs/PLAN.md says the rail is what
- * keeps it off one, and this fires on the ones a list missed, which is exactly
- * the case nobody writes a test for.
- */
-export class PageUnreachable extends Error {
-  constructor(
-    readonly afterHop: number,
-    readonly chosen: string
-  ) {
-    super(
-      `The page stopped answering after hop ${afterHop}, which acted on ${chosen}. ` +
-        `Every locator call waits for a pending navigation to finish, and a navigation ` +
-        `an application prevents in will-navigate never finishes, so the page stays alive ` +
-        `while nothing can be surveyed. The Route ends here rather than spending the rest ` +
-        `of its budget on hops that would each time out. If this was an outbound link, the ` +
-        `adapter's exclusion list is what should have kept the traversal off it.`
-    );
-    this.name = 'PageUnreachable';
-  }
-}
-
 export class FixFailure extends Error {
   constructor(
     readonly step: string,
@@ -163,6 +141,44 @@ export class FixFailure extends Error {
         (cause instanceof Error ? (cause.stack ?? cause.message) : String(cause))
     );
     this.name = 'FixFailure';
+  }
+}
+
+/**
+ * Thrown when the page stops answering after a Hop.
+ *
+ * **The measured case is an outbound link, and the shape is worth knowing
+ * before it is met again.** Every Playwright locator call waits for any pending
+ * navigation to finish. An application that routes external links through
+ * `will-navigate` and calls `preventDefault` leaves a navigation that never
+ * finishes, so the page stays alive and answers `evaluate` in milliseconds
+ * while every locator call blocks: measured against the testbed on 2026-09-22,
+ * still blocked 8.8 seconds after the click with no sign of clearing.
+ *
+ * So the Route is over, and the honest thing is to say so once rather than to
+ * spend the remaining budget on Hops that will each time out. This is not
+ * stranded: moves were available and the Route took one. It is a finding,
+ * and phase 5 is where it becomes a named check rather than an error.
+ *
+ * **The exclusion list is the first defense and this is the second.** A Route
+ * should not reach an outbound link at all; docs/PLAN.md says the rail is what
+ * keeps it off one, and this fires on the ones a list missed, which is exactly
+ * the case nobody writes a test for.
+ */
+export class PageUnreachable extends Error {
+  constructor(
+    readonly afterHop: number,
+    readonly target: string
+  ) {
+    super(
+      `The page stopped answering after hop ${afterHop}, which acted on ${target}. ` +
+        `Every locator call waits for a pending navigation to finish, and a navigation ` +
+        `an application prevents in will-navigate never finishes, so the page stays alive ` +
+        `while nothing can be surveyed. The Route ends here rather than spending the rest ` +
+        `of its budget on hops that would each time out. If this was an outbound link, the ` +
+        `adapter's exclusion list is what should have kept the Route off it.`
+    );
+    this.name = 'PageUnreachable';
   }
 }
 
@@ -300,7 +316,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   try {
     if (fix) await runFix(fix, { page, app, rng: streams.fix, journal });
 
-    let lastChosen: string | undefined;
+    let lastTarget: string | undefined;
 
     while (hops < hopsPerRoute) {
       let found: SurveyResult;
@@ -319,8 +335,10 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         // as a dead end in the application. The first hop has no previous
         // choice to name, so a survey failing there is something else and is
         // rethrown unchanged.
-        if (lastChosen === undefined || error instanceof NondeterministicExclusion) throw error;
-        throw new PageUnreachable(hops - 1, lastChosen);
+        if (lastTarget === undefined || error instanceof NondeterministicExclusion) throw error;
+        // `hops` is the count of Trip hops completed, which is also the number
+        // of the last one, since Trip hops count from 1.
+        throw new PageUnreachable(hops, lastTarget);
       }
 
       // Recorded once per Route rather than per Hop. A Route that never hopped
@@ -330,7 +348,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         menuVerdictNoted = true;
         journal.write({
           kind: 'note',
-          hop: hops,
+          hop: hops + 1,
           note: `Menu candidates withheld: ${found.menuSource.reason}`,
           at: new Date().toISOString(),
         });
@@ -351,15 +369,16 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       }
 
       const startedAt = new Date();
-      const chosen = await chooser.choose(found.candidates, streams.traversal);
-      lastChosen = `${chosen.role} "${chosen.name}"`;
+      const { target, draw } = await chooser.choose(found.candidates, streams.trip);
+      lastTarget = `${target.role} "${target.name}"`;
+      const action = actionFor(target);
 
       // Drawn whether or not it is used, so that the stream advances the same
-      // way regardless of which control was chosen. A value drawn only for a
+      // way regardless of which control was the target. A value drawn only for a
       // text box would make every later draw depend on what the survey happened
       // to offer, and two runs of one seed would diverge at the first hop that
       // chose a button where the other chose a field.
-      const value = values.generate(chosen, streams.traversal);
+      const value = values.generate(target, streams.trip);
 
       // A bounded action that ran out of time ends the Hop, not the Route. The
       // measured case is an outbound link: the click schedules a navigation the
@@ -370,20 +389,25 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // question, and it needs the Route alive to ask it.
       let abandoned: string | undefined;
       try {
-        await act(app, chosen, takesTypedValue(chosen) ? value : undefined, hopTimeoutMs);
+        await act(app, target, action, value, hopTimeoutMs);
       } catch (error) {
         abandoned = error instanceof Error ? error.message.split('\n')[0] : String(error);
       }
 
       const settling = await settle(page, settleTimeoutMs);
 
+      // The pool is written first, if this file has not seen it, so the Hop
+      // line below never names a pool that is not already on disk.
+      const pool = journal.pool(found.candidates.map(journaled));
+
       journal.write({
-        kind: 'hop',
-        hop: hops,
-        phase: 'traversal',
-        chosen: journaled(chosen),
-        candidates: found.candidates.map(journaled),
-        ...(takesTypedValue(chosen) ? { value } : {}),
+        kind: 'trip-hop',
+        hop: hops + 1,
+        target: journaled(target),
+        action,
+        pool,
+        ...(draw === undefined ? {} : { draw }),
+        ...(action === 'fill' ? { value } : {}),
         ...(abandoned === undefined ? {} : { abandoned }),
         startedAt: startedAt.toISOString(),
         durationMs: Date.now() - startedAt.getTime(),
@@ -429,7 +453,7 @@ function strandedReason(found: SurveyResult): string {
   if (found.unnamed.length) {
     return (
       `No candidate was available. ${found.unnamed.length} element(s) carried a hoppable ` +
-      `role and no accessible name, so the traversal could not reach them: ` +
+      `role and no accessible name, so the Route could not reach them: ` +
       `${found.unnamed.map((element) => element.role).join(', ')}.`
     );
   }
@@ -442,7 +466,7 @@ async function runFix(
   context: { page: Page; app: ElectronApplication; rng: Rng; journal: Journal }
 ): Promise<void> {
   const { page, app, rng, journal } = context;
-  let index = 0;
+  let steps = 0;
 
   await fix({
     page,
@@ -450,27 +474,34 @@ async function runFix(
     rng,
     step: async (name, action) => {
       const startedAt = new Date();
+      const hop = steps + 1;
       try {
         await action();
       } catch (error) {
+        // The failed step gets its own line, with the error on it, before the
+        // failure is thrown. R11 wants a broken Fix told apart from a failed
+        // Route, and that means saying which step broke rather than leaving it
+        // as a sentence inside the outcome's reason.
+        journal.write({
+          kind: 'fix-hop',
+          hop,
+          name,
+          error: error instanceof Error ? error.message.split('\n')[0] : String(error),
+          startedAt: startedAt.toISOString(),
+          durationMs: Date.now() - startedAt.getTime(),
+          checks: [],
+        });
         throw new FixFailure(name, error);
       }
       journal.write({
-        kind: 'hop',
-        hop: index,
-        phase: 'fix',
-        chosen: { source: 'page', role: 'fix-step', name },
-        candidates: [],
+        kind: 'fix-hop',
+        hop,
+        name,
         startedAt: startedAt.toISOString(),
         durationMs: Date.now() - startedAt.getTime(),
-        // A Fix step waits for whatever it is about to touch, because a Fix
-        // knows what it is doing and the traversal does not. Reporting it as
-        // settled would claim a wait that never ran.
-        settled: false,
-        settleMs: 0,
         checks: [],
       });
-      index += 1;
+      steps += 1;
     },
   });
 }
@@ -488,6 +519,19 @@ function journaled(candidate: SurveyedCandidate): JournaledCandidate {
 }
 
 /**
+ * What a Hop will do to its target.
+ *
+ * Decided once, recorded in the journal, and then carried out by `act` exactly
+ * as recorded. Working it out twice, once to write down and once to do, would
+ * leave room for the record and the behavior to disagree, and the record is the
+ * thing a replay trusts.
+ */
+function actionFor(target: SurveyedCandidate): HopAction {
+  if (target.source === 'menu') return 'menu-click';
+  return takesTypedValue(target) ? 'fill' : 'click';
+}
+
+/**
  * Do the one thing this Hop does.
  *
  * Every path through here is bounded by the caller's timeout, and the caller is
@@ -496,21 +540,22 @@ function journaled(candidate: SurveyedCandidate): JournaledCandidate {
  */
 async function act(
   app: ElectronApplication,
-  candidate: SurveyedCandidate,
-  value: string | undefined,
+  target: SurveyedCandidate,
+  action: HopAction,
+  value: string,
   timeoutMs: number
 ): Promise<void> {
-  if (candidate.source === 'menu') {
-    await clickMenuItem(app, [...candidate.menuPath]);
+  if (target.source === 'menu') {
+    await clickMenuItem(app, [...target.menuPath]);
     return;
   }
 
-  if (value !== undefined) {
-    await candidate.locator.fill(value, { timeout: timeoutMs });
+  if (action === 'fill') {
+    await target.locator.fill(value, { timeout: timeoutMs });
     return;
   }
 
-  await candidate.locator.click({ timeout: timeoutMs });
+  await target.locator.click({ timeout: timeoutMs });
 }
 
 /**
@@ -530,7 +575,7 @@ async function act(
  * necessity.
  *
  * What this does: read the accessibility tree twice with a frame between, and
- * stop when two consecutive reads agree. That measures the thing the traversal
+ * stop when two consecutive reads agree. That measures the thing the Route
  * actually depends on, which is the survey being stable, rather than a proxy
  * for it. R8 rests on the candidate list being identical hop for hop.
  *

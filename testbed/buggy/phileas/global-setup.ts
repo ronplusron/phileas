@@ -27,7 +27,7 @@ export default function globalSetup(config: FullConfig): void {
   // checked its seed against the environment variable would be checking the
   // mechanism against itself: requireSeed reads that variable, so the two agree
   // however wrong they are. The file is evidence of a different kind, and it is
-  // what lets a Route notice a seed that did not survive the trip to its worker.
+  // what lets a Route notice a seed that did not survive being handed to its worker.
   fs.writeFileSync(seedRecordPath(config.rootDir), seed, 'utf8');
 
   console.log(`Journey seed: ${seed}`);

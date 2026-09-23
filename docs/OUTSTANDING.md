@@ -25,9 +25,9 @@ layer landed with a known hazard still open; a second closed in phase 4.
 Everything in `PLAN.md` from phase 5 on. Phases 0 through 4 are done and
 `HISTORY.md` records them: the toolchain, the launch layer lifted and
 hardened, a packaged application it can launch, the seeds that make a run
-reproducible, and the traversal that travels through it and writes down where
-it went. What is unwritten is every check: nothing yet judges whether anything
-the traversal found is wrong.
+reproducible, and the Routes that travel through it and write down where
+they went. What is unwritten is every check: nothing yet judges whether anything
+a Route found is wrong.
 
 ### 1.2 Planted defects, and the applications still to build
 
@@ -170,7 +170,8 @@ what a run that cannot replay from its seed needs in order to replay at all.
 
 **What it rests on, and when to revisit:** nothing changes while every move is
 a seeded draw. Revisit when either a real appetite for it appears, or the
-traversal starts needing judgment that a rule cannot express. Revisit sooner if
+choice of the next Hop starts needing judgment that a rule cannot express.
+Revisit sooner if
 anyone proposes inlining the choice of the next candidate into the hop loop,
 which is the change that would make this expensive. `../CLAUDE.md` holds that
 as a commitment.

@@ -99,7 +99,7 @@ one where a claim about the product can be demonstrated, so a reader who has
 to stop can stop with something.
 
 Why this order: every later phase needs something to verify with (phase 0) and
-something to launch (phase 2). Seeds come before traversal because the seed
+something to launch (phase 2). Seeds come before traveling because the seed
 split is what `../CLAUDE.md` warns is painful to retrofit. The journal lands
 with the first route rather than after it, because R9 is about the record
 surviving what the first route will do to the application. App-declared checks
@@ -152,7 +152,7 @@ selector, view name or other application knowledge.
 - `menu.ts` becomes a second candidate source for `survey`. The reason is
   `../CLAUDE.md`'s own example: the exclusion list exists for things like Quit,
   and Quit is a menu item. An exclusion list naming a menu item only makes
-  sense if the traversal can reach the menu. Menu items live in the main
+  sense if a Route can reach the menu. Menu items live in the main
   process and never appear in the page's accessibility tree, so `survey` by
   role alone would never see them. `editor`'s own suite reads the menu the
   same way, through `Menu.getApplicationMenu()`.
@@ -344,7 +344,7 @@ kit was in its origin and is now consumable.
 `journey.ts` holds the four terms of R1: seed, routes, hops per route,
 deadline. `random.ts` holds a small seedable generator and the per-Route
 derivation `routeSeed = hash(journeySeed, routeIndex)`, split into a Fix stream
-and a traversal stream, exactly as `../CLAUDE.md` decides.
+and a Trip stream, exactly as `../CLAUDE.md` decides.
 
 **Write the generator in the repository rather than taking a dependency.** It
 has to reproduce across machines and Node versions, and a dependency's
@@ -360,7 +360,7 @@ at the file's top level. The seed hazard below says why.
 
 Boundary: bookkeeping, with unit tests worth keeping: the same seed gives the
 same sequence; route k's stream is unaffected by whether the routes before it
-ran; consuming from the Fix stream leaves the traversal stream unchanged. Pure
+ran; consuming from the Fix stream leaves the Trip stream unchanged. Pure
 functions, no Electron needed. They prove the reproducibility mechanism and
 nothing about traveling.
 
@@ -444,7 +444,7 @@ arriving somewhere unexpected has no idea which component it is in.
 
 **Choosing is a named seam rather than a line in the loop**, taking the
 candidate list and a source of randomness and returning one candidate; the only
-implementation here draws an index from the traversal stream. `../CLAUDE.md`
+implementation here draws an index from the Trip stream. `../CLAUDE.md`
 says why the seam exists and `OUTSTANDING.md` says what is expected to use it
 later. Generating a value to type is a second seam, separate from choosing
 which control to act on. `route.ts` exports `runRoute()`, which runs one Route:
@@ -474,6 +474,14 @@ missing is any notion of something being wrong.
 
 The journal already exists from phase 4; this phase fills in its check-results
 field and nothing else about it changes.
+
+**The checks run after every Fix hop as well as every Trip hop**, decided
+2026-09-23. Skipping them would save almost nothing, since a Fix is usually a
+handful of steps against a Trip of tens, and it would leave a Fix that breaks
+the application to be noticed by whichever Trip hop happens to hit it first. And
+**a check that fails after a Fix hop is reported as a Fix failure**, not as a
+failed Route, for R11's reason: ten Routes failing on one broken step is one
+problem, and the Fix hop's own line is where it belongs.
 
 `oracles/implicit/` is R17, one check per item, each with its evidence:
 
@@ -751,7 +759,7 @@ when the truth is "a dialog is open". Stubbing the dialog module the way
 decided.
 
 **What "blank" means.** A window with no visible text and no drawn boxes is
-one definition, and a legitimately empty state trips it. Define it narrowly,
+one definition, and a legitimately empty state sets it off. Define it narrowly,
 tune it against `buggy` and then against the first real consumer rather than
 against imagined cases, and remember this is one of the checks R19 exists for.
 
@@ -762,8 +770,8 @@ Route timeout is set from the budget and the settle wait, never left at the
 default.
 
 **Editing a Fix or the exclusion list changes recorded routes.** Both are inputs
-to the draw. The seed split keeps a Fix edit from touching the traversal
-stream, but an exclusion-list edit changes what the traversal draws over. The
+to the draw. The seed split keeps a Fix edit from touching the Trip stream,
+but an exclusion-list edit changes what the Trip draws over. The
 journal's record of what could have been chosen is what lets R13 say a seed
 stopped reproducing rather than letting it pass.
 

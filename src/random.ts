@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
  *
  * Nothing in src/ calls the platform's own unseeded generator, and
  * tests/no-math-random.spec.ts fails if anything starts to. A single unseeded
- * draw anywhere in the traversal would make every recorded seed reproduce a
+ * draw anywhere in a Route would make every recorded seed reproduce a
  * different route, and nothing would look wrong: the Journey would still pass,
  * the report would still name a seed, and the seed would be worthless. That is
  * R13's failure arriving silently, which is why the check is mechanical rather
@@ -29,14 +29,26 @@ export interface Rng {
 
   /** One item, drawn uniformly. Throws on an empty list. */
   pick<T>(items: readonly T[]): T;
+
+  /**
+   * One item, and the raw draw that selected it.
+   *
+   * The same selection as `pick`, by the same arithmetic, so a Route that
+   * switches from one to the other makes identical choices. The difference is
+   * that the draw comes back too, as the generator's own 32-bit integer rather
+   * than the fraction made from it: an integer compares exactly, and the journal
+   * records it so that a replay can tell the sequence broke at the hop where it
+   * broke, including when a broken draw happens to land on the same item.
+   */
+  pickWithDraw<T>(items: readonly T[]): { readonly item: T; readonly draw: number };
 }
 
 /**
  * The two independent streams a Route draws from.
  *
- * Separate generators rather than one, because a Fix and the traversal must not
+ * Separate generators rather than one, because a Fix and the Trip must not
  * share a position. Editing a Fix so that it consumes one more draw would
- * otherwise shift every draw the traversal makes afterwards, and routes that
+ * otherwise shift every draw the Trip makes afterwards, and routes that
  * used to fail would stop reproducing. A recorded failing seed that no longer
  * reproduces reads as a fixed bug, which is worse than never having recorded
  * it.
@@ -48,8 +60,8 @@ export interface RouteStreams {
   /** Draws made while following the Fix. */
   fix: Rng;
 
-  /** Draws made while traveling. */
-  traversal: Rng;
+  /** Draws made on the Trip, the part of a Route after its Fix. */
+  trip: Rng;
 }
 
 /**
@@ -61,6 +73,9 @@ export interface RouteStreams {
  * this function, so it should be verifiable by eye rather than trusted.
  */
 function sfc32(a: number, b: number, c: number, d: number): () => number {
+  // Returns the raw 32-bit draw. The fraction everything else uses is made from
+  // it in createRng, so that the integer a journal records and the fraction a
+  // pick uses can never disagree about which draw they came from.
   return function draw(): number {
     a >>>= 0;
     b >>>= 0;
@@ -72,7 +87,7 @@ function sfc32(a: number, b: number, c: number, d: number): () => number {
     b = (c + (c << 3)) | 0;
     c = (c << 21) | (c >>> 11);
     c = (c + t) | 0;
-    return (t >>> 0) / 4_294_967_296;
+    return t >>> 0;
   };
 }
 
@@ -124,8 +139,26 @@ export function createRng(seed: string): Rng {
   // draw does not expose the raw seed state.
   for (let i = 0; i < 12; i += 1) rng();
 
+  const next = (): number => rng() / 4_294_967_296;
+
+  const pickWithDraw = <T>(items: readonly T[]): { item: T; draw: number } => {
+    if (items.length === 0) {
+      // A Route with nothing to choose from is stranded, which is an outcome
+      // the Route reports rather than an error it recovers from. Drawing from
+      // an empty list means that outcome was not handled where it should have
+      // been.
+      throw new RangeError('pick() was given an empty list');
+    }
+    const draw = rng();
+    const item = items[Math.floor((draw / 4_294_967_296) * items.length)];
+    if (item === undefined) {
+      throw new RangeError('pick() drew past the end of the list');
+    }
+    return { item, draw };
+  };
+
   return {
-    next: rng,
+    next,
 
     int(maxExclusive: number): number {
       if (!Number.isInteger(maxExclusive) || maxExclusive < 1) {
@@ -133,23 +166,14 @@ export function createRng(seed: string): Rng {
           `int() needs a whole number of at least 1, and was given ${maxExclusive}`
         );
       }
-      return Math.floor(rng() * maxExclusive);
+      return Math.floor(next() * maxExclusive);
     },
 
     pick<T>(items: readonly T[]): T {
-      if (items.length === 0) {
-        // A Route with nothing to choose from is stranded, which is an outcome
-        // the traversal reports rather than an error it recovers from. Drawing
-        // from an empty list means that outcome was not handled where it should
-        // have been.
-        throw new RangeError('pick() was given an empty list');
-      }
-      const chosen = items[Math.floor(rng() * items.length)];
-      if (chosen === undefined) {
-        throw new RangeError('pick() drew past the end of the list');
-      }
-      return chosen;
+      return pickWithDraw(items).item;
     },
+
+    pickWithDraw,
   };
 }
 
@@ -180,6 +204,10 @@ export function deriveRouteStreams(journeySeed: string, routeIndex: number): Rou
   return {
     routeSeed,
     fix: createRng(digest(routeSeed, 'fix')),
-    traversal: createRng(digest(routeSeed, 'traversal')),
+    // The label is hashed into the seed, so it is an input to every draw the Trip
+    // makes rather than a name. Changing it changes every Route, and every seed
+    // recorded before the change stops reproducing. It was changed once, from
+    // 'traversal', deliberately and while no recorded seed mattered.
+    trip: createRng(digest(routeSeed, 'trip')),
   };
 }

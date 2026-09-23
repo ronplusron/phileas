@@ -19,12 +19,14 @@ import {
   FixFailure,
   type AppUnderTest,
   type Candidate,
+  type JournaledCandidate,
+  type TripHopEntry,
 } from '../src/index';
 
 /**
  * Survey and the Route, against the real application.
  *
- * These run the traversal rather than simulating it, because the thing worth
+ * These run real Routes rather than simulating them, because the thing worth
  * checking is what the accessibility tree actually offers and what an exclusion
  * actually keeps out of the draw. A survey tested against a fabricated tree
  * would agree with whatever the fabrication assumed.
@@ -213,23 +215,71 @@ test('a Route spends its budget and journals every hop', async ({ page, app }) =
   const entries = readJournal(
     path.join(dir, `route-000-${streams.routeSeed}.jsonl`)
   );
-  const hops = entries.filter((entry) => entry.kind === 'hop');
+  const pools = new Map<string, readonly JournaledCandidate[]>();
+  const hops: TripHopEntry[] = [];
+  for (const entry of entries) {
+    if (entry.kind === 'pool') pools.set(entry.id, entry.candidates);
+    if (entry.kind === 'trip-hop') hops.push(entry);
+  }
   expect(hops).toHaveLength(6);
 
-  // R10: position, what was chosen, and what else could have been chosen. The
-  // last of those is what R14 later rests on, since comparing it against what
-  // is available now is the only way to say whether a seed stopped reproducing
+  // R10: position, the target, and what else could have been chosen. The last
+  // of those is what R14 later rests on, since comparing it against what is
+  // available now is the only way to say whether a seed stopped reproducing
   // because the application changed or because the outcome did.
   for (const [index, entry] of hops.entries()) {
-    if (entry.kind !== 'hop') continue;
-    expect(entry.hop).toBe(index);
-    expect(entry.candidates.length).toBeGreaterThan(0);
-    expect(entry.candidates).toContainEqual(entry.chosen);
+    // Counted from 1, because "stranded at hop 12" is read by a person.
+    expect(entry.hop).toBe(index + 1);
+
+    const pool = pools.get(entry.pool);
+    expect(pool, `hop ${entry.hop} names pool ${entry.pool}, which is not in the file`).toBeDefined();
+    expect(pool).toContainEqual(entry.target);
+    expect(['click', 'fill', 'menu-click']).toContain(entry.action);
   }
 });
 
+test('every target is the pool entry its draw points at, from the file alone', async ({
+  page,
+  app,
+}) => {
+  // The consistency check that needs no replay. The seeded chooser always links
+  // three recorded things by one rule, target = pool[floor(draw / 2^32 x size)],
+  // so a journal can be checked against itself with nothing launched. A line
+  // that breaks the rule means the engine acted on something other than what
+  // its draw picked, or recorded the wrong pool or target.
+  const dir = scratch();
+  const streams = deriveRouteStreams('consistency-seed', 0);
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams,
+    journeySeed: 'consistency-seed',
+    routeIndex: 0,
+    hopsPerRoute: 12,
+    journalDir: dir,
+  });
+
+  const pools = new Map<string, readonly JournaledCandidate[]>();
+  let checked = 0;
+  for (const entry of readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`))) {
+    if (entry.kind === 'pool') pools.set(entry.id, entry.candidates);
+    if (entry.kind !== 'trip-hop') continue;
+
+    expect(entry.draw, `hop ${entry.hop} has no draw, and the seeded chooser always draws`).toBeDefined();
+    const pool = pools.get(entry.pool) ?? [];
+    const position = Math.floor(((entry.draw ?? 0) / 4_294_967_296) * pool.length);
+    expect(pool[position], `hop ${entry.hop}`).toEqual(entry.target);
+    checked += 1;
+  }
+
+  // A loop over an empty journal passes every assertion inside it. This is the
+  // line that makes the zero-failure result above mean something.
+  expect(checked).toBe(12);
+});
+
 test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
-  const chosen = async (): Promise<string[]> => {
+  const targets = async (): Promise<string[]> => {
     const dir = scratch();
     const streams = deriveRouteStreams('replay-seed', 2);
     await runRoute({
@@ -243,11 +293,17 @@ test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
       journalDir: dir,
     });
     return readJournal(path.join(dir, `route-002-${streams.routeSeed}.jsonl`))
-      .filter((entry) => entry.kind === 'hop')
-      .map((entry) => (entry.kind === 'hop' ? `${entry.chosen.name}/${entry.value ?? ''}` : ''));
+      .filter((entry) => entry.kind === 'trip-hop')
+      .map((entry) =>
+        // The draw is compared as well as the target. A broken sequence can land
+        // on the same target by chance, and only the draw tells the two apart.
+        entry.kind === 'trip-hop'
+          ? `${entry.target.name}/${entry.value ?? ''}/${String(entry.draw)}`
+          : ''
+      );
   };
 
-  const first = await chosen();
+  const first = await targets();
 
   // Back to where the Route started, because R8 is about an unchanged
   // application: a seed is only meaningful against the state it was recorded
@@ -255,7 +311,7 @@ test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
   await page.getByRole('button', { name: 'Inventory', exact: true }).click();
   await page.getByRole('button', { name: 'Clear search', exact: true }).click();
 
-  const second = await chosen();
+  const second = await targets();
 
   expect(second).toEqual(first);
   expect(first.length).toBe(8);
@@ -266,7 +322,7 @@ test('a Route with nowhere to go is stranded, not failed, and names the hop', as
   app,
 }) => {
   // Every control taken away, which is what a dead end, an inescapable dialog
-  // and a trap all look like from the traversal's side.
+  // and a trap all look like from the Route's side.
   await page.evaluate(() => {
     for (const element of document.querySelectorAll('button, input, a')) element.remove();
   });
@@ -331,13 +387,23 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
   await expect(failing).rejects.toThrow(FixFailure);
   await expect(failing).rejects.toThrow(/reach a control that is not there/);
 
-  // The step that succeeded is still in the record, marked as the Fix rather
-  // than as traveling, so a reader can see how far the known start got.
+  // Both steps are in the record as Fix hops, numbered from 1: the one that
+  // succeeded, so a reader can see how far the known start got, and the one
+  // that failed, with its error on its own line. R11 wants a broken Fix told
+  // apart from a failed Route, which means saying which step broke rather than
+  // leaving it as a sentence inside the outcome's reason.
   const entries = readJournal(
     path.join(dir, `route-000-${deriveRouteStreams('fix-seed', 0).routeSeed}.jsonl`)
   );
-  const fixSteps = entries.filter((entry) => entry.kind === 'hop' && entry.phase === 'fix');
-  expect(fixSteps).toHaveLength(1);
+  const fixHops = entries.filter((entry) => entry.kind === 'fix-hop');
+  expect(fixHops.map((entry) => (entry.kind === 'fix-hop' ? entry.hop : 0))).toEqual([1, 2]);
+  expect(fixHops[0]).toMatchObject({ name: 'open the summary' });
+  expect(fixHops[0]).not.toHaveProperty('error');
+  expect(fixHops[1]).toMatchObject({ name: 'reach a control that is not there' });
+  expect(fixHops[1]?.kind === 'fix-hop' ? fixHops[1].error : undefined).toBeTruthy();
+
+  // And the Route never reached its Trip.
+  expect(entries.some((entry) => entry.kind === 'trip-hop')).toBe(false);
 });
 
 test('a value is drawn on every hop, including hops that never type it', async ({
@@ -369,7 +435,7 @@ test('a value is drawn on every hop, including hops that never type it', async (
       choose: (candidates) => {
         const button = candidates.find((candidate) => candidate.role === 'button');
         if (!button) throw new Error('this test needs a button on every hop');
-        return button;
+        return { target: button };
       },
     },
     values: {
@@ -413,7 +479,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
       choose: (candidates) => {
         const link = candidates.find((candidate) => candidate.role === 'link');
         if (!link) throw new Error('this test needs the outbound link to be reachable');
-        return link;
+        return { target: link };
       },
     },
   });
@@ -423,7 +489,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
   // Route cannot continue, and the requirement is that it says so once rather
   // than spending its remaining budget on hops that each time out.
   await expect(outcome).rejects.toThrow(PageUnreachable);
-  await expect(outcome).rejects.toThrow(/stopped answering after hop 0/);
+  await expect(outcome).rejects.toThrow(/stopped answering after hop 1\b/);
   await expect(outcome).rejects.toThrow(/exclusion list/);
 
   const entries = readJournal(
@@ -433,10 +499,10 @@ test('a prevented navigation ends the Route once, rather than timing out every h
   // The hop that did it is still in the record, marked abandoned. Dropping it
   // would leave a journal whose last entry is an ordinary hop, with nothing to
   // say why the Route stopped.
-  const hops = entries.filter((entry) => entry.kind === 'hop');
+  const hops = entries.filter((entry) => entry.kind === 'trip-hop');
   expect(hops).toHaveLength(1);
-  expect(hops[0]?.kind === 'hop' ? hops[0].abandoned : undefined).toBeTruthy();
-  expect(hops[0]?.kind === 'hop' ? hops[0].chosen.name : '').toBe('Read about the journey');
+  expect(hops[0]?.kind === 'trip-hop' ? hops[0].abandoned : undefined).toBeTruthy();
+  expect(hops[0]?.kind === 'trip-hop' ? hops[0].target.name : '').toBe('Read about the journey');
 
   // And the outcome line says failed rather than leaving the journal open, so a
   // reader can tell a Route that ended from one nobody saw stop.

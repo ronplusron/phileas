@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 /**
  * `Math.random` must not appear in the engine.
  *
- * One unseeded draw anywhere in the traversal makes every recorded seed
+ * One unseeded draw anywhere in a Route makes every recorded seed
  * reproduce a different route, and nothing about the run looks wrong: the
  * Journey passes, the report names a seed, and the seed is worthless. That is
  * R13's failure with no symptom, so the rule is checked rather than stated.

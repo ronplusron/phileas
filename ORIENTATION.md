@@ -29,7 +29,7 @@ packaged build, refusing a stale one, keeping windows off the screen, reaching
 the native menu, stubbing outbound links, and the `AppUnderTest` interface the
 whole thing talks through. `journey.ts` and `random.ts` joined them in phase 3.
 `survey.ts`, `route.ts` and `journal.ts` joined them in phase 4: discovery by
-accessibility role, one Route's traversal with the choosing and value seams,
+accessibility role, one Route's Fix and Trip with the choosing and value seams,
 and the per-Hop record. `src/oracles/` still contains nothing but `.gitkeep`.
 
 **What is genuinely absent is every check.** Nothing yet decides whether
@@ -38,15 +38,17 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs sixty-seven tests. Seven launch it, refuse a stale
+through, and `npm test` runs eighty-two tests. Seven launch it, refuse a stale
 bundle, report a bad boot in the application's own words, keep every window off
 the screen, and prove the outbound-link stub took effect rather than assuming
 it. Twenty prove the reproducibility mechanism without launching anything,
 including known-answer vectors that pin the generator's output. Nine record
 what `buggy` correctly does, so a defect planted later can be told apart from
 an accidental one. Seven assert that a guard refuses rather than answering when
-it has no evidence. Fourteen travel through the application, and seven cover
-the journal, including one cut off mid-write. The last three cover the fixture
+it has no evidence. Fifteen travel through the application, and nine cover the
+journal, including one cut off mid-write. Ten cover the window modes and the
+hop delay, and two keep every source file searchable. The last three cover the
+fixture
 layer and the types, the type ones being compile-time assertions that
 `npm run typecheck` enforces.
 
@@ -136,7 +138,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own sixty-seven tests against `testbed/buggy/`.
+`npm test` runs the engine's own eighty-two tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them. It prints the Journey seed; set
@@ -197,14 +199,14 @@ does land inside the Route timeout and the Journey deadline. `PHILEAS_ALLOW_STAL
 against a stale build, and the run says so rather than passing quietly.
 
 `tsconfig.json` is `noEmit` with `strict` and `noUncheckedIndexedAccess` on.
-`noUncheckedIndexedAccess` is not tidiness: a traversal engine indexes into
+`noUncheckedIndexedAccess` is not tidiness: an engine that travels indexes into
 arrays of discovered elements constantly, and that flag is what forces the
 empty-survey case to be handled rather than crashing on a route that found
 nothing to do.
 
 ## 5. Verification, and its limits
 
-**The launch layer and the traversal are verified; the product is not.** Tests
+**The launch layer and the Route are verified; the product is not.** Tests
 launch a real packaged application, refuse a stale bundle, prove the
 outbound-link stub took effect, travel through the application, and show that
 one seed retraces one Route hop for hop. That is genuinely checked rather than

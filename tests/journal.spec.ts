@@ -32,11 +32,11 @@ const opening = {
 
 function hop(index: number) {
   return {
-    kind: 'hop' as const,
-    hop: index,
-    phase: 'traversal' as const,
-    chosen: { source: 'page' as const, role: 'button', name: `Button ${index}`, nth: 0 },
-    candidates: [{ source: 'page' as const, role: 'button', name: `Button ${index}`, nth: 0 }],
+    kind: 'trip-hop' as const,
+    hop: index + 1,
+    target: { source: 'page' as const, role: 'button', name: `Button ${index}`, nth: 0 },
+    action: 'click' as const,
+    pool: 'pool-id',
     startedAt: new Date().toISOString(),
     durationMs: 1,
     settled: true,
@@ -57,7 +57,7 @@ test('every hop is on disk before the next one starts', () => {
   for (let index = 0; index < 3; index += 1) {
     journal.write(hop(index));
     const entries = readJournal(journalPath(dir, opening.routeIndex, opening.routeSeed));
-    expect(entries.filter((entry) => entry.kind === 'hop')).toHaveLength(index + 1);
+    expect(entries.filter((entry) => entry.kind === 'trip-hop')).toHaveLength(index + 1);
   }
 
   journal.close({ outcome: 'passed', hops: 3 });
@@ -94,7 +94,7 @@ test('a journal truncated mid-write still reads back every completed hop', () =>
   fs.writeFileSync(file, whole.slice(0, lastLineStart + 30));
 
   const entries = readJournal(file);
-  expect(entries.filter((entry) => entry.kind === 'hop')).toHaveLength(3);
+  expect(entries.filter((entry) => entry.kind === 'trip-hop')).toHaveLength(3);
   expect(entries[0]?.kind).toBe('route');
 });
 
@@ -145,4 +145,56 @@ test('the file name carries the seed, so a report names a findable journal', () 
   // report alone. The report names a route seed, and a directory listing has to
   // be enough to find the journal for it without opening anything.
   expect(path.basename(file)).toBe('route-007-abcdef0123456789.jsonl');
+});
+
+test('a pool is written once, and before the first hop that names it', () => {
+  const dir = scratch();
+  const journal = Journal.open(dir, opening);
+  const inventory = [
+    { source: 'page' as const, role: 'button', name: 'Inventory', nth: 0 },
+    { source: 'page' as const, role: 'button', name: 'Summary', nth: 0 },
+  ];
+  const summary = [{ source: 'page' as const, role: 'button', name: 'Inventory', nth: 0 }];
+
+  // Three hops over two distinct lists, the way a Route moves between two views
+  // and back.
+  const first = journal.pool(inventory);
+  journal.write({ ...hop(0), pool: first });
+  const second = journal.pool(summary);
+  journal.write({ ...hop(1), pool: second });
+  const third = journal.pool(inventory);
+  journal.write({ ...hop(2), pool: third });
+  journal.close({ outcome: 'passed', hops: 3 });
+
+  // The same list gets the same id, and a list that merely differs gets another.
+  // An id drawn from anything but the contents would write the unchanging menu
+  // out again on every hop, which is the size problem pools exist to remove.
+  expect(third).toBe(first);
+  expect(second).not.toBe(first);
+
+  const entries = readJournal(journalPath(dir, opening.routeIndex, opening.routeSeed));
+  const pools = entries.filter((entry) => entry.kind === 'pool');
+  expect(pools).toHaveLength(2);
+
+  // Every hop names a pool that appears EARLIER in the file. That ordering is
+  // what makes a file cut off mid-write safe to read: it can lose the last hop,
+  // but it can never hold a hop pointing at a list that is not there.
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (entry.kind === 'pool') seen.add(entry.id);
+    if (entry.kind === 'trip-hop') expect(seen.has(entry.pool)).toBe(true);
+  }
+});
+
+test('a pool id depends on order, not only on membership', () => {
+  const dir = scratch();
+  const journal = Journal.open(dir, opening);
+  const a = { source: 'page' as const, role: 'button', name: 'A', nth: 0 };
+  const b = { source: 'page' as const, role: 'button', name: 'B', nth: 0 };
+
+  // The draw picks by position, so a list that only reordered sends the same
+  // draw to a different target. Treating [A, B] and [B, A] as one pool would let
+  // a replay report a match where the Route actually diverged.
+  expect(journal.pool([a, b])).not.toBe(journal.pool([b, a]));
+  journal.abandon();
 });

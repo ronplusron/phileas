@@ -59,7 +59,7 @@ declare const checked: unique symbol;
  * `Readonly<JourneyTerms>` alone let a hand-written object typecheck as a
  * Journey and skip every check below: `{ routes: 0, hopsPerRoute: 0,
  * deadlineMs: 0 }` compiled, registered no tests at all, and reported green
- * having travelled nowhere. That is the failure the comment on `defineJourney`
+ * having traveled nowhere. That is the failure the comment on `defineJourney`
  * calls the one this engine is least able to notice about itself, and the
  * validation guarding against it was entirely optional.
  *

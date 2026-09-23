@@ -1,6 +1,6 @@
 # Phileas
 
-An exploratory testing engine for Electron apps: unscripted traversal with
+An exploratory testing engine for Electron apps: unscripted travel with
 continuous invariant checking, seeded so that any failure replays exactly. It
 ships as a package and is consumed by the application under test.
 
@@ -30,7 +30,7 @@ costs the whole reporting model:
 | Hop | `test.step` | Hops nest in the trace without each becoming a separate pass or fail |
 
 Journey was claimed to be the test early on and that was wrong. If the Journey
-were the test, ten traversals would share one verdict, one timeout and one
+were the test, ten Routes would share one verdict, one timeout and one
 trace, and a single failure would take the other nine with it.
 
 ## Routes are independent, and the seed is split two ways
@@ -44,7 +44,7 @@ route 7 reproducible only by replaying routes 1 through 6, which reintroduces
 exactly the dependence the design is built to avoid -- quietly, because
 everything still passes.
 
-**Split each Route's seed in two**, one for the Fix and one for traversal.
+**Split each Route's seed in two**, one for the Fix and one for the Trip.
 Otherwise editing a Fix later shifts every subsequent draw, and routes that
 used to fail stop reproducing. A recorded failing seed that no longer
 reproduces is worse than no recording, because it reads as a fixed bug.
@@ -63,7 +63,7 @@ scratch, and Anchors became the Fix.
 
 **So the Fix is not setup ceremony borrowed from a scripted suite. It is the
 correction that made the second attempt different from the first,** and it is
-what makes traversal **semirandom** rather than random: a known start, an
+what makes a Route **semirandom** rather than random: a known start, an
 unpredictable continuation. That is also the reason the name fits. Fogg knew
 where he was leaving from and when he had to be back, and nothing in between.
 
@@ -104,7 +104,7 @@ results.
 ## A failed Fix is a distinct finding from a failed Route
 
 Ten Routes failing on one broken precondition is one bug, not ten. If the Fix
-and the traversal report through the same channel, a single broken setup
+and the Trip report through the same channel, a single broken setup
 step looks like a catastrophic morning and buries whatever else was found.
 
 ## The planner is a for-loop, and must not become a component
@@ -116,7 +116,7 @@ file, and it was judged explicitly not to deserve being a named component.
 
 **Watch for it growing back.** The moment it starts deciding what gets
 explored rather than how many Routes there are, it has become interference in
-the traversal, which `docs/OUTSTANDING.md` records as considered and declined.
+where Routes go, which `docs/OUTSTANDING.md` records as considered and declined.
 
 ## Invariants run after every Hop, and the first violation ends the Route
 
@@ -128,7 +128,7 @@ cascading noise that buries the one hop that mattered.
 The tiers are in the README and in `docs/PRODUCT_REQUIREMENTS.md`. The
 universal tier ships with the engine and assumes nothing about any app. One
 of its checks does double duty: an element with no accessible name is both an
-accessibility fault and something the traversal cannot reliably hop to.
+accessibility fault and something a Route cannot reliably hop to.
 
 ## A Route has three outcomes, and stranded is the third
 
@@ -191,7 +191,7 @@ returning one candidate**, even though today there is exactly one
 implementation and it is a seeded draw.
 
 This reads as ceremony around a single line and is not. It is what lets a
-different chooser be added later without the traversal loop being rewritten
+different chooser be added later without the hop loop being rewritten
 around it, and `docs/OUTSTANDING.md` records what that later chooser is
 expected to be. Inlining it is the specific change that turns a cheap addition
 into an expensive one, so it is called out here at the point where someone
@@ -296,8 +296,12 @@ fits, and are never forced:
   coincidence. It works because "fix" is also an ordinary English word meaning
   what the thing does, which is the test any further character name has to
   pass.
-- **Journey**, **Route** and **Hop** are plain travel words and stay that way.
-- **Passepartout** was reserved for the traversal module and has been dropped.
+- **Journey**, **Route**, **Trip** and **Hop** are plain travel words and stay
+  that way. The **Trip** is the part of a Route after its Fix: the unpredictable
+  continuation, where each Hop is drawn from the seed. In a Journey with no Fix,
+  a Route is all Trip. Avoid "trip" as a verb in this project, as in a check
+  that trips; say fires or fails, so the noun stays unambiguous.
+- **Passepartout** was reserved for the module that travels and has been dropped.
   `docs/HISTORY.md` records why. Watch for a place it genuinely fits rather
   than reinstating it as a label.
 
@@ -359,7 +363,7 @@ is a property of the application rather than of the engine:
   staleness guard cannot run at all, because there are no sources to compare
   against, and a test oracle is usually out of reach for the same reason.
   **Whether anything else is lost depends on the release rather than on the
-  shape.** Where it allows the ordinary launch path, the traversal and the
+  shape.** Where it allows the ordinary launch path, traveling and the
   universal checks all work, since they observe a running process. Where it
   ships hardened, the engine gets in over the debugging protocol instead, and
   that reaches the part of the application that draws the screen and not the

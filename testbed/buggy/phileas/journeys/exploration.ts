@@ -4,7 +4,7 @@ import { defineJourney } from '@drugstoresushi/phileas';
  * The terms of the ordinary Journey through `buggy`.
  *
  * Four terms and nothing else. What gets explored is not decided here and must
- * not start being: a journey definition that begins steering the traversal is
+ * not start being: a journey definition that begins steering a Route is
  * the planner growing back, which `CLAUDE.md` records as declined.
  *
  * No seed. An ordinary run settles one per run in global setup; a seed written

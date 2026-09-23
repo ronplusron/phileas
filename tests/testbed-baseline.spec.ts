@@ -17,8 +17,8 @@ import type { AppUnderTest } from '../src/index';
  * being a claim anyone can check. That sentence is the first success measure in
  * `docs/PRODUCT_REQUIREMENTS.md` section 10, and this is its baseline.
  *
- * **These are not tests of the engine.** Nothing here exercises traversal,
- * seeding or a check. They assert that the application under test behaves as
+ * **These are not tests of the engine.** Nothing here travels, seeds or
+ * checks. They assert that the application under test behaves as
  * its authors intended, which is the one thing the engine cannot tell you and
  * must not be asked to.
  *
@@ -132,7 +132,7 @@ test('switching views moves both buttons, not just one', async () => {
 
     // Both, deliberately. A view switch that sets the new button and forgets
     // the old one leaves two controls claiming to be pressed, which is exactly
-    // the kind of thing a traversal would walk past.
+    // the kind of thing a Route would walk past.
     await expect(page.locator('#view-inventory')).toHaveAttribute('aria-pressed', 'false');
     await expect(page.locator('#view-summary')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#inventory')).toBeHidden();

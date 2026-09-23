@@ -13,7 +13,7 @@ import type { ElectronApplication, Page } from '@playwright/test';
  */
 
 /**
- * One thing the traversal could act on next.
+ * One thing a Route could act on next.
  *
  * Minimal on purpose. survey() is what produces these, and it may add to this
  * shape; what is here is only what an exclusion predicate needs in order to
@@ -55,8 +55,8 @@ export type Candidate = {
  * application. A predicate cannot be derived, so it is the exception rather
  * than the shape.
  *
- * This is a safety rail, not a map. It says what the traversal may not touch.
- * It never says what the traversal may touch, which is survey()'s job.
+ * This is a safety rail, not a map. It says what a Route may not touch. It
+ * never says what a Route may touch, which is survey()'s job.
  */
 export interface Exclusions {
   /** Accessible names that must never be hopped to, however they are reached. */
@@ -208,7 +208,7 @@ export interface AppUnderTest {
    */
   staleness?: StalenessGuard;
 
-  /** What the traversal must never act on. */
+  /** What a Route must never act on. */
   exclusions: Exclusions;
 
   /**
@@ -275,7 +275,7 @@ export interface AppUnderTest {
    *
    * Two readers. Cleanup, which is what it was found for. And the check that
    * nothing else launched: a foreign process appearing after a hop is evidence
-   * that the traversal left the application, and that evidence does not depend
+   * that a Route left the application, and that evidence does not depend
    * on the external-link stub having taken effect. docs/PLAN.md says why a
    * second source is not redundant with the stub's own recorder.
    */

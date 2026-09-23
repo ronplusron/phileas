@@ -12,7 +12,7 @@ import type { ElectronApplication } from '@playwright/test';
  * Why the engine reaches the menu at all: menu items live in the main process
  * and never appear in a page's accessibility tree, so survey by role alone
  * would never see them -- and an exclusion list naming Quit is meaningless
- * unless the traversal can reach Quit. docs/PLAN.md has the rest.
+ * unless a Route can reach Quit. docs/PLAN.md has the rest.
  *
  * Labels are walked rather than looked up by id because ids are optional in an
  * Electron menu template and many applications omit them.

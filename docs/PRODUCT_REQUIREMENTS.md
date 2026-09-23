@@ -24,6 +24,8 @@ Terms used throughout:
   journey semirandom rather than random, and most journeys will define one. A
   journey without a fix is valid, and every route then starts from the
   application's own initial state.
+- A **trip** is the unpredictable part of a route: the hops after the fix,
+  each one decided at the moment it is taken. A route with no fix is all trip.
 
 A journey has three possible outcomes per route: passed, failed, or
 **stranded**. Stranded means the route ran out of moves before reaching its
@@ -117,7 +119,7 @@ jobs, which may be the same person on different days.
 
 ## 5. Features
 
-- **Unscripted traversal.** The engine decides its own next move from what the
+- **Unscripted travel.** The engine decides its own next move from what the
   screen actually offers, rather than following a written path. Answers: the
   paths nobody thought to write down.
 - **Seeded runs.** Every run is defined by a seed, so any run or any single

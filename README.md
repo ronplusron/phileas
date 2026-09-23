@@ -26,6 +26,7 @@ it and what they do today.
 | **Journey** | The top-level run. One or more Routes, one seed, one budget. |
 | **Route** | One pass through the application. Executes as one test, with its own verdict. |
 | **Fix** | Anchors the start of every Route. A fixed sequence of Hops, the same every time. Optional, and usually present. |
+| **Trip** | The rest of a Route after its Fix: Hops drawn from the seed. Without a Fix, the whole Route is its Trip. |
 | **Hop** | The atomic unit: one UI or API interaction. |
 | **Journal** | The record a Route writes as it goes, one entry per Hop. |
 
@@ -63,7 +64,7 @@ Journey and derives each Route's seeds from them. And it now travels: a Route
 finds what the screen offers by accessibility role, draws its next move from
 its seed, acts, waits for the page to stop moving, and writes a journal entry
 per Hop. `testbed/buggy/` is a packaged application built to be traveled
-through, and sixty-seven tests run against it.
+through, and eighty-two tests run against it.
 
 What is still unwritten is every check. Nothing yet decides whether anything a
 Route walked past is wrong, so the engine can currently report only that a
@@ -88,7 +89,7 @@ npm run package
 
 Then `npm test` from the root runs Playwright against that bundle, and
 `npm run journey` runs the Journey from the application's own config. The tests
-show the launch layer and the traversal behave as written, and that one seed
+show the launch layer and the Route behave as written, and that one seed
 retraces one Route hop for hop. **They are not evidence that the engine finds
 bugs**, and cannot be until `testbed/` holds deliberately planted defects and a
 Journey is shown finding each one.

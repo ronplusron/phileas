@@ -16,7 +16,7 @@ import type { Candidate, Journey, Narrowing } from '../src/index';
 
 // A Journey is branded, so defineJourney is the only way to make one. This
 // object used to typecheck, register no tests at all, and report green having
-// travelled nowhere.
+// traveled nowhere.
 // @ts-expect-error a Journey cannot be written by hand
 const handWritten: Journey = { routes: 0, hopsPerRoute: 0, deadlineMs: 0 };
 void handWritten;
