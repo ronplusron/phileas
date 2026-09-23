@@ -15,14 +15,15 @@ accumulates is how a section grows until nobody reads it.
 **These headings are judgments.** Placing an item is a decision about what
 kind of thing it is, and worth making deliberately.
 
-`DEFECTS.md` is what is wrong. It holds one entry, filed when the launch
-layer landed with a known hazard still open; a second closed in phase 4.
+`DEFECTS.md` is what is wrong: three entries, two of them to close before phase
+5.
 
 ## 1. Agreed, not built
 
 ### 1.1 The engine
 
-Everything in `PLAN.md` from phase 5 on. Phases 0 through 4 are done and
+Everything in `PLAN.md` from phase 5 on, after the work `PLAN.md` lists as
+coming before phase 5. Phases 0 through 4 are done and
 `HISTORY.md` records them: the toolchain, the launch layer lifted and
 hardened, a packaged application it can launch, the seeds that make a run
 reproducible, and the Routes that travel through it and write down where
@@ -100,22 +101,42 @@ three sides, expresses it without changing any runtime shape. Left as its own
 change rather than folded into the review fixes, because turning on `checkJs`
 will surface more than it fixes.
 
-### 1.6 Keyboard shortcuts as a source of Hops
+### 1.6 The keyboard: key presses, shortcuts and typing, before phase 5
 
-Raised 2026-09-22 and deliberately not declined. Three questions have to be
-answered before it can be built.
+Raised 2026-09-22 as shortcuts alone. Agreed on 2026-09-23 as work before
+phase 5, widened to the whole keyboard, since both target IDEs need it: their
+consoles recall history on Up Arrow, and editors act on keystrokes. The
+worked cases are in 1.8.
 
-**Today no Hop presses a key.** A click is a mouse click, `fill` sets a value
-without keystrokes, and a menu entry is clicked through the menu. Keyboard-only
-paths are a natural place for defects to live, and a Route that cannot press a
-key can never reach them.
+**Today no Hop presses a key.** A click is a mouse click, a menu entry is
+clicked through the menu, and text goes in by `fill`. Keyboard-only paths are
+a natural place for defects to live, and a Route that cannot press a key can
+never reach them.
+
+**Filling a field is not typing into it.** `fill` sets the whole value at once
+and fires a single input event. So a defect in a key handler -- one that fires
+on each keystroke, validates as you type, or reacts to a particular key -- is
+out of every Route's reach, and nothing says so: the journal records `fill`
+and the value, and a reader could reasonably assume the value was typed.
+Typing each character instead would reach key handlers, at a round trip per
+character, and changes no draw, though the application may respond
+differently and so send a Route elsewhere. Choosing between filling and
+typing by a draw would reach them some of the time, and adding that draw
+changes every recorded seed.
+
+**The `select` action has the same shape.** It chooses an option in a native
+dropdown directly and never opens the list, so moving through a dropdown's
+options by keyboard, and anything an application does while its list is
+open, is out of reach in the same way. A focused dropdown, which `focus`
+already leaves, is where arrow keys would go; whether they change the choice
+on macOS is unmeasured.
 
 **The exclusion predicate makes the gap sharper.** Its only measured case is a
 shortcut that closes an editor tab, and closes the application once no tabs
 remain. That case cannot currently arise, so the one rail designed around a
 shortcut guards against something the engine never does.
 
-The three questions:
+Three questions have to be answered in the work:
 
 - **Discovery.** A shortcut is not a thing in the accessibility tree, so
   discovery by role does not find it. Menu accelerators are readable from the
@@ -132,9 +153,9 @@ The three questions:
   Quit by its menu path and leaving Cmd+Q reachable would be a rail with a gap
   in it that no test notices.
 
-When a Hop does press a key, the journal records it as a `press` action,
-which is planned rather than built: `action` today is `click`, `fill` or
-`menu-click`, and a key press will need to record which key as well.
+When a Hop presses a key, the journal records it as a `press` action, with
+which key. `action` today is `click`, `fill`, `select`, `focus` or
+`menu-click`.
 
 ### 1.7 An optional map, in phase 10
 
@@ -189,7 +210,13 @@ Recorded 2026-09-23. Four applications, reached in this order:
 
 trickster-tales is not one of the four. It served on 2026-09-23 as a demo, the
 first real application the engine traveled through, and its dropdowns found a
-gap `HISTORY.md` records.
+gap `HISTORY.md` records. It is also the clearest worked example of where a
+specified check's expected results come from: its own test suite already reads
+its corpus independently, in `e2e/app/corpus.ts`, and derives expectations
+from it. The checks phase 6 would write for it are the number of tale cards
+against the tales in the data, a tale's listed motifs against its motifs in
+the data, the count beside a facet value against the tales carrying that tag,
+and a search against the tales whose text matches.
 
 **Positron.** Everything below except the last bullet is from the suite reading
 `HISTORY.md` records.
@@ -251,7 +278,7 @@ engine is useful on either application:
   through the reachable controls that switch views and save. A check compares
   the saved file's text with what was typed. It has to compare text, not
   rendered output, since `*text*` and `_text_` both render as italics. Needs
-  phase 6, and needs real typing (2.4) if the editor converts only on
+  phase 6, and needs real typing (1.6) if the editor converts only on
   keystrokes.
 - **Console history:** submit a line, press Up, and the line comes back. Needs
   key presses (1.6), a console input discovery can reach, which is unmeasured
@@ -267,6 +294,80 @@ presses (1.6), the optional map (1.7), and checks written for the application
 that read contents, files or a driver. What is beyond Playwright is narrower:
 the operating system's own popups and dialogs, and anything drawn on a canvas,
 which offers pixels and no text.
+
+### 1.9 What each hop did to the screen, R31, before phase 5
+
+Agreed 2026-09-23 as a Must, after a journal was read that said a Hop clicked
+"Compare" and nothing about what followed. The only trace of an effect was the
+next Hop drawing from a different pool, a fingerprint no reader can turn back
+into a screen.
+
+**The design, decided in conversation and measured on trickster-tales:**
+
+- **Two readings are compared:** the accessibility tree the survey read before
+  the Hop, and the last one the settle wait read after it. Both are already
+  taken, so the effect costs nothing extra.
+- **`changed`** says whether anything in the tree differs. It is kept separate
+  from the headings because headings can miss a change entirely: on
+  trickster-tales, clicking a facet value left every heading in place.
+- **Headings that appeared and went away,** listed up to five each with a count
+  of the rest, rather than the screen's whole list of headings. The whole list
+  is noise: on trickster-tales the application's title and a sidebar heading
+  sit on every screen, and the library and facet screens repeat all eight
+  tales' titles. The difference is what reads -- going from a tale to Compare
+  is "+ Compare, - the tale's title, - How this tale works, - Thompson
+  motifs".
+- **An effect that could not be read is recorded as such,** never as "nothing
+  changed". A page that stopped answering and a Hop that did nothing would
+  otherwise leave the same record, and only the first is a finding.
+- **Fix hops get the same reading,** from a settle after each step, which also
+  makes their settle measurements real rather than always false.
+- **Dropped: the pool afterwards.** It was proposed, and it is always the next
+  Hop's pool; computing it separately would mean a second full survey on every
+  Hop, including another call of the adapter's exclusion predicate.
+
+**The limit to know:** headings describe a screen, not every change on it. A
+number that changes in a plain paragraph shows only as `changed`. If that
+proves to matter, the next step is recording the changed text itself, which
+costs more.
+
+### 1.10 What the two IDEs need that nothing supplies yet
+
+Recorded 2026-09-23, to be reviewed before the work that comes before phase 5
+starts, so that its order can be settled with these in view. Where an item is
+already recorded elsewhere, this points there rather than repeating it.
+
+- **More kinds of action:** scrolling, right-click, double-click, dragging and
+  hovering. A Hop today can click, fill, select, focus and click a menu entry.
+  Virtualized lists and long panes need scrolling before their contents exist
+  to be found, and both IDEs rely heavily on context menus.
+- **Other windows.** A Route surveys one window, the page the adapter selects.
+  Both IDEs open more, and the first of RStudio's recorded bugs starts in its
+  plot zoom window.
+- **Frames and webviews.** Positron draws its notebooks, data explorer, plots
+  and help in webviews; RStudio's help and viewer panes are frames. Whether
+  the accessibility snapshot the survey reads reaches inside them is
+  unmeasured.
+- **The debugging-port launch** that a hardened release needs is named in the
+  engine's types and has never been built. For RStudio the chosen remedy is a
+  build without the hardening instead, and how hard that build is has not been
+  measured.
+- **Native dialogs,** such as Open and Save, which both IDEs use constantly.
+  `PLAN.md` carries them as a hazard with the answer undecided.
+- **Cost on a large application.** The survey and the settle wait each read the
+  whole page's accessibility tree, several times per Hop. That has been
+  measured only on applications far smaller than either IDE.
+- **A page that never stops moving:** a blinking cursor, a spinner, a live
+  console. The settle wait might never see two readings agree, and would then
+  spend its whole limit on every Hop. Unmeasured.
+- **Bugs that happen on quitting.** Quit is excluded, so no Hop reaches it, but
+  every Route already ends by closing the application. A main-process error
+  check watching that close could catch RStudio's first recorded bug without a
+  Route ever hopping to Quit. Phase 5 decides the main-process check.
+
+Already recorded and scheduled: key presses and typing (1.6), main-process
+errors, log checks and narrowing (phase 5), and expected results from files,
+R or a driver (phase 6).
 
 ## 2. Undecided
 
@@ -354,27 +455,23 @@ Kept here rather than under Declined because parking it was deliberate. If
 the terms of a Journey ever need a collective noun, this is the candidate
 already considered.
 
-### 2.4 Filling a field is not typing into it
+### 2.4 Default exclusions for the menu entries every Electron application has
 
-Recorded 2026-09-23. A Hop that puts text in a field uses Playwright's `fill`,
-which sets the whole value at once and fires a single input event. No key is
-pressed. So a defect that lives in a key handler -- one that fires on each
-keystroke, validates as you type, or reacts to a particular key -- is out of
-every Route's reach, and nothing says so: the journal records `fill` and the
-value, and a reader could reasonably assume the value was typed.
+Raised 2026-09-23. Writing an adapter for trickster-tales meant excluding, by
+hand, the standard menu entries Electron gives every application: Quit, Hide,
+Hide Others and Services; Reload and Force Reload; Toggle Developer Tools and
+Toggle Full Screen; Minimize; Show Substitutions; Start and Stop Speaking; and
+Cut, Copy, Paste and Paste and Match Style, for the reasons `DEFECTS.md` gives
+under the clipboard. Every adapter for every application would otherwise
+write the same list, and one that forgot an entry would find out from a Route
+that quit, reloaded, spoke aloud or read the clipboard.
 
-What to do about it is open. Typing each character instead would reach key
-handlers, at a round trip per character, and changes no draw, though the
-application may respond differently and so send a Route elsewhere. Choosing
-between filling and typing by a draw would reach them some of the time, and
-adding that draw changes every recorded seed. It is close kin to 1.6: both are about the
-keyboard, and a Hop that types and a Hop that presses a shortcut would likely
-share whatever settles how key events reach the application.
-
-**The `select` action has the same shape.** It chooses an option in a native
-dropdown directly, firing the events a choice fires, and never opens the list.
-So moving through a dropdown's options by keyboard, and anything an
-application does while its list is open, is out of reach in the same way.
+Undecided: whether the engine excludes these by default, with an adapter able
+to allow any of them back. Two things decide it. A menu candidate carries its
+label path and not the role Electron built it from, and labels include the
+application's name (`Quit Trickster Tales`), so a default would need the role.
+And a default the engine applies silently is an input to the seeded draw the
+adapter cannot see, so it has to be as visible as the adapter's own list.
 
 ## 3. Declined
 

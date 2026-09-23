@@ -47,7 +47,7 @@ phases are marked by number.
 | Journey seed | The one seed a run is defined by, settled once before any Route starts. Setting `PHILEAS_SEED` replays it. |
 | Route seed | Derived from the Journey seed and the Route's index, so any Route can be replayed on its own. |
 | Fix stream / Trip stream | Two separate seeded streams of numbers per Route, so editing the Fix never shifts the Trip's draws. |
-| Replay | Re-running a recorded seed to retrace a Route hop for hop. Only meaningful against the same build. |
+| Replay | Re-running a recorded seed to retrace a Route hop for hop. Only meaningful against the same build and the same window mode: a shown run offers menu entries a hidden one withholds, so one seed takes different routes. The hop delay changes nothing. |
 
 ## Recording
 

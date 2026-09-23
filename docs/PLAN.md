@@ -471,6 +471,26 @@ be compared file to file. That is the first evidence that seeding and
 traveling work together, and it is what R13 is later built on. What is still
 missing is any notion of something being wrong.
 
+### Before phase 5: work the demos found
+
+Phase 4 ended, and running the engine against real applications for a demo
+found gaps that phase 5 would otherwise have built on top of. Decided on
+2026-09-23 that these come first, in this order, and that phase 5 starts only
+once they are done:
+
+1. **A review of what the two IDEs need**, `OUTSTANDING.md` 1.10, before any of
+   the work below starts, so its order is settled with those needs in view.
+2. **What each hop did to the screen,** R31, `OUTSTANDING.md` 1.9.
+3. **The keyboard:** key presses, shortcuts and real typing, `OUTSTANDING.md`
+   1.6.
+4. **The clipboard,** a defect in `DEFECTS.md`: `buggy`'s adapter lets a shown
+   run cut, copy and paste. Whether the engine excludes the standard menu
+   entries by default is `OUTSTANDING.md` 2.4, decided alongside it.
+5. **An earlier run's journals sitting beside a new run's,** a defect in
+   `DEFECTS.md`.
+
+Each item leaves this list when it merges, and `HISTORY.md` records it.
+
 ### Phase 5: the universal tier, and the Route as a test
 
 The journal already exists from phase 4; this phase fills in its check-results

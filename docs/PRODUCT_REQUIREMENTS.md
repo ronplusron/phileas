@@ -249,6 +249,11 @@ and the runner runs all of them after every hop.
 - **R10 (Must)** Each hop in the record states its position in the route, what
   was chosen, what else could have been chosen at that point, and the result
   of every check that ran.
+- **R31 (Must)** Each hop's record states what the hop did to the screen:
+  whether anything a person using a screen reader would notice changed, and,
+  in a form a person can read, what appeared and what went away. A hop that
+  changed nothing says so. A hop whose effect could not be read says that,
+  rather than claiming nothing changed.
 - **R11 (Must)** A failure in the fix is reported as distinct from a failure
   found while traveling. Ten routes failing on one broken precondition is one
   problem, not ten, and the fix is fixed, so a failure in it says nothing

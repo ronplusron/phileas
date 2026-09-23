@@ -63,10 +63,13 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: ten phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 5 is the next thing to do**: the universal tier of checks, and the
-point where a Route can fail for a reason rather than only for not finishing.
-`docs/PLAN.md` has its shape. `journal.ts` already carries an empty
-`checks` field on every Hop for it to fill.
+**The work before phase 5 is the next thing to do.** Running the engine
+against real applications for a demo found gaps phase 5 would otherwise build
+on, and `docs/PLAN.md` lists them under "Before phase 5", in order, starting
+with a review of what the two IDEs need. Phase 5 itself -- the universal tier
+of checks, and the point where a Route can fail for a reason rather than only
+for not finishing -- starts once that list is empty. `journal.ts` already
+carries an empty `checks` field on every Hop for it to fill.
 
 **Read `docs/DEFECTS.md` before writing any of it.** One defect is open and
 phase 5 is what closes it: the external-link stub can install successfully and
@@ -147,8 +150,25 @@ Route and now travels inside them. It prints the Journey seed; set
 
 Each Route writes a journal to
 `testbed/buggy/phileas/.phileas-journals/<journey seed>/`, one JSON Lines file
-per Route, flushed per Hop. Re-running a seed rewrites that directory, so
-comparing two runs means copying the first set aside first.
+per Route, flushed per Hop. A rerun of a seed overwrites the files it writes
+and leaves the rest, so a rerun with fewer Routes sits beside the earlier
+run's extra files; `docs/DEFECTS.md` carries that. Comparing two runs means
+copying the first set aside first.
+
+**Reading a journal, until phase 7's report renders one (R30),** is a matter of
+`jq`. One line per Hop:
+
+```
+jq -r 'if .kind=="trip-hop" then "hop \(.hop)  \(.action)  \(.target.name)" elif .kind=="outcome" then "\(.outcome) after \(.hops) hops" else empty end' route-000-*.jsonl
+```
+
+`jq . route-000-*.jsonl` prints every line in full.
+
+**A replay needs the same window mode as the run it retraces.** A shown run
+offers menu entries a hidden one withholds, so the same seed takes a different
+route: measured on `buggy`, seed `demo1` started Summary, Inventory, Clear
+search hidden, and Clear search, Clear search, Show Inventory shown. The hop
+delay changes nothing.
 
 **None of it is evidence that the engine finds bugs**, because nothing is
 planted in `buggy` yet and nothing travels through it. They show the launch

@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**One defect is recorded.** The launch layer landed in phase 1, so this file
+**Three defects are recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -36,9 +36,9 @@ a worry.** It is not a defect, because the file is not in this repository; it
 is not a worry, if what to do about it is already decided. `PLAN.md` carries
 those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
-which is how the entry below arrived.
+which is how the first entry below arrived.
 
-What follows is one defect, then the two things most likely to be filed here
+What follows is three defects, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -85,6 +85,53 @@ sound for an application nobody has read, which is the whole hazard.
 **This entry leaves when phase 5's second evidence source exists**, and on
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
+
+## A shown run reaches the system clipboard
+
+**Filed 2026-09-23, found while writing an adapter for another application.**
+With windows shown, the menu source is offered, and `buggy`'s adapter excludes
+only Quit. So its Journeys can hop to Edit > Cut, Copy and Paste, and they
+have. Counted from journals still on disk: the `headed01` Journey hopped Cut 9
+times, Copy 10 and Paste 6, and a watched demo run, `demo1`, hopped Cut 7,
+Copy 3 and Paste 4. A hidden run is unaffected, because it withholds the menu.
+
+**Three things go wrong, and none is visible from the record.**
+
+- **It changes the machine it runs on.** Cut and Copy overwrite whatever the
+  person running the Journey had on their clipboard.
+- **It can carry that content into evidence.** Paste puts the clipboard into
+  the page, and from there into any failure screenshot, DOM dump or trace. A
+  password copied a minute before the run could end up in an attachment.
+- **It breaks replay.** What a Paste inserts is state from outside the seed,
+  different on every machine and every minute, and the journal does not
+  record it, since a paste is not a `fill`. Two runs of one seed can diverge
+  at the first Paste with nothing in the record to say why.
+
+**Why a defect and not a limit:** it produces a wrong answer, a replay that does
+not reproduce, and it leaks data, and every Journey still passes.
+
+**What closes it:** `buggy`'s adapter excluding the clipboard entries, before
+phase 5. Whether the engine should exclude them by default for every
+application is undecided and is in `OUTSTANDING.md`, beside the other standard
+menu entries every Electron application carries.
+
+## An earlier run's journals sit beside a new run's
+
+**Filed 2026-09-23, found by listing a Journey's journal folder.** A run writes
+each Route's journal into `.phileas-journals/<journey seed>/` and never clears
+that folder. A rerun of the same seed rewrites only the files it writes, so a
+rerun with fewer Routes leaves the earlier run's extra files in place, under
+the same seed. Measured: in the `demo1` folder, Route 0's journal was written
+at 07:19 by a one-Route run, and Routes 1 to 4 were left from a five-Route run
+at 06:55.
+
+**Why a defect:** nothing distinguishes the stale files. A person reading the
+folder, or the phase 7 report reading it, takes five files as one Journey, and
+four of them describe a run that is not the one being looked at.
+
+**What closes it,** before phase 5: a run either clears its seed's folder before
+writing, or writes each run to a folder of its own. Which is undecided. The
+second keeps earlier runs available for comparison, which a replay wants.
 
 ## Two things that will look like candidates, and are not
 

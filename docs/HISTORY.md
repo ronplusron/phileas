@@ -25,6 +25,30 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: everything open written down before any of it is built
+
+Asked what was still only in the conversation, and the answer was a lot: an
+agreed requirement, R31, existed only in a branch's plan, and neither the order
+of the work before phase 5 nor several defects and measurements had been
+written anywhere. The instruction was that nothing decided stays only in a
+session. So before any of that work starts: R31 is in the requirements with
+its design in `OUTSTANDING.md` 1.9, the keyboard work is one entry, 1.6, the
+two IDEs' unmet needs are 1.10, two defects are in `DEFECTS.md`, default
+exclusions for Electron's standard menu entries are an open question, and the
+order is in `PLAN.md` under "Before phase 5".
+
+Two decisions made in passing and recorded here. **"Stream" stays** for the Fix
+and Trip's seeded sequences, over "sequence": the Fix is already defined as a
+sequence of fix hops, and the collision would be inside the project's own
+vocabulary, where Node's meaning of "stream" is outside it and unused by the
+journal. **The `PHILEAS_` prefix stays,** and so does the name
+`PHILEAS_HOP_DELAY_MS`: asked whether the prefix was too long, and after the
+weighing, the answer was that it is not the problem.
+
+One correction made on the way: `ORIENTATION.md` said a rerun of a seed
+rewrites its journal folder. It overwrites only the files it writes, which is
+one of the two defects.
+
 ## 2026-09-23: four targets, and whether the engine is useful on the large two
 
 The docs had called Positron and RStudio "external candidates", and in
