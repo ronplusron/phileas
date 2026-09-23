@@ -25,6 +25,30 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: a journal a person can read, as R30
+
+Asked whether a person should be able to read one Route's journal, and when.
+Nothing numbered said so: R9's "readable" meant the file survives and parses,
+and the one sentence that meant a person was an edge case in section 9. R12
+covers the report, not the journal.
+
+Three ways were weighed: a requirement and a reader now, the view as part of
+the phase 7 report, or no view at all. A reader built now needed either a
+transpiler dependency or a change to how the engine's code is written, since
+plain `node` would not run the one started, and it risked a second renderer
+beside the report's. Dropping it left the requirements' own triager, who
+"often did not run the journey", reading raw JSON.
+
+**Decided: the requirement now, the view in phase 7.** R30 costs nothing to
+write and settles what "readable" means; building it inside the report means
+one renderer and no new dependency. Reading journals through phases 5 and 6
+stays a matter of `jq`, which pools made tolerable. If that hurts, the
+renderer moves forward rather than being built twice.
+
+Recorded alongside it: `fill` sets a value without pressing a key, so a
+defect in a key handler is out of every Route's reach. It is in
+`OUTSTANDING.md` as undecided.
+
 ## 2026-09-23: a map, allowed and never required
 
 A per-application list of controls had been recorded as declined since the

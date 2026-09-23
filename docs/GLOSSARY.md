@@ -53,7 +53,7 @@ phases are marked by number.
 
 | Term | Meaning |
 |---|---|
-| Journal | One file per Route, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. |
+| Journal | One file per Route, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. Made for the engine and for replay; a person reads it through the phase 7 report (R30). |
 | Line kinds | `route` (the opening line), `pool`, `fix-hop`, `trip-hop`, `note` (such as the menu being withheld), `outcome` (the closing line, absent if the Route died). |
 | Abandoned | A trip hop whose action timed out. It's still recorded, and the Route continues. |
 

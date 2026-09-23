@@ -642,6 +642,14 @@ reports what it traveled through, so a green result can be told from a run
 that did nothing. Every failure names its route and seed (R7), and the summary
 is enough to reproduce from (R12).
 
+**The report also renders a single Route for a person to read (R30)**, from
+its journal alone, including one cut off mid-write. It is the same renderer
+pointed at one Route rather than a second one: the journal stays a format made
+for the engine and for replay, and reading it is this phase's job rather than
+the format's. Decided 2026-09-23, over building a reader earlier. If reading
+journals during phases 5 and 6 turns out to hurt, this piece moves forward as
+the first part of `report/` rather than being built twice.
+
 **R27 lands here too, and it asks for more than the nothing-found case.** A
 run where the application never launched, where every Route stranded at its
 first hop, or where zero Routes ran at all is reported as degraded rather than

@@ -255,6 +255,12 @@ and the runner runs all of them after every hop.
   about the route that was about to be traveled.
 - **R12 (Should)** Someone who did not run the journey can reproduce a finding
   from the report alone, without asking whoever ran it.
+- **R30 (Should)** A person can read the record of a single route without
+  special tools: each hop's position, what it acted on and how, what else it
+  could have acted on, and the result of every check, in the order they
+  happened. This holds for a route that ended abruptly as well as one that
+  finished. The record itself may stay in a form made for the engine; what
+  this asks is that reading it never requires one.
 - **R13 (Should)** A reported seed that no longer reproduces its route is
   flagged as such, rather than silently passing. A seed that stops reproducing
   reads as a fixed bug, which is worse than no record at all. This is also the

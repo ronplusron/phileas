@@ -262,6 +262,23 @@ Kept here rather than under Declined because parking it was deliberate. If
 the terms of a Journey ever need a collective noun, this is the candidate
 already considered.
 
+### 2.4 Filling a field is not typing into it
+
+Recorded 2026-09-23. A Hop that puts text in a field uses Playwright's `fill`,
+which sets the whole value at once and fires a single input event. No key is
+pressed. So a defect that lives in a key handler -- one that fires on each
+keystroke, validates as you type, or reacts to a particular key -- is out of
+every Route's reach, and nothing says so: the journal records `fill` and the
+value, and a reader could reasonably assume the value was typed.
+
+What to do about it is open. Typing each character instead would reach key
+handlers, at a round trip per character, and changes no draw, though the
+application may respond differently and so send a Route elsewhere. Choosing
+between filling and typing by a draw would reach them some of the time, and
+adding that draw changes every recorded seed. It is close kin to 1.6: both are about the
+keyboard, and a Hop that types and a Hop that presses a shortcut would likely
+share whatever settles how key events reach the application.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias
