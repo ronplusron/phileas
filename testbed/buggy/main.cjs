@@ -3,8 +3,8 @@
 // This application exists to be traveled through. Its surface is chosen
 // against the five ways a defect gets found in docs/PRODUCT_REQUIREMENTS.md,
 // because each one is where a defect gets planted in a later phase: named
-// controls to hop to, a count above a list, a search box with a clear, two
-// views to navigate between, a menu holding Quit, an outbound link, and a
+// controls to hop to, a count above a list, a search box with a clear, a
+// native dropdown filtering by category, two views to navigate between, a menu holding Quit, an outbound link, and a
 // total derived from a data file that ships with the application.
 //
 // Nothing here is deliberately broken yet. Phase 2 is the unbroken version.

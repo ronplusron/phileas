@@ -279,6 +279,11 @@ adding that draw changes every recorded seed. It is close kin to 1.6: both are a
 keyboard, and a Hop that types and a Hop that presses a shortcut would likely
 share whatever settles how key events reach the application.
 
+**The `select` action has the same shape.** It chooses an option in a native
+dropdown directly, firing the events a choice fires, and never opens the list.
+So moving through a dropdown's options by keyboard, and anything an
+application does while its list is open, is out of reach in the same way.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias

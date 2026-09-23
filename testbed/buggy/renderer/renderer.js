@@ -7,13 +7,17 @@
 
 let all = [];
 let query = '';
+let category = '';
 
 const el = (id) => document.getElementById(id);
 
 function visible() {
-  if (query === '') return all;
   const needle = query.toLowerCase();
-  return all.filter((item) => item.name.toLowerCase().includes(needle));
+  return all.filter(
+    (item) =>
+      (category === '' || item.category === category) &&
+      (needle === '' || item.name.toLowerCase().includes(needle))
+  );
 }
 
 function render() {
@@ -64,6 +68,11 @@ function reportBootFailure(error) {
 try {
   el('search').addEventListener('input', (event) => {
     query = event.target.value;
+    render();
+  });
+
+  el('category').addEventListener('change', (event) => {
+    category = event.target.value;
     render();
   });
 

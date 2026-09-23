@@ -26,6 +26,19 @@
           <label for="search">Search items</label>
           <input id="search" type="search" placeholder="Search items" />
           <button id="clear">Clear search</button>
+          <!--
+            A native dropdown, because it is the most common kind and the one a
+            Hop cannot operate by clicking: an option inside it has to be chosen
+            through the dropdown. Written out rather than built from the data,
+            so the baseline can check the two still agree.
+          -->
+          <label for="category">Category</label>
+          <select id="category">
+            <option value="">All categories</option>
+            <option value="luggage">Luggage</option>
+            <option value="instruments">Instruments</option>
+            <option value="clothing">Clothing</option>
+          </select>
         </div>
 
         <h2 id="count">0 items</h2>

@@ -25,6 +25,51 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: choosing from a native dropdown
+
+Found by pointing the engine at trickster-tales for a demo, the first real
+application it has traveled through. Every one of the fourteen abandoned Hops
+across three Routes was an option in a native `<select>`, its two Compare
+pickers. Playwright cannot click an `<option>`, so each Hop that drew one spent
+its whole time limit failing, and no dropdown's value could ever change. The
+feature list had said dropdowns were opened but not chosen from "on purpose",
+which was wrong: they were never chosen from at all.
+
+It is a gap in the engine rather than a limit of the platform. Measured on
+trickster-tales: clicking an option timed out; choosing it through its
+dropdown with `selectOption` set the value; with both pickers set the
+application responded, since it listens for the change event that
+`selectOption` fires. It works with windows hidden, because it never opens the
+native list.
+
+So there is a `select` action. An option is chosen through its dropdown, by
+its position there rather than by its label, which can repeat. Whether an
+option belongs to a native dropdown is asked of the page, and only for
+options: the accessibility tree calls both kinds an option, and an option in a
+list built from ordinary elements is still clicked. `buggy` gained a category
+dropdown so a test can prove it; the test was shown to fail with `select`
+removed. Like `fill`, it sets the choice without the keyboard, which
+`OUTSTANDING.md` records beside `fill`.
+
+**The dropdown itself is focused, not clicked, and the reason was found by
+the dropdown `buggy` gained.** The first Journey after it took a minute rather
+than seven seconds. Every hop was fast; the time was going into closing the
+application. Measured six times each: a close took about 40ms on `main`'s
+bundle, on this branch, and after a `select`, and 0.7 to 10.4 seconds after a
+click on the dropdown. Clicking a native `<select>` opens the operating
+system's popup list, in the main process even with windows hidden, and until
+it is dismissed the application is slow to close. The engine has always
+clicked dropdowns; `buggy` simply had none until now, and on trickster-tales
+it went unnoticed.
+
+Two answers were weighed: focus the dropdown, or stop offering native
+dropdowns at all. Focus was chosen because it keeps every control the
+accessibility tree reports reachable, so a recorded pool still matches the
+screen, and because focus is a real event an application can mishandle and
+the place a keyboard would act on a dropdown once keys exist. After it, a
+close took 33 to 47ms and three Journeys took about six and a half seconds
+each, with no Hop abandoned.
+
 ## 2026-09-23: a journal a person can read, as R30
 
 Asked whether a person should be able to read one Route's journal, and when.

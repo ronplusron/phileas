@@ -62,10 +62,23 @@ export interface JournaledCheck {
  * key handler is out of its reach, and a reader seeing a typed value would
  * otherwise assume keystrokes.
  *
+ * `select` chooses an option inside a native dropdown, through the dropdown.
+ * Clicking the option itself never works: Playwright cannot click an `<option>`,
+ * so before this existed every such Hop timed out and was abandoned, and no
+ * dropdown's value could ever change. Like `fill`, it sets the choice directly
+ * and never opens the list, so moving through the list by keyboard is not
+ * exercised.
+ *
+ * `focus` is what a Hop does to a native dropdown itself. Clicking one opens the
+ * operating system's popup list, which the engine cannot see or use, and which
+ * holds the application open: measured, a close took 0.7 to 10.4 seconds after
+ * one, against about 40ms otherwise. Focusing reaches the dropdown the way
+ * tabbing to it would, without the list.
+ *
  * `press` is planned, for when a Hop can press a key; `docs/OUTSTANDING.md`
  * section 1.6 has what has to be settled first.
  */
-export type HopAction = 'click' | 'fill' | 'menu-click';
+export type HopAction = 'click' | 'fill' | 'select' | 'focus' | 'menu-click';
 
 /**
  * A candidate list, written once and referred to by id.

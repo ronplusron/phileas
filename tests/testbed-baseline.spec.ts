@@ -107,6 +107,38 @@ test('clearing the search restores the full list', async () => {
   });
 });
 
+test('the category dropdown offers exactly the categories in the data', async () => {
+  await withReadyPage(buggy, async (page) => {
+    // Written out in the page rather than built from the data, so this is the
+    // check that the two still agree. A category added to the data and not to
+    // the dropdown would leave items no choice can reach.
+    const offered = await page.locator('#category option').evaluateAll((options) =>
+      options.map((option) => (option as HTMLOptionElement).value).filter((value) => value !== '')
+    );
+    expect([...offered].sort()).toEqual([...new Set(items.map((item) => item.category))].sort());
+  });
+});
+
+test('choosing a category filters the list, and combines with the search', async () => {
+  await withReadyPage(buggy, async (page) => {
+    await page.locator('#category').selectOption('instruments');
+    await expect(page.locator('#items li')).toHaveCount(
+      items.filter((item) => item.category === 'instruments').length
+    );
+
+    // Both filters at once: the barometer is the only instrument with "bar".
+    await page.locator('#search').fill('bar');
+    await expect(page.locator('#items li')).toHaveCount(1);
+    await expect(page.locator('#count')).toHaveText('1 item');
+
+    // Back to all categories keeps the search.
+    await page.locator('#category').selectOption('');
+    await expect(page.locator('#items li')).toHaveCount(
+      items.filter((item) => item.name.toLowerCase().includes('bar')).length
+    );
+  });
+});
+
 test('the total is every item, and does not follow the search', async () => {
   await withReadyPage(buggy, async (page) => {
     await page.locator('#view-summary').click();

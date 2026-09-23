@@ -65,6 +65,11 @@ test('survey finds the application controls by role, with no enumeration of them
     'button "Summary"',
     'searchbox "Search items"',
     'button "Clear search"',
+    'combobox "Category"',
+    'option "All categories"',
+    'option "Luggage"',
+    'option "Instruments"',
+    'option "Clothing"',
   ]);
 });
 
@@ -234,7 +239,7 @@ test('a Route completes its Trip and journals every hop', async ({ page, app }) 
     const pool = pools.get(entry.pool);
     expect(pool, `hop ${entry.hop} names pool ${entry.pool}, which is not in the file`).toBeDefined();
     expect(pool).toContainEqual(entry.target);
-    expect(['click', 'fill', 'menu-click']).toContain(entry.action);
+    expect(['click', 'fill', 'select', 'focus', 'menu-click']).toContain(entry.action);
   }
 });
 
@@ -324,7 +329,7 @@ test('a Route with nowhere to go is stranded, not failed, and names the hop', as
   // Every control taken away, which is what a dead end, an inescapable dialog
   // and a trap all look like from the Route's side.
   await page.evaluate(() => {
-    for (const element of document.querySelectorAll('button, input, a')) element.remove();
+    for (const element of document.querySelectorAll('button, input, select, a')) element.remove();
   });
 
   const dir = scratch();
@@ -450,6 +455,91 @@ test('a value is drawn on every hop, including hops that never type it', async (
 
   expect(generatedFor).toEqual(['button', 'button', 'button', 'button', 'button']);
   expect(typedInto).toEqual([]);
+});
+
+test('an option in a native dropdown is chosen through the dropdown, and takes effect', async ({
+  page,
+  app,
+}) => {
+  // Playwright cannot click an <option>. Before `select` existed, every Hop that
+  // drew one timed out and was abandoned, and no dropdown's value could change:
+  // measured on trickster-tales, where all 14 abandoned Hops of a Journey were
+  // options in its two Compare pickers. The chooser here always draws the
+  // Luggage option, so every Hop exercises exactly that case.
+  const dir = scratch();
+  const streams = deriveRouteStreams('select-seed', 0);
+
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams,
+    journeySeed: 'select-seed',
+    routeIndex: 0,
+    tripLength: 2,
+    journalDir: dir,
+    hopTimeoutMs: 1_000,
+    chooser: {
+      choose: (candidates) => {
+        const luggage = candidates.find(
+          (candidate) => candidate.role === 'option' && candidate.name === 'Luggage'
+        );
+        if (!luggage) throw new Error('this test needs the Luggage option to be offered');
+        return { target: luggage };
+      },
+    },
+  });
+
+  const hops = readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`)).filter(
+    (entry) => entry.kind === 'trip-hop'
+  );
+  expect(hops).toHaveLength(2);
+  for (const entry of hops) {
+    expect(entry).toMatchObject({ action: 'select', target: { role: 'option', name: 'Luggage' } });
+    expect(entry.kind === 'trip-hop' ? entry.abandoned : 'wrong kind').toBeUndefined();
+  }
+
+  // The choice reached the application, not only the dropdown: buggy listens
+  // for the change event and filters the list to its three luggage items.
+  await expect(page.locator('#category')).toHaveValue('luggage');
+  await expect(page.locator('#count')).toHaveText('3 items');
+});
+
+test('a native dropdown itself is focused, not clicked open', async ({ page, app }) => {
+  // Clicking a native <select> opens the operating system's popup list, which
+  // the engine cannot see or use and which holds the application open: a close
+  // took 0.7 to 10.4 seconds after one, against about 40ms otherwise. Focusing
+  // reaches it the way tabbing to it would. The chooser always draws the
+  // dropdown, so every Hop exercises exactly that case.
+  const dir = scratch();
+  const streams = deriveRouteStreams('focus-seed', 0);
+
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams,
+    journeySeed: 'focus-seed',
+    routeIndex: 0,
+    tripLength: 2,
+    journalDir: dir,
+    chooser: {
+      choose: (candidates) => {
+        const dropdown = candidates.find((candidate) => candidate.role === 'combobox');
+        if (!dropdown) throw new Error('this test needs the Category dropdown to be offered');
+        return { target: dropdown };
+      },
+    },
+  });
+
+  const hops = readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`)).filter(
+    (entry) => entry.kind === 'trip-hop'
+  );
+  expect(hops.map((entry) => (entry.kind === 'trip-hop' ? entry.action : ''))).toEqual([
+    'focus',
+    'focus',
+  ]);
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('category');
 });
 
 test('a prevented navigation ends the Route once, rather than timing out every hop', async ({

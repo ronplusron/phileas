@@ -371,7 +371,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       const startedAt = new Date();
       const { target, draw } = await chooser.choose(found.candidates, streams.trip);
       lastTarget = `${target.role} "${target.name}"`;
-      const action = actionFor(target);
+      const action = await actionFor(target, hopTimeoutMs);
 
       // Drawn whether or not it is used, so that the stream advances the same
       // way regardless of which control was the target. A value drawn only for a
@@ -526,9 +526,50 @@ function journaled(candidate: SurveyedCandidate): JournaledCandidate {
  * leave room for the record and the behavior to disagree, and the record is the
  * thing a replay trusts.
  */
-function actionFor(target: SurveyedCandidate): HopAction {
+async function actionFor(target: SurveyedCandidate, timeoutMs: number): Promise<HopAction> {
   if (target.source === 'menu') return 'menu-click';
-  return takesTypedValue(target) ? 'fill' : 'click';
+  if (takesTypedValue(target)) return 'fill';
+  if (target.role === 'option' || target.role === 'combobox') {
+    const part = await nativeDropdownPart(target, timeoutMs);
+    if (part === 'option') return 'select';
+    if (part === 'dropdown') return 'focus';
+  }
+  return 'click';
+}
+
+/**
+ * Which part of a native `<select>` a candidate is, if any.
+ *
+ * Asked of the page, because the accessibility tree calls a native dropdown and
+ * a list built from ordinary elements by the same roles, and only the document
+ * says which is which. They need different actions. In a custom list, the
+ * dropdown and its options are clicked like anything else. In a native one, an
+ * option cannot be clicked at all and is chosen through its dropdown, and the
+ * dropdown itself is focused rather than clicked, since a click opens a popup
+ * list the engine cannot use and that holds the application open. Asked only
+ * for options and dropdowns, so it costs one round trip on the Hops that need
+ * it and none on the rest.
+ *
+ * A page that does not answer is treated as no native dropdown. The click that
+ * follows then times out and the Hop is recorded as abandoned, which is the
+ * honest outcome for a page that has stopped answering.
+ */
+async function nativeDropdownPart(
+  target: SurveyedCandidate,
+  timeoutMs: number
+): Promise<'dropdown' | 'option' | undefined> {
+  if (target.source !== 'page') return undefined;
+  return target.locator
+    .evaluate(
+      (element) => {
+        if (element.tagName === 'SELECT') return 'dropdown' as const;
+        if (element.closest('select') !== null) return 'option' as const;
+        return undefined;
+      },
+      undefined,
+      { timeout: timeoutMs }
+    )
+    .catch(() => undefined);
 }
 
 /**
@@ -552,6 +593,26 @@ async function act(
 
   if (action === 'fill') {
     await target.locator.fill(value, { timeout: timeoutMs });
+    return;
+  }
+
+  if (action === 'select') {
+    // By the option's position in its dropdown rather than by its label, since
+    // two options in one dropdown may share a label and the position cannot be
+    // ambiguous. selectOption fires the input and change events a person's
+    // choice would, which is what the application listens for.
+    const index = await target.locator.evaluate(
+      (option) => (option as HTMLOptionElement).index,
+      undefined,
+      { timeout: timeoutMs }
+    );
+    const dropdown = target.locator.locator('xpath=ancestor::select[1]');
+    await dropdown.selectOption({ index }, { timeout: timeoutMs });
+    return;
+  }
+
+  if (action === 'focus') {
+    await target.locator.focus({ timeout: timeoutMs });
     return;
   }
 

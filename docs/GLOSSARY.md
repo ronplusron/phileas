@@ -36,7 +36,7 @@ phases are marked by number.
 | Chooser | The named seam that picks a target from the pool. Today it's always the seeded draw. |
 | Draw | The number from the seeded stream that picked the target, recorded as a raw 32-bit integer. |
 | Target | What a Hop acted on, or tried to. |
-| Action | What was done to the target: `click`, `fill` or `menu-click`, with `press` planned. `fill` sets a value without pressing keys. |
+| Action | What was done to the target: `click`, `fill`, `select`, `focus` or `menu-click`, with `press` planned. `fill` sets a value without pressing keys. In a native dropdown, `select` chooses an option without opening the list, and `focus` reaches the dropdown itself, since clicking it opens a list the engine cannot use. |
 | Value | The text a `fill` put in, from a second seam separate from the chooser. |
 | Settle | What the page does when it stops changing after a Hop. The engine waits for it, up to a limit, by reading the page until two reads agree. |
 
