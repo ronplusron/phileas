@@ -699,6 +699,9 @@ travel through; the second follows once its own migration gives it one.
 Nothing about consumers is open by the time this phase runs: the interface was
 hardened in phase 1, which is where that question did its real work.
 
+After the two confirmed consumers come Positron and RStudio. They are targets
+rather than candidates, and `OUTSTANDING.md` 1.8 records what each will need.
+
 What the first real adapter discovers about the seam goes back into
 `AppUnderTest`. `HISTORY.md` records that the second adapter is what finds
 where the seam's shape is wrong, so expect this phase to produce interface

@@ -176,6 +176,98 @@ is what answers them:
   mark candidates a map supplied, so that R14 can tell a map edit from an
   application change.
 
+### 1.8 The four applications the engine is for, and what each will need
+
+Recorded 2026-09-23. Four applications, reached in this order:
+
+- **`613-mitzvot` and `editor`**, the confirmed consumers `HISTORY.md` names.
+  Small, ordinary DOM, the ordinary launch path. The most direct fit, and
+  phase 9's work.
+- **Positron and RStudio, eventually.** Targets, not candidates to be weighed:
+  both are to be tested, after the engine has proven itself on the first two.
+  Positron is the stronger of the two, for measured reasons below.
+
+trickster-tales is not one of the four. It served on 2026-09-23 as a demo, the
+first real application the engine traveled through, and its dropdowns found a
+gap `HISTORY.md` records.
+
+**Positron.** Everything below except the last bullet is from the suite reading
+`HISTORY.md` records.
+
+- **Launch:** the ordinary path works. It carries no fuse configuration and
+  leaves `RunAsNode` enabled, so the main process, menus and link stub are all
+  in reach.
+- **Discovery:** ordinary DOM, and its own tests reach for accessible
+  locators 30.3% of the time, under a written policy ranking roles above
+  identifiers. The limit is the editor's text layer and the terminal's canvas,
+  which are exactly what its own accessibility scanner excludes.
+- **Breadth is the hard part:** more candidates than a Trip can visit, many of
+  them virtualized and changing between one survey and the next. The Fix is
+  the answer. A Fix that opens a notebook or the data explorer keeps a Trip
+  inside one area with its own well-named controls, and several Journeys with
+  different Fixes cover several areas.
+- **Its driver** types into the editor, reads the terminal buffer, sets values,
+  reads elements and runs registered commands. Checks may read it and the
+  survey may not, which `../CLAUDE.md` settles; it is how a check reaches what
+  discovery cannot.
+- **Before its Journeys mean anything:** it writes to the console in normal
+  operation, so the console-error check needs narrowing (R19), and it keeps
+  four separate kinds of dialog.
+
+**RStudio.**
+
+- **Launch:** the release build ships hardened, so the engine gets in only over
+  the debugging port, which reaches no main process: no link stub, no hidden
+  windows, no menus, no main-process checks. The first of its three recorded
+  bugs is a main-process exception that path would travel straight past. The
+  remedy is building it from source without the hardening, the second
+  deployment shape. It is heavy, and it is a cost rather than a wall. Its
+  source is AGPL: build it and test it, and copy nothing from it.
+- **Discovery** reaches its toolbars, menus, dialogs and panes, which are well
+  named: 80 of the 84 elements found by role on the resting screen carry a
+  usable name. It stops at the console, the
+  source editor, the data grid and the visual editor.
+- **All three of its recorded bugs sit in the reachable part** -- a plot window
+  left open while quitting, a dismissed summary returning on pagination, a
+  preview that fails silently on a fresh profile -- and its scripted suite
+  missed all three. That is the case for it.
+- **Its expected results come from R and the file system**, never from its own
+  code or its automation bridge. A separate R process running the same code
+  gives the values the Environment pane and the data viewer should show; the
+  file system gives what the Files pane should list and what a saved file
+  should contain. The separate R has to match RStudio's -- the same version,
+  packages and working directory -- or a mismatch belongs to the test's setup
+  rather than to RStudio. Its bridge reports RStudio's own view of itself, so
+  comparing the screen with it catches display bugs only.
+- **Its readiness flag is not a settle signal:** its own guide warns it is set
+  before the workbench is finished.
+
+**Two cases these capabilities have to reach**, raised as tests of whether the
+engine is useful on either application:
+
+- **Asterisks saved as underscores in the visual editor.** A Fix types
+  `*text*`: a Fix is the Journey author's own code and may use Playwright
+  directly, so the unreachable editor does not stop it. The Trip then hops
+  through the reachable controls that switch views and save. A check compares
+  the saved file's text with what was typed. It has to compare text, not
+  rendered output, since `*text*` and `_text_` both render as italics. Needs
+  phase 6, and needs real typing (2.4) if the editor converts only on
+  keystrokes.
+- **Console history:** submit a line, press Up, and the line comes back. Needs
+  key presses (1.6), a console input discovery can reach, which is unmeasured
+  on both applications, and a relation check (R20, phase 6). The value is not
+  repeating the sequence a scripted test already covers, but checking the
+  relation still holds after whatever arbitrary hops came before it.
+
+**Where the limit actually is.** Discovery by role stops where the
+accessibility tree does: an editor's text layer, a canvas, a windowed list.
+That is neither Playwright's limit nor a permanent one. Playwright can type
+into and read those surfaces through the page, and the ways past it are key
+presses (1.6), the optional map (1.7), and checks written for the application
+that read contents, files or a driver. What is beyond Playwright is narrower:
+the operating system's own popups and dialogs, and anything drawn on a canvas,
+which offers pixels and no text.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

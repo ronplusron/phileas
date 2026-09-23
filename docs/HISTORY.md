@@ -25,6 +25,30 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: four targets, and whether the engine is useful on the large two
+
+The docs had called Positron and RStudio "external candidates", and in
+conversation RStudio was described as only having been studied. Both were
+wrong:
+the engine is for four applications, `613-mitzvot` and `editor` first and
+Positron and RStudio eventually, and `OUTSTANDING.md` 1.8 now records what
+each will need.
+
+The question that produced it was a fair one: the engine looked useful for
+small applications, somewhat useful for Positron, and useless for RStudio. The
+answer, from what was already recorded rather than new measurement, was that
+RStudio's three recorded bugs all sit in the part discovery reaches and were
+all missed by its scripted suite; that its real obstacle, the hardened release,
+is a build choice, since it is open source; and that Positron's difficulty is
+breadth, which is the problem the Fix was invented for. Two concrete cases were
+worked through -- asterisks saved as underscores, and console history -- and
+they are recorded there as what the engine has to be able to reach. Both need
+key presses, which were recorded and unscheduled, and which are now next after
+the hop-effect work, ahead of phase 5.
+
+What stays true: until phase 5 adds checks, the engine has shown it can
+travel and replay, not that it finds anything.
+
 ## 2026-09-23: one name for where the application is
 
 The trickster-tales demo adapter read its checkout's location from
