@@ -30,8 +30,9 @@ argument, and re-deriving them would cost it again.
 Asked what was still only in the conversation, and the answer was a lot: an
 agreed requirement, R31, existed only in a branch's plan, and neither the order
 of the work before phase 5 nor several defects and measurements had been
-written anywhere. The instruction was that nothing decided stays only in a
-session. So before any of that work starts: R31 is in the requirements with
+written anywhere. The instruction: "Make sure everything is recorded. We
+can't keep information only in a session and lose it." So before any of that
+work starts: R31 is in the requirements with
 its design in `OUTSTANDING.md` 1.9, the keyboard work is one entry, 1.6, the
 two IDEs' unmet needs are 1.10, two defects are in `DEFECTS.md`, default
 exclusions for Electron's standard menu entries are an open question, and the
@@ -129,10 +130,11 @@ clicked dropdowns; `buggy` simply had none until now, and on trickster-tales
 it went unnoticed.
 
 Two answers were weighed: focus the dropdown, or stop offering native
-dropdowns at all. Focus was chosen because it keeps every control the
-accessibility tree reports reachable, so a recorded pool still matches the
-screen, and because focus is a real event an application can mishandle and
-the place a keyboard would act on a dropdown once keys exist. After it, a
+dropdowns at all. Focus was chosen as the option that tests dropdowns most
+fully: it keeps every control the accessibility tree reports reachable, so a
+recorded pool still matches the screen, and focus is a real event an
+application can mishandle and the place a keyboard would act on a dropdown
+once keys exist. After it, a
 close took 33 to 47ms and three Journeys took about six and a half seconds
 each, with no Hop abandoned.
 
@@ -222,10 +224,10 @@ counter, so a Route with a three-step Fix and a length of 20 takes 23 hops.
 R1 said "a maximum number of hops per route", which the code never did.
 
 It is now `tripLength` everywhere, and R1 says "the length of each route's
-trip in hops". Chosen over `tripBudget` and `tripHopBudget` from a list of ten
-words for the amount, on one test: the number is meant to be reached, since a
-Route that falls short strands, and pure ceiling words such as cap or limit
-lose that. Its documented unit covers the catch that "length" could mean time.
+trip in hops". Chosen from ten alternatives for the amount. The list itself
+had favored "budget" and "allowance", on the grounds that the number is meant
+to be reached, and `tripLength` was picked over them. Its catch, that
+"length" could mean time, is covered by the documented unit.
 
 "Budget" now means only the whole run's bound, the routes, Trip length and
 deadline together, as the requirements already used it, and a settle wait's
@@ -242,9 +244,10 @@ reading real journals rather than by designing in the abstract.
 used throughout phase 4 and is wrong for this engine, because traversal in
 computer science means systematic coverage and a seeded draw over whatever
 the screen offers is not that; `../CLAUDE.md` already said the engine travels
-rather than traverses. The noun it left missing is Trip, chosen over "trek",
-which fixed Trip's two catches but sounds larger than the Route it sits
-inside. The catch accepted with it: "trip" is also a verb for a check that
+rather than traverses. The noun it left missing is Trip, chosen over "trek".
+Trek had been weighed as fixing Trip's two catches while sounding larger than
+the Route it sits inside; the choice itself came with no reason given. The
+catch accepted with it: "trip" is also a verb for a check that
 fires, so the project avoids that use.
 
 **The rename changed every seed.** A stream's name is hashed into its seed, so

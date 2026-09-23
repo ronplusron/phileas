@@ -475,8 +475,9 @@ missing is any notion of something being wrong.
 
 Phase 4 ended, and running the engine against real applications for a demo
 found gaps that phase 5 would otherwise have built on top of. Decided on
-2026-09-23 that these come first, in this order, and that phase 5 starts only
-once they are done:
+2026-09-23 that these come first and that phase 5 starts only once they are
+done. The first three are in the order that was set; where the last two fall
+is open, and is settled at the review:
 
 1. **A review of what the two IDEs need**, `OUTSTANDING.md` 1.10, before any of
    the work below starts, so its order is settled with those needs in view.
@@ -534,7 +535,10 @@ problem, and the Fix hop's own line is where it belongs.
   stray-process member phase 1 adds to the interface. It runs after every hop,
   so measure what it costs before adopting it, and expect it to be
   macOS-shaped work first. Do not delete it later as redundant with the
-  recorder; the hazards below say why it is not.
+  recorder; the hazards below say why it is not. The hop loop already ends a
+  Route with `PageUnreachable` when a prevented navigation leaves the page
+  unable to answer; that ending belongs here, as this check's finding rather
+  than an error thrown from the hop loop.
 - No unexpected dialog: renderer dialogs through Playwright's dialog event.
   Native main-process dialogs are a hazard below.
 - A readable name on every visible control: this comes from the survey itself.

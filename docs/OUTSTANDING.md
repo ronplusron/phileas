@@ -202,8 +202,8 @@ is what answers them:
 Recorded 2026-09-23. Four applications, reached in this order:
 
 - **`613-mitzvot` and `editor`**, the confirmed consumers `HISTORY.md` names.
-  Small, ordinary DOM, the ordinary launch path. The most direct fit, and
-  phase 9's work.
+  Small applications, and both launch the ordinary way, with their fuses
+  enabled. The most direct fit, and phase 9's work.
 - **Positron and RStudio, eventually.** Targets, not candidates to be weighed:
   both are to be tested, after the engine has proven itself on the first two.
   Positron is the stronger of the two, for measured reasons below.
@@ -213,7 +213,7 @@ first real application the engine traveled through, and its dropdowns found a
 gap `HISTORY.md` records. It is also the clearest worked example of where a
 specified check's expected results come from: its own test suite already reads
 its corpus independently, in `e2e/app/corpus.ts`, and derives expectations
-from it. The checks phase 6 would write for it are the number of tale cards
+from it. Checks phase 6 could write for it include the number of tale cards
 against the tales in the data, a tale's listed motifs against its motifs in
 the data, the count beside a facet value against the tales carrying that tag,
 and a search against the tales whose text matches.
@@ -320,8 +320,8 @@ into a screen.
 - **An effect that could not be read is recorded as such,** never as "nothing
   changed". A page that stopped answering and a Hop that did nothing would
   otherwise leave the same record, and only the first is a finding.
-- **Fix hops get the same reading,** from a settle after each step, which also
-  makes their settle measurements real rather than always false.
+- **Fix hops get a reading too,** one after each step. Whether that is a single
+  snapshot or a full settle wait is decided in the work.
 - **Dropped: the pool afterwards.** It was proposed, and it is always the next
   Hop's pool; computing it separately would mean a second full survey on every
   Hop, including another call of the adapter's exclusion predicate.
@@ -340,23 +340,25 @@ already recorded elsewhere, this points there rather than repeating it.
 - **More kinds of action:** scrolling, right-click, double-click, dragging and
   hovering. A Hop today can click, fill, select, focus and click a menu entry.
   Virtualized lists and long panes need scrolling before their contents exist
-  to be found, and both IDEs rely heavily on context menus.
+  to be found. How much either IDE puts in context menus is unmeasured.
 - **Other windows.** A Route surveys one window, the page the adapter selects.
-  Both IDEs open more, and the first of RStudio's recorded bugs starts in its
-  plot zoom window.
-- **Frames and webviews.** Positron draws its notebooks, data explorer, plots
-  and help in webviews; RStudio's help and viewer panes are frames. Whether
-  the accessibility snapshot the survey reads reaches inside them is
-  unmeasured.
+  The first of RStudio's recorded bugs starts in a second one, its plot zoom
+  window. How many others either IDE opens is unmeasured.
+- **Frames and webviews.** An IDE commonly draws some panes -- help, previews,
+  rendered output -- in a frame or webview, a page inside the page. Which of
+  either IDE's panes are drawn that way, and whether the accessibility
+  snapshot the survey reads reaches inside them, are both unmeasured.
 - **The debugging-port launch** that a hardened release needs is named in the
   engine's types and has never been built. For RStudio the chosen remedy is a
   build without the hardening instead, and how hard that build is has not been
   measured.
-- **Native dialogs,** such as Open and Save, which both IDEs use constantly.
-  `PLAN.md` carries them as a hazard with the answer undecided.
+- **Native dialogs,** such as Open and Save, which file work in either IDE
+  reaches. `PLAN.md` carries them as a hazard with the answer undecided.
 - **Cost on a large application.** The survey and the settle wait each read the
   whole page's accessibility tree, several times per Hop. That has been
-  measured only on applications far smaller than either IDE.
+  measured only on applications far smaller than either IDE. So has the
+  journal's size: each distinct pool is written once, and one screen of a
+  large application could offer hundreds of candidates.
 - **A page that never stops moving:** a blinking cursor, a spinner, a live
   console. The settle wait might never see two readings agree, and would then
   spend its whole limit on every Hop. Unmeasured.
@@ -472,6 +474,20 @@ label path and not the role Electron built it from, and labels include the
 application's name (`Quit Trickster Tales`), so a default would need the role.
 And a default the engine applies silently is an input to the seeded draw the
 adapter cannot see, so it has to be as visible as the adapter's own list.
+
+### 2.5 Different Fixes for different Routes of one Journey
+
+`../CLAUDE.md` names this as a wanted option, raised when the Fix was
+designed, and it was not tracked here until 2026-09-23. A Journey has one Fix
+today, applied fresh to every Route. Wanted: Routes of one Journey starting
+from different Fixes.
+
+Undecided, including how a Route would be given its Fix. The constraint is the
+one `../CLAUDE.md` puts on the planner: it may decide how many Routes there
+are, and never what they explore, so whatever assigns a Fix must not become a
+judgment about where a Route should go. Several Journeys, each with its own
+Fix, already give a coarser version of the same thing, which 1.8 relies on
+for Positron.
 
 ## 3. Declined
 
