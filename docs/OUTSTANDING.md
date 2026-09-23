@@ -100,6 +100,42 @@ three sides, expresses it without changing any runtime shape. Left as its own
 change rather than folded into the review fixes, because turning on `checkJs`
 will surface more than it fixes.
 
+### 1.6 Keyboard shortcuts as a source of Hops
+
+Raised 2026-09-22 and deliberately not declined. Three questions have to be
+answered before it can be built.
+
+**Today no Hop presses a key.** A click is a mouse click, `fill` sets a value
+without keystrokes, and a menu entry is clicked through the menu. Keyboard-only
+paths are a natural place for defects to live, and a Route that cannot press a
+key can never reach them.
+
+**The exclusion predicate makes the gap sharper.** Its only measured case is a
+shortcut that closes an editor tab, and closes the application once no tabs
+remain. That case cannot currently arise, so the one rail designed around a
+shortcut guards against something the engine never does.
+
+The three questions:
+
+- **Discovery.** A shortcut is not a thing in the accessibility tree, so
+  discovery by role does not find it. Menu accelerators are readable from the
+  menu in the main process. Shortcuts the page handles itself are discoverable
+  only where the application declares `aria-keyshortcuts`, which few do;
+  finding the rest would mean reading source, which `survey` must not do.
+  `../CLAUDE.md` says why.
+- **Triggering.** Playwright cannot press a native accelerator, which is why
+  `src/menu.ts` clicks menu entries instead. Whether a key event sent to the
+  renderer reaches a native menu accelerator is unmeasured, and it decides
+  whether menu accelerators are reachable at all.
+- **Exclusion.** How `names` and the predicate apply to a shortcut, including
+  whether a menu entry and its accelerator are one candidate or two. Excluding
+  Quit by its menu path and leaving Cmd+Q reachable would be a rail with a gap
+  in it that no test notices.
+
+When a Hop does press a key, the journal has to say so. It records no action
+today: whether a Hop clicked or filled is inferred from the role, and a
+keypress would have nothing to be inferred from.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

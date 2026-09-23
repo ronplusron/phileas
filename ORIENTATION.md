@@ -83,7 +83,8 @@ unavailable under an ordinary run, because a menu click with no focused window
 reaches a handler with no window and does nothing while reporting success. That
 is detection rather than repair, a repair was measured and does not exist, and
 `docs/HISTORY.md` has both. The consequence is that `menuPaths` exclusions do
-not fire either. `PHILEAS_SHOW=1` brings the menu source back.
+not fire either. Any `PHILEAS_SHOW` mode but `hidden` brings the menu source
+back, because it is a focused window that the menu needs.
 
 **If `npm test` cannot find Electron:** `npm install` does not run Electron's
 postinstall in this environment, so the types arrive and the binary does not.
@@ -172,8 +173,27 @@ Playwright's downloaded browsers are not needed and installing did not fetch
 any. The engine drives an Electron binary through Playwright's own Electron
 support, never one of those browsers.
 
-`PHILEAS_SHOW=1` puts the application's windows back on the screen, which is
-useful when working out why something failed. `PHILEAS_ALLOW_STALE=1` runs
+`PHILEAS_SHOW` decides what the run does with the application's windows, and
+has four values. `hidden`, `0`, or leaving it unset keeps them off the screen,
+which is the default and what an unattended Journey uses. `back`, or `1`, puts
+them on the screen behind whatever is frontmost, which is the useful setting
+for watching because the run does not take the screen away from you. `front`
+also activates the application so it comes forward, and `top` additionally
+keeps it above every other window, which is genuinely hard to get away from.
+Anything else is refused by name rather than read as hidden.
+
+**Showing a window is not the same as activating the application**, which was
+measured rather than assumed: a process launched from a terminal does not
+become frontmost on macOS, so under `back` the window is drawn correctly and
+sits behind what you are looking at, and does not appear at all if that is
+full-screen in its own Space. Every reading from inside the process says the
+window is fine.
+
+`PHILEAS_HOP_DELAY_MS` pauses that many milliseconds after each Hop, so a run
+can be watched at all: a Route otherwise travels twenty Hops in about a second,
+and showing windows is pointless if what they show is a blur. It changes no
+draw and no verdict, so a seed retraces the same Route with any delay, but it
+does land inside the Route timeout and the Journey deadline. `PHILEAS_ALLOW_STALE=1` runs
 against a stale build, and the run says so rather than passing quietly.
 
 `tsconfig.json` is `noEmit` with `strict` and `noUncheckedIndexedAccess` on.

@@ -197,6 +197,14 @@ export interface RunRouteOptions {
   readonly hopTimeoutMs?: number;
   /** How long to wait for the page to stop moving after a Hop. */
   readonly settleTimeoutMs?: number;
+  /**
+   * How long to pause after each Hop so a person can watch.
+   *
+   * Defaults to whatever `PHILEAS_HOP_DELAY_MS` says, so a run can be slowed
+   * down from the command line without editing a Journey. See
+   * `hopDelayFromEnvironment`.
+   */
+  readonly hopDelayMs?: number;
 }
 
 /**
@@ -222,6 +230,42 @@ const DEFAULT_HOP_TIMEOUT_MS = 3_000;
 /** How long to wait for the page to stop moving. See `settle`. */
 const DEFAULT_SETTLE_TIMEOUT_MS = 2_000;
 
+/** The variable a watching delay is read from. Named because errors quote it. */
+export const HOP_DELAY_VARIABLE = 'PHILEAS_HOP_DELAY_MS';
+
+/**
+ * How long to pause after each Hop, so that a person can watch one happen.
+ *
+ * **This is a viewing aid and nothing else.** A Route travels twenty Hops in
+ * about a second, which is unwatchable even with the windows frontmost, and
+ * showing windows is pointless if what they show is a blur. It changes no draw
+ * and no verdict: the same seed retraces the same Route with any delay, because
+ * the delay consumes nothing from either stream.
+ *
+ * Named for its units. `deadlineMs` carries a comment about a duration being
+ * mistaken for a count, and a bare `PHILEAS_HOP_DELAY` invites exactly that.
+ *
+ * **It is not free of consequences, and they are both timeouts.** The pause
+ * lands inside the Route's own timeout and inside the Journey's deadline, so a
+ * delay of a second against a budget of twenty Hops adds twenty seconds to
+ * every Route. A watched run that reports a timeout is usually this rather than
+ * the application.
+ */
+export function hopDelayFromEnvironment(): number {
+  const raw = (process.env[HOP_DELAY_VARIABLE] ?? '').trim();
+  if (raw === '') return 0;
+
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 0) {
+    throw new RangeError(
+      `${HOP_DELAY_VARIABLE}=${JSON.stringify(raw)} is not a delay. It is a whole number of ` +
+        `milliseconds to pause after each Hop so a person can watch, and zero or unset means ` +
+        `no pause.`
+    );
+  }
+  return value;
+}
+
 export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> {
   const {
     page,
@@ -237,6 +281,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     values = seededValues,
     hopTimeoutMs = DEFAULT_HOP_TIMEOUT_MS,
     settleTimeoutMs = DEFAULT_SETTLE_TIMEOUT_MS,
+    hopDelayMs = hopDelayFromEnvironment(),
   } = options;
 
   // Opened and flushed before the Route does anything, so that a Route which
@@ -348,6 +393,12 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       });
 
       hops += 1;
+
+      // After the entry is written, not before, so that `durationMs` stays the
+      // Hop's own cost and a watched journal is comparable with an unwatched
+      // one. The pause is for eyes; it must not end up in the record as though
+      // the application took that long.
+      if (hopDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, hopDelayMs));
     }
 
     journal.close({ outcome: 'passed', hops, exclusionsNeverMatched: neverMatched(tally) });

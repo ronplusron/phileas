@@ -87,13 +87,79 @@ export async function makeUserDataDir(cfg: AppUnderTest): Promise<string> {
 }
 
 /**
+ * What the run does with the application's windows.
+ *
+ * Four values rather than a switch, because "visible" turned out to be three
+ * different things and only one of them is what watching a run needs.
+ *
+ * Measured on 2026-09-22, which is why the middle two exist: showing a window
+ * does not ACTIVATE the application. A GUI process launched from a terminal
+ * does not become frontmost on macOS, so the window is drawn correctly, at a
+ * sensible size, in the middle of the display, and sits behind whatever the
+ * viewer is actually looking at. If that frontmost application is full-screen
+ * in its own Space, the window does not appear to the viewer at all. Reported
+ * from inside the process every reading said the window was fine, which is
+ * exactly the shape of failure this project keeps meeting.
+ */
+export type WindowMode =
+  /** Off the screen entirely. The default, and what an unattended run uses. */
+  | 'hidden'
+  /**
+   * On the screen, behind whatever is frontmost.
+   *
+   * The useful default for watching, because the run does not take the screen
+   * away from you: the window is there to be selected when you want it.
+   */
+  | 'back'
+  /** On the screen and activated, so it comes forward and can be left. */
+  | 'front'
+  /**
+   * On the screen, activated, and kept above every other window.
+   *
+   * Deliberately last and deliberately awkward. This is what a viewer cannot
+   * get away from: it was measured by trapping one, and it earns its place only
+   * for a run somebody is watching on purpose and wants nothing to cover.
+   */
+  | 'top';
+
+/** The variable the mode is read from. Named because the message quotes it. */
+export const WINDOW_MODE_VARIABLE = 'PHILEAS_SHOW';
+
+/**
+ * Read the window mode for this run.
+ *
+ * **An unrecognized value is refused rather than treated as hidden.** A
+ * mistyped mode quietly meaning "off the screen" would look exactly like a run
+ * somebody asked to watch and then could not see, and they would spend the
+ * afternoon looking for the window rather than at the spelling.
+ *
+ * `1` still means what it always meant, which is `back`. Nothing written
+ * against the older switch changes behavior.
+ */
+export function windowMode(): WindowMode {
+  const raw = (process.env[WINDOW_MODE_VARIABLE] ?? '').trim().toLowerCase();
+
+  if (raw === '' || raw === '0' || raw === 'hidden') return 'hidden';
+  if (raw === '1' || raw === 'back') return 'back';
+  if (raw === 'front') return 'front';
+  if (raw === 'top') return 'top';
+
+  throw new Error(
+    `${WINDOW_MODE_VARIABLE}=${JSON.stringify(process.env[WINDOW_MODE_VARIABLE])} is not a ` +
+      `window mode. Use hidden (or 0, or leave it unset) to keep windows off the screen, ` +
+      `back (or 1) to show them behind whatever is frontmost, front to show and activate ` +
+      `them, or top to show, activate and keep them above everything else.`
+  );
+}
+
+/**
  * Whether application windows should be visible on the desktop.
  *
- * Off unless PHILEAS_SHOW is set. A Journey runs unattended (C5), and this is
- * for watching one when working out why something failed.
+ * A Journey runs unattended (C5), and every mode but the default is for
+ * watching one when working out why something failed.
  */
 export function showWindows(): boolean {
-  return Boolean(process.env.PHILEAS_SHOW);
+  return windowMode() !== 'hidden';
 }
 
 /**
@@ -125,6 +191,59 @@ export async function hideWindows(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.prototype.show = function () {};
     for (const window of BrowserWindow.getAllWindows()) window.hide();
+  });
+}
+
+/**
+ * Do whatever the mode asks before any window has been drawn.
+ *
+ * Called before `firstWindow()`, which is the earliest the main process can be
+ * reached and, for an application that defers display, before anything is on
+ * the screen. `top` is handled here rather than after the fact because a window
+ * created later has to get the same treatment, and replacing `show` is the only
+ * hook that reaches one.
+ */
+export async function prepareWindows(app: ElectronApplication, mode: WindowMode): Promise<void> {
+  if (mode === 'hidden') {
+    await hideWindows(app);
+    return;
+  }
+
+  if (mode === 'top') {
+    await app.evaluate(({ BrowserWindow }) => {
+      const show = BrowserWindow.prototype.show;
+      BrowserWindow.prototype.show = function (this: Electron.BrowserWindow) {
+        show.call(this);
+        this.setAlwaysOnTop(true);
+      };
+      for (const window of BrowserWindow.getAllWindows()) window.setAlwaysOnTop(true);
+    });
+  }
+}
+
+/**
+ * Bring the application forward, for the modes that ask for it.
+ *
+ * Separate from `prepareWindows` because of an ordering constraint rather than
+ * for tidiness: hiding has to happen before a window is drawn, and activating
+ * has to happen after one exists. One function would have to be wrong about one
+ * of them.
+ *
+ * `focus({ steal: true })` is what the plain `focus()` is not. A process
+ * launched from a terminal is not the active application, and asking politely
+ * leaves it where it is, which is the measured behavior this whole mode exists
+ * to correct.
+ *
+ * **A Route launches its own application**, so a Journey of five Routes takes
+ * the screen five times rather than once. That is inherent in the Route being
+ * the test and is worth knowing before starting a long one in `front`.
+ */
+export async function activateWindows(app: ElectronApplication, mode: WindowMode): Promise<void> {
+  if (mode !== 'front' && mode !== 'top') return;
+
+  await app.evaluate(({ app: electronApp, BrowserWindow }) => {
+    electronApp.focus({ steal: true });
+    BrowserWindow.getAllWindows()[0]?.focus();
   });
 }
 
@@ -171,9 +290,11 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
     timeout: 20_000,
   });
 
+  const mode = windowMode();
+
   // Before firstWindow(), which is the earliest the main process can be reached
   // and, for an app that defers display, before anything has been drawn.
-  if (!showWindows()) await hideWindows(app);
+  await prepareWindows(app, mode);
 
   const launched: LaunchedApp = {
     app,
@@ -196,6 +317,10 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
   page.on('console', (message) => {
     if (message.type() === 'error') launched.consoleErrors.push(message.text());
   });
+
+  // After a window exists, which is what activation needs and hiding could not
+  // wait for.
+  await activateWindows(app, mode);
 
   return launched;
 }

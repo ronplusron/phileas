@@ -374,7 +374,7 @@ async function surveyPage(
 
     if (node.role && hoppable.has(node.role)) {
       if (node.name) {
-        const key = `${node.role} ${node.name}`;
+        const key = `${node.role}\u0000${node.name}`;
         const nth = seen.get(key) ?? 0;
         seen.set(key, nth + 1);
         candidates.push({
