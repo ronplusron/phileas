@@ -25,6 +25,24 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-23: one name for where the application is
+
+The trickster-tales demo adapter read its checkout's location from
+`TRICKSTER_TALES_DIR`, a name made up for that one adapter. Asked why an
+adapter would choose its own: there was no reason. Left to each adapter, every
+application would come with its own variable to find and document, and the
+command to run a Journey would look different for each.
+
+The deployment shape settled earlier -- adapters in a repository of their own,
+pointed at a checkout someone built -- has exactly one fact that differs from
+machine to machine, which is where that checkout sits. So the engine names it
+once, `PHILEAS_APP_DIR`, and `requireAppDir()` reads it. A run tests one
+application at a time, so one variable is enough. It refuses by name when the
+variable is unset or is not a folder, for R24, rather than letting an adapter
+build a path out of nothing and fail later somewhere that says nothing about
+why. An adapter inside the application's own repository, as `buggy`'s is, does
+not need it.
+
 ## 2026-09-23: choosing from a native dropdown
 
 Found by pointing the engine at trickster-tales for a demo, the first real

@@ -365,7 +365,8 @@ is a property of the application rather than of the engine:
   works in this shape, including the staleness guard, because you built the
   thing you are testing -- which is also what lets you decide whether it is
   built hardened against automation, and the bullet below is what that
-  decides.
+  decides. The adapter finds the checkout through `PHILEAS_APP_DIR`, one name
+  for every adapter, so no folder path is written into a committed file.
 - **Adapters in a repository of your own, pointed at an installed binary.**
   The only shape available for a closed-source application, and the only one
   where how the application was built is somebody else's choice. The

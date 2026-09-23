@@ -39,18 +39,19 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs eighty-nine tests. Seven launch it, refuse a stale
-bundle, report a bad boot in the application's own words, keep every window off
-the screen, and prove the outbound-link stub took effect rather than assuming
-it. Twenty-three prove the reproducibility mechanism and a Journey's terms
-without launching anything, including known-answer vectors that pin the
+through, and `npm test` runs ninety-three tests. Seven launch it, refuse a
+stale bundle, report a bad boot in the application's own words, keep every
+window off the screen, and prove the outbound-link stub took effect rather than
+assuming it. Twenty-three prove the reproducibility mechanism and a Journey's
+terms without launching anything, including known-answer vectors that pin the
 generator's output. Eleven record what `buggy` correctly does, so a defect
 planted later can be told apart from an accidental one. Seven assert that a
 guard refuses rather than answering when it has no evidence. Seventeen travel
 through the application, and nine cover the journal, including one cut off
-mid-write. Ten cover the window modes and the hop delay, and two keep every
-source file searchable. The last three cover the fixture layer and the types,
-the type ones being compile-time assertions that `npm run typecheck` enforces.
+mid-write. Fourteen cover the window modes, the hop delay and the application's
+checkout, and two keep every source file searchable. The last three cover the
+fixture layer and the types, the type ones being compile-time assertions that
+`npm run typecheck` enforces.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -138,7 +139,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own eighty-nine tests against `testbed/buggy/`.
+`npm test` runs the engine's own ninety-three tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them. It prints the Journey seed; set
@@ -195,8 +196,15 @@ window is fine.
 can be watched at all: a Route otherwise travels twenty Hops in about a second,
 and showing windows is pointless if what they show is a blur. It changes no
 draw and no verdict, so a seed retraces the same Route with any delay, but it
-does land inside the Route deadline and the Journey deadline, where either is set. `PHILEAS_ALLOW_STALE=1` runs
-against a stale build, and the run says so rather than passing quietly.
+does land inside the Route deadline and the Journey deadline, where either is
+set. `PHILEAS_ALLOW_STALE=1` runs against a stale build, and the run says so
+rather than passing quietly.
+
+`PHILEAS_APP_DIR` names the application's checkout, for an adapter that lives
+outside the application, and `requireAppDir()` is how such an adapter reads it:
+it refuses by name when the variable is unset or is not a folder. `buggy`
+does not use it, since its adapter sits inside its repository and finds it
+from there.
 
 `tsconfig.json` is `noEmit` with `strict` and `noUncheckedIndexedAccess` on.
 `noUncheckedIndexedAccess` is not tidiness: an engine that travels indexes into

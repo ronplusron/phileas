@@ -85,4 +85,5 @@ phases are marked by number.
 | `PHILEAS_SEED` | Replays a Journey with a given seed. |
 | `PHILEAS_SHOW` | `hidden` (default), `back` (shown behind), `front` (shown and activated), or `top` (always on top). |
 | `PHILEAS_HOP_DELAY_MS` | Pauses after each Hop so a Route can be watched. It changes no draw. |
+| `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |
 | `PHILEAS_ALLOW_STALE` | Runs even when the staleness guard finds a mismatch, and the run says the guard was overridden. |

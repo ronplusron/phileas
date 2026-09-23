@@ -86,6 +86,58 @@ export async function makeUserDataDir(cfg: AppUnderTest): Promise<string> {
   return fs.promises.mkdtemp(path.join(os.tmpdir(), `phileas-${slug}-`));
 }
 
+/** The variable an adapter reads the application's checkout from. */
+export const APP_DIR_VARIABLE = 'PHILEAS_APP_DIR';
+
+/**
+ * The application's checkout, for an adapter that lives outside it.
+ *
+ * One name for every adapter, rather than one each. The deployment shape the
+ * project settled on is adapters in a repository of their own, pointed at a
+ * checkout of the application that someone built, and in that shape where the
+ * checkout sits is the one fact that differs from machine to machine. Left to
+ * each adapter, every application came with its own variable to discover and
+ * document, and the command to run a Journey looked different for each. A run
+ * tests one application at a time, so one variable is enough.
+ *
+ * Kept out of the adapter's own file because a committed path names someone's
+ * folders, and it would be wrong on every other machine anyway.
+ *
+ * An adapter that lives inside the application's own repository does not need
+ * this: it finds the application relative to itself, as `buggy`'s does.
+ *
+ * **Refuses rather than guessing**, for R24. Unset, the adapter would otherwise
+ * build a path out of nothing and the run would fail later, somewhere that says
+ * nothing about why. So an unset variable, or one naming something that is not
+ * a folder, is reported here, by name, with what to set it to.
+ */
+export function requireAppDir(): string {
+  const raw = process.env[APP_DIR_VARIABLE];
+  if (!raw || raw.trim() === '') {
+    throw new Error(
+      `${APP_DIR_VARIABLE} is not set. This adapter lives outside the application it tests, ` +
+        `and reads where that application's checkout is from ${APP_DIR_VARIABLE}. Set it to ` +
+        `the folder holding the checkout you built.`
+    );
+  }
+
+  const dir = path.resolve(raw);
+  let isFolder = false;
+  try {
+    isFolder = fs.statSync(dir).isDirectory();
+  } catch {
+    isFolder = false;
+  }
+  if (!isFolder) {
+    throw new Error(
+      `${APP_DIR_VARIABLE} is ${JSON.stringify(raw)}, which is not a folder` +
+        (dir === raw ? '' : ` (resolved to ${dir})`) +
+        `. Set it to the folder holding the application's checkout.`
+    );
+  }
+  return dir;
+}
+
 /**
  * What the run does with the application's windows.
  *

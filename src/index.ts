@@ -23,6 +23,8 @@ export {
   prepareWindows,
   activateWindows,
   WINDOW_MODE_VARIABLE,
+  requireAppDir,
+  APP_DIR_VARIABLE,
   type WindowMode,
   UNAVAILABLE_UNDER,
   type LaunchedApp,
