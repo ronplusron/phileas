@@ -57,7 +57,7 @@ phases are marked by number.
 
 | Term | Meaning |
 |---|---|
-| Journal | One file per Route, at `<root>/<journey seed>/<run>/`, where only the root is the consumer's, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. Made for the engine and for replay; a person reads it through the phase 7 report (R30). |
+| Journal | One file per Route, at `<root>/<journey seed>/<run>/`, where only the root is the consumer's, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. Made for the engine and for replay; a person reads it through `phileas run --follow` or `phileas show`, one line per Hop (R30). |
 | Line kinds | `route` (the opening line), `pool`, `fix-hop`, `trip-hop`, `note` (such as the menu being unavailable, which only a launch path with no main process would cause), `outcome` (the closing line, absent if the Route died). |
 | Effect | What a Hop did to the screen: whether anything changed, and which headings appeared and went away (R31), recorded on every Fix hop and Trip hop. An effect that could not be read says so rather than claiming nothing changed. |
 | Abandoned | A trip hop whose action timed out. It's still recorded, and the Route continues. |
@@ -92,11 +92,12 @@ phases are marked by number.
 
 | Term | Meaning |
 |---|---|
-| `phileas` command | `phileas run [config] [flags]`: runs a Journey with its settings changed for that run only, without editing its file. Each flag travels to the run as one of the variables below. The config defaults to `phileas/`. |
+| `phileas` command | `phileas run [config] [flags]`: runs a Journey with its settings changed for that run only, without editing its file. Each flag travels to the run as one of the variables below. The config defaults to `phileas/`. `phileas show [what]` prints a finished run's journals, one line per Hop, and defaults to the latest run under `phileas/.phileas-journals/`. |
 | `PHILEAS_SEED` | Replays a Journey with a given seed. Set by `--seed`. |
 | `PHILEAS_ROUTES`, `PHILEAS_TRIP_LENGTH`, `PHILEAS_ROUTE_DEADLINE_MS`, `PHILEAS_JOURNEY_DEADLINE_MS` | Override the Journey file's terms for one run, set by `--routes`, `--trip-length`, `--route-deadline-ms` and `--journey-deadline-ms`. Applied in `defineJourney`, checked like the file's own terms, and marked in the printout. |
 | `PHILEAS_RUN` | The run's name, which `startJourney` in global setup sets fresh on every run, while printing every setting in force, and each Route reads to find its journal folder. Not set by hand: one left over in the environment is replaced. |
 | `PHILEAS_SHOW` | `hidden` (default), `back` (shown behind), `front` (shown and activated), or `top` (always on top). Set by `--show`. |
 | `PHILEAS_HOP_DELAY_MS` | Pauses after each Hop so a Route can be watched. It changes no draw. Set by `--hop-delay-ms`. |
+| `PHILEAS_FOLLOW` | `1` prints each Route's journal as it is written, one line per Hop; `0` or unset, one line per Route. Changes no draw. Set by `--follow`. |
 | `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |
 | `PHILEAS_ALLOW_STALE` | Runs even when the staleness guard finds a mismatch, and the run says the guard was overridden. |

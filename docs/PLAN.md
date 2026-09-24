@@ -666,7 +666,9 @@ pointed at one Route rather than a second one: the journal stays a format made
 for the engine and for replay, and reading it is this phase's job rather than
 the format's. Decided 2026-09-23, over building a reader earlier. If reading
 journals during phases 5 and 6 turns out to hurt, this piece moves forward as
-the first part of `report/` rather than being built twice.
+the first part of `report/` rather than being built twice. **It moved forward on
+2026-09-24**, before phase 5, as `src/report/render.mjs`, behind `phileas run
+--follow` and `phileas show`; the Journey summary here builds on it.
 
 **R27 lands here too, and it asks for more than the nothing-found case.** A
 run where the application never launched, where every Route stranded at its

@@ -6,6 +6,8 @@
     "lib": ["ES2022", "DOM"],
     "types": ["node"],
     "strict": true,
+    "allowJs": true,
+    "checkJs": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
@@ -15,5 +17,5 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "testbed/**/*.ts", "demo/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.mjs", "tests/**/*.ts", "testbed/**/*.ts", "demo/**/*.ts"]
 }

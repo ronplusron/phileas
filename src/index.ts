@@ -106,6 +106,8 @@ export {
   DEFAULT_SETTLE_QUIET_MS,
   hopDelayFromEnvironment,
   HOP_DELAY_VARIABLE,
+  FOLLOW_VARIABLE,
+  followFromEnvironment,
   seededChooser,
   DEFAULT_KEY_SHARE,
   DEFAULT_MENU_SHARE,
@@ -128,3 +130,4 @@ export {
   type RouteOutcome,
   type RunRouteOptions,
 } from './route';
+export { renderEntry, renderJournal, effectText, targetText } from './report/render.mjs';

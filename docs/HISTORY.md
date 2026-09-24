@@ -25,6 +25,50 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: reading a journal, moved forward from phase 7
+
+**Why now.** Right after the `phileas` command landed, the first question was
+how to see a run's log in the terminal, and the only answers were a `jq`
+one-liner and the train demo's private reader. `PLAN.md` phase 7 had said that
+if reading journals hurt during phases 5 and 6, R30's renderer would move
+forward "as the first part of `report/` rather than being built twice". It
+moved forward before phase 5, which runs Journeys many times over. Asked for,
+after the design and the difference between the two commands were explained:
+`phileas run --follow` and `phileas show`.
+
+**One renderer, `src/report/render.mjs`.** One line per Hop: the Route and Hop
+number, the action, the target, a typed value shortened for the screen, and
+the effect, plus notes and the outcome. It reads a journal cut off mid-write
+and says the Route did not finish, and reports a broken line where it sits and
+keeps reading. `--follow` sets `PHILEAS_FOLLOW=1`, and the journal prints each
+rendered line after the entry is on disk, never before; Playwright shows a
+test's output as it arrives, measured at one line a second under a one-second
+hop delay. `show` takes a run folder, a seed's folder, a journals folder, one
+journal file or a seed's name under `phileas/.phileas-journals/`, defaulting to
+the latest run there; runs are named in UTC, so the latest sorts last. The
+train demo prints `--follow`'s lines and has no reader of its own, and its
+replay still retraced all 50 hops.
+
+**Why it is plain JavaScript, measured rather than assumed.** The command is
+plain JavaScript and has to load the renderer. The first plan was a
+self-contained TypeScript file, which Node 24 and 25 both loaded by erasing
+its types. But Node refuses to erase types in a file that sits inside
+`node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`), while a file
+linked into `node_modules` loads, because Node follows the link. So the plan
+would have worked for this repository's consumers, which link the engine, and
+failed for anyone who installs a copy. The renderer is JavaScript with its
+types in comments, checked by the compiler through `checkJs`, and so is the
+command now; a real copy of both inside `node_modules` ran `show`.
+
+**Tested on Node 24.** Node 24.21.0 was installed and made the default the
+same day, so the floor set earlier is now the version tested: 126 tests passed
+on it before this change and 132 after. Six new tests: the rendering of every
+entry kind, a journal cut off mid-write, a broken middle line, which run
+`show` picks, the follow setting's refusal, and a real `--follow` run whose
+printed lines match `show`'s for the same Route, line for line. Positive
+controls: with the journal ignoring `follow`, the real run printed no Hops and
+failed; with `show` picking the earliest run, the run-choice test failed.
+
 ## 2026-09-24: a `phileas` command, and a Node floor of 24
 
 **The command.** Raised while running the train demo, where changing the

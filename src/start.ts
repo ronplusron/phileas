@@ -1,6 +1,6 @@
 import { overriddenTerms, resolveRun, resolveSeed, SEED_VARIABLE, type Journey } from './journey';
 import { windowMode } from './launch';
-import { hopDelayFromEnvironment } from './route';
+import { followFromEnvironment, hopDelayFromEnvironment } from './route';
 
 /**
  * Settle the seed, name the run, check the run's settings and print them. The
@@ -9,8 +9,8 @@ import { hopDelayFromEnvironment } from './route';
  * Its own file because it reads settings from three others, one of which
  * already imports `journey.ts`.
  *
- * **The window mode and the hop delay are read here, not only where they are
- * used.** Both are otherwise first read after the application has launched, so
+ * **The window mode, the hop delay and following are read here, not only where
+ * they are used.** Both are otherwise first read after the application has launched, so
  * a mistyped mode got as far as starting Electron before being refused, once per
  * Route. Read here, it is refused before anything launches.
  *
@@ -30,6 +30,7 @@ export function startJourney(journey: Journey): {
   const run = resolveRun();
   const mode = windowMode();
   const hopDelayMs = hopDelayFromEnvironment();
+  const follow = followFromEnvironment();
 
   const forThisRun = new Set<string>(overriddenTerms(journey));
   const mark = (term: string) => (forThisRun.has(term) ? 'set for this run' : '');
@@ -48,6 +49,7 @@ export function startJourney(journey: Journey): {
     ['Journey deadline', deadline(journey.journeyDeadlineMs), mark('journeyDeadlineMs')],
     ['Window mode', mode, ''],
     ['Hop delay', hopDelayMs ? `${hopDelayMs} ms` : 'none', ''],
+    ['Follow', follow ? 'on' : 'off', ''],
   ];
   const width = Math.max(...rows.map(([name, value]) => `${name}: ${value}`.length));
   const settings = rows.map(([name, value, note]) =>

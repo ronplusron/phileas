@@ -108,10 +108,10 @@ hop 5   type    searchbox "Search"  "Carpet"   changed, no heading moved
 hop 6   press   ArrowUp                 no change
 ```
 
-**This log belongs to the demo, not the engine.** R30, a journal a person can
-read, is phase 7's, built into the report. The demo's log is a few dozen lines
-reading the journal format as it stands, and must not grow into a second
-reader that phase 7 would then have to reconcile with.
+**The log is the engine's, not the demo's.** It was first written as a few
+dozen lines of the demo's own, kept from growing into a second reader of the
+journal. On 2026-09-24 R30's renderer moved forward from phase 7, and the demo
+now prints `phileas run --follow`'s lines instead, so there is one reader.
 
 **Replay, shown.** The demo ends by running one Route again from its seed and
 showing its lines match the first run's, hop for hop.

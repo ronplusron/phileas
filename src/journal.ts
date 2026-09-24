@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { HopEffect } from './effect';
+import { renderEntry } from './report/render.mjs';
 
 /**
  * The record one Route writes as it goes.
@@ -321,7 +322,11 @@ export class Journal {
   /** The pools already in this file, so each is written exactly once. */
   private readonly pools = new Set<string>();
 
-  private constructor(readonly file: string) {}
+  private constructor(
+    readonly file: string,
+    private readonly routeIndex: number,
+    private readonly follow: boolean
+  ) {}
 
   /**
    * Open the journal and record what the Route is.
@@ -333,11 +338,14 @@ export class Journal {
    */
   static open(
     directory: string,
-    opening: Omit<OpeningEntry, 'kind' | 'startedAt'>
+    opening: Omit<OpeningEntry, 'kind' | 'startedAt'>,
+    { follow = false }: { follow?: boolean } = {}
   ): Journal {
     fs.mkdirSync(directory, { recursive: true });
     const journal = new Journal(
-      journalPath(directory, opening.routeIndex, opening.routeSeed)
+      journalPath(directory, opening.routeIndex, opening.routeSeed),
+      opening.routeIndex,
+      follow
     );
     // 'wx': create, and refuse if the file already exists. Appending would glue
     // a second Route's entries onto the first, and overwriting would destroy an
@@ -377,6 +385,13 @@ export class Journal {
     // cost is one flush per hop against a Trip of tens, which is why it is
     // affordable here and would not be per candidate.
     fs.fsyncSync(this.fd);
+
+    // Printed after the entry is on disk, never before, so what a person sees
+    // following a run is never ahead of the record. See `phileas run --follow`.
+    if (this.follow) {
+      const line = renderEntry(entry, this.routeIndex);
+      if (line) console.log(line);
+    }
   }
 
   /**

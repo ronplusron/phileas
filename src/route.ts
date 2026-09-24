@@ -368,6 +368,11 @@ export interface RunRouteOptions {
    * `hopDelayFromEnvironment`.
    */
   readonly hopDelayMs?: number;
+  /**
+   * Print the journal as it is written. Read from the environment when left
+   * out, as `followFromEnvironment`.
+   */
+  readonly follow?: boolean;
 }
 
 /**
@@ -408,6 +413,26 @@ export const DEFAULT_SETTLE_QUIET_MS = 400;
 
 /** The variable a watching delay is read from. Named because errors quote it. */
 export const HOP_DELAY_VARIABLE = 'PHILEAS_HOP_DELAY_MS';
+
+/**
+ * Whether each Route prints its journal as it is written, one readable line
+ * per entry, which `phileas run --follow` sets.
+ *
+ * A viewing aid like the hop delay: it changes no draw and no verdict. Off by
+ * default, so an unattended run's output stays one line per Route.
+ */
+export const FOLLOW_VARIABLE = 'PHILEAS_FOLLOW';
+
+/** Read whether to follow, refusing anything but on or off. */
+export function followFromEnvironment(): boolean {
+  const raw = (process.env[FOLLOW_VARIABLE] ?? '').trim();
+  if (raw === '' || raw === '0') return false;
+  if (raw === '1') return true;
+  throw new RangeError(
+    `${FOLLOW_VARIABLE}=${JSON.stringify(raw)} is not on or off. Use 1 to print each Route's ` +
+      `journal as it is written, and 0 or leave it unset for one line per Route.`
+  );
+}
 
 /**
  * How long to pause after each Hop, so that a person can watch one happen.
@@ -457,6 +482,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     hopTimeoutMs = DEFAULT_HOP_TIMEOUT_MS,
     settleTimeoutMs = DEFAULT_SETTLE_TIMEOUT_MS,
     hopDelayMs = hopDelayFromEnvironment(),
+    follow = followFromEnvironment(),
   } = options;
   const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
   const shares = sharesFor(cfg);
@@ -471,7 +497,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     tripLength: tripLength,
     settleQuietMs,
     ...shares,
-  });
+  }, { follow });
 
   const tally = createExclusionTally(cfg.exclusions);
   let hops = 0;

@@ -13,7 +13,6 @@ import {
   WINDOW_MODE_VARIABLE,
   HOP_DELAY_VARIABLE,
 } from '../src/index';
-// @ts-expect-error -- plain JavaScript with no declarations, imported for its parser.
 import { parse } from '../bin/phileas.mjs';
 
 /**
@@ -52,10 +51,11 @@ function withEnvironment<T>(values: Record<string, string>, body: () => T): T {
 }
 
 test('the command reads its flags, a config, and what goes to Playwright', () => {
-  expect(parse(['run'])).toEqual({ config: 'phileas', settings: {}, passThrough: [] });
+  expect(parse(['run'])).toEqual({ command: 'run', config: 'phileas', settings: {}, passThrough: [] });
   expect(
     parse(['run', 'testbed/buggy/phileas', '--routes', '3', '--show=front', '--', '--grep', 'route 0$'])
   ).toEqual({
+    command: 'run',
     config: 'testbed/buggy/phileas',
     settings: { PHILEAS_ROUTES: '3', PHILEAS_SHOW: 'front' },
     passThrough: ['--grep', 'route 0$'],
@@ -69,6 +69,9 @@ test('the command refuses what it cannot read, by name', () => {
   expect(() => parse(['run', '--routes', '3', '--routes', '4'])).toThrow(/given twice/);
   expect(() => parse(['run', 'a', 'b'])).toThrow(/second config/);
   expect(() => parse(['travel'])).toThrow(/unknown command travel/);
+  expect(() => parse(['run', '--follow=yes'])).toThrow(/--follow takes no value/);
+  expect(() => parse(['show', 'a', 'b'])).toThrow(/one thing to show/);
+  expect(() => parse(['show', '--routes'])).toThrow(/show takes no flags/);
   // A flag Playwright knows is still refused here unless it comes after --, so
   // that nothing reaches Playwright by accident.
   expect(() => parse(['run', '--grep', 'x'])).toThrow(/unknown flag --grep/);
@@ -145,6 +148,7 @@ test('startJourney prints every setting, and marks each one set for this run', (
     'Journey deadline',
     'Window mode',
     'Hop delay',
+    'Follow',
   ]);
 });
 

@@ -40,7 +40,7 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and twenty-six tests. Seven launch it,
+through, and `npm test` runs one hundred and thirty-two tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -52,7 +52,8 @@ what a Hop did to the screen from two readings, without launching anything.
 Thirty-two travel through the application, and ten cover the journal, including
 one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
 cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. Seven cover the `phileas`
-command and the overrides it carries, one of them running it for real. The last three cover the
+command and the overrides it carries, one of them running it for real, and six
+cover reading a journal, following a run and showing one. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
 `npm run typecheck` enforces.
 
@@ -146,7 +147,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and twenty-six tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and thirty-two tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them, through the `phileas` command. It prints
@@ -171,14 +172,14 @@ kept, in folders that sort in the order the runs happened, and comparing two
 runs means comparing two folders. A journal never overwrites another: one
 already at its path is refused. Nothing yet clears old runs away.
 
-**Reading a journal, until phase 7's report renders one (R30),** is a matter of
-`jq`. One line per Hop:
-
-```
-jq -r 'if .kind=="trip-hop" then "hop \(.hop)  \(.action)  \(.target.name)  +\(.effect.appeared // []) -\(.effect.wentAway // [])" elif .kind=="outcome" then "\(.outcome) after \(.hops) hops" else empty end' route-000-*.jsonl
-```
-
-`jq . route-000-*.jsonl` prints every line in full.
+**Reading a journal (R30)** goes through one renderer, `src/report/render.mjs`,
+moved forward from phase 7. `phileas run --follow` prints each Route's lines
+as its journal is written, one per Hop: what it acted on and how, the value
+typed, and what appeared and went away. `phileas show` prints a finished run
+the same way: with no argument the latest run under `phileas/.phileas-journals/`,
+or a seed's name, a seed's folder, a run folder or one journal file. A journal
+cut off mid-write reads up to the cut and says the Route did not finish.
+`jq . route-000-*.jsonl` still prints every line in full.
 
 **A replay used to need the same window mode as the run it retraces,** because
 a shown run offered menu entries a hidden one withheld. Since 2026-09-24 every

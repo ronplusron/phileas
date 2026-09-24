@@ -2,9 +2,10 @@
 // Hop, prints one plain line per Hop as its journal is written, and ends by
 // running Route 0 again from its seed to show it retraces hop for hop.
 //
-// This reads the journal format as it stands, for the demo only. It must not
-// grow into a second journal reader: R30, a journal a person can read, is
-// phase 7's, built into the report. docs/DEMO_PLAN_TRAIN.md says why.
+// The per-Hop lines are the engine's own, from `phileas run --follow`'s
+// renderer, so the demo keeps no journal reader of its own. It reads journals
+// only to compare the replay with the first run, which is not reading for a
+// person.
 //
 //   node demo/rail-itinerary/watch.mjs             the default seed
 //   PHILEAS_SEED=abc node demo/rail-itinerary/watch.mjs
@@ -28,49 +29,6 @@ const env = {
 };
 delete env.PHILEAS_RUN;
 
-const pad = (text, width) => String(text).padEnd(width);
-
-function effectText(effect) {
-  if (!effect) return '';
-  if (!effect.readable) return `could not read the screen: ${effect.reason}`;
-  if (!effect.changed) return 'no change';
-  const parts = [
-    ...effect.appeared.map((h) => `+ ${h}`),
-    ...(effect.appearedMore ? [`+ ${effect.appearedMore} more`] : []),
-    ...effect.wentAway.map((h) => `- ${h}`),
-    ...(effect.wentAwayMore ? [`- ${effect.wentAwayMore} more`] : []),
-  ];
-  return parts.length ? parts.join('   ') : 'changed, no heading moved';
-}
-
-function targetText(entry) {
-  const t = entry.target;
-  if (t.source === 'key') return t.role === 'shortcut' ? `shortcut ${t.name}` : `key ${t.name}`;
-  if (t.source === 'menu') return `menu ${t.menuPath.join(' > ')}`;
-  return `${t.role} "${t.name}"`;
-}
-
-function lineFor(route, entry) {
-  if (entry.kind === 'trip-hop') {
-    // Long values are shortened for the screen; the journal keeps them whole.
-    const typed = entry.value ?? '';
-    const shown = typed.length > 12 ? `${typed.slice(0, 8)}... (${typed.length} characters)` : typed;
-    const value = entry.action === 'type' ? `"${shown}"` : '';
-    const abandoned = entry.abandoned ? '   (gave up: took too long)' : '';
-    return (
-      `route ${route}  hop ${pad(entry.hop, 3)}${pad(entry.action, 11)}` +
-      `${pad(targetText(entry), 44)}${pad(value, 10)}${effectText(entry.effect)}${abandoned}`
-    );
-  }
-  if (entry.kind === 'fix-hop') return `route ${route}  fix ${entry.hop}  ${entry.name}  ${effectText(entry.effect)}`;
-  if (entry.kind === 'note') return `route ${route}  note: ${entry.note.split('. ')[0]}.`;
-  if (entry.kind === 'outcome') {
-    const reason = entry.reason ? `: ${entry.reason}` : '';
-    return `route ${route}  ${entry.outcome} after ${entry.hops} hops${reason}\n`;
-  }
-  return undefined;
-}
-
 /** The run folder that appeared after `since`, once it exists. */
 function newRunFolder(since) {
   const seedFolder = path.join(journalsRoot, seed);
@@ -83,42 +41,33 @@ function newRunFolder(since) {
     .at(-1);
 }
 
-/** Run the Journey, printing each journal line as it is flushed. */
-function runAndWatch(extraArgs, { quiet = false } = {}) {
+/**
+ * Run the Journey. With `follow`, print each Hop's line as the engine writes it;
+ * the rest of Playwright's output is kept, and shown only if the run fails.
+ */
+function run(extraArgs, { follow = false } = {}) {
   const since = Date.now() - 1000;
   const child = spawn(
     path.join(repo, 'node_modules', '.bin', 'playwright'),
     ['test', '-c', config, ...extraArgs],
-    { cwd: repo, env, stdio: ['ignore', 'pipe', 'pipe'] }
+    { cwd: repo, env: { ...env, PHILEAS_FOLLOW: follow ? '1' : '0' }, stdio: ['ignore', 'pipe', 'pipe'] }
   );
   let output = '';
-  child.stdout.on('data', (chunk) => (output += chunk));
+  let partial = '';
+  child.stdout.on('data', (chunk) => {
+    output += chunk;
+    const lines = (partial + chunk).split('\n');
+    partial = lines.pop() ?? '';
+    for (const line of lines) {
+      if (!follow || !/^route \d+ {2}(?!seed )/.test(line)) continue;
+      console.log(line);
+      if (/^route \d+ {2}(passed|failed|stranded) after/.test(line)) console.log('');
+    }
+  });
   child.stderr.on('data', (chunk) => (output += chunk));
 
-  const seen = new Map();
-  let folder;
-  const poll = () => {
-    folder ??= newRunFolder(since);
-    if (!folder) return;
-    for (const file of fs.readdirSync(folder).sort()) {
-      const route = Number(file.slice(6, 9));
-      const text = fs.readFileSync(path.join(folder, file), 'utf8');
-      const complete = text.slice(0, text.lastIndexOf('\n') + 1).split('\n').filter(Boolean);
-      for (const raw of complete.slice(seen.get(file) ?? 0)) {
-        const line = lineFor(route, JSON.parse(raw));
-        if (line && !quiet) console.log(line);
-      }
-      seen.set(file, complete.length);
-    }
-  };
-  const timer = setInterval(poll, 150);
-
   return new Promise((resolve) => {
-    child.on('close', (code) => {
-      clearInterval(timer);
-      poll();
-      resolve({ code, output, folder });
-    });
+    child.on('close', (code) => resolve({ code, output, folder: newRunFolder(since) }));
   });
 }
 
@@ -135,7 +84,7 @@ function hopsOf(folder, route) {
 }
 
 console.log(`Rail Itinerary demo, seed ${seed}\n`);
-const first = await runAndWatch([]);
+const first = await run([], { follow: true });
 if (first.code !== 0 || !first.folder) {
   console.log(first.output);
   process.exit(first.code || 1);
@@ -143,7 +92,7 @@ if (first.code !== 0 || !first.folder) {
 
 if (!process.argv.includes('--no-replay')) {
   console.log(`Replaying route 0 from the same seed ...\n`);
-  const again = await runAndWatch(['--grep', 'route 0$'], { quiet: true });
+  const again = await run(['--grep', 'route 0$']);
   if (again.code !== 0 || !again.folder) {
     console.log(again.output);
     process.exit(again.code || 1);
