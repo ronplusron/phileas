@@ -3,10 +3,11 @@
 Everything not settled that is not itself a defect: what is agreed and
 unbuilt, what nobody has decided, and what was declined.
 
-**Nothing currently waits on an opinion**, so there is no section for it.
-The three questions that gated phase 1 were settled on 2026-09-21, and
-`HISTORY.md` records each with the measurement behind it. A section comes
-back when something needs one.
+**Questions waiting on an answer have a section of their own**, first and
+unnumbered, so that adding or emptying it never renumbers the items that
+other documents cite. It holds the review `PLAN.md` puts first under "Before
+phase 5". When it empties, it goes, as it did once the three questions that
+gated phase 1 were settled on 2026-09-21.
 
 **An item leaves this file when it closes.** It is not marked done and it is
 not kept for the record, because `HISTORY.md` is the record. A file that only
@@ -17,6 +18,75 @@ kind of thing it is, and worth making deliberately.
 
 `DEFECTS.md` is what is wrong: three entries, two of them to close before phase
 5.
+
+## Waiting on an answer: the review before phase 5
+
+Pooled on 2026-09-23, at the start of the review, and grouped by area. Each
+question points at where its detail lives rather than restating it. A
+recommendation made in a session is marked as one, and is not a decision. A
+question leaves here when it is answered, and the answer goes where its area
+is recorded.
+
+**What the two IDEs need (1.10), and a probe of RStudio**
+
+1. **Whether to accept this schedule for the items in 1.10.** Proposed at the
+   end of the session that recorded them, and not yet answered:
+   - Measured before phase 5, by one probe of RStudio: frames and webviews,
+     the cost of surveying and settling on a large application, and a page
+     that never stops moving.
+   - Designed before phase 9: other windows, and more kinds of action.
+   - In phase 5, where `PLAN.md` already has them: native dialogs, and bugs
+     that happen on quitting.
+   - At RStudio's turn, after phase 9: the debugging-port launch, or a build
+     from source.
+
+   A reason offered for measuring before R31 rather than only before phase 5,
+   not a decision: R31 compares readings the settle wait takes, so whether a
+   page that never stops moving settles at all bears on its design.
+2. **Whether to run that probe.** The installed RStudio is the hardened
+   release, so a probe reaches it only over the debugging port, cannot keep
+   its window off the screen, and has to run with a throwaway profile and
+   configuration so it touches none of the machine's own settings, projects
+   or R session.
+3. **Whether to install Positron so the probe covers it too,** or leave it
+   unmeasured for now. It is not installed.
+
+**The clipboard, and the menu entries every Electron application has**
+
+4. **Where the clipboard fix falls** among the work before phase 5.
+   Recommended, not decided: right after this review and ahead of the
+   journals fix, because it can leak data today.
+5. **Whether to close it before deciding 2.4.** `PLAN.md` has 2.4 decided
+   alongside the fix, and `DEFECTS.md` says `buggy`'s adapter excluding the
+   clipboard entries closes the defect on its own. Recommended, not decided:
+   the adapter's exclusion first, 2.4 afterwards.
+6. **2.4 itself:** whether the engine excludes the standard menu entries by
+   default.
+
+**An earlier run's journals beside a new run's**
+
+7. **Where this fix falls.** Recommended, not decided: right after the
+   clipboard fix.
+8. **Clearing the seed's folder, or a folder per run.** `DEFECTS.md` has both.
+
+**What each hop did to the screen, R31 (1.9)**
+
+9. **A single snapshot or a full settle wait after each Fix hop.** 1.9 leaves
+   it to the work; it is here so it is weighed with the rest.
+
+**The keyboard (1.6)**
+
+10. **Filling or typing:** always type, or choose between them by a draw,
+    which changes every recorded seed.
+11. **Whether a menu entry and its accelerator are one candidate or two**,
+    which decides whether excluding Quit also excludes Cmd+Q.
+12. **Whether menu accelerators and `aria-keyshortcuts` are enough to
+    discover shortcuts by**, since `survey` reads no source.
+
+Whether a key event sent to the page reaches a native menu accelerator is
+unmeasured, and measuring it may settle 11 and 12. Whether arrow keys change
+a focused dropdown's choice on macOS is unmeasured too; it bears on `select`
+rather than on either question.
 
 ## 1. Agreed, not built
 
