@@ -518,6 +518,31 @@ and are marked in the printout the same way. Left open when the command was
 agreed on 2026-09-24: whether they are a documented way to set a run, or
 plumbing a person should reach only through the command.
 
+### 2.6 Weighting the candidates a Hop just made appear
+
+Raised 2026-09-24, as something to note and not to decide. The idea, close to
+how it was put: at hop 1 every available target is known, and one is chosen.
+At hop 2 there are several targets, and some may be new, say because hop 1
+landed on a dialog. If the Route tracked between hops what was new, it could
+weight the new targets above the rest, making them more likely to be chosen.
+That is one way to make a Route more semirandom than random.
+
+**Notes, a reading and not a decision:**
+
+- **Replay survives it.** Which candidates are new is a function of two pools
+  the journal already records, so a weighted draw is still a seeded draw and
+  a replay makes the same choice. It would be a chooser behind the choosing
+  seam, which `../CLAUDE.md` keeps a named interface for exactly this kind of
+  addition, and the journal would need to say which weighting drew each Hop.
+- **It is not the declined route bias, 3.1.** That assigned directions before
+  anything had run. This reacts to what the last Hop actually did, which is
+  the thing 3.1 called missing.
+- **What would settle it is measurement.** Whether Routes already reach new
+  surfaces often enough, and whether weighting finds more in `testbed/`'s
+  planted defects than an even draw does, once phase 8 has them. A weight
+  chosen before that is a guess about where bugs are, the same caution 1.6
+  gives for weighting the keys.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias
