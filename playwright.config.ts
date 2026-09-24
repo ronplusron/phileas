@@ -10,6 +10,9 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
 
+  // Fails the run if it leaves a phileas-* folder in the system temp folder.
+  globalSetup: './tests/leftover-temp.ts',
+
   // One application at a time. Each test launches its own process, and
   // parallel Electron instances would contend for the same temporary
   // directories and the same screen.

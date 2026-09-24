@@ -12,6 +12,7 @@ import {
   resolveBundle,
 } from '../src/index';
 import type { AppUnderTest } from '../src/index';
+import { launchOrRemove } from './scratch';
 
 /**
  * The engine's guards, tested for the case where they have nothing to say.
@@ -104,7 +105,7 @@ test('the launch refuses an adapter that supplies its own user data directory', 
 
 test('the outbound recorder refuses to answer when it is not installed', async () => {
   const dir = await makeUserDataDir(buggy);
-  const launched = await launchApp(buggy, dir);
+  const launched = await launchOrRemove(buggy, dir);
   try {
     await buggy.waitForReady(await launched.app.firstWindow());
 
@@ -127,7 +128,7 @@ test('the outbound recorder refuses to answer when it is not installed', async (
 
 test('clicking a menu item refuses an empty path', async () => {
   const dir = await makeUserDataDir(buggy);
-  const launched = await launchApp(buggy, dir);
+  const launched = await launchOrRemove(buggy, dir);
   try {
     const page = await launched.app.firstWindow();
     await buggy.waitForReady(page);

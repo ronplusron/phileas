@@ -148,6 +148,10 @@ npm run journey
 ```
 
 `npm test` runs the engine's own one hundred and thirty-two tests against `testbed/buggy/`.
+It fails if the run leaves a `phileas-*` folder in the system temp folder.
+Another run making those folders at the same time, such as a Journey in a
+second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the
+check for one run, and the run says it did.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them, through the `phileas` command. It prints

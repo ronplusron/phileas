@@ -5,6 +5,7 @@ import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import { launchApp, closeApp, makeUserDataDir, resolveBundle, assertBundleFresh } from '../src/index';
 import { openedExternally } from '../src/index';
 import type { AppUnderTest } from '../src/index';
+import { launchOrRemove } from './scratch';
 
 /**
  * The phase 2 boundary, stated as tests.
@@ -18,7 +19,7 @@ import type { AppUnderTest } from '../src/index';
 
 async function withApp(cfg: AppUnderTest, body: (launched: Awaited<ReturnType<typeof launchApp>>) => Promise<void>) {
   const dir = await makeUserDataDir(cfg);
-  const launched = await launchApp(cfg, dir);
+  const launched = await launchOrRemove(cfg, dir);
   try {
     await body(launched);
   } finally {

@@ -25,6 +25,32 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: a run removes the temporary folders it makes
+
+**What was wrong.** The suite and Journeys left folders in the system temp
+folder and never removed them: 1,302 of them, about 379 MB, found on
+2026-09-24, and roughly 80 more per `npm test`. The route and journal specs
+made scratch folders and never removed them, `app-dir.spec.ts` did the same,
+and `window-modes-applied.spec.ts` closed the application but left its user
+data folder. Nine other launches removed their folder in a `finally` that a
+failed launch never reached.
+
+**What changed.** `tests/scratch.ts` records each scratch folder and removes it
+in `afterEach`, which runs whether the test passed or failed; a test built to
+fail confirmed that. `launchOrRemove` removes a user data folder when the launch
+itself throws. `tests/leftover-temp.ts` fails the run if any `phileas-*` folder
+it did not start with is still there at the end. Disabling the journal spec's
+cleanup made it fail and name all nine folders that spec makes, which is the
+positive control.
+
+**A Journey's user data folder is removed when its Route ends, whatever the
+outcome.** The fixture already did this, and a five-Route Journey left none.
+Keeping them for a failed Route was considered and not taken: a seed replays
+the Route exactly, and the journal and trace are the record, so a profile of
+several megabytes per Route adds nothing. What still escapes is a run killed
+outright, since teardown never runs. That is the likeliest source of the few
+demo folders found, though it was not confirmed.
+
 ## 2026-09-24: reading a journal, moved forward from phase 7
 
 **Why now.** Right after the `phileas` command landed, the first question was

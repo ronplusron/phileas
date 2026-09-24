@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { requireAppDir, APP_DIR_VARIABLE } from '../src/index';
+import { scratch, removeScratch } from './scratch';
 
 /**
  * Where an adapter outside the application finds the application's checkout.
@@ -11,6 +12,8 @@ import { requireAppDir, APP_DIR_VARIABLE } from '../src/index';
  * is an adapter building a path out of nothing and the run failing later, in a
  * place that says nothing about why. R24 asks for the missing thing to be named.
  */
+
+test.afterEach(removeScratch);
 
 function withAppDir<T>(value: string | undefined, body: () => T): T {
   const before = process.env[APP_DIR_VARIABLE];
@@ -37,7 +40,7 @@ test('a path that does not exist is refused, and the refusal quotes it', () => {
 });
 
 test('a file is refused, since a checkout is a folder', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-app-dir-'));
+  const dir = scratch('phileas-app-dir-');
   const file = path.join(dir, 'package.json');
   fs.writeFileSync(file, '{}');
   expect(() => withAppDir(file, requireAppDir)).toThrow(/is not a folder/);
@@ -46,7 +49,7 @@ test('a file is refused, since a checkout is a folder', () => {
 test('a real folder is returned as an absolute path', () => {
   // The positive control for the refusals above: a check that refused
   // everything would pass all three of them.
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-app-dir-'));
+  const dir = scratch('phileas-app-dir-');
   expect(withAppDir(dir, requireAppDir)).toBe(dir);
 
   // A relative path is resolved against where the run was started.

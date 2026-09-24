@@ -3,8 +3,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect, type Page } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
-import { launchApp, closeApp, makeUserDataDir, menuLabels, clickMenuItem } from '../src/index';
+import { closeApp, makeUserDataDir, menuLabels, clickMenuItem } from '../src/index';
 import type { AppUnderTest } from '../src/index';
+import { launchOrRemove } from './scratch';
 
 /**
  * What `buggy` correctly does, recorded while it is still correct.
@@ -47,7 +48,7 @@ const items: Item[] = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
 
 async function withReadyPage(cfg: AppUnderTest, body: (page: Page) => Promise<void>) {
   const dir = await makeUserDataDir(cfg);
-  const launched = await launchApp(cfg, dir);
+  const launched = await launchOrRemove(cfg, dir);
   try {
     const page = await launched.app.firstWindow();
     await cfg.waitForReady(page);
@@ -174,7 +175,7 @@ test('switching views moves both buttons, not just one', async () => {
 
 test('the native menu has the shape the adapter and phase 4 expect', async () => {
   const dir = await makeUserDataDir(buggy);
-  const launched = await launchApp(buggy, dir);
+  const launched = await launchOrRemove(buggy, dir);
   try {
     await buggy.waitForReady(await launched.app.firstWindow());
 
@@ -200,7 +201,7 @@ test('every menu path the adapter excludes still names a real menu item', async 
   // derive the list from source, which is the fuller answer, but it does fail
   // when an entry stops matching.
   const dir = await makeUserDataDir(buggy);
-  const launched = await launchApp(buggy, dir);
+  const launched = await launchOrRemove(buggy, dir);
   try {
     await buggy.waitForReady(await launched.app.firstWindow());
 
@@ -225,7 +226,7 @@ test('every clipboard entry in the menu is excluded', async () => {
   // added to the Edit menu later, such as Paste and Match Style, fails here
   // instead of being reached by a shown run.
   const dir = await makeUserDataDir(buggy);
-  const launched = await launchApp(buggy, dir);
+  const launched = await launchOrRemove(buggy, dir);
   try {
     await buggy.waitForReady(await launched.app.firstWindow());
 
@@ -246,7 +247,7 @@ test('every clipboard entry in the menu is excluded', async () => {
 
 test('the menu can drive the application, not merely be read', async () => {
   const dir = await makeUserDataDir(buggy);
-  const launched = await launchApp(buggy, dir);
+  const launched = await launchOrRemove(buggy, dir);
   try {
     const page = await launched.app.firstWindow();
     await buggy.waitForReady(page);

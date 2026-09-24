@@ -1,8 +1,8 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { Journal, journalPath, readJournal } from '../src/index';
+import { scratch as makeScratch, removeScratch } from './scratch';
 
 /**
  * The journal, tested for the endings it exists to survive.
@@ -19,8 +19,10 @@ import { Journal, journalPath, readJournal } from '../src/index';
  * a record of.
  */
 
+test.afterEach(removeScratch);
+
 function scratch(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-journal-test-'));
+  return makeScratch('phileas-journal-test-');
 }
 
 const opening = {

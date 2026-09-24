@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { expect } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
@@ -33,6 +32,7 @@ import {
   type JournaledCandidate,
   type TripHopEntry,
 } from '../src/index';
+import { scratch as makeScratch, removeScratch } from './scratch';
 
 /**
  * Survey and the Route, against the real application.
@@ -48,9 +48,10 @@ import {
  */
 
 const test = createTest(buggy);
+test.afterEach(removeScratch);
 
 function scratch(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-route-test-'));
+  return makeScratch('phileas-route-test-');
 }
 
 // A Route reads its run's name the way it does in a Journey, from what global

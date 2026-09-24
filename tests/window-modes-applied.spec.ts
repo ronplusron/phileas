@@ -1,6 +1,8 @@
+import fs from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
-import { launchApp, closeApp, makeUserDataDir, WINDOW_MODE_VARIABLE } from '../src/index';
+import { closeApp, makeUserDataDir, WINDOW_MODE_VARIABLE } from '../src/index';
+import { launchOrRemove } from './scratch';
 
 /**
  * What each window mode does to a real window.
@@ -27,7 +29,7 @@ async function windowState(mode: string | undefined) {
   else process.env[WINDOW_MODE_VARIABLE] = mode;
 
   const userDataDir = await makeUserDataDir(buggy);
-  const launched = await launchApp(buggy, userDataDir);
+  const launched = await launchOrRemove(buggy, userDataDir);
   try {
     // Synchronized on the application being ready before anything is read.
     // `buggy` creates its window hidden and calls show() on 'ready-to-show',
@@ -46,9 +48,13 @@ async function windowState(mode: string | undefined) {
       };
     });
   } finally {
-    await closeApp(buggy, launched);
-    if (before === undefined) delete process.env[WINDOW_MODE_VARIABLE];
-    else process.env[WINDOW_MODE_VARIABLE] = before;
+    try {
+      await closeApp(buggy, launched);
+    } finally {
+      await fs.promises.rm(userDataDir, { recursive: true, force: true });
+      if (before === undefined) delete process.env[WINDOW_MODE_VARIABLE];
+      else process.env[WINDOW_MODE_VARIABLE] = before;
+    }
   }
 }
 
