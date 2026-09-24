@@ -40,7 +40,7 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and eleven tests. Seven launch it,
+through, and `npm test` runs one hundred and twelve tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -49,7 +49,7 @@ generator's output. Twelve record what `buggy` correctly does, so a defect
 planted later can be told apart from an accidental one. Seven assert that a
 guard refuses rather than answering when it has no evidence. Seven work out
 what a Hop did to the screen from two readings, without launching anything.
-Twenty-four travel through the application, and ten cover the journal, including
+Twenty-five travel through the application, and ten cover the journal, including
 one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
 cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
@@ -144,7 +144,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and eleven tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and twelve tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them. It prints the Journey seed; set
@@ -153,7 +153,8 @@ Route and now travels inside them. It prints the Journey seed; set
 Each Route writes a journal to
 `testbed/buggy/phileas/.phileas-journals/<journey seed>/<run>/`, one JSON
 Lines file per Route, flushed per Hop. The run is named for when it started,
-in UTC, and the run prints its name beside the seed. So every run of a seed is
+in UTC, and the run prints its name beside the seed. The layout under
+`.phileas-journals/` is the engine's; a consumer chooses only that root. So every run of a seed is
 kept, in folders that sort in the order the runs happened, and comparing two
 runs means comparing two folders. A journal never overwrites another: one
 already at its path is refused. Nothing yet clears old runs away.

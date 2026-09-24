@@ -57,7 +57,7 @@ phases are marked by number.
 
 | Term | Meaning |
 |---|---|
-| Journal | One file per Route, in a folder per run under the Journey seed, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. Made for the engine and for replay; a person reads it through the phase 7 report (R30). |
+| Journal | One file per Route, at `<root>/<journey seed>/<run>/`, where only the root is the consumer's, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. Made for the engine and for replay; a person reads it through the phase 7 report (R30). |
 | Line kinds | `route` (the opening line), `pool`, `fix-hop`, `trip-hop`, `note` (such as the menu being withheld), `outcome` (the closing line, absent if the Route died). |
 | Effect | What a Hop did to the screen: whether anything changed, and which headings appeared and went away (R31), recorded on every Fix hop and Trip hop. An effect that could not be read says so rather than claiming nothing changed. |
 | Abandoned | A trip hop whose action timed out. It's still recorded, and the Route continues. |
@@ -93,7 +93,7 @@ phases are marked by number.
 | Term | Meaning |
 |---|---|
 | `PHILEAS_SEED` | Replays a Journey with a given seed. |
-| `PHILEAS_RUN` | The run's name, which global setup sets fresh on every run and each Route reads to find its journal folder. Not set by hand: one left over in the environment is replaced. |
+| `PHILEAS_RUN` | The run's name, which `startJourney` in global setup sets fresh on every run and each Route reads to find its journal folder. Not set by hand: one left over in the environment is replaced. |
 | `PHILEAS_SHOW` | `hidden` (default), `back` (shown behind), `front` (shown and activated), or `top` (always on top). |
 | `PHILEAS_HOP_DELAY_MS` | Pauses after each Hop so a Route can be watched. It changes no draw. |
 | `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |

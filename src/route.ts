@@ -2,7 +2,8 @@ import type { ElectronApplication, Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test';
 import type { Rng, RouteStreams } from './random';
 import { effectOf, type HopEffect } from './effect';
-import { Journal, type HopAction, type JournaledCandidate } from './journal';
+import { Journal, journalFolder, type HopAction, type JournaledCandidate } from './journal';
+import { requireRun } from './journey';
 import { clickMenuItem } from './menu';
 import {
   createExclusionTally,
@@ -242,8 +243,12 @@ export interface RunRouteOptions {
   readonly journeySeed: string;
   readonly routeIndex: number;
   readonly tripLength: number;
-  /** Where this Route's journal file is written. */
-  readonly journalDir: string;
+  /**
+   * The folder all journals go under. The engine writes this Route's journal
+   * to `<root>/<journey seed>/<run>/`, the run named by `startJourney` in
+   * global setup; see `journalFolder`. Only the root is the consumer's.
+   */
+  readonly journalsRoot: string;
   readonly fix?: Fix;
   readonly chooser?: Chooser;
   readonly values?: ValueGenerator;
@@ -342,7 +347,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     journeySeed,
     routeIndex,
     tripLength,
-    journalDir,
+    journalsRoot,
     fix,
     chooser = seededChooser,
     values = seededValues,
@@ -354,7 +359,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
   // Opened and flushed before the Route does anything, so that a Route which
   // dies inside its Fix still leaves a file naming the seed that produced it.
-  const journal = Journal.open(journalDir, {
+  const journal = Journal.open(journalFolder(journalsRoot, journeySeed, requireRun()), {
     journeySeed,
     routeSeed: streams.routeSeed,
     routeIndex,

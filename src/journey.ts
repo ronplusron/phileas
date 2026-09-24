@@ -236,6 +236,14 @@ export function requireSeed(): string {
 }
 
 /**
+ * Settle the seed and name the run. The one call a consumer's global setup
+ * makes, so neither step can be left out.
+ */
+export function startJourney(pinnedSeed?: string): { seed: string; run: string } {
+  return { seed: resolveSeed(pinnedSeed), run: resolveRun() };
+}
+
+/**
  * The environment variable that carries this run's name to its workers.
  *
  * The run is named separately from the seed because a seed is replayed and a

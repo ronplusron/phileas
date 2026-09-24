@@ -271,6 +271,21 @@ export type JournalEntry =
   | ClosingEntry;
 
 /**
+ * The folder one run's journals go in: `<root>/<journey seed>/<run>/`.
+ *
+ * The engine's, not the consumer's, decided 2026-09-24. A consumer chooses the
+ * root and nothing under it. Under the seed first, so the journals for a seed
+ * named in a report are found by looking for that seed; then a folder per run,
+ * so a rerun of a seed never lands beside or on top of an earlier run's files.
+ * Phase 7's report and any replay comparison find journals by this layout, so
+ * a consumer that laid them out its own way would break both, and before this
+ * lived here each consumer had to copy it correctly.
+ */
+export function journalFolder(root: string, journeySeed: string, run: string): string {
+  return path.join(root, journeySeed, run);
+}
+
+/**
  * Where a Route's journal is written.
  *
  * One file per Route, named by index and seed. The seed is in the name as well

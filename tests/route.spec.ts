@@ -13,6 +13,8 @@ import {
   seededValues,
   settle,
   DEFAULT_SETTLE_QUIET_MS,
+  RUN_VARIABLE,
+  journalFolder,
   COMMON_KEY_SHARE,
   printedShortcut,
   survey,
@@ -43,6 +45,18 @@ const test = createTest(buggy);
 
 function scratch(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-route-test-'));
+}
+
+// A Route reads its run's name the way it does in a Journey, from what global
+// setup settled. These tests have no global setup, so the name is set here.
+const TEST_RUN = 'test-run';
+process.env[RUN_VARIABLE] = TEST_RUN;
+
+/** The one run folder a test's scratch root holds, under its single seed. */
+function inRun(root: string): string {
+  const seeds = fs.readdirSync(root);
+  expect(seeds, `expected one seed folder under ${root}`).toHaveLength(1);
+  return journalFolder(root, seeds[0] ?? '', TEST_RUN);
 }
 
 const NO_EXCLUSIONS: AppUnderTest['exclusions'] = {};
@@ -223,13 +237,13 @@ test('a Route completes its Trip and journals every hop', async ({ page, app }) 
     journeySeed: 'test-seed',
     routeIndex: 0,
     tripLength: 6,
-    journalDir: dir,
+    journalsRoot: dir,
   });
 
   expect(outcome).toEqual({ kind: 'passed', hops: 6 });
 
   const entries = readJournal(
-    path.join(dir, `route-000-${streams.routeSeed}.jsonl`)
+    path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`)
   );
   const pools = new Map<string, readonly JournaledCandidate[]>();
   const hops: TripHopEntry[] = [];
@@ -274,12 +288,12 @@ test('every target is the pool entry its draw points at, from the file alone', a
     journeySeed: 'consistency-seed',
     routeIndex: 0,
     tripLength: 12,
-    journalDir: dir,
+    journalsRoot: dir,
   });
 
   const pools = new Map<string, readonly JournaledCandidate[]>();
   let checked = 0;
-  for (const entry of readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`))) {
+  for (const entry of readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`))) {
     if (entry.kind === 'pool') pools.set(entry.id, entry.candidates);
     if (entry.kind !== 'trip-hop') continue;
 
@@ -312,9 +326,9 @@ test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
       journeySeed: 'replay-seed',
       routeIndex: 2,
       tripLength: 8,
-      journalDir: dir,
+      journalsRoot: dir,
     });
-    return readJournal(path.join(dir, `route-002-${streams.routeSeed}.jsonl`))
+    return readJournal(path.join(inRun(dir), `route-002-${streams.routeSeed}.jsonl`))
       .filter((entry) => entry.kind === 'trip-hop')
       .map((entry) =>
         // The draw is compared as well as the target. A broken sequence can land
@@ -358,7 +372,7 @@ test('a Route with nowhere to go is stranded, not failed, and names the hop', as
     journeySeed: 'stranded-seed',
     routeIndex: 0,
     tripLength: 10,
-    journalDir: dir,
+    journalsRoot: dir,
   });
 
   // Stranded is the third outcome and is never folded into either of the other
@@ -373,7 +387,7 @@ test('a Route with nowhere to go is stranded, not failed, and names the hop', as
   // The journal is where that lands, and an outcome line saying only
   // "stranded" would leave a reader nothing to act on.
   const entries = readJournal(
-    path.join(dir, `route-000-${deriveRouteStreams('stranded-seed', 0).routeSeed}.jsonl`)
+    path.join(inRun(dir), `route-000-${deriveRouteStreams('stranded-seed', 0).routeSeed}.jsonl`)
   );
   const closing = entries.find((entry) => entry.kind === 'outcome');
   expect(closing).toMatchObject({ outcome: 'stranded', hops: 0 });
@@ -395,7 +409,7 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
     journeySeed: 'fix-seed',
     routeIndex: 0,
     tripLength: 5,
-    journalDir: dir,
+    journalsRoot: dir,
     fix: async ({ step }) => {
       await step('open the summary', async () => {
         await page.getByRole('button', { name: 'Summary', exact: true }).click();
@@ -415,7 +429,7 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
   // apart from a failed Route, which means saying which step broke rather than
   // leaving it as a sentence inside the outcome's reason.
   const entries = readJournal(
-    path.join(dir, `route-000-${deriveRouteStreams('fix-seed', 0).routeSeed}.jsonl`)
+    path.join(inRun(dir), `route-000-${deriveRouteStreams('fix-seed', 0).routeSeed}.jsonl`)
   );
   const fixHops = entries.filter((entry) => entry.kind === 'fix-hop');
   expect(fixHops.map((entry) => (entry.kind === 'fix-hop' ? entry.hop : 0))).toEqual([1, 2]);
@@ -443,7 +457,7 @@ test('every hop records what it did to the screen, Fix and Trip alike (R31)', as
     journeySeed: 'effect-seed',
     routeIndex: 0,
     tripLength: 5,
-    journalDir: dir,
+    journalsRoot: dir,
     fix: async ({ step }) => {
       await step('open the summary', async () => {
         await page.getByRole('button', { name: 'Summary', exact: true }).click();
@@ -452,7 +466,7 @@ test('every hop records what it did to the screen, Fix and Trip alike (R31)', as
     },
   });
 
-  const entries = readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`));
+  const entries = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`));
   const [opened, idle] = entries.filter((entry) => entry.kind === 'fix-hop');
 
   // Opening the summary brings its heading onto the screen. Read from the real
@@ -503,7 +517,7 @@ test('a value is drawn on every hop, including hops that never type it', async (
     journeySeed: 'unconditional-draw',
     routeIndex: 0,
     tripLength: 5,
-    journalDir: scratch(),
+    journalsRoot: scratch(),
     chooser: {
       choose: (candidates) => {
         const button = candidates.find((candidate) => candidate.role === 'button');
@@ -545,7 +559,7 @@ test('an option in a native dropdown is chosen through the dropdown, and takes e
     journeySeed: 'select-seed',
     routeIndex: 0,
     tripLength: 2,
-    journalDir: dir,
+    journalsRoot: dir,
     hopTimeoutMs: 1_000,
     chooser: {
       choose: (candidates) => {
@@ -558,7 +572,7 @@ test('an option in a native dropdown is chosen through the dropdown, and takes e
     },
   });
 
-  const hops = readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`)).filter(
+  const hops = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`)).filter(
     (entry) => entry.kind === 'trip-hop'
   );
   expect(hops).toHaveLength(2);
@@ -590,7 +604,7 @@ test('a native dropdown itself is focused, not clicked open', async ({ page, app
     journeySeed: 'focus-seed',
     routeIndex: 0,
     tripLength: 2,
-    journalDir: dir,
+    journalsRoot: dir,
     chooser: {
       choose: (candidates) => {
         const dropdown = candidates.find((candidate) => candidate.role === 'combobox');
@@ -600,7 +614,7 @@ test('a native dropdown itself is focused, not clicked open', async ({ page, app
     },
   });
 
-  const hops = readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`)).filter(
+  const hops = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`)).filter(
     (entry) => entry.kind === 'trip-hop'
   );
   expect(hops.map((entry) => (entry.kind === 'trip-hop' ? entry.action : ''))).toEqual([
@@ -631,7 +645,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
     journeySeed: 'abandon-seed',
     routeIndex: 0,
     tripLength: 3,
-    journalDir: dir,
+    journalsRoot: dir,
     hopTimeoutMs: 700,
     chooser: {
       choose: (candidates) => {
@@ -651,7 +665,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
   await expect(outcome).rejects.toThrow(/exclusion list/);
 
   const entries = readJournal(
-    path.join(dir, `route-000-${deriveRouteStreams('abandon-seed', 0).routeSeed}.jsonl`)
+    path.join(inRun(dir), `route-000-${deriveRouteStreams('abandon-seed', 0).routeSeed}.jsonl`)
   );
 
   // The hop that did it is still in the record, marked abandoned. Dropping it
@@ -815,10 +829,10 @@ test('typing arrives as one keystroke per character', async ({ page, app }) => {
     journeySeed: 'typing-seed',
     routeIndex: 0,
     tripLength: 30,
-    journalDir: dir,
+    journalsRoot: dir,
   });
 
-  const typed = readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`)).filter(
+  const typed = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`)).filter(
     (entry): entry is TripHopEntry =>
       entry.kind === 'trip-hop' && entry.action === 'type' && entry.target.name === 'Search items'
   );
@@ -827,4 +841,27 @@ test('typing arrives as one keystroke per character', async ({ page, app }) => {
   // Without this, a Route that never typed anything would pass trivially.
   expect(characters).toBeGreaterThan(0);
   expect(await page.evaluate(() => (window as unknown as { typed: number }).typed)).toBe(characters);
+});
+
+test('the engine lays journals out under the root as seed, then run', async ({ page, app }) => {
+  // Only the root is the consumer's. Phase 7's report and replay find journals
+  // by this layout, so it is asserted from the outside, by path.
+  const root = scratch();
+  const streams = deriveRouteStreams('layout-seed', 3);
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams,
+    journeySeed: 'layout-seed',
+    routeIndex: 3,
+    tripLength: 1,
+    journalsRoot: root,
+  });
+
+  const expected = path.join(root, 'layout-seed', TEST_RUN, `route-003-${streams.routeSeed}.jsonl`);
+  expect(fs.existsSync(expected)).toBe(true);
+  // Nothing else anywhere under the root: one seed folder, one run folder, one file.
+  expect(fs.readdirSync(root)).toEqual(['layout-seed']);
+  expect(fs.readdirSync(path.join(root, 'layout-seed'))).toEqual([TEST_RUN]);
 });

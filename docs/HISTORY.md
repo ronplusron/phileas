@@ -25,6 +25,29 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: the engine owns where journals go
+
+**Why.** After journals moved to a folder per run, each consumer still built
+the path itself and handed `runRoute` a finished `journalDir`. So the layout
+lived in every consumer, and the engine enforced it without applying it: when
+the trickster-tales demo adapter was brought up to date, its old one-folder
+layout meant a rerun of any seed would fail on a journal refusing to
+overwrite. Every future consumer would have had to copy the layout correctly.
+
+**What changed.** `runRoute` takes `journalsRoot` in place of `journalDir`,
+and writes each Route's journal to `<root>/<journey seed>/<run>/` itself,
+through `journalFolder`. A consumer chooses the root and nothing under it,
+decided at the time: the layout and the run's name stay the engine's, because
+phase 7's report and replay find journals by them. `startJourney` settles the
+seed and names the run in one call, so a consumer's global setup cannot do one
+and forget the other. `buggy` now makes that one call and names only its root.
+
+**What checks it.** A new test runs a Route under a scratch root and asserts
+the file lands at exactly `<root>/<seed>/<run>/route-...jsonl`, with nothing
+else under the root. The route tests read journals through the same layout.
+Two real Journeys of one seed wrote two run folders of five journals each.
+112 tests pass.
+
 ## 2026-09-24: the keyboard, and the end of the work before phase 5
 
 **Before this, no Hop pressed a key.** Text went in by `fill`, which sets a

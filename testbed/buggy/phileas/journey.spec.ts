@@ -5,6 +5,7 @@ import {
   createTest,
   expect,
   deriveRouteStreams,
+  journalFolder,
   requireRun,
   requireSeed,
   routeIndices,
@@ -34,17 +35,10 @@ const test = createTest(buggy);
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Where this run's journals are written: a folder per run, under its seed.
- *
- * Under the seed first, so that the journals for a seed named in a report are
- * found by looking for that seed. Then a folder per run, so that a re-run of a
- * seed never lands beside or on top of an earlier run's files: every run of a
- * seed is kept, which is what a replay compares against. That was chosen on
- * 2026-09-24 over clearing the seed's folder before each run; how long the
- * folders are kept is still an open question.
+ * Where this consumer keeps its journals. Only the root is the consumer's: the
+ * engine writes each run under it as `<seed>/<run>/`.
  */
-const journalDir = (journeySeed: string, run: string): string =>
-  path.join(here, '.phileas-journals', journeySeed, run);
+const journalsRoot = path.join(here, '.phileas-journals');
 
 for (const routeIndex of routeIndices(exploration)) {
   test(`route ${routeIndex}`, async ({ page, app }, testInfo) => {
@@ -78,7 +72,7 @@ for (const routeIndex of routeIndices(exploration)) {
       journeySeed,
       routeIndex,
       tripLength: exploration.tripLength,
-      journalDir: journalDir(journeySeed, run),
+      journalsRoot,
     });
 
     testInfo.annotations.push({
@@ -102,7 +96,7 @@ for (const routeIndex of routeIndices(exploration)) {
       `Route ${routeIndex} ended ${outcome.kind} after ${outcome.hops} of ` +
         `${exploration.tripLength} hops` +
         (outcome.kind === 'stranded' ? `: ${outcome.reason}` : '') +
-        `. Route seed ${streams.routeSeed}; journal in ${journalDir(journeySeed, run)}.`
+        `. Route seed ${streams.routeSeed}; journal in ${journalFolder(journalsRoot, journeySeed, run)}.`
     ).toBe('passed');
   });
 }
