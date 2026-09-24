@@ -48,7 +48,13 @@ totals computed from rows, forms, and a search.
   itineraries"). Each opens its legs. A button adds one.
 - **Itinerary.** Its legs, one row each: from, to, train, departure and
   arrival, class. Beneath them, a fare total. Buttons to add a leg, remove a
-  leg, and go back.
+  leg, buy tickets, and go back.
+- **Ticket purchase.** A modal dialog that opens over the itinerary, built
+  so that nothing behind it can be reached while it is open: the ticket
+  holder's name in a text field, the number of tickets in a native dropdown
+  from 1 to 5, the total price for that many, and Purchase and Cancel.
+  Purchase closes the dialog and marks the itinerary as ticketed. Nothing is
+  paid for and no card details are asked for; it is a pretend purchase.
 - **Add a leg.** A form: from and to as native station dropdowns, a date
   field, a time field, a class dropdown (standard, first, sleeper), and Save
   and Cancel.
@@ -76,6 +82,9 @@ with nothing handed to it:
 - Some buttons print their shortcuts in their names, such as "Save (⌘S)" and
   "Search timetable (⌘F)", and the page handles those keys itself, so the
   keyboard work has something to press.
+- The ticket purchase dialog puts typing, a dropdown and a total in one
+  place, and is a real dialog over another screen, which is what
+  `OUTSTANDING.md` 1.11 needs measured.
 - The native menu holds the standard entries, and the adapter excludes Quit,
   the clipboard entries and the outbound link, as `buggy`'s does.
 
@@ -125,6 +134,8 @@ catch it:
 | The seating chart opens a dialog with no way out | stranding (phase 5) |
 | "Book on the operator's site" leaves the application | no navigation away (phase 5) |
 | The fare total leaves out the last leg | structural check (phase 6) |
+| The ticket total ignores the number of tickets above 1 | structural check (phase 6) |
+| Changing the number of tickets clears the name already typed | metamorphic check (phase 6) |
 | Clearing the timetable search does not bring every train back | metamorphic check (phase 6) |
 | A first-class fare is wrong the same way every time | specified check (phase 6) |
 
@@ -142,8 +153,12 @@ reproduces it, and a replay that walks straight back to it.
 - **Whether stage two's bugs switch on together or one at a time.** One at a
   time reads better in a demo; together is closer to phase 8's measure.
 - **Where the modal question lands.** `OUTSTANDING.md` 1.11 asks whether a
-  dialog hides the controls behind it from the survey. The seating-chart
-  dialog in stage two depends on the answer.
+  dialog hides the controls behind it from the survey. The ticket purchase
+  dialog in stage one, and the seating-chart dialog in stage two, depend on
+  the answer. Both are modal by design, so nothing behind them should be
+  reachable. If Phileas still reaches the itinerary behind the ticket dialog,
+  that is a flaw in the engine the demo has exposed, to be measured and fixed
+  before the demo is shown, not behavior to present.
 
 ## Build order for stage one
 
