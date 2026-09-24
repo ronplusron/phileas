@@ -25,6 +25,62 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: a `phileas` command, and a Node floor of 24
+
+**The command.** Raised while running the train demo, where changing the
+number of Routes for one run meant editing the Journey file and editing it
+back. `phileas run [config] [flags] [-- Playwright arguments]` takes `--seed`,
+`--routes`, `--trip-length`, `--route-deadline-ms`, `--journey-deadline-ms`,
+`--show` and `--hop-delay-ms`, and overrides the Journey for that run only.
+Its own command because Playwright refuses flags it does not know: measured on
+1.63, `playwright test --routes 5` fails with "unknown option". The config
+defaults to `phileas/`, the consumer layout's folder, so `phileas run --routes
+3` is enough in a consuming repository; that default was asked for when
+offered.
+
+**How a flag reaches the run.** The command refuses an unknown flag or a
+missing value, puts each value in an environment variable, and starts
+Playwright's own command-line entry, found from the config's folder. Those
+variables are the only channel Playwright's workers take. The Journey file is
+loaded separately by the config, global setup and each worker, and all of them
+pass through `defineJourney`, so that is where the overrides are applied, and
+checked by the same rules as the file's own terms. A refusal names the
+variable, and the command's help lists each flag's variable. The command is
+plain JavaScript and checks no values itself, so the rules live in one place:
+Node cannot load the engine's TypeScript, whose imports carry no file
+extensions.
+
+**Two changes to what was there, both agreed with the design.** A seed in the
+environment now wins over one pinned in the Journey file, where it used to
+lose, which would have ignored `--seed` without a word. And `startJourney`
+takes the whole Journey rather than its seed, lives in `src/start.ts` since it
+reads settings from three files, and prints every setting in force, marking
+each one set for this run; consumers' global setup no longer prints the seed
+itself. It also reads the window mode and hop delay, which were first read
+after Electron had launched, so `--show frnt` is now refused before anything
+starts. Measured through the command: `--routes 0`, `--routes 2.5`, `--show
+frnt`, `--hop-delay-ms soon` and `--route-deadline-ms 5` were each refused by
+name before any launch.
+
+**Tested.** Seven tests: the flag parser and its refusals, overrides applied
+and recorded, bad overrides refused by variable, the early refusal, the
+printout, and the command run for real against `buggy` with one Route of two
+hops, checking one test registered and the Journey file unchanged. Positive
+controls: with `defineJourney` ignoring the variables, the four tests that
+depend on it failed and the real run registered all five Routes; with
+`startJourney` not reading the window mode, the early refusal failed.
+
+**The Node floor went from 20 to 24.** Asked why it was 20: no reason is
+recorded, it arrived with the first commit, and it was already unreachable,
+since `electron` 44 declares `node >= 22.12.0`. From Node's release schedule
+as of this day: 20 ended 2026-04-30; 22 is in maintenance to 2027-04-30; 24 is
+active LTS, in maintenance from 2026-10-20 to 2028-04-30; 25, an odd release
+that never becomes LTS, ended 2026-06-01; 26 is current and becomes LTS on
+2026-10-28. 24 was recommended and chosen as the oldest release still in
+active LTS; 25 was ruled out as already ended, and 26 as needed by nothing and
+not yet LTS. The engine has only ever run on Node 25.9.0, which is past its end
+of life, so 24 is a stated floor rather than a tested one.
+
 ## 2026-09-24: a menu hop hands its handler the Route's window, in every mode
 
 **How it surfaced.** Watching the train demo in `front` mode, menu hops

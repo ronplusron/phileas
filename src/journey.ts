@@ -96,26 +96,72 @@ declare const checked: unique symbol;
 export type Journey = Readonly<JourneyTerms> & { readonly [checked]: true };
 
 /**
- * Check a Journey's terms and freeze them.
+ * The environment variables that override a Journey's terms for one run.
+ *
+ * The `phileas` command sets them from its flags, because they are the only
+ * channel that reaches Playwright's workers, and every process that loads the
+ * Journey file passes through `defineJourney`. So an override applies wherever
+ * the Journey is read, and the file is never edited for one run. Whether people
+ * should set them by hand is not decided; `docs/OUTSTANDING.md` has it under
+ * Undecided.
+ */
+export const OVERRIDE_VARIABLES = {
+  routes: 'PHILEAS_ROUTES',
+  tripLength: 'PHILEAS_TRIP_LENGTH',
+  routeDeadlineMs: 'PHILEAS_ROUTE_DEADLINE_MS',
+  journeyDeadlineMs: 'PHILEAS_JOURNEY_DEADLINE_MS',
+} as const;
+
+type OverridableTerm = keyof typeof OVERRIDE_VARIABLES;
+
+/** Which terms each Journey took from the environment, for startJourney to mark. */
+const overridden = new WeakMap<Journey, readonly OverridableTerm[]>();
+
+/** The terms a Journey took from the environment for this run, rather than from its file. */
+export function overriddenTerms(journey: Journey): readonly OverridableTerm[] {
+  return overridden.get(journey) ?? [];
+}
+
+/**
+ * Check a Journey's terms and freeze them, after applying any overrides for
+ * this run.
  *
  * The checks are deliberately unforgiving. A Journey of zero Routes, or a Route
  * with a Trip length of zero, passes every test it registers by doing nothing,
  * and reads in a report exactly like a Journey that traveled and found nothing.
  * A run that cannot fail is the failure mode this engine is least able to
- * notice about itself.
+ * notice about itself. An override is checked the same way, and a refusal names
+ * the variable it came from, since the Journey file is not where it is wrong.
  */
-export function defineJourney(terms: JourneyTerms): Journey {
-  requireWholeNumberAtLeastOne('routes', terms.routes);
-  requireWholeNumberAtLeastOne('tripLength', terms.tripLength);
+export function defineJourney(fileTerms: JourneyTerms): Journey {
+  const terms: JourneyTerms = { ...fileTerms };
+  const fromEnvironment: OverridableTerm[] = [];
+  for (const [term, variable] of Object.entries(OVERRIDE_VARIABLES) as [OverridableTerm, string][]) {
+    const raw = process.env[variable];
+    if (raw === undefined || raw === '') continue;
+    // Digits only, so that "3.5", "1e3" and " 3" are refused rather than read.
+    if (!/^[0-9]+$/.test(raw)) {
+      throw new RangeError(`${variable}=${JSON.stringify(raw)} is not a whole number, so ${term} cannot be set from it.`);
+    }
+    terms[term] = Number(raw);
+    fromEnvironment.push(term);
+  }
+  const named = (term: OverridableTerm) =>
+    fromEnvironment.includes(term) ? `${term} (from ${OVERRIDE_VARIABLES[term]})` : term;
 
-  requireDeadlineIfGiven('journeyDeadlineMs', terms.journeyDeadlineMs);
-  requireDeadlineIfGiven('routeDeadlineMs', terms.routeDeadlineMs);
+  requireWholeNumberAtLeastOne(named('routes'), terms.routes);
+  requireWholeNumberAtLeastOne(named('tripLength'), terms.tripLength);
+
+  requireDeadlineIfGiven(named('journeyDeadlineMs'), terms.journeyDeadlineMs);
+  requireDeadlineIfGiven(named('routeDeadlineMs'), terms.routeDeadlineMs);
 
   if (terms.seed !== undefined && terms.seed.length === 0) {
     throw new RangeError('seed was given as an empty string; leave it out instead');
   }
 
-  return Object.freeze({ ...terms }) as Journey;
+  const journey = Object.freeze(terms) as Journey;
+  overridden.set(journey, fromEnvironment);
+  return journey;
 }
 
 /**
@@ -206,12 +252,14 @@ export function generateSeed(): string {
  * puts in the environment reaches the workers, which is why the seed is settled
  * here and read inside each Route's body by `requireSeed`.
  *
- * Order: a seed pinned in the journey definition wins, then one already in the
- * environment, which is how a replay is asked for from the command line. Only
- * when neither exists is one generated.
+ * Order: a seed already in the environment wins, which is how the `phileas`
+ * command's `--seed` reaches here, then one pinned in the journey definition.
+ * Only when neither exists is one generated. The environment used to lose to a
+ * pinned seed, which would have ignored `--seed` without a word; reversed on
+ * 2026-09-24, since a flag overrides the Journey file for that run.
  */
 export function resolveSeed(pinned?: string): string {
-  const seed = pinned || process.env[SEED_VARIABLE] || generateSeed();
+  const seed = process.env[SEED_VARIABLE] || pinned || generateSeed();
   process.env[SEED_VARIABLE] = seed;
   return seed;
 }
@@ -233,14 +281,6 @@ export function requireSeed(): string {
     );
   }
   return seed;
-}
-
-/**
- * Settle the seed and name the run. The one call a consumer's global setup
- * makes, so neither step can be left out.
- */
-export function startJourney(pinnedSeed?: string): { seed: string; run: string } {
-  return { seed: resolveSeed(pinnedSeed), run: resolveRun() };
 }
 
 /**

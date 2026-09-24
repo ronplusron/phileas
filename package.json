@@ -8,17 +8,21 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "bin": {
+    "phileas": "./bin/phileas.mjs"
+  },
   "files": [
-    "src"
+    "src",
+    "bin"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
-    "journey": "playwright test -c testbed/buggy/phileas/playwright.config.ts",
+    "journey": "node bin/phileas.mjs run testbed/buggy/phileas",
     "demo:train": "node demo/rail-itinerary/watch.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "dependencies": {
     "@electron/asar": "^4.3.0"

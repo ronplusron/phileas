@@ -17,11 +17,12 @@ export const seedRecordPath = (rootDir: string): string =>
  * every Route would still pass. Global setup runs once and what it puts in the
  * environment reaches the workers, which is the whole reason this file exists.
  *
- * It prints the seed because a Journey nobody can retrace is worth little, and
- * phase 7's report does not exist yet.
+ * startJourney prints the seed and every other setting in force, because a
+ * Journey nobody can retrace is worth little, and phase 7's report does not
+ * exist yet.
  */
 export default function globalSetup(config: FullConfig): void {
-  const { seed, run } = startJourney(exploration.seed);
+  const { seed } = startJourney(exploration);
 
   // Written to disk as well as to the environment, deliberately. A Route that
   // checked its seed against the environment variable would be checking the
@@ -29,7 +30,4 @@ export default function globalSetup(config: FullConfig): void {
   // however wrong they are. The file is evidence of a different kind, and it is
   // what lets a Route notice a seed that did not survive being handed to its worker.
   fs.writeFileSync(seedRecordPath(config.rootDir), seed, 'utf8');
-
-  console.log(`Journey seed: ${seed}`);
-  console.log(`Run: ${run}`);
 }

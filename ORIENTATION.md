@@ -40,7 +40,7 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and nineteen tests. Seven launch it,
+through, and `npm test` runs one hundred and twenty-six tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -51,7 +51,8 @@ guard refuses rather than answering when it has no evidence. Seven work out
 what a Hop did to the screen from two readings, without launching anything.
 Thirty-two travel through the application, and ten cover the journal, including
 one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
-cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. The last three cover the
+cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. Seven cover the `phileas`
+command and the overrides it carries, one of them running it for real. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
 `npm run typecheck` enforces.
 
@@ -65,13 +66,13 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: eleven phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**A `phileas` command is the next thing to do, then phase 5.** Running the
-engine against real applications for a demo found gaps phase 5 would otherwise
-have built on, and all of them closed on 2026-09-24. One item was added after:
-a command for setting a Journey's settings for one run, `docs/OUTSTANDING.md`
-1.12. `docs/PLAN.md` lists it under "Before phase 5". Phase 5 itself is the universal tier of checks, and the point
-where a Route can fail for a reason rather than only for not finishing. `journal.ts` already
-carries an empty `checks` field on every Hop for it to fill.
+**Phase 5 is the next thing to do.** Running the engine against real
+applications for a demo found gaps phase 5 would otherwise have built on, and
+all of them closed on 2026-09-24, the last being a `phileas` command for a
+Journey's settings on the command line. Phase 5 is the universal tier of
+checks, and the point where a Route can fail for a reason rather than only for
+not finishing. `journal.ts` already carries an empty `checks` field on every
+Hop for it to fill.
 
 **Read `docs/DEFECTS.md` before writing any of it.** One defect is open, and
 phase 5 closes it: the external-link stub can install successfully and do
@@ -145,11 +146,21 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and nineteen tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and twenty-six tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
-Route and now travels inside them. It prints the Journey seed; set
-`PHILEAS_SEED` to replay one.
+Route and now travels inside them, through the `phileas` command. It prints
+every setting in force, marking those set for this run.
+
+**The `phileas` command changes a Journey's settings for one run** without
+editing its file: `phileas run [config] --routes 3 --trip-length 50 --seed
+abc --show back --hop-delay-ms 300`, and `--route-deadline-ms` and
+`--journey-deadline-ms`. The config defaults to `phileas/`, the consumer
+layout's folder, and anything after `--` goes to Playwright. From this
+repository, `npm run journey -- --routes 1` passes flags through. Replaying a
+seed needs the same Route count and Trip length as the run it retraces, which
+is what the printout is for. `phileas --help` lists each flag with the
+environment variable it travels in, which is what a refusal names.
 
 Each Route writes a journal to
 `testbed/buggy/phileas/.phileas-journals/<journey seed>/<run>/`, one JSON

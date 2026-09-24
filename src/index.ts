@@ -48,12 +48,14 @@ export {
   generateSeed,
   SEED_VARIABLE,
   resolveRun,
-  startJourney,
+  OVERRIDE_VARIABLES,
+  overriddenTerms,
   requireRun,
   RUN_VARIABLE,
   type Journey,
   type JourneyTerms,
 } from './journey';
+export { startJourney } from './start';
 export {
   createRng,
   deriveRouteSeed,

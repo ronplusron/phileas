@@ -267,10 +267,16 @@ test('a missing seed is an error, never an invented one', () => {
   }
 });
 
-test('a pinned seed wins over the environment, which wins over a fresh one', () => {
+test('the environment wins over a pinned seed, which wins over a fresh one', () => {
   const before = process.env[SEED_VARIABLE];
   try {
+    // The environment is how the phileas command's --seed arrives, and a flag
+    // overrides the Journey file for that run. Reversed on 2026-09-24: a pinned
+    // seed used to win, which would have ignored --seed without a word.
     process.env[SEED_VARIABLE] = 'from-the-environment';
+    expect(resolveSeed('pinned-for-replay')).toBe('from-the-environment');
+
+    delete process.env[SEED_VARIABLE];
     expect(resolveSeed('pinned-for-replay')).toBe('pinned-for-replay');
 
     process.env[SEED_VARIABLE] = 'from-the-environment';

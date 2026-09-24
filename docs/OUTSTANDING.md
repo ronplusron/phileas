@@ -271,7 +271,7 @@ by approving a proposal made at the end of the session that recorded them:
   showed the need. Nothing earlier is known to need it, though whether the
   testbed's siblings or the two first consumers use frames is unmeasured.
 - **At the IDEs' turn, asked for 2026-09-24:** revisit the draw shares for
-  the keys and the menu, 1.13, once a Journey has run against either IDE.
+  the keys and the menu, 1.12, once a Journey has run against either IDE.
 - **In phase 5, where `PLAN.md` already has them:** native dialogs, and bugs
   that happen on quitting.
 - **At RStudio's turn, after phase 9:** the debugging-port launch, or a build
@@ -389,36 +389,7 @@ that nothing behind a named dialog may be reached, which is a structural
 check (R18, phase 6); or a pattern of abandoned Hops whose clicks were
 intercepted, as evidence of an overlay.
 
-### 1.12 A `phileas` command, for a Journey's settings on the command line, before phase 5
-
-Raised 2026-09-24, while running the train demo: changing the number of Routes
-or Hops for one run meant editing the Journey's file and then editing it
-back, and it is easy to forget which file holds them. Agreed the same day, to
-come before phase 5, in this shape.
-
-**What it is.** A program the engine ships, run as `npx phileas run <journey
-config>` with flags, for every Journey and not only a demo. Flags for the
-seed, the number of Routes, the Trip length, the Route deadline and the
-Journey deadline, and the existing settings too -- the window mode and the
-hop delay -- so there is one set of flags rather than a mix of flags and
-variables. A flag overrides the Journey file for that run only; the file
-supplies the defaults and is not edited.
-
-**Why its own command.** Real flags are only possible this way: measured on
-Playwright 1.63, `playwright test --routes 5` fails with "unknown option",
-while the same command with a flag Playwright knows runs. So the command
-checks its flags and then starts Playwright itself, handing the values to
-Playwright's workers through environment variables, the only channel they
-take. Those variables are plumbing; whether people should set them directly
-is not decided.
-
-**Agreed with it.** A bad value is refused by name before anything launches,
-and so is an unknown flag. The run prints the settings in force and marks
-which came from the command line, so a changed run is never mistaken for the
-default. Overriding Routes or Hops changes what a seed produces, so a replay
-needs the same flags, which the printout is for.
-
-### 1.13 The draw shares for the keys and the menu, provisional
+### 1.12 The draw shares for the keys and the menu, provisional
 
 Chosen 2026-09-24: the common keys and the menu bar each get an eighth of the
 share draw, and the page three quarters. Those are the defaults; an adapter
@@ -535,6 +506,17 @@ are, and never what they explore, so whatever assigns a Fix must not become a
 judgment about where a Route should go. Several Journeys, each with its own
 Fix, already give a coarser version of the same thing, which 1.8 relies on
 for Positron.
+
+### 2.5 Whether the `phileas` command's variables are for people too
+
+The command hands each flag to the run as an environment variable, because
+that is the only channel Playwright's workers take: `PHILEAS_ROUTES`,
+`PHILEAS_TRIP_LENGTH`, `PHILEAS_ROUTE_DEADLINE_MS` and
+`PHILEAS_JOURNEY_DEADLINE_MS`, beside the older `PHILEAS_SEED`,
+`PHILEAS_SHOW` and `PHILEAS_HOP_DELAY_MS`. Set by hand, they work the same way
+and are marked in the printout the same way. Left open when the command was
+agreed on 2026-09-24: whether they are a documented way to set a run, or
+plumbing a person should reach only through the command.
 
 ## 3. Declined
 

@@ -3,9 +3,8 @@ import { defineJourney } from '@drugstoresushi/phileas';
 /**
  * The demo's Journey: a few Routes, short enough to watch.
  *
- * No seed here, because a seed written into a definition wins over one passed
- * in, and the demo wants a fixed default that can still be overridden. The
- * default is set by watch.mjs instead.
+ * No seed here. The demo's fixed default is set by watch.mjs, which is where
+ * the demo is run from.
  */
 export const demo = defineJourney({
   routes: 3,
