@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Four defects are recorded.** The launch layer landed in phase 1, so this file
+**Three defects are recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows is four defects, then the two things most likely to be filed here
+What follows is three defects, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -85,35 +85,6 @@ sound for an application nobody has read, which is the whole hazard.
 **This entry leaves when phase 5's second evidence source exists**, and on
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
-
-## A shown run reaches the system clipboard
-
-**Filed 2026-09-23, found while writing an adapter for another application.**
-With windows shown, the menu source is offered, and `buggy`'s adapter excludes
-only Quit. So its Journeys can hop to Edit > Cut, Copy and Paste, and they
-have. Counted from journals still on disk: the `headed01` Journey hopped Cut 9
-times, Copy 10 and Paste 6, and a watched demo run, `demo1`, hopped Cut 7,
-Copy 3 and Paste 4. A hidden run is unaffected, because it withholds the menu.
-
-**Three things go wrong, and none is visible from the record.**
-
-- **It changes the machine it runs on.** Cut and Copy overwrite whatever the
-  person running the Journey had on their clipboard.
-- **It can carry that content into evidence.** Paste puts the clipboard into
-  the page, and from there into any failure screenshot, DOM dump or trace. A
-  password copied a minute before the run could end up in an attachment.
-- **It breaks replay.** What a Paste inserts is state from outside the seed,
-  different on every machine and every minute, and the journal does not
-  record it, since a paste is not a `fill`. Two runs of one seed can diverge
-  at the first Paste with nothing in the record to say why.
-
-**Why a defect and not a limit:** it produces a wrong answer, a replay that does
-not reproduce, and it leaks data, and every Journey still passes.
-
-**What closes it:** `buggy`'s adapter excluding the clipboard entries, before
-phase 5. The engine excluding them by default for every application, beside
-the other standard menu entries every Electron application carries, is agreed
-and is in `OUTSTANDING.md`; the adapter's fix does not wait for it.
 
 ## An earlier run's journals sit beside a new run's
 

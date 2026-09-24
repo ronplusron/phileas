@@ -32,22 +32,34 @@ export const buggy: AppUnderTest = {
   },
 
   exclusions: {
-    // One exclusion of each kind, covering two different things, which is what
-    // a reference implementation should show. It used to cover Quit twice --
-    // once by name and once by path -- leaving a copier unable to tell which
-    // entry did the work or whether both were needed.
+    // Both kinds of exclusion, each covering something different, which is
+    // what a reference implementation should show. It used to cover Quit
+    // twice -- once by name and once by path -- leaving a copier unable to tell
+    // which entry did the work or whether both were needed.
     //
     // The outbound link is a page element and is excluded by name. Quit is a
     // menu entry and is excluded by its path, which is the form that survives
     // a page control later appearing with the same label.
     //
-    // Both are written by hand rather than derived from the application's
+    // Cut, Copy and Paste are excluded because a shown run reaches the system
+    // clipboard through them: they overwrite what the person running the
+    // Journey had copied, can carry it into a failure screenshot, and put
+    // state from outside the seed into the page, so a replay diverges with
+    // nothing in the journal to say why. They are excluded here rather than
+    // by the engine, whose default exclusions are agreed and not yet built.
+    //
+    // All of it is written by hand rather than derived from the application's
     // source. A derived list is what keeps a rail from going stale the day
     // another way out appears, and docs/DEFECTS.md carries that it is not
     // built; tests/testbed-baseline.spec.ts at least fails when an entry stops
-    // naming anything real.
+    // naming anything real, or when a clipboard entry is left reachable.
     names: ['Read about the journey'],
-    menuPaths: [['Buggy', 'Quit Buggy']],
+    menuPaths: [
+      ['Buggy', 'Quit Buggy'],
+      ['Edit', 'Cut'],
+      ['Edit', 'Copy'],
+      ['Edit', 'Paste'],
+    ],
   },
 
   /**

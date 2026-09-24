@@ -220,6 +220,30 @@ test('every menu path the adapter excludes still names a real menu item', async 
   }
 });
 
+test('every clipboard entry in the menu is excluded', async () => {
+  // Read from the running application rather than from the list, so an entry
+  // added to the Edit menu later, such as Paste and Match Style, fails here
+  // instead of being reached by a shown run.
+  const dir = await makeUserDataDir(buggy);
+  const launched = await launchApp(buggy, dir);
+  try {
+    await buggy.waitForReady(await launched.app.firstWindow());
+
+    const clipboard = (await menuLabels(launched.app, ['Edit'])).filter((label) =>
+      /^(Cut|Copy|Paste)\b/.test(label)
+    );
+    expect(clipboard.length, 'no clipboard entries found, so this asserts nothing').toBeGreaterThan(0);
+
+    const excluded = (buggy.exclusions.menuPaths ?? []).map((p) => p.join(' > '));
+    for (const label of clipboard) {
+      expect(excluded, `Edit > ${label} is reachable by a shown run`).toContain(`Edit > ${label}`);
+    }
+  } finally {
+    await closeApp(buggy, launched).catch(() => {});
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  }
+});
+
 test('the menu can drive the application, not merely be read', async () => {
   const dir = await makeUserDataDir(buggy);
   const launched = await launchApp(buggy, dir);

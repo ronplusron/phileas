@@ -16,7 +16,7 @@ accumulates is how a section grows until nobody reads it.
 **These headings are judgments.** Placing an item is a decision about what
 kind of thing it is, and worth making deliberately.
 
-`DEFECTS.md` is what is wrong: four entries, three of them to close before
+`DEFECTS.md` is what is wrong: three entries, two of them to close before
 phase 5 and one in phase 5.
 
 ## 1. Agreed, not built
@@ -417,8 +417,8 @@ Raised 2026-09-23. Writing an adapter for trickster-tales meant excluding, by
 hand, the standard menu entries Electron gives every application: Quit, Hide,
 Hide Others and Services; Reload and Force Reload; Toggle Developer Tools and
 Toggle Full Screen; Minimize; Show Substitutions; Start and Stop Speaking; and
-Cut, Copy, Paste and Paste and Match Style, for the reasons `DEFECTS.md` gives
-under the clipboard. Every adapter for every application would otherwise
+Cut, Copy, Paste and Paste and Match Style, for the reasons `HISTORY.md` gives
+under the clipboard fix. Every adapter for every application would otherwise
 write the same list, and one that forgot an entry would find out from a Route
 that quit, reloaded, spoke aloud or read the clipboard.
 
@@ -429,8 +429,8 @@ Electron built it from, and labels include the application's name (`Quit
 Trickster Tales`), so the default matches by role, which the menu source will
 have to read. And a default the engine applies is an input to the seeded draw,
 so every default exclusion is written in the journal the way the adapter's own
-are, never applied silently. The clipboard fix in `buggy`'s adapter does not
-wait for it.
+are, never applied silently. `buggy`'s adapter excludes its own clipboard
+entries in the meantime.
 
 ## 2. Undecided
 

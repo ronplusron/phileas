@@ -25,6 +25,33 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: the clipboard fix
+
+**The defect.** With windows shown, the menu source is offered, and `buggy`'s
+adapter excluded only Quit, so its Journeys hopped to Edit > Cut, Copy and
+Paste: counted from journals on disk, one Journey hopped Cut 9 times, Copy 10
+and Paste 6. That did three things, none visible from the record. It
+overwrote whatever the person running the Journey had copied. It could carry
+that content into evidence, since Paste puts it into the page and from there
+into any failure screenshot or trace. And it broke replay, since what a Paste
+inserts is state from outside the seed and the journal does not record it. A
+hidden run was unaffected, because it withholds the menu.
+
+**The fix** is `buggy`'s adapter excluding `Edit > Cut`, `Edit > Copy` and
+`Edit > Paste` by menu path, the paths read from journals of real shown runs
+rather than assumed. The engine excluding the standard menu entries by default
+is agreed separately and not built, and this fix did not wait for it.
+
+**What checks it.** A new baseline test reads the Edit menu from the running
+application and fails if any entry beginning Cut, Copy or Paste is not
+excluded, so an entry added later, such as Paste and Match Style, fails there
+rather than being reached. Its positive control: with Paste taken out of the
+list, it failed, naming `Edit > Paste`. The existing test that every excluded
+menu path still names a real item covers the three new paths too. A shown
+Journey of five Routes afterwards offered no clipboard entry in any pool,
+while `Edit > Select All`, from the same menu, appeared 19 times, which shows
+the menu was being offered. 94 tests pass.
+
 ## 2026-09-24: the review before phase 5, and what it settled
 
 The work before phase 5 opened with a review of what the two IDEs need, so
