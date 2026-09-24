@@ -270,6 +270,8 @@ by approving a proposal made at the end of the session that recorded them:
   reading inside frames and webviews, decided 2026-09-24 once the probes
   showed the need. Nothing earlier is known to need it, though whether the
   testbed's siblings or the two first consumers use frames is unmeasured.
+- **At the IDEs' turn, asked for 2026-09-24:** revisit the draw shares for
+  the keys and the menu, 1.13, once a Journey has run against either IDE.
 - **In phase 5, where `PLAN.md` already has them:** native dialogs, and bugs
   that happen on quitting.
 - **At RStudio's turn, after phase 9:** the debugging-port launch, or a build
@@ -354,6 +356,11 @@ so every default exclusion is written in the journal the way the adapter's own
 are, never applied silently. `buggy`'s adapter excludes its own clipboard
 entries in the meantime.
 
+**More pressing since 2026-09-24.** Hidden runs used to offer no menu, so an
+unattended Journey could not reach any of these entries. The menu is now
+offered in every window mode, so an adapter missing one of them meets it in
+an ordinary run.
+
 ### 1.11 Dialogs that are not native modals
 
 Raised 2026-09-24. A native modal dialog, opened with `showModal()`, is now
@@ -410,6 +417,24 @@ and so is an unknown flag. The run prints the settings in force and marks
 which came from the command line, so a changed run is never mistaken for the
 default. Overriding Routes or Hops changes what a seed produces, so a replay
 needs the same flags, which the printout is for.
+
+### 1.13 The draw shares for the keys and the menu, provisional
+
+Chosen 2026-09-24: the common keys and the menu bar each get an eighth of the
+share draw, and the page three quarters. Those are the defaults; an adapter
+can set its own as `keyShare` and `menuShare`, asked for the same day, and the
+shares used are written on each Route's opening journal line. `HISTORY.md` has the counts they were
+chosen from, which come from three small applications. **Neither share has
+been measured on an IDE**, the case where both matter most: the IDE probes
+went over the debugging port, which reaches no menu, and an IDE's menu bar
+runs to a hundred entries or more.
+
+**What reopens it.** Once a Journey has run against an IDE with the menu
+offered, count from its journals how often each side changed the screen, the
+way the rail demo's were counted. Adjust either share if the page is being
+crowded out or a key-only behavior, such as console history on Up, is being
+reached too rarely. A changed share changes what every seed produces, so it
+lands as its own change and says so.
 
 ## 2. Undecided
 

@@ -311,4 +311,25 @@ export interface AppUnderTest {
    * effect is read and so what a replay compares against.
    */
   settleQuietMs?: number;
+
+  /**
+   * The share of Hops drawn from the common keys, as a fraction from 0 up to
+   * but not including 1. Leave it out for the engine's default, an eighth.
+   *
+   * For an application where the keys reach more than a screen shows, such as
+   * a console's history, or less. The share is an input to the seeded draw, so
+   * it is written in every journal: a replay under a different share takes a
+   * different Route.
+   */
+  keyShare?: number;
+
+  /**
+   * The share of Hops drawn from the menu bar, on the same terms as `keyShare`.
+   * Leave it out for the engine's default, an eighth.
+   *
+   * For an application whose menu is far larger or smaller than its screens,
+   * which is why it is the adapter's to set. The two shares together must
+   * leave the page something, so they sum to less than 1.
+   */
+  menuShare?: number;
 }

@@ -255,7 +255,7 @@ test('the menu can drive the application, not merely be read', async () => {
     // above: reading a label proves the menu exists, and this proves the wiring
     // behind it works. A menu that renders and does nothing would pass one and
     // fail the other.
-    await clickMenuItem(launched.app, ['View', 'Show Summary']);
+    await clickMenuItem(launched.app, ['View', 'Show Summary'], page);
 
     await expect(page.locator('#summary')).toBeVisible();
     await expect(page.locator('#view-summary')).toHaveAttribute('aria-pressed', 'true');

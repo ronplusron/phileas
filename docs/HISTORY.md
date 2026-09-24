@@ -25,6 +25,74 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: a menu hop hands its handler the Route's window, in every mode
+
+**How it surfaced.** Watching the train demo in `front` mode, menu hops
+stopped partway through each Route, after a note that menu candidates were
+withheld because no window held focus. The journals showed that once focus
+went, it never came back for the rest of the Route, and that nothing in the
+application preceded its going. A rerun with a positive control settled the cause:
+Finder was brought forward during Route 1, and menus were withheld from the
+next survey, 0.6 seconds later. Undisturbed Routes kept them for all 50 hops.
+One Route lost focus 2.5 seconds in with no known cause, and the demo's
+replay of it did not retrace: the runs differed at hop 4.
+
+**The finding that mattered more.** A menu item was added at run time whose
+handler recorded the window it received. Clicked the way `clickMenuItem`
+clicked, `item.click()` with no arguments, it received no window with the
+application hidden, and equally with it shown, frontmost and focused. Passed
+the window through `click(event, focusedWindow, focusedWebContents)`, the
+signature Electron documents, it received the window in both. So focus was
+never what a menu hop was missing. The entry below from 2026-09-22 read it
+that way because its positive control, `buggy`'s View menu, falls back to the
+first window when handed none; so does the train demo's. Two consequences had
+been standing:
+
+- In a shown run, a menu hop whose handler uses its window with no fallback
+  did nothing and was journaled as done, which is the failure the focus rule
+  was written to prevent.
+- What a Route could draw depended on whatever else on the machine held
+  focus, so a seed stopped reproducing when someone clicked elsewhere.
+
+**The fix.** `clickMenuItem` takes the Route's page and hands the handler that
+page's window and web contents, with the event a mouse click produces. The
+focus check is gone, so the menu is offered in every window mode, hidden
+included. A test adds a handler with no fallback and asserts it receives the
+Route's window; restoring the bare `item.click()` made it fail, receiving
+`null`. One case stays out of reach: a handler that ignores its arguments and
+asks `BrowserWindow.getFocusedWindow()` itself gets nothing while hidden,
+which phase 5's check that a hop changed something is what sees. Chosen from
+three options on a recommendation; the other two were reclaiming focus in the
+shown modes, and only reporting focus changes.
+
+**Menu entries no longer keep a Route from stranding.** Offered in every mode,
+the menu made the two stranding tests report passed: a Route facing a trap
+dialog clicked `View > Show Summary` behind it for all five hops. The menu bar
+is on offer on every screen, the same reason the common keys were ruled out
+earlier the same day, so the same rule now covers both: they stay in the
+draw, and only what the page offers keeps a Route going. The cost is a page
+whose only way onward is a menu entry, which strands. Agreed on a
+recommendation. Counting the menu again made both stranding tests fail.
+
+**The keys and the menu each get an eighth of the draw.** Drawn evenly with the
+page, the menu took a share set by how sparse the screen was: 19% of hops on
+the rail demo, 48% on `buggy`, 45% on trickster-tales' Library screen, whose
+15 entries changed the screen in none of the 44 menu hops its journals hold.
+Adding a menu eighth to the keys' quarter was then questioned as too much,
+since 3/8 of hops would go to something other than a page control, and the
+rail demo's journals put the cost on the keys: 138 key hops changed the screen
+6 times, against 199 of 306 page hops, 21 of 44 menu hops, and 19 of 45
+printed shortcuts. Three splits were offered and an eighth each was chosen,
+the recommended one, leaving the page three quarters. A chosen side with
+nothing on it falls back to the page. Both shares are provisional until an
+IDE's menu is measured: the IDE probes went over the debugging port, which
+reaches no menu. Revisiting them at the IDEs' turn was asked for, and so was
+making them configurable: an adapter sets `keyShare` and `menuShare`, as it
+sets `settleQuietMs`, chosen over the Journey file on a recommendation because
+the right share depends on the application. Shares that cannot be drawn with
+are refused by name, and the shares used go on each Route's opening journal
+line, since a different share takes a different Route.
+
 ## 2026-09-24: a native modal hides what is behind it, and a train demo
 
 **The defect, found by building the demo.** Rail Itinerary's ticket purchase

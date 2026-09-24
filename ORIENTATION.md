@@ -40,7 +40,7 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and fourteen tests. Seven launch it,
+through, and `npm test` runs one hundred and nineteen tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -49,7 +49,7 @@ generator's output. Twelve record what `buggy` correctly does, so a defect
 planted later can be told apart from an accidental one. Seven assert that a
 guard refuses rather than answering when it has no evidence. Seven work out
 what a Hop did to the screen from two readings, without launching anything.
-Twenty-seven travel through the application, and ten cover the journal, including
+Thirty-two travel through the application, and ten cover the journal, including
 one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
 cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
@@ -87,13 +87,13 @@ for that reason. And `buggy`'s outbound-link test is the positive control for
 the `external.ts` hazard: keep it, because without it an empty recorder and a
 stub that never took read identically.
 
-**One thing phase 4 left standing, deliberately.** The menu source is
-unavailable under an ordinary run, because a menu click with no focused window
-reaches a handler with no window and does nothing while reporting success. That
-is detection rather than repair, a repair was measured and does not exist, and
-`docs/HISTORY.md` has both. The consequence is that `menuPaths` exclusions do
-not fire either. Any `PHILEAS_SHOW` mode but `hidden` brings the menu source
-back, because it is a focused window that the menu needs.
+**The menu bar is offered in every window mode, hidden included,** since
+2026-09-24. A menu hop hands its handler the Route's own window, so focus
+decides nothing; `docs/HISTORY.md` has the measurement that overturned the
+earlier reading. So an unattended run now reaches the menu, and an adapter's
+`menuPaths` exclusions are what keep it off Quit and the clipboard. Default
+exclusions for the entries every Electron application has are agreed and not
+yet built, `docs/OUTSTANDING.md` 1.10, and matter more than they did.
 
 **If `npm test` cannot find Electron:** `npm install` does not run Electron's
 postinstall in this environment, so the types arrive and the binary does not.
@@ -145,7 +145,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and fourteen tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and nineteen tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them. It prints the Journey seed; set
@@ -169,11 +169,10 @@ jq -r 'if .kind=="trip-hop" then "hop \(.hop)  \(.action)  \(.target.name)  +\(.
 
 `jq . route-000-*.jsonl` prints every line in full.
 
-**A replay needs the same window mode as the run it retraces.** A shown run
-offers menu entries a hidden one withholds, so the same seed takes a different
-route: measured on `buggy`, seed `demo1` started Summary, Inventory, Clear
-search hidden, and Clear search, Clear search, Show Inventory shown. The hop
-delay changes nothing.
+**A replay used to need the same window mode as the run it retraces,** because
+a shown run offered menu entries a hidden one withheld. Since 2026-09-24 every
+mode offers the same menu, but a replay across modes has not been measured, so
+match the mode until it is. The hop delay changes nothing.
 
 **None of it is evidence that the engine finds bugs**, because nothing is
 planted in `buggy` yet and nothing travels through it. They show the launch

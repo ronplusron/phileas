@@ -15,9 +15,15 @@ import {
   DEFAULT_SETTLE_QUIET_MS,
   RUN_VARIABLE,
   journalFolder,
-  COMMON_KEY_SHARE,
+  DEFAULT_KEY_SHARE,
+  DEFAULT_MENU_SHARE,
+  sharesFor,
+  sideOfShareDraw,
+  sideCandidates,
   printedShortcut,
   survey,
+  showWindows,
+  clickMenuItem,
   takesTypedValue,
   NondeterministicExclusion,
   PageUnreachable,
@@ -87,6 +93,16 @@ test('survey finds the application controls by role, with no enumeration of them
     'option "Luggage"',
     'option "Instruments"',
     'option "Clothing"',
+    // The menu bar, in menu order, offered in every window mode. Nothing is
+    // excluded here, so Quit and the clipboard entries are among them.
+    'menuitem "About Buggy"',
+    'menuitem "Quit Buggy"',
+    'menuitem "Cut"',
+    'menuitem "Copy"',
+    'menuitem "Paste"',
+    'menuitem "Select All"',
+    'menuitem "Show Inventory"',
+    'menuitem "Show Summary"',
     // The common keys, always offered after everything else, in this order.
     'key "Enter"',
     'key "Escape"',
@@ -198,10 +214,12 @@ test('a deterministic predicate is not accused of being one', async ({ page, app
   expect(found.excluded.map((entry) => entry.rule)).toEqual(['exclude()']);
 });
 
-test('menu candidates are withheld, with a reason, when no window has focus', async ({
-  page,
-  app,
-}) => {
+test('menu candidates are offered whether or not a window has focus', async ({ page, app }) => {
+  const focused = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getFocusedWindow() !== null);
+  // The condition that used to withhold them, confirmed rather than assumed.
+  // Under a shown mode a window may hold focus, and the offer must not care.
+  if (!showWindows()) expect(focused).toBe(false);
+
   const found = await survey({
     page,
     app,
@@ -210,19 +228,38 @@ test('menu candidates are withheld, with a reason, when no window has focus', as
     tally: createExclusionTally(NO_EXCLUSIONS),
   });
 
-  // Measured on 2026-09-22: with windows hidden, getFocusedWindow() returns
-  // null, focus() on a hidden window does not change that, and replacing
-  // getFocusedWindow in the main process does not help either, because Electron
-  // resolves the focused window for a menu click natively. So the menu source
-  // is genuinely unavailable under an ordinary run, and the point of this test
-  // is that it SAYS so: a source that quietly offered nothing would be
-  // indistinguishable from an application with no menu.
-  expect(found.menuSource.offered).toBe(false);
-  if (!found.menuSource.offered) {
-    expect(found.menuSource.reason).toMatch(/no application window holds focus/i);
-    expect(found.menuSource.reason).toMatch(/PHILEAS_SHOW/);
-  }
-  expect(found.candidates.every((candidate) => candidate.source !== 'menu')).toBe(true);
+  // Withholding them made what a Route could draw depend on whatever else on
+  // the machine held focus, and a replay went a different way on 2026-09-24
+  // because of it.
+  expect(found.menuSource.offered).toBe(true);
+  expect(found.candidates.filter((c) => c.source === 'menu').map((c) => c.name)).toEqual(
+    expect.arrayContaining(['Show Inventory', 'Show Summary'])
+  );
+});
+
+test('a menu hop hands its handler the Route window, as a click on the menu would', async ({
+  page,
+  app,
+}) => {
+  // A handler with no fallback, which buggy's own do not have: handed no window,
+  // it records none. The ordinary shape `(item, win) => win.webContents.send()`
+  // would do nothing at all there, and a bare `item.click()` hands it no window
+  // whether or not one holds focus, measured on 2026-09-24.
+  await app.evaluate(({ Menu, MenuItem }) => {
+    const view = Menu.getApplicationMenu()?.items.find((item) => item.label === 'View');
+    const record = globalThis as { menuProbe?: number | null };
+    view?.submenu?.append(
+      new MenuItem({ label: 'Probe', click: (_item, win) => (record.menuProbe = win?.id ?? null) })
+    );
+  });
+
+  await clickMenuItem(app, ['View', 'Probe'], page);
+
+  const received = await app.evaluate(() => (globalThis as { menuProbe?: number | null }).menuProbe);
+  const routeWindow = await app.browserWindow(page);
+  const expected = await routeWindow.evaluate((win) => (win as { id: number }).id);
+  await routeWindow.dispose();
+  expect(received).toBe(expected);
 });
 
 test('a Route completes its Trip and journals every hop', async ({ page, app }) => {
@@ -274,7 +311,8 @@ test('every target is the pool entry its draw points at, from the file alone', a
 }) => {
   // The consistency check that needs no replay. The seeded chooser links the
   // recorded things by one rule: the share draw picks a side, the common keys
-  // below a quarter of 2^32 and the rest otherwise, and the target is
+  // below an eighth of 2^32, the menu below a quarter and the page otherwise,
+  // with an empty side falling back to the page, and the target is
   // side[floor(draw / 2^32 x size)] in pool order. So a journal can be checked
   // against itself with nothing launched. A line that breaks the rule means the
   // engine acted on something other than what its draws picked.
@@ -293,17 +331,32 @@ test('every target is the pool entry its draw points at, from the file alone', a
 
   const pools = new Map<string, readonly JournaledCandidate[]>();
   let checked = 0;
+  let keyShare = NaN;
+  let menuShare = NaN;
   for (const entry of readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`))) {
+    // The shares come from the file too, which is what makes this "from the
+    // file alone": a reader with only the journal can check it.
+    if (entry.kind === 'route') {
+      keyShare = entry.keyShare ?? NaN;
+      menuShare = entry.menuShare ?? NaN;
+    }
     if (entry.kind === 'pool') pools.set(entry.id, entry.candidates);
     if (entry.kind !== 'trip-hop') continue;
 
     expect(entry.draw, `hop ${entry.hop} has no draw, and the seeded chooser always draws`).toBeDefined();
     expect(entry.shareDraw, `hop ${entry.hop} has no share draw`).toBeDefined();
+    // Written out here from the journal's own description of the share draw,
+    // rather than calling the chooser's helpers, which would check the chooser
+    // against itself.
     const pool = pools.get(entry.pool) ?? [];
-    const keys = pool.filter((c) => c.source === 'key' && c.role === 'key');
-    const rest = pool.filter((c) => !(c.source === 'key' && c.role === 'key'));
-    const keysWon = (entry.shareDraw ?? 0) < 4_294_967_296 * COMMON_KEY_SHARE;
-    const side = (keysWon && keys.length) || !rest.length ? keys : rest;
+    const isKey = (c: JournaledCandidate) => c.source === 'key' && c.role === 'key';
+    const keys = pool.filter(isKey);
+    const menu = pool.filter((c) => c.source === 'menu');
+    const page = pool.filter((c) => c.source !== 'menu' && !isKey(c));
+    const fraction = (entry.shareDraw ?? 0) / 4_294_967_296;
+    const chosen =
+      fraction < keyShare ? keys : fraction < keyShare + menuShare ? menu : page;
+    const side = [chosen, page, keys, menu].find((candidates) => candidates.length) ?? [];
     const position = Math.floor(((entry.draw ?? 0) / 4_294_967_296) * side.length);
     expect(side[position], `hop ${entry.hop}`).toEqual(entry.target);
     checked += 1;
@@ -312,6 +365,45 @@ test('every target is the pool entry its draw points at, from the file alone', a
   // A loop over an empty journal passes every assertion inside it. This is the
   // line that makes the zero-failure result above mean something.
   expect(checked).toBe(12);
+  expect([keyShare, menuShare]).toEqual([DEFAULT_KEY_SHARE, DEFAULT_MENU_SHARE]);
+});
+
+test("a Route draws with the adapter's shares, and journals them", async ({ page, app }) => {
+  const sidesDrawn = async (cfg: AppUnderTest) => {
+    const dir = scratch();
+    const streams = deriveRouteStreams('shares-seed', 0);
+    await runRoute({
+      page,
+      app,
+      cfg,
+      streams,
+      journeySeed: 'shares-seed',
+      routeIndex: 0,
+      tripLength: 20,
+      journalsRoot: dir,
+    });
+    const entries = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`));
+    const opening = entries.find((entry) => entry.kind === 'route');
+    const hops = entries.filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+    return {
+      shares: opening?.kind === 'route' ? [opening.keyShare, opening.menuShare] : [],
+      offPage: hops.filter(
+        (hop) => hop.target.source === 'menu' || (hop.target.source === 'key' && hop.target.role === 'key')
+      ).length,
+    };
+  };
+
+  const none = await sidesDrawn({ ...buggy, keyShare: 0, menuShare: 0 });
+  expect(none.shares).toEqual([0, 0]);
+  expect(none.offPage).toBe(0);
+
+  // The positive control: the same seed with the default shares does reach the
+  // keys or the menu, so the zero above is the shares and not a quiet Route.
+  await page.reload();
+  await buggy.waitForReady(page);
+  const defaults = await sidesDrawn(buggy);
+  expect(defaults.shares).toEqual([DEFAULT_KEY_SHARE, DEFAULT_MENU_SHARE]);
+  expect(defaults.offPage).toBeGreaterThan(0);
 });
 
 test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
@@ -752,6 +844,48 @@ test('settle reports what it cost, and says when a page never stopped moving', a
   // seconds and is what an unbounded snapshot would have cost.
   expect(noisy.ms).toBeGreaterThan(400);
   expect(noisy.ms).toBeLessThan(2_000);
+});
+
+test('the keys and the menu each get an eighth of the share draw by default', () => {
+  const shares = sharesFor({});
+  expect(shares).toEqual({ keyShare: 1 / 8, menuShare: 1 / 8 });
+  const eighth = 4_294_967_296 / 8;
+  // The boundaries, from both sides, so a share that drifted by one would show.
+  expect(sideOfShareDraw(0, shares)).toBe('keys');
+  expect(sideOfShareDraw(eighth - 1, shares)).toBe('keys');
+  expect(sideOfShareDraw(eighth, shares)).toBe('menu');
+  expect(sideOfShareDraw(2 * eighth - 1, shares)).toBe('menu');
+  expect(sideOfShareDraw(2 * eighth, shares)).toBe('page');
+  expect(sideOfShareDraw(4_294_967_295, shares)).toBe('page');
+});
+
+test('an adapter can set its own shares, and one that cannot be drawn with is refused', () => {
+  const quarter = 4_294_967_296 / 4;
+  const shares = sharesFor({ keyShare: 0, menuShare: 1 / 4 });
+  expect(sideOfShareDraw(0, shares)).toBe('menu');
+  expect(sideOfShareDraw(quarter - 1, shares)).toBe('menu');
+  expect(sideOfShareDraw(quarter, shares)).toBe('page');
+
+  expect(() => sharesFor({ keyShare: 1 })).toThrow(/keyShare is 1/);
+  expect(() => sharesFor({ menuShare: -0.1 })).toThrow(/menuShare is -0.1/);
+  expect(() => sharesFor({ keyShare: Number.NaN })).toThrow(/keyShare is NaN/);
+  expect(() => sharesFor({ keyShare: 0.5, menuShare: 0.5 })).toThrow(/leaves the page no share/);
+});
+
+test('a chosen side with nothing on it falls back to the page', () => {
+  const page = { source: 'page', role: 'button', name: 'Summary' };
+  const shortcut = { source: 'key', role: 'shortcut', name: '⌘S' };
+  const key = { source: 'key', role: 'key', name: 'Enter' };
+  const menu = { source: 'menu', role: 'menuitem', name: 'Show Summary' };
+
+  // Printed shortcuts are drawn with the page, since each belongs to a control.
+  expect(sideCandidates([page, shortcut, key, menu], 'page')).toEqual([page, shortcut]);
+  expect(sideCandidates([page, shortcut, key, menu], 'keys')).toEqual([key]);
+  expect(sideCandidates([page, shortcut, key, menu], 'menu')).toEqual([menu]);
+  // An application with no menu, or one whose menu is all excluded.
+  expect(sideCandidates([page, key], 'menu')).toEqual([page]);
+  // Only reachable by a chooser handed a pool directly: a Route strands first.
+  expect(sideCandidates([menu], 'keys')).toEqual([menu]);
 });
 
 test('a shortcut printed in a name is read as the key it names', () => {

@@ -129,15 +129,16 @@ test('clicking a menu item refuses an empty path', async () => {
   const dir = await makeUserDataDir(buggy);
   const launched = await launchApp(buggy, dir);
   try {
-    await buggy.waitForReady(await launched.app.firstWindow());
+    const page = await launched.app.firstWindow();
+    await buggy.waitForReady(page);
 
     // It used to walk nothing, click nothing, and return success. Phase 4
     // builds these paths from Candidate.menuPath, which is optional.
-    await expect(clickMenuItem(launched.app, [])).rejects.toThrow(/at least one label/);
+    await expect(clickMenuItem(launched.app, [], page)).rejects.toThrow(/at least one label/);
 
     // The positive control: a real path still works, so the refusal above is
     // the empty case rather than the function being broken.
-    await clickMenuItem(launched.app, ['View', 'Show Summary']);
+    await clickMenuItem(launched.app, ['View', 'Show Summary'], page);
   } finally {
     await closeApp(buggy, launched).catch(() => {});
     await fs.promises.rm(dir, { recursive: true, force: true });

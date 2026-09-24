@@ -55,26 +55,109 @@ export interface Choice {
   readonly target: SurveyedCandidate;
   readonly draw?: number;
   /**
-   * The draw that decided between a common key and everything else, where a
-   * seeded draw did. See `COMMON_KEY_SHARE`.
+   * The draw that decided which side of the pool the Hop was drawn from --
+   * the common keys, the menu bar or the page -- where a seeded draw did. See
+   * `sideOfShareDraw`.
    */
   readonly shareDraw?: number;
 }
 
 /**
- * The share of Hops that press one of the common keys, when anything else is
- * on offer too.
+ * The default share of Hops that press one of the common keys, when anything
+ * else is on offer too. An adapter can set its own as `keyShare`.
  *
- * Chosen on 2026-09-24. Drawn as seven equal candidates among the rest, the
- * keys took 7 Hops in 8 on a screen with one control, crowding out the
- * controls where there are fewest of them. So a first draw decides between the
- * keys and everything else, with the keys getting this share, and a second
- * draw picks within whichever side won. At a quarter, Up is pressed about one
- * Hop in 28 on any screen, which is what reaches a console's history, and
- * controls keep three quarters of every Trip. Printed shortcuts are drawn with
- * the controls, since each belongs to one.
+ * Chosen on 2026-09-24 as a quarter. Drawn as seven equal candidates among the
+ * rest, the keys took 7 Hops in 8 on a screen with one control, crowding out
+ * the controls where there are fewest of them. So a first draw decides which
+ * side a Hop is drawn from, and a second picks within it. Printed shortcuts are
+ * drawn with the controls, since each belongs to one.
+ *
+ * Cut to an eighth the same day, with the menu given its own eighth, once the
+ * rail demo's journals were counted: 138 key hops changed the screen 6 times,
+ * against 199 of 306 page hops. An eighth still presses a key about 6 times in
+ * a 50-hop Trip, which is what reaches a console's history. Provisional until an
+ * IDE is measured; docs/OUTSTANDING.md holds it.
  */
-export const COMMON_KEY_SHARE = 1 / 4;
+export const DEFAULT_KEY_SHARE = 1 / 8;
+
+/**
+ * The default share of Hops that click a menu bar entry, when anything else is
+ * on offer too. An adapter can set its own as `menuShare`.
+ *
+ * Chosen on 2026-09-24, when the menu began to be offered in every window mode.
+ * Drawn evenly with the page, it took a share set by how sparse the screen was
+ * rather than by anything about the menu: 45% of Hops on trickster-tales'
+ * Library screen, whose 15 entries changed the screen in none of the 44 hops
+ * its journals hold, and a large application's menu would crowd the page out
+ * entirely. Provisional on the same terms as DEFAULT_KEY_SHARE.
+ */
+export const DEFAULT_MENU_SHARE = 1 / 8;
+
+/** The shares a Route draws its sides with, as a journal records them. */
+export interface Shares {
+  readonly keyShare: number;
+  readonly menuShare: number;
+}
+
+/**
+ * The shares an adapter asks for, or the defaults, refused by name when they
+ * cannot be drawn with.
+ *
+ * Checked before the Route does anything. A share of 1 or more, or two that
+ * leave the page nothing, would still run, and would draw every Hop from a
+ * side that cannot keep a Route going.
+ */
+export function sharesFor(cfg: Pick<AppUnderTest, 'keyShare' | 'menuShare'>): Shares {
+  const shares = {
+    keyShare: cfg.keyShare ?? DEFAULT_KEY_SHARE,
+    menuShare: cfg.menuShare ?? DEFAULT_MENU_SHARE,
+  };
+  for (const [name, value] of Object.entries(shares)) {
+    if (!Number.isFinite(value) || value < 0 || value >= 1) {
+      throw new Error(`${name} is ${value}, and must be a fraction from 0 up to but not including 1.`);
+    }
+  }
+  if (shares.keyShare + shares.menuShare >= 1) {
+    throw new Error(
+      `keyShare ${shares.keyShare} and menuShare ${shares.menuShare} sum to 1 or more, which ` +
+        'leaves the page no share of the draw. They must sum to less than 1.'
+    );
+  }
+  return shares;
+}
+
+/** Which side of the pool a share draw chose, before falling back from an empty side. */
+export type Side = 'keys' | 'menu' | 'page';
+
+/**
+ * The side a share draw points at, as a pure function of the draw, so that a
+ * journal can be checked against it from the file alone.
+ */
+export function sideOfShareDraw(shareDraw: number, shares: Shares): Side {
+  const fraction = shareDraw / 4_294_967_296;
+  if (fraction < shares.keyShare) return 'keys';
+  if (fraction < shares.keyShare + shares.menuShare) return 'menu';
+  return 'page';
+}
+
+/**
+ * The candidates a Hop is drawn from, given the side its share draw chose.
+ *
+ * A chosen side with nothing on it falls back to the page, and the page to the
+ * keys and then the menu, so a draw always lands somewhere. The Route strands
+ * before choosing when the page offers nothing, so on a Route the last two
+ * fallbacks are only reached by a chooser handed a pool directly.
+ */
+export function sideCandidates<T extends { source: string; role: string }>(
+  pool: readonly T[],
+  side: Side
+): readonly T[] {
+  const keys = pool.filter((c) => c.source === 'key' && c.role === 'key');
+  const menu = pool.filter((c) => c.source === 'menu');
+  const page = pool.filter((c) => c.source !== 'menu' && !(c.source === 'key' && c.role === 'key'));
+  const chosen = side === 'keys' ? keys : side === 'menu' ? menu : page;
+  return [chosen, page, keys, menu].find((candidates) => candidates.length) ?? [];
+}
 
 /** Whether a candidate is one of the common keys, which draw from their own share. */
 export function isCommonKey(candidate: SurveyedCandidate): boolean {
@@ -82,24 +165,45 @@ export function isCommonKey(candidate: SurveyedCandidate): boolean {
 }
 
 /**
+ * Whether a candidate counts toward a Route having somewhere to go.
+ *
+ * The common keys and the menu bar are on offer on every screen, so counting
+ * either would mean no Route ever stranded, and a dead end or a trap would read
+ * as passed. Both stay in the draw; they just cannot keep a Route going on
+ * their own. Decided 2026-09-24 for the keys, and the same day for the menu
+ * once it was offered in every window mode. The cost is a page whose only way
+ * onward is a menu entry: it strands, which is reported apart from failures.
+ */
+export function keepsRouteGoing(candidate: SurveyedCandidate): boolean {
+  return candidate.source !== 'menu' && !isCommonKey(candidate);
+}
+
+/**
  * The only chooser there is today: drawn from the seed, in two steps.
  *
- * The share draw is taken on every Hop, even when one side is empty, so the
+ * The share draw is taken on every Hop, even when a side is empty, so the
  * stream advances the same way whatever the screen offered. The journal
- * records both draws, and the target is always the entry the second draw
- * points at within the side the first chose, in pool order.
+ * records both draws and the shares, and the target is always the entry the
+ * second draw points at within the side the first chose, in pool order. The
+ * draw is taken as a fraction of 2^32 and read by sideOfShareDraw.
  */
-export const seededChooser: Chooser = {
-  choose: (candidates, rng) => {
-    const keys = candidates.filter(isCommonKey);
-    const rest = candidates.filter((candidate) => !isCommonKey(candidate));
-    const sides = Math.round(1 / COMMON_KEY_SHARE);
-    const share = rng.pickWithDraw(Array.from({ length: sides }, (_, index) => index === 0));
-    const side = (share.item && keys.length) || !rest.length ? keys : rest;
-    const { item, draw } = rng.pickWithDraw(side);
-    return { target: item, draw, shareDraw: share.draw };
-  },
-};
+export function createSeededChooser(shares: Shares): Chooser {
+  return {
+    choose: (candidates, rng) => {
+      // One draw, wanted for its raw value: sideOfShareDraw reads the side from it.
+      const share = rng.pickWithDraw([0]);
+      const side = sideCandidates(candidates, sideOfShareDraw(share.draw, shares));
+      const { item, draw } = rng.pickWithDraw(side);
+      return { target: item, draw, shareDraw: share.draw };
+    },
+  };
+}
+
+/** The seeded chooser with the engine's default shares. */
+export const seededChooser: Chooser = createSeededChooser({
+  keyShare: DEFAULT_KEY_SHARE,
+  menuShare: DEFAULT_MENU_SHARE,
+});
 
 /**
  * Generating a value to type, as a second seam.
@@ -349,13 +453,14 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     tripLength,
     journalsRoot,
     fix,
-    chooser = seededChooser,
     values = seededValues,
     hopTimeoutMs = DEFAULT_HOP_TIMEOUT_MS,
     settleTimeoutMs = DEFAULT_SETTLE_TIMEOUT_MS,
     hopDelayMs = hopDelayFromEnvironment(),
   } = options;
   const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
+  const shares = sharesFor(cfg);
+  const chooser = options.chooser ?? createSeededChooser(shares);
 
   // Opened and flushed before the Route does anything, so that a Route which
   // dies inside its Fix still leaves a file naming the seed that produced it.
@@ -365,6 +470,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     routeIndex,
     tripLength: tripLength,
     settleQuietMs,
+    ...shares,
   });
 
   const tally = createExclusionTally(cfg.exclusions);
@@ -421,10 +527,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         });
       }
 
-      // The common keys alone do not keep a Route going: they are always on
-      // offer, so counting them would mean no Route ever stranded, and a dead
-      // end or a trap would read as passed. Decided 2026-09-24.
-      if (found.candidates.every(isCommonKey)) {
+      // Only what the page offers keeps a Route going. See keepsRouteGoing.
+      if (!found.candidates.some(keepsRouteGoing)) {
         // R5. Naming the hop is the requirement, and it is what separates "this
         // application has a dead end at hop 3" from "this Route found nothing
         // to do", which are different findings about different things.
@@ -520,22 +624,24 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
 /** Why the Route had nowhere left to go, in terms a reader can act on. */
 function strandedReason(found: SurveyResult): string {
-  if (found.excluded.length) {
+  // Menu exclusions fire on every hop, so they say nothing about this page.
+  const excluded = found.excluded.filter((entry) => entry.candidate.source !== 'menu');
+  if (excluded.length) {
     return (
-      `No candidate was available. ${found.excluded.length} were found and every one was ` +
-      `excluded: ${found.excluded.map((entry) => entry.rule).join(', ')}.`
+      `No candidate was available on the page. ${excluded.length} were found and every one ` +
+      `was excluded: ${excluded.map((entry) => entry.rule).join(', ')}.`
     );
   }
   if (found.unnamed.length) {
     return (
-      `No candidate was available. ${found.unnamed.length} element(s) carried a hoppable ` +
+      `No candidate was available on the page. ${found.unnamed.length} element(s) carried a hoppable ` +
       `role and no accessible name, so the Route could not reach them: ` +
       `${found.unnamed.map((element) => element.role).join(', ')}.`
     );
   }
   return (
-    'No candidate was available but the common keys: the survey found nothing ' +
-    'with a hoppable role.'
+    'No candidate was available but the common keys and the menu bar: the survey found ' +
+    'nothing on the page with a hoppable role.'
   );
 }
 
@@ -711,7 +817,7 @@ async function act(
   timeoutMs: number
 ): Promise<void> {
   if (target.source === 'menu') {
-    await clickMenuItem(app, [...target.menuPath]);
+    await clickMenuItem(app, [...target.menuPath], page);
     return;
   }
 

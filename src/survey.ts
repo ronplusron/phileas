@@ -1,6 +1,6 @@
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
 import type { Candidate, Exclusions } from './app-under-test';
-import { hasFocusedWindow, menuEntries } from './menu';
+import { menuEntries } from './menu';
 
 /**
  * What a Route could act on next, found from the running application.
@@ -228,6 +228,10 @@ export interface ExcludedCandidate {
  * for a launch path that cannot collect some evidence. A source that quietly
  * offered nothing would be indistinguishable from an application with no menu,
  * and the Route's journal would read the same either way.
+ *
+ * The electron launch path always offers the menu. The debugging-port path,
+ * once it exists, reaches no main process and so no menu, and that is the case
+ * the second arm is kept for.
  */
 export type MenuSourceVerdict =
   | { readonly offered: true; readonly count: number }
@@ -581,24 +585,10 @@ async function surveyPage(
 async function surveyMenu(
   app: ElectronApplication
 ): Promise<{ menuCandidates: MenuCandidate[]; menuSource: MenuSourceVerdict }> {
-  // Asked before the menu is read, not after. See hasFocusedWindow: with no
-  // focused window an ordinary menu handler does nothing at all, while the
-  // click reports success, and the engine causes that condition itself by
-  // keeping windows off the screen.
-  if (!(await hasFocusedWindow(app))) {
-    return {
-      menuCandidates: [],
-      menuSource: {
-        offered: false,
-        reason:
-          'No application window holds focus, so a menu click would reach a handler with no ' +
-          'window and do nothing, while reporting success. Menu candidates are withheld ' +
-          'rather than journaled as hops that did nothing. Run with PHILEAS_SHOW=1 to put ' +
-          'the windows back on the screen and get the menu source back.',
-      },
-    };
-  }
-
+  // Offered whether or not a window holds focus. Menus used to be withheld
+  // without focus, which made what a Route could draw depend on whatever else
+  // on the machine took focus, and broke a replay on 2026-09-24. clickMenuItem
+  // hands the handler the Route's window itself, so focus decides nothing.
   const entries = await menuEntries(app);
   const menuCandidates: MenuCandidate[] = entries
     .filter((entry) => entry.enabled)

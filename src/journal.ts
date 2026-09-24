@@ -171,11 +171,16 @@ export interface TripHopEntry {
    */
   readonly draw?: number;
   /**
-   * The raw 32-bit draw that decided between the common keys and everything
-   * else, taken before `draw`. Below a quarter of 2^32, the keys won, and
-   * `draw` then points into the pool's common keys, in pool order; otherwise
-   * into the rest. When one side was empty, the other was used whatever this
-   * says. Absent in journals written before 2026-09-24, where `draw` points
+   * The raw 32-bit draw that decided which side of the pool the Hop was drawn
+   * from, taken before `draw`. As a fraction of 2^32: below the opening
+   * line's `keyShare` it chose the common keys; below `keyShare` plus
+   * `menuShare`, the menu bar entries; otherwise the page, meaning
+   * everything else, printed shortcuts included. `draw` then points into that
+   * side, in pool order. A chosen side with nothing on it falls back to the
+   * page, and an empty page to the keys and then the menu.
+   *
+   * Journals written earlier on 2026-09-24 split only keys from the rest, with
+   * the keys below a quarter; before that day this is absent and `draw` points
    * into the whole pool.
    */
   readonly shareDraw?: number;
@@ -222,6 +227,12 @@ export interface OpeningEntry {
   readonly tripLength: number;
   /** The quiet window the settle wait used for this Route. See `settle`. */
   readonly settleQuietMs: number;
+  /**
+   * The shares the share draw was read with, the adapter's or the defaults.
+   * Absent in journals written before 2026-09-24's configurable shares.
+   */
+  readonly keyShare?: number;
+  readonly menuShare?: number;
   readonly startedAt: string;
 }
 
