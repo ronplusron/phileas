@@ -355,23 +355,33 @@ so every default exclusion is written in the journal the way the adapter's own
 are, never applied silently. `buggy`'s adapter excludes its own clipboard
 entries in the meantime.
 
-### 1.11 Whether a dialog hides what is behind it from the survey, to measure
+### 1.11 Dialogs that are not native modals
 
-Raised 2026-09-24, agreed as a measurement, not yet scheduled. The survey
-returns a flat list of every visible, named control, in page order, and
-records nothing about what contains what. So with a dialog open, its buttons
-and text area are candidates like any others, and whether the controls behind
-the dialog are still offered depends entirely on the accessibility tree.
+Raised 2026-09-24. A native modal dialog, opened with `showModal()`, is now
+handled: the survey reads only the dialog, and `HISTORY.md` has the
+measurement and the fix. A dialog built any other way is still surveyed as
+part of the whole page, and two gaps remain, both recorded and not yet
+scheduled.
 
-A true modal, one that makes everything behind it inert, should drop those
-controls from the tree; a dialog that only looks modal may leave them in, and
-then a Route can act behind it, which no person could. Neither case has been
-measured, on `buggy` or on either IDE.
+**When nothing behind the dialog is reachable, but the tree still lists it.**
+An application can block the background in three ways. With `aria-hidden`,
+the background leaves the accessibility tree and the survey offers only the
+dialog, which is correct. With `inert`, it should leave the tree the same way
+in Chromium, but whether Playwright's snapshot leaves it out is unmeasured.
+With only an overlay that catches clicks, the background stays in the tree:
+every Hop drawn to it times out and is journaled as abandoned, and a dialog
+with no way out cannot strand, which is the waste the native-modal fix
+removed. Recognizing an overlay without reading the application's code is
+undecided.
 
-It bears on phase 5 in two places. A planted dialog with no way out is meant
-to strand, which it cannot if the controls behind it are still offered. And
-the "no unexpected dialog" check needs to know what a Route can reach while a
-dialog is open.
+**When things behind the dialog are also reachable, and should not be.** The
+survey offers them and a Hop really clicks them, recorded as an ordinary
+click. If the dialog was meant to block the background, that is a real bug
+Phileas walks into and cannot recognize, since no check says what should be
+unreachable. Two ways a check could, both undecided: an adapter declaring
+that nothing behind a named dialog may be reached, which is a structural
+check (R18, phase 6); or a pattern of abandoned Hops whose clicks were
+intercepted, as evidence of an overlay.
 
 ## 2. Undecided
 

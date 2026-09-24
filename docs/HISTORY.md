@@ -25,6 +25,33 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: a native modal hides what is behind it, and a train demo
+
+**The defect, found by building the demo.** Rail Itinerary's ticket purchase
+dialog is opened with `showModal()`, and the browser reported it modal. With it
+open, the survey still offered the eight controls behind it beside the
+dialog's own nine, because the accessibility snapshot of the whole page still
+held them. None could be clicked: tried on the demo, a click behind it timed
+out after three seconds and left the dialog open. So while a dialog was open
+about half of every Hop was wasted and journaled as abandoned, and a dialog
+with no way out could never strand, which phase 5's planted trap depends on.
+
+**The fix.** While a native modal dialog is open, `survey` reads only that
+dialog, and scopes each candidate's locator to it, so a "Cancel" behind it is
+never mistaken for the dialog's own. A Hop's effect is still read from the
+whole page, so the page is read once more while a modal is open. Two tests: a
+modal hides what is behind it, with the closed dialog as the control, and a
+no-way-out modal strands the Route. With the fix switched off both failed,
+the trapped Route reporting "passed". Dialogs built any other way are not
+recognized, and `OUTSTANDING.md` 1.11 has what that leaves open.
+
+**The demo, stage one.** `demo/rail-itinerary/`, planned in
+`DEMO_PLAN_TRAIN.md`: a train travel planner that uses none of Phileas's own
+terms, packaged with its own adapter. `npm run demo:train` runs three Routes
+of twenty Hops with the window forward and a pause per Hop, prints a plain
+line per Hop from its journal as it is written, and replays Route 0 to show it
+retraces; on the default seed it did, all twenty Hops. 114 tests pass.
+
 ## 2026-09-24: the engine owns where journals go
 
 **Why.** After journals moved to a folder per run, each consumer still built

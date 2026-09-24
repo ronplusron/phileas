@@ -1,0 +1,242 @@
+[
+  {
+    "train": "IC 101",
+    "from": "London",
+    "to": "York",
+    "departs": "07:00",
+    "arrives": "11:00",
+    "standardFare": 29
+  },
+  {
+    "train": "IC 102",
+    "from": "London",
+    "to": "York",
+    "departs": "12:00",
+    "arrives": "17:00",
+    "standardFare": 66
+  },
+  {
+    "train": "IC 103",
+    "from": "York",
+    "to": "Edinburgh",
+    "departs": "08:15",
+    "arrives": "13:15",
+    "standardFare": 24
+  },
+  {
+    "train": "IC 104",
+    "from": "York",
+    "to": "Edinburgh",
+    "departs": "12:45",
+    "arrives": "13:45",
+    "standardFare": 73
+  },
+  {
+    "train": "IC 105",
+    "from": "Edinburgh",
+    "to": "Glasgow",
+    "departs": "06:45",
+    "arrives": "07:45",
+    "standardFare": 27
+  },
+  {
+    "train": "IC 106",
+    "from": "Edinburgh",
+    "to": "Glasgow",
+    "departs": "12:00",
+    "arrives": "17:00",
+    "standardFare": 48
+  },
+  {
+    "train": "IC 107",
+    "from": "London",
+    "to": "Manchester",
+    "departs": "08:00",
+    "arrives": "13:00",
+    "standardFare": 93
+  },
+  {
+    "train": "IC 108",
+    "from": "London",
+    "to": "Manchester",
+    "departs": "14:45",
+    "arrives": "19:45",
+    "standardFare": 26
+  },
+  {
+    "train": "IC 109",
+    "from": "Manchester",
+    "to": "Glasgow",
+    "departs": "06:15",
+    "arrives": "11:15",
+    "standardFare": 57
+  },
+  {
+    "train": "IC 110",
+    "from": "Manchester",
+    "to": "Glasgow",
+    "departs": "12:15",
+    "arrives": "16:15",
+    "standardFare": 89
+  },
+  {
+    "train": "IC 111",
+    "from": "London",
+    "to": "Brussels",
+    "departs": "06:15",
+    "arrives": "09:15",
+    "standardFare": 33
+  },
+  {
+    "train": "IC 112",
+    "from": "London",
+    "to": "Brussels",
+    "departs": "14:15",
+    "arrives": "19:15",
+    "standardFare": 67
+  },
+  {
+    "train": "IC 113",
+    "from": "London",
+    "to": "Paris",
+    "departs": "06:00",
+    "arrives": "07:00",
+    "standardFare": 99
+  },
+  {
+    "train": "IC 114",
+    "from": "London",
+    "to": "Paris",
+    "departs": "14:45",
+    "arrives": "16:45",
+    "standardFare": 107
+  },
+  {
+    "train": "IC 115",
+    "from": "Brussels",
+    "to": "Amsterdam",
+    "departs": "08:45",
+    "arrives": "11:45",
+    "standardFare": 94
+  },
+  {
+    "train": "IC 116",
+    "from": "Brussels",
+    "to": "Amsterdam",
+    "departs": "13:30",
+    "arrives": "17:30",
+    "standardFare": 58
+  },
+  {
+    "train": "IC 117",
+    "from": "Brussels",
+    "to": "Paris",
+    "departs": "06:00",
+    "arrives": "08:00",
+    "standardFare": 93
+  },
+  {
+    "train": "IC 118",
+    "from": "Brussels",
+    "to": "Paris",
+    "departs": "12:45",
+    "arrives": "15:45",
+    "standardFare": 63
+  },
+  {
+    "train": "IC 119",
+    "from": "Paris",
+    "to": "Lyon",
+    "departs": "08:00",
+    "arrives": "11:00",
+    "standardFare": 35
+  },
+  {
+    "train": "IC 120",
+    "from": "Paris",
+    "to": "Lyon",
+    "departs": "13:45",
+    "arrives": "18:45",
+    "standardFare": 41
+  },
+  {
+    "train": "IC 121",
+    "from": "Lyon",
+    "to": "Geneva",
+    "departs": "07:45",
+    "arrives": "11:45",
+    "standardFare": 25
+  },
+  {
+    "train": "IC 122",
+    "from": "Lyon",
+    "to": "Geneva",
+    "departs": "12:30",
+    "arrives": "13:30",
+    "standardFare": 63
+  },
+  {
+    "train": "IC 123",
+    "from": "Geneva",
+    "to": "Zurich",
+    "departs": "08:45",
+    "arrives": "13:45",
+    "standardFare": 94
+  },
+  {
+    "train": "IC 124",
+    "from": "Geneva",
+    "to": "Zurich",
+    "departs": "13:00",
+    "arrives": "17:00",
+    "standardFare": 31
+  },
+  {
+    "train": "IC 125",
+    "from": "Zurich",
+    "to": "Milan",
+    "departs": "07:00",
+    "arrives": "08:00",
+    "standardFare": 113
+  },
+  {
+    "train": "IC 126",
+    "from": "Zurich",
+    "to": "Milan",
+    "departs": "13:45",
+    "arrives": "16:45",
+    "standardFare": 56
+  },
+  {
+    "train": "IC 127",
+    "from": "Paris",
+    "to": "Zurich",
+    "departs": "08:00",
+    "arrives": "11:00",
+    "standardFare": 79
+  },
+  {
+    "train": "IC 128",
+    "from": "Paris",
+    "to": "Zurich",
+    "departs": "13:15",
+    "arrives": "16:15",
+    "standardFare": 98
+  },
+  {
+    "train": "IC 129",
+    "from": "Lyon",
+    "to": "Milan",
+    "departs": "06:15",
+    "arrives": "07:15",
+    "standardFare": 118
+  },
+  {
+    "train": "IC 130",
+    "from": "Lyon",
+    "to": "Milan",
+    "departs": "13:15",
+    "arrives": "16:15",
+    "standardFare": 114
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Weekend in Scotland",
+    "legs": [
+      {
+        "train": "IC 101"
+      },
+      {
+        "train": "IC 103"
+      }
+    ]
+  },
+  {
+    "name": "Alps by rail",
+    "legs": [
+      {
+        "train": "IC 113"
+      },
+      {
+        "train": "IC 119"
+      },
+      {
+        "train": "IC 121"
+      }
+    ]
+  }
+]

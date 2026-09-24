@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Rail Itinerary</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Every control carries a readable name: that is what Phileas finds. -->
+    <header>
+      <h1>Rail Itinerary</h1>
+      <nav aria-label="Screens">
+        <button data-screen="itineraries">Itineraries</button>
+        <button data-screen="timetable">Search timetable (⌘F)</button>
+        <button data-screen="about">About</button>
+      </nav>
+      <p id="status" data-ready="false" aria-live="polite">Loading</p>
+    </header>
+
+    <main>
+      <section id="itineraries" aria-label="Itineraries">
+        <h2 id="itinerary-count"></h2>
+        <ul id="itinerary-list"></ul>
+        <button id="new-itinerary">New itinerary</button>
+      </section>
+
+      <section id="itinerary" aria-label="Itinerary" hidden>
+        <h2 id="itinerary-name"></h2>
+        <p id="ticketed" hidden>Ticketed</p>
+        <table>
+          <thead>
+            <tr><th>From</th><th>To</th><th>Train</th><th>Departs</th><th>Arrives</th><th>Class</th><th>Fare</th><th></th></tr>
+          </thead>
+          <tbody id="legs"></tbody>
+        </table>
+        <h3 id="fare-total"></h3>
+        <div class="actions">
+          <button id="add-leg">Add a leg</button>
+          <button id="buy-tickets">Buy tickets</button>
+          <button id="back">Back to itineraries</button>
+        </div>
+      </section>
+
+      <section id="add" aria-label="Add a leg" hidden>
+        <h2>Add a leg</h2>
+        <form id="leg-form">
+          <label>From <select id="leg-from"></select></label>
+          <label>To <select id="leg-to"></select></label>
+          <label>Date <input id="leg-date" type="text" placeholder="YYYY-MM-DD" /></label>
+          <label>Time <input id="leg-time" type="text" placeholder="HH:MM" /></label>
+          <label>Class
+            <select id="leg-class">
+              <option value="standard">Standard</option>
+              <option value="first">First</option>
+              <option value="sleeper">Sleeper</option>
+            </select>
+          </label>
+          <p id="leg-message" aria-live="polite"></p>
+          <div class="actions">
+            <button type="submit" id="save-leg">Save (⌘S)</button>
+            <button type="button" id="cancel-leg">Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="timetable" aria-label="Timetable" hidden>
+        <h2 id="train-count"></h2>
+        <label>Search trains <input id="train-search" type="search" /></label>
+        <button id="clear-search">Clear</button>
+        <ul id="train-list"></ul>
+      </section>
+
+      <section id="about" aria-label="About" hidden>
+        <h2>About</h2>
+        <p>A demo application for showing Phileas at work. Nothing here books a real ticket.</p>
+        <a href="https://example.com/rail-network" id="network-link">Visit the rail network's site</a>
+      </section>
+    </main>
+
+    <!--
+      Modal by design: opened with showModal(), which makes everything behind
+      it unreachable until it closes. docs/OUTSTANDING.md asks whether Phileas
+      honors that; the demo is where it is seen.
+    -->
+    <dialog id="purchase-dialog" aria-labelledby="purchase-title">
+      <form method="dialog" id="purchase-form">
+        <h2 id="purchase-title">Ticket purchase</h2>
+        <label>Ticket holder's name <input id="holder" type="text" /></label>
+        <label>Number of tickets
+          <select id="ticket-count">
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+          </select>
+        </label>
+        <p id="ticket-total"></p>
+        <p id="purchase-message" aria-live="polite"></p>
+        <div class="actions">
+          <button type="button" id="purchase-button">Purchase</button>
+          <button type="button" id="cancel-purchase">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>

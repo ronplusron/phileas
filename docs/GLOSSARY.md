@@ -29,7 +29,7 @@ phases are marked by number.
 | Term | Meaning |
 |---|---|
 | Page | The contents of the application's window, which Electron draws as a web page. The native menu is not part of it. |
-| Survey | Finding what the page offers right now by reading its controls' accessibility roles and names, plus the native menu. Nobody lists an application's controls for it. |
+| Survey | Finding what the page offers right now by reading its controls' accessibility roles and names, plus the native menu. Nobody lists an application's controls for it. While a native modal dialog is open, only the dialog is read. |
 | Candidate | One thing a Hop could act on: a visible, enabled control with an accessible name, a menu entry, or a key. |
 | Common keys | Enter, Escape, Tab and the four arrows, offered on every Hop and pressed on whatever has focus. Together they get a fixed quarter of the draw whenever anything else is on offer, and they alone never keep a Route from stranding. They are withheld while an excluded control has focus. |
 | Printed shortcut | A shortcut shown in a control's accessible name, such as ⌘S in "Save current document (⌘S)", offered as a key to press and drawn with the controls. Excluded whenever its control is. Native menu accelerators are not offered, since a key sent through Playwright never reaches one. |

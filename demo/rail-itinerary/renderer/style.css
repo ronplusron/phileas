@@ -1,0 +1,40 @@
+/* Large enough to read on a projector, and nothing more. */
+:root {
+  font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  color: #1d2a33;
+  background: #f4f1ea;
+}
+body { margin: 0; }
+header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.8rem 1.5rem;
+  background: #16425b;
+  color: #fff;
+}
+header h1 { margin: 0; font-size: 1.4rem; }
+header nav { display: flex; gap: 0.5rem; }
+#status { margin-left: auto; font-size: 0.85rem; opacity: 0.8; }
+main { padding: 1.2rem 1.5rem; }
+button {
+  font: inherit;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid #16425b;
+  border-radius: 6px;
+  background: #fff;
+  color: #16425b;
+  cursor: pointer;
+}
+header button { border-color: #fff; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #d9a441; }
+ul { padding-left: 0; list-style: none; }
+li { margin: 0.35rem 0; }
+table { border-collapse: collapse; margin: 0.8rem 0; }
+th, td { padding: 0.35rem 0.7rem; border-bottom: 1px solid #cfc8b8; text-align: left; }
+form label { display: block; margin: 0.6rem 0; }
+input, select { font: inherit; padding: 0.25rem 0.4rem; }
+.actions { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
+#ticketed { color: #2e7d32; font-weight: 600; }
+dialog { border: 2px solid #16425b; border-radius: 10px; padding: 1.4rem; }
+dialog::backdrop { background: rgb(22 66 91 / 0.45); }

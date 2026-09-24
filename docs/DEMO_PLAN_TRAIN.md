@@ -152,15 +152,15 @@ reproduces it, and a replay that walks straight back to it.
   that is undecided.
 - **Whether stage two's bugs switch on together or one at a time.** One at a
   time reads better in a demo; together is closer to phase 8's measure.
-- **Where the modal question lands.** `OUTSTANDING.md` 1.11 asks whether a
-  dialog hides the controls behind it from the survey. The ticket purchase
-  dialog in stage one, and the seating-chart dialog in stage two, depend on
-  the answer. Both are modal by design, so nothing behind them should be
-  reachable. If Phileas still reaches the itinerary behind the ticket dialog,
-  that is a flaw in the engine the demo has exposed, to be measured and fixed
-  before the demo is shown, not behavior to present.
+- **The seating chart's dialog.** Both dialogs are native modals by design.
+  Building stage one exposed that the survey offered the controls behind the
+  ticket dialog, a flaw now fixed and recorded in `HISTORY.md`, so a native
+  modal with no way out now strands. The seating chart must be a native modal
+  too, or `OUTSTANDING.md` 1.11 applies.
 
 ## Build order for stage one
+
+Built 2026-09-24, all but the presenting script. `npm run demo:train` runs it.
 
 1. The application and its data, packaged, with a staleness-guarded adapter.
 2. The Journey and its one-command watched run.

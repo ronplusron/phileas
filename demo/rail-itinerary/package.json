@@ -1,0 +1,19 @@
+{
+  "name": "rail-itinerary",
+  "productName": "Rail Itinerary",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A train travel planner, built to show Phileas at work. docs/DEMO_PLAN_TRAIN.md is its plan.",
+  "type": "module",
+  "main": "main.cjs",
+  "author": "Drugstore Sushi",
+  "scripts": {
+    "package": "electron-packager . --overwrite --platform=darwin --arch=arm64 --app-bundle-id=com.drugstoresushi.railitinerary --app-copyright=\"Copyright (c) 2026 Ron Blum. All rights reserved.\" --out dist --prune=true --ignore=\"^/dist($|/)\" --ignore=\"^/phileas($|/)\" --ignore=\"^/node_modules($|/)\" --ignore=\"^/watch\\.mjs$\"",
+    "demo": "node watch.mjs"
+  },
+  "devDependencies": {
+    "@drugstoresushi/phileas": "file:../..",
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.4.3"
+  }
+}

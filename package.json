@@ -14,7 +14,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
-    "journey": "playwright test -c testbed/buggy/phileas/playwright.config.ts"
+    "journey": "playwright test -c testbed/buggy/phileas/playwright.config.ts",
+    "demo:train": "node demo/rail-itinerary/watch.mjs"
   },
   "engines": {
     "node": ">=20"

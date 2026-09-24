@@ -12,6 +12,10 @@ node_modules/
 # lands beside that application rather than at the repository root.
 /testbed/*/test-results/
 /testbed/*/playwright-report/
+# The same, for each demo application.
+/demo/*/dist/
+/demo/*/test-results/
+/demo/*/playwright-report/
 *.log
 .DS_Store
 .phileas-seed

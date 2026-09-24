@@ -506,11 +506,29 @@ async function surveyPage(
   page: Page,
   timeoutMs: number | undefined
 ): Promise<{ candidates: PageCandidate[]; unnamed: UnnamedElement[]; tree: unknown }> {
-  const snapshot = (await page
-    .locator('body')
-    .ariaSnapshotJSON(timeoutMs === undefined ? {} : { timeout: timeoutMs })) as
-    | AriaNode
-    | AriaNode[];
+  const bounded = timeoutMs === undefined ? {} : { timeout: timeoutMs };
+
+  // **While a modal dialog is open, only the dialog is surveyed.** Measured on
+  // 2026-09-24 with the demo's ticket dialog, opened with showModal(): the
+  // browser reported it modal, and the accessibility snapshot of the body still
+  // held the eight controls behind it beside the dialog's own nine. None could
+  // be clicked -- each timed out and was journaled as abandoned -- so about
+  // half of every Hop was wasted while a dialog was open, and a dialog with no
+  // way out could never strand. The candidates' locators are scoped to the
+  // dialog too, so a "Cancel" behind it is never mistaken for the dialog's own.
+  //
+  // Native modal dialogs only. A dialog built from ordinary elements with
+  // aria-modal is not recognized here, and is unmeasured.
+  const modal = page.locator('dialog:modal');
+  const modalOpen = (await modal.count()) > 0;
+  const root = modalOpen ? modal.last() : page.locator('body');
+  const snapshot = (await root.ariaSnapshotJSON(bounded)) as AriaNode | AriaNode[];
+
+  // The whole page is still what a Hop's effect is read from (R31), since the
+  // settle wait that reads "after" reads the whole page too. So with a modal
+  // open, the page is read once more.
+  const tree =
+    modalOpen ? await page.locator('body').ariaSnapshotJSON(bounded) : snapshot;
 
   const candidates: PageCandidate[] = [];
   const unnamed: UnnamedElement[] = [];
@@ -534,7 +552,7 @@ async function surveyPage(
           name: node.name,
           nth,
           disabled: node.disabled === true,
-          locator: page.getByRole(node.role as Parameters<Page['getByRole']>[0], {
+          locator: root.getByRole(node.role as Parameters<Page['getByRole']>[0], {
             name: node.name,
             exact: true,
           }).nth(nth),
@@ -555,7 +573,7 @@ async function surveyPage(
   return {
     candidates: candidates.filter((candidate) => !candidate.disabled),
     unnamed,
-    tree: snapshot,
+    tree,
   };
 }
 

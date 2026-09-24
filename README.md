@@ -56,7 +56,7 @@ Journey and derives each Route's seeds from them. And it now travels: a Route
 finds what the screen offers by accessibility role, draws its next move from
 its seed, acts, waits for the page to stop moving, and writes a journal entry
 per Hop. `testbed/buggy/` is a packaged application built to be traveled
-through, and one hundred and twelve tests run against it.
+through, and one hundred and fourteen tests run against it.
 
 What is still unwritten is every check. Nothing yet decides whether anything a
 Route walked past is wrong, so the engine can currently report only that a
@@ -102,3 +102,4 @@ Journey is shown finding each one.
 | `src/oracles/` | The check runner and the implicit tier. |
 | `tests/` | This engine's own tests. |
 | `testbed/` | Applications built to be tested, each broken in one chosen way, with the adapter each needs. |
+| `demo/` | Applications built to show Phileas at work, apart from `testbed/`. `docs/DEMO_PLAN_TRAIN.md` plans the first; `npm run demo:train` runs it. |

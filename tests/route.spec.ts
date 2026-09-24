@@ -865,3 +865,61 @@ test('the engine lays journals out under the root as seed, then run', async ({ p
   expect(fs.readdirSync(root)).toEqual(['layout-seed']);
   expect(fs.readdirSync(path.join(root, 'layout-seed'))).toEqual([TEST_RUN]);
 });
+
+test('while a modal dialog is open, only the dialog is surveyed', async ({ page, app }) => {
+  // Measured on the demo's ticket dialog: the body's snapshot still held the
+  // controls behind a real modal, none of which could be clicked.
+  await page.evaluate(() => {
+    const behind = document.createElement('button');
+    behind.textContent = 'Cancel';
+    document.body.append(behind);
+    const dialog = document.createElement('dialog');
+    dialog.id = 'probe-dialog';
+    dialog.innerHTML = '<button>Keep going</button><button>Cancel</button>';
+    document.body.append(dialog);
+  });
+  const offered = async () =>
+    (
+      await survey({ page, app, exclusions: {}, hopIndex: 0, tally: createExclusionTally({}) })
+    ).candidates
+      .filter((c) => c.source === 'page')
+      .map((c) => c.name);
+
+  // The positive control: with the dialog closed, the page's controls are offered.
+  expect(await offered()).toContain('Summary');
+
+  await page.evaluate(() => (document.getElementById('probe-dialog') as HTMLDialogElement).showModal());
+  expect(await offered()).toEqual(['Keep going', 'Cancel']);
+
+  // The dialog's Cancel, not the one behind it, is what a Hop would act on.
+  const found = await survey({ page, app, exclusions: {}, hopIndex: 0, tally: createExclusionTally({}) });
+  const cancel = found.candidates.find((c) => c.source === 'page' && c.name === 'Cancel');
+  expect(
+    cancel?.source === 'page'
+      ? await cancel.locator.evaluate((el) => el.closest('dialog')?.id ?? 'outside')
+      : undefined
+  ).toBe('probe-dialog');
+});
+
+test('a modal dialog with no way out strands the Route', async ({ page, app }) => {
+  // The planted defect phase 5 needs: before the survey honored modals, the
+  // controls behind this dialog kept every Route going.
+  await page.evaluate(() => {
+    const dialog = document.createElement('dialog');
+    dialog.innerHTML = '<p>There is no way out of this dialog.</p>';
+    document.body.append(dialog);
+    dialog.addEventListener('cancel', (event) => event.preventDefault());
+    dialog.showModal();
+  });
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('trap-seed', 0),
+    journeySeed: 'trap-seed',
+    routeIndex: 0,
+    tripLength: 5,
+    journalsRoot: scratch(),
+  });
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
+});
