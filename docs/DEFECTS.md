@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Two defects are recorded.** The launch layer landed in phase 1, so this file
+**One defect is recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows is two defects, then the two things most likely to be filed here
+What follows is one defect, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -85,36 +85,6 @@ sound for an application nobody has read, which is the whole hazard.
 **This entry leaves when phase 5's second evidence source exists**, and on
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
-
-## The settle wait can call a moving page settled
-
-**Filed 2026-09-24, measured on RStudio.** `settle` in `src/route.ts` reads the
-accessibility tree, waits one frame, reads it again, and returns settled when
-the two agree. A page that changes more slowly than a frame passes that test
-between changes. With RStudio's console printing a line every 200 ms, the tree
-differed at every one of twelve samples, and `settle` still returned settled
-in about 35 ms, every time. Positron did the same, and also returned settled
-with a line every 5 ms. `HISTORY.md` has the measurements and their controls.
-
-**Why a defect:** it produces a wrong answer that reads as a right one. The
-survey that follows is taken from a page mid-change, so the pool the next Hop
-draws from depends on timing, and a replay can diverge with nothing in the
-journal to say why (R8). R31 records a Hop's effect from the settle wait's last
-reading, so it would record a half-finished change as the Hop's effect.
-Nothing reports it: the journal says settled.
-
-**Not the same as a page that never settles.** On RStudio at a line every 5 ms
-the wait ran out its limit and returned unsettled, which is the designed
-behavior and is recorded honestly. This entry is the case that returns
-settled.
-
-**What closes it,** chosen 2026-09-24: a quiet window. The page counts as
-settled only when the whole tree stays unchanged for a stretch of time, rather
-than across one frame. The stretch is paid on every Hop, so its length is set
-by measuring `buggy` and both IDEs, not chosen in advance. Chosen over
-comparing only the pool, which would let R31 read an effect before its text
-finished changing. It comes before R31, since R31 builds on the same readings,
-and `PLAN.md` has it in the work before phase 5.
 
 ## Two things that will look like candidates, and are not
 

@@ -290,4 +290,15 @@ export interface AppUnderTest {
    * indistinguishable from one that passed.
    */
   narrowedChecks?: Partial<Record<UniversalCheck, Narrowing>>;
+
+  /**
+   * How long the page must stay unchanged after a Hop to count as settled, in
+   * milliseconds. Leave it out for the engine's default.
+   *
+   * For an application whose effects pause longer than the default partway
+   * through, so that the settle wait would otherwise stop mid-change. The
+   * length used is written in every journal, because it decides when a Hop's
+   * effect is read and so what a replay compares against.
+   */
+  settleQuietMs?: number;
 }

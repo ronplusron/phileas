@@ -25,6 +25,53 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: a quiet window for the settle wait
+
+**The defect.** The settle wait read the accessibility tree, waited one frame,
+read it again, and called the page settled when the two agreed. On RStudio and
+Positron, a console printing a line every 200 ms changed the tree at every one
+of twelve samples and still read as settled every time: two reads a frame
+apart fall between changes. So a survey could be taken mid-change, and R31
+would have read an effect half finished.
+
+**The fix,** chosen at the review: the page counts as settled only once it has
+stayed unchanged for a quiet window. The window is an engine default that an
+adapter can override with `settleQuietMs`, both chosen after the review
+answered that the length varies too much between applications for one value
+to suit them all. Every journal's opening line records the window its Route
+used.
+
+**How the default's length was chosen: 400 ms, by measurement.** Each
+action's effect was timed by reading the tree every frame for several seconds
+afterwards and recording every change.
+
+- `buggy`: every effect a single change, finished within 46 ms.
+- RStudio: the longest pause inside one effect was 173 ms, among tab clicks,
+  and effects of console commands finished within about 700 ms.
+- Positron: the longest pause inside one effect was 337 ms, Help drawing a
+  page at 466 ms after changes at 45 and 129.
+
+Both IDEs also changed about a second after most actions, and that turned out
+not to be the actions' effect at all: it was resource monitors, RStudio's
+memory readings and Positron's CPU and memory readings, ticking roughly once a
+second. They leave gaps well over 400 ms between ticks, so they do not stop a
+400 ms window from settling. Their other consequences, for R31 and for replay
+on RStudio, are recorded in `OUTSTANDING.md` 1.10 for the IDEs' turn. A
+`Sys.sleep(1)` in the console produced a real change after about 1.2 seconds,
+which is computation; no window should be expected to wait it out, and the
+wait's two-second limit returns unsettled instead.
+
+**What it costs.** About 0.4 seconds per Hop, against about 35 ms before.
+`buggy`'s five-Route Journey went from about 6 seconds to 46, and the test
+suite from 24 seconds to 45.
+
+**What checks it.** A new test gives a page a button renamed every 200 ms and
+asserts it is not settled; its positive control, in the same test, runs the
+old rule of no window and asserts that the same page does read as settled.
+A second new test asserts a quiet page settles no sooner than the window.
+Two Journeys of one seed matched line for line once timings were ignored,
+with all 100 Hops settled at a median of 414 ms. 99 tests pass.
+
 ## 2026-09-24: a folder per run, for journals
 
 **The defect.** A run wrote each Route's journal into

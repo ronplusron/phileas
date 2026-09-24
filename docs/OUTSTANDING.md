@@ -16,8 +16,7 @@ accumulates is how a section grows until nobody reads it.
 **These headings are judgments.** Placing an item is a decision about what
 kind of thing it is, and worth making deliberately.
 
-`DEFECTS.md` is what is wrong: two entries, one to close before phase 5 and
-one in phase 5.
+`DEFECTS.md` is what is wrong: one entry, which phase 5 closes.
 
 ## 1. Agreed, not built
 
@@ -318,8 +317,9 @@ into a screen.
 
 - **Two readings are compared:** the accessibility tree the survey read before
   the Hop, and the last one the settle wait read after it. Both are already
-  taken, so the effect costs nothing extra. That second reading can come from
-  a page still changing, which `DEFECTS.md` records against the settle wait.
+  taken, so the effect costs nothing extra. The second is taken once the page
+  has stayed unchanged for the settle wait's quiet window, so it is not read
+  mid-change.
 - **`changed`** says whether anything in the tree differs. It is kept separate
   from the headings because headings can miss a change entirely: on
   trickster-tales, clicking a facet value left every heading in place.
@@ -400,8 +400,18 @@ repeating it.
   nor the journal's pools need work.
 - **A page that never stops moving** turned out to be two findings, the same
   on both IDEs. A blinking cursor is not in the accessibility tree, so it does
-  not register at all. A live console does, and the settle wait can return
-  settled while it is still changing, which is now in `DEFECTS.md`.
+  not register at all. A live console does, and the settle wait used to return
+  settled while it was still changing; it now waits for a quiet window, and
+  `HISTORY.md` has the fix.
+- **Resource monitors that tick,** at the IDEs' turn, agreed 2026-09-24. Both
+  IDEs show memory or CPU readings that change about once a second: RStudio's
+  "Memory in use" image and its "KiB used by R session" button, Positron's
+  resource monitor and memory meter. Two things follow. R31 would record every
+  IDE Hop as having changed the screen. And RStudio's reading is a button, so
+  it is a candidate whose name differs from one run to the next, which sends a
+  replay's draw somewhere else. The remedy agreed is an adapter naming such
+  elements for the engine to leave out of pools, settling and effects. `buggy`
+  has none, so nothing breaks before the engine meets an IDE.
 - **Bugs that happen on quitting.** Quit is excluded, so no Hop reaches it, but
   every Route already ends by closing the application. A main-process error
   check watching that close could catch RStudio's first recorded bug without a

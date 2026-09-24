@@ -12,6 +12,7 @@ import {
   runRoute,
   seededValues,
   settle,
+  DEFAULT_SETTLE_QUIET_MS,
   survey,
   takesTypedValue,
   NondeterministicExclusion,
@@ -603,6 +604,40 @@ test('a prevented navigation ends the Route once, rather than timing out every h
   // is alive and answering, which is what makes this a blocked locator rather
   // than an application that left.
   expect(await page.evaluate(() => document.title)).toBe('Buggy');
+});
+
+test('a page that changes every 200ms is not settled, though two reads agree', async ({
+  page,
+}) => {
+  // The defect this closes, reproduced on the testbed. Measured on RStudio and
+  // Positron on 2026-09-24: a console printing a line every 200 ms read as
+  // settled every time, because two reads a frame apart fall between changes.
+  await page.evaluate(() => {
+    const ticker = document.createElement('div');
+    document.body.append(ticker);
+    let n = 0;
+    setInterval(() => {
+      const button = document.createElement('button');
+      button.textContent = `Tick ${n++}`;
+      ticker.replaceChildren(button);
+    }, 200);
+  });
+
+  // The positive control: with no window, which is the old rule of two reads
+  // agreeing, the same page does read as settled. Without this, a settle that
+  // could never return settled would pass the assertion below.
+  const oldRule = await settle(page, 2_000, 0);
+  expect(oldRule.settled).toBe(true);
+
+  const withWindow = await settle(page, 2_000);
+  expect(withWindow.settled).toBe(false);
+});
+
+test('a quiet page settles after the window, not before', async ({ page }) => {
+  const quiet = await settle(page, 2_000);
+  expect(quiet.settled).toBe(true);
+  expect(quiet.ms).toBeGreaterThanOrEqual(DEFAULT_SETTLE_QUIET_MS);
+  expect(quiet.ms).toBeLessThan(DEFAULT_SETTLE_QUIET_MS + 500);
 });
 
 test('settle reports what it cost, and says when a page never stopped moving', async ({

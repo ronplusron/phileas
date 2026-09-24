@@ -40,7 +40,7 @@ phases are marked by number.
 | Target | What a Hop acted on, or tried to. |
 | Action | What was done to the target: `click`, `fill`, `select`, `focus` or `menu-click`, with `press` planned, and `type` planned to replace `fill`. `fill` sets a value without pressing keys; `type` presses one key per character. In a native dropdown, `select` chooses an option without opening the list, and `focus` reaches the dropdown itself, since clicking it opens a list the engine cannot use. |
 | Value | The text a `fill` put in, or a `type` once it replaces `fill`, from a second seam separate from the chooser. |
-| Settle | What the page does when it stops changing after a Hop. The engine waits for it, up to a limit, by reading the page until two reads agree. |
+| Settle | What the page does when it stops changing after a Hop. The engine waits for it, up to a limit, by reading the page until it has stayed unchanged for a quiet window: 400 ms by default, which an adapter can change with `settleQuietMs`. |
 
 ## Seeds and replay
 

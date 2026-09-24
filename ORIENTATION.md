@@ -39,14 +39,14 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs ninety-seven tests. Seven launch it, refuse a
+through, and `npm test` runs ninety-nine tests. Seven launch it, refuse a
 stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
 terms without launching anything, including known-answer vectors that pin the
 generator's output. Twelve record what `buggy` correctly does, so a defect
 planted later can be told apart from an accidental one. Seven assert that a
-guard refuses rather than answering when it has no evidence. Seventeen travel
+guard refuses rather than answering when it has no evidence. Nineteen travel
 through the application, and ten cover the journal, including one cut off
 mid-write and one refusing to overwrite an earlier run. Fourteen cover the window modes, the hop delay and the application's
 checkout, and two keep every source file searchable. The last three cover the
@@ -66,16 +66,15 @@ verification points rather than bookkeeping.
 **The work before phase 5 is the next thing to do.** Running the engine
 against real applications for a demo found gaps phase 5 would otherwise build
 on, and `docs/PLAN.md` lists them under "Before phase 5", in the order a
-review of what the two IDEs need settled, starting with the settle fix.
+review of what the two IDEs need settled, starting with R31.
 Phase 5 itself -- the universal tier
 of checks, and the point where a Route can fail for a reason rather than only
 for not finishing -- starts once that list is empty. `journal.ts` already
 carries an empty `checks` field on every Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Two defects are open.
-One closes before phase 5: the settle wait calling a moving page settled.
-Phase 5 closes the other: the external-link stub can
-install successfully and do nothing, and it stays open until a second source
+**Read `docs/DEFECTS.md` before writing any of it.** One defect is open, and
+phase 5 closes it: the external-link stub can install successfully and do
+nothing, and it stays open until a second source
 of evidence exists that does not depend on the stub having worked. That file
 holds what is wrong, confirmed by reading the code, and nothing here restates
 it.
@@ -145,7 +144,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own ninety-seven tests against `testbed/buggy/`.
+`npm test` runs the engine's own ninety-nine tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them. It prints the Journey seed; set

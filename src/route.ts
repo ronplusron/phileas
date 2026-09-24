@@ -246,6 +246,19 @@ const DEFAULT_HOP_TIMEOUT_MS = 3_000;
 /** How long to wait for the page to stop moving. See `settle`. */
 const DEFAULT_SETTLE_TIMEOUT_MS = 2_000;
 
+/**
+ * How long the page must stay unchanged to count as settled. See `settle`.
+ *
+ * Measured on 2026-09-24, not chosen. The longest pause measured inside one
+ * Hop's real effect was 337 ms, Positron drawing a help page; RStudio's longest
+ * was 173 ms, and `buggy`'s effects are single changes inside 46 ms. So the
+ * window is longer than any of those. It is also short enough that both IDEs'
+ * resource monitors, which tick about once a second, leave room for it between
+ * ticks. The price is paid on every Hop, so an adapter can set its own with
+ * `settleQuietMs`.
+ */
+export const DEFAULT_SETTLE_QUIET_MS = 400;
+
 /** The variable a watching delay is read from. Named because errors quote it. */
 export const HOP_DELAY_VARIABLE = 'PHILEAS_HOP_DELAY_MS';
 
@@ -299,6 +312,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     settleTimeoutMs = DEFAULT_SETTLE_TIMEOUT_MS,
     hopDelayMs = hopDelayFromEnvironment(),
   } = options;
+  const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
 
   // Opened and flushed before the Route does anything, so that a Route which
   // dies inside its Fix still leaves a file naming the seed that produced it.
@@ -307,6 +321,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     routeSeed: streams.routeSeed,
     routeIndex,
     tripLength: tripLength,
+    settleQuietMs,
   });
 
   const tally = createExclusionTally(cfg.exclusions);
@@ -394,7 +409,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         abandoned = error instanceof Error ? error.message.split('\n')[0] : String(error);
       }
 
-      const settling = await settle(page, settleTimeoutMs);
+      const settling = await settle(page, settleTimeoutMs, settleQuietMs);
 
       // The pool is written first, if this file has not seen it, so the Hop
       // line below never names a pool that is not already on disk.
@@ -635,10 +650,18 @@ async function act(
  * touch until it has surveyed, so whatever it waits for is generic by
  * necessity.
  *
- * What this does: read the accessibility tree twice with a frame between, and
- * stop when two consecutive reads agree. That measures the thing the Route
- * actually depends on, which is the survey being stable, rather than a proxy
- * for it. R8 rests on the candidate list being identical hop for hop.
+ * What this does: read the accessibility tree over and over, a frame apart,
+ * and return settled once it has stayed the same for `quietMs`. That measures
+ * the thing the Route actually depends on, which is the survey being stable,
+ * rather than a proxy for it. R8 rests on the candidate list being identical
+ * hop for hop.
+ *
+ * **Why a window and not two reads.** It used to stop as soon as two reads a
+ * frame apart agreed. Measured on RStudio and Positron on 2026-09-24, a console
+ * printing a line every 200 ms changed the tree at every sample and still read
+ * as settled every time, because two reads a frame apart fall between changes.
+ * docs/HISTORY.md has the measurement, and `DEFAULT_SETTLE_QUIET_MS` says how
+ * the window's length was chosen.
  *
  * **An application that never settles is not stopped here.** The wait is
  * bounded and returns unsettled, because a page that keeps moving is a finding
@@ -646,33 +669,36 @@ async function act(
  */
 export async function settle(
   page: Page,
-  timeoutMs: number
+  timeoutMs: number,
+  quietMs: number = DEFAULT_SETTLE_QUIET_MS
 ): Promise<{ settled: boolean; ms: number }> {
   const startedAt = Date.now();
   let previous: string | undefined;
+  let unchangedSince = startedAt;
 
   try {
-  while (Date.now() - startedAt < timeoutMs) {
-    // Bounded by whatever is left of the budget. An unbounded snapshot here
-    // waits on any pending navigation, and a navigation the application
-    // prevented never resolves, so the settle wait would outlast its own
-    // timeout by Playwright's default instead of returning unsettled.
-    const remaining = Math.max(1, timeoutMs - (Date.now() - startedAt));
-    const current = JSON.stringify(
-      await page.locator('body').ariaSnapshotJSON({ timeout: remaining })
-    );
-    if (previous !== undefined && current === previous) {
-      return { settled: true, ms: Date.now() - startedAt };
+    while (Date.now() - startedAt < timeoutMs) {
+      // Bounded by whatever is left of the budget. An unbounded snapshot here
+      // waits on any pending navigation, and a navigation the application
+      // prevented never resolves, so the settle wait would outlast its own
+      // timeout by Playwright's default instead of returning unsettled.
+      const remaining = Math.max(1, timeoutMs - (Date.now() - startedAt));
+      const current = JSON.stringify(
+        await page.locator('body').ariaSnapshotJSON({ timeout: remaining })
+      );
+      const readAt = Date.now();
+      if (current !== previous) unchangedSince = readAt;
+      else if (readAt - unchangedSince >= quietMs) {
+        return { settled: true, ms: readAt - startedAt };
+      }
+      previous = current;
+
+      // One frame, so consecutive reads span a repaint rather than two reads
+      // the renderer had no chance to change anything between.
+      await page
+        .evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
+        .catch(() => undefined);
     }
-    previous = current;
-
-    // One frame, so the comparison spans a repaint rather than two reads the
-    // renderer had no chance to change anything between.
-    await page
-      .evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
-      .catch(() => undefined);
-  }
-
   } catch {
     // The snapshot itself timed out, which means the page stopped answering
     // rather than that it kept moving. Both are "not settled" from here; the

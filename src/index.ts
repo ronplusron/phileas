@@ -96,6 +96,7 @@ export {
 export {
   runRoute,
   settle,
+  DEFAULT_SETTLE_QUIET_MS,
   hopDelayFromEnvironment,
   HOP_DELAY_VARIABLE,
   seededChooser,

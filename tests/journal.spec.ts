@@ -28,6 +28,7 @@ const opening = {
   routeSeed: 'def456',
   routeIndex: 3,
   tripLength: 5,
+  settleQuietMs: 400,
 };
 
 function hop(index: number) {

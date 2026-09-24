@@ -195,6 +195,8 @@ export interface OpeningEntry {
   readonly routeSeed: string;
   readonly routeIndex: number;
   readonly tripLength: number;
+  /** The quiet window the settle wait used for this Route. See `settle`. */
+  readonly settleQuietMs: number;
   readonly startedAt: string;
 }
 
