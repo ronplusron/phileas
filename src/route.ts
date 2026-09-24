@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test';
 import type { Rng, RouteStreams } from './random';
+import { effectOf, type HopEffect } from './effect';
 import { Journal, type HopAction, type JournaledCandidate } from './journal';
 import { clickMenuItem } from './menu';
 import {
@@ -329,7 +330,16 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   let menuVerdictNoted = false;
 
   try {
-    if (fix) await runFix(fix, { page, app, rng: streams.fix, journal });
+    if (fix) {
+      await runFix(fix, {
+        page,
+        app,
+        rng: streams.fix,
+        journal,
+        settleTimeoutMs,
+        settleQuietMs,
+      });
+    }
 
     let lastTarget: string | undefined;
 
@@ -428,6 +438,11 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         durationMs: Date.now() - startedAt.getTime(),
         settled: settling.settled,
         settleMs: settling.ms,
+        effect: effectOf(
+          found.tree,
+          settling.tree,
+          'The page stopped answering while the settle wait read it, so what the Hop did could not be read.'
+        ),
         checks: [],
       });
 
@@ -478,10 +493,38 @@ function strandedReason(found: SurveyResult): string {
 /** Run the Fix, journaling each step, and wrap any failure as R11 asks. */
 async function runFix(
   fix: Fix,
-  context: { page: Page; app: ElectronApplication; rng: Rng; journal: Journal }
+  context: {
+    page: Page;
+    app: ElectronApplication;
+    rng: Rng;
+    journal: Journal;
+    settleTimeoutMs: number;
+    settleQuietMs: number;
+  }
 ): Promise<void> {
-  const { page, app, rng, journal } = context;
+  const { page, app, rng, journal, settleTimeoutMs, settleQuietMs } = context;
   let steps = 0;
+
+  // The "before" of the first step. Every later step's "before" is the reading
+  // the previous step's settle wait ended on, so this is the only extra read.
+  let before: unknown = await page
+    .locator('body')
+    .ariaSnapshotJSON({ timeout: settleTimeoutMs })
+    .catch(() => undefined);
+
+  // A full settle wait after each step, as after a Trip hop, rather than one
+  // snapshot, which could catch the screen mid-change and record the wrong
+  // effect. Decided 2026-09-24; a Fix is usually a handful of steps.
+  const effectAfter = async (): Promise<HopEffect> => {
+    const settling = await settle(page, settleTimeoutMs, settleQuietMs);
+    const effect = effectOf(
+      before,
+      settling.tree,
+      'The page did not answer before or after this step, so what it did could not be read.'
+    );
+    before = settling.tree;
+    return effect;
+  };
 
   await fix({
     page,
@@ -497,6 +540,7 @@ async function runFix(
         // failure is thrown. R11 wants a broken Fix told apart from a failed
         // Route, and that means saying which step broke rather than leaving it
         // as a sentence inside the outcome's reason.
+        const effect = await effectAfter();
         journal.write({
           kind: 'fix-hop',
           hop,
@@ -504,16 +548,21 @@ async function runFix(
           error: error instanceof Error ? error.message.split('\n')[0] : String(error),
           startedAt: startedAt.toISOString(),
           durationMs: Date.now() - startedAt.getTime(),
+          effect,
           checks: [],
         });
         throw new FixFailure(name, error);
       }
+      // Before the entry, as for a Trip hop, so that `durationMs` includes the
+      // settle wait on both kinds of Hop.
+      const effect = await effectAfter();
       journal.write({
         kind: 'fix-hop',
         hop,
         name,
         startedAt: startedAt.toISOString(),
         durationMs: Date.now() - startedAt.getTime(),
+        effect,
         checks: [],
       });
       steps += 1;
@@ -671,9 +720,10 @@ export async function settle(
   page: Page,
   timeoutMs: number,
   quietMs: number = DEFAULT_SETTLE_QUIET_MS
-): Promise<{ settled: boolean; ms: number }> {
+): Promise<{ settled: boolean; ms: number; tree?: unknown }> {
   const startedAt = Date.now();
   let previous: string | undefined;
+  let tree: unknown;
   let unchangedSince = startedAt;
 
   try {
@@ -683,13 +733,12 @@ export async function settle(
       // prevented never resolves, so the settle wait would outlast its own
       // timeout by Playwright's default instead of returning unsettled.
       const remaining = Math.max(1, timeoutMs - (Date.now() - startedAt));
-      const current = JSON.stringify(
-        await page.locator('body').ariaSnapshotJSON({ timeout: remaining })
-      );
+      tree = await page.locator('body').ariaSnapshotJSON({ timeout: remaining });
+      const current = JSON.stringify(tree);
       const readAt = Date.now();
       if (current !== previous) unchangedSince = readAt;
       else if (readAt - unchangedSince >= quietMs) {
-        return { settled: true, ms: readAt - startedAt };
+        return { settled: true, ms: readAt - startedAt, tree };
       }
       previous = current;
 
@@ -703,9 +752,12 @@ export async function settle(
     // The snapshot itself timed out, which means the page stopped answering
     // rather than that it kept moving. Both are "not settled" from here; the
     // hop loop is what tells them apart, because it is what has to decide
-    // whether the Route can continue.
+    // whether the Route can continue. No tree is handed back, so the Hop's
+    // effect is recorded as unreadable rather than as nothing having changed.
     return { settled: false, ms: Date.now() - startedAt };
   }
 
-  return { settled: false, ms: Date.now() - startedAt };
+  // Unsettled, but the last reading is still the best account of what the Hop
+  // did, and the Hop's own line says it was unsettled.
+  return { settled: false, ms: Date.now() - startedAt, tree };
 }

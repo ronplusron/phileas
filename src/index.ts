@@ -93,6 +93,7 @@ export {
   type JournaledCandidate,
   type JournaledCheck,
 } from './journal';
+export { effectOf, headingsIn, EFFECT_HEADINGS_LISTED, type HopEffect } from './effect';
 export {
   runRoute,
   settle,

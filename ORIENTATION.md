@@ -31,7 +31,8 @@ the native menu, stubbing outbound links, and the `AppUnderTest` interface the
 whole thing talks through. `journey.ts` and `random.ts` joined them in phase 3.
 `survey.ts`, `route.ts` and `journal.ts` joined them in phase 4: discovery by
 accessibility role, one Route's Fix and Trip with the choosing and value seams,
-and the per-Hop record. `src/oracles/` still contains nothing but `.gitkeep`.
+and the per-Hop record. `effect.ts` joined them before phase 5, for what each
+Hop did to the screen. `src/oracles/` still contains nothing but `.gitkeep`.
 
 **What is genuinely absent is every check.** Nothing yet decides whether
 anything a Route walked past is wrong, so a green Journey today is consistent
@@ -39,17 +40,18 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs ninety-nine tests. Seven launch it, refuse a
-stale bundle, report a bad boot in the application's own words, keep every
+through, and `npm test` runs one hundred and seven tests. Seven launch it,
+refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
 terms without launching anything, including known-answer vectors that pin the
 generator's output. Twelve record what `buggy` correctly does, so a defect
 planted later can be told apart from an accidental one. Seven assert that a
-guard refuses rather than answering when it has no evidence. Nineteen travel
-through the application, and ten cover the journal, including one cut off
-mid-write and one refusing to overwrite an earlier run. Fourteen cover the window modes, the hop delay and the application's
-checkout, and two keep every source file searchable. The last three cover the
+guard refuses rather than answering when it has no evidence. Seven work out
+what a Hop did to the screen from two readings, without launching anything.
+Twenty travel through the application, and ten cover the journal, including
+one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
+cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
 `npm run typecheck` enforces.
 
@@ -66,7 +68,7 @@ verification points rather than bookkeeping.
 **The work before phase 5 is the next thing to do.** Running the engine
 against real applications for a demo found gaps phase 5 would otherwise build
 on, and `docs/PLAN.md` lists them under "Before phase 5", in the order a
-review of what the two IDEs need settled, starting with R31.
+review of what the two IDEs need settled. The keyboard is all that is left of it.
 Phase 5 itself -- the universal tier
 of checks, and the point where a Route can fail for a reason rather than only
 for not finishing -- starts once that list is empty. `journal.ts` already
@@ -144,7 +146,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own ninety-nine tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and seven tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them. It prints the Journey seed; set
@@ -162,7 +164,7 @@ already at its path is refused. Nothing yet clears old runs away.
 `jq`. One line per Hop:
 
 ```
-jq -r 'if .kind=="trip-hop" then "hop \(.hop)  \(.action)  \(.target.name)" elif .kind=="outcome" then "\(.outcome) after \(.hops) hops" else empty end' route-000-*.jsonl
+jq -r 'if .kind=="trip-hop" then "hop \(.hop)  \(.action)  \(.target.name)  +\(.effect.appeared // []) -\(.effect.wentAway // [])" elif .kind=="outcome" then "\(.outcome) after \(.hops) hops" else empty end' route-000-*.jsonl
 ```
 
 `jq . route-000-*.jsonl` prints every line in full.

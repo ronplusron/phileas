@@ -65,6 +65,7 @@ src/
   survey.ts            discovery by role, with the exclusion list applied
   route.ts             one Route: Fix, hops, stop rules, stranded; exports runRoute()
   journal.ts           the per-hop record, appended and flushed per hop
+  effect.ts            what a Hop did to the screen, from two readings (R31)
   oracles/
     index.ts           the runner: whole set after every Hop, first violation ends the Route
     implicit/          the tier that assumes nothing about the application (R17)
@@ -480,13 +481,12 @@ Phase 4 ended, and running the engine against real applications for a demo
 found gaps that phase 5 would otherwise have built on top of. Decided on
 2026-09-23 that these come first and that phase 5 starts only once they are
 done. A review of what the two IDEs need came first and closed on
-2026-09-24, and so did the clipboard, journals and settle fixes that followed
-it; `HISTORY.md` records each. The order below was accepted at that
+2026-09-24, and so did the clipboard, journals and settle fixes and R31 that
+followed it; `HISTORY.md` records each. The order below was accepted at that
 review, from a proposal made there; the reasons given with it are the
 proposal's:
 
-1. **What each hop did to the screen,** R31, `OUTSTANDING.md` 1.9.
-2. **The keyboard:** key presses, shortcuts and real typing, `OUTSTANDING.md`
+1. **The keyboard:** key presses, shortcuts and real typing, `OUTSTANDING.md`
    1.6.
 
 Each item leaves this list when it merges, and `HISTORY.md` records it.

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { HopEffect } from './effect';
 
 /**
  * The record one Route writes as it goes.
@@ -126,6 +127,8 @@ export interface FixHopEntry {
   readonly error?: string;
   readonly startedAt: string;
   readonly durationMs: number;
+  /** What the step did to the screen (R31), read after a full settle wait. */
+  readonly effect: HopEffect;
   /**
    * Empty until phase 5, which runs the checks after Fix hops too. A check
    * failing here is a Fix failure, for the same reason as `error`.
@@ -184,6 +187,11 @@ export interface TripHopEntry {
   readonly settled: boolean;
   /** How long the settle wait took, which is the cost paid on every Hop. */
   readonly settleMs: number;
+  /**
+   * What the Hop did to the screen (R31): whether anything changed, and which
+   * headings appeared and went away. See `effectOf`.
+   */
+  readonly effect: HopEffect;
   /** Empty until phase 5. */
   readonly checks: readonly JournaledCheck[];
 }

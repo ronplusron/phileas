@@ -25,6 +25,50 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: R31, what each Hop did to the screen
+
+**Why.** A journal was read that said a Hop clicked "Compare" and nothing about
+what followed. The only trace of an effect was the next Hop drawing from a
+different pool, which no reader can turn back into a screen. R31 was agreed as
+a Must on 2026-09-23, and designed in conversation against trickster-tales.
+
+**What it records.** Every Trip hop and every Fix step now carries an
+`effect`: whether anything in the accessibility tree changed, and which
+headings appeared and went away, up to five each with a count of the rest.
+`src/effect.ts` works it out from two readings already taken, the survey's
+before the Hop and the settle wait's last after it, so it costs nothing extra.
+A Fix step gets a full settle wait before its reading, as decided at the
+review, and its "before" is the previous step's reading, so the whole Fix
+costs one extra read. An effect that could not be read, because the page
+stopped answering, is recorded as unreadable, never as nothing changing.
+
+The design choices it carries, each for a reason found on a real application:
+
+- **`changed` is kept apart from the headings,** because a filter on
+  trickster-tales changed the screen and left every heading in place.
+- **Only the headings that differ are listed,** because an application's
+  title and a sidebar heading sit on every screen, and a list view can repeat
+  dozens of titles. They are compared as a multiset, so one of two identical
+  titles going away is seen.
+- **The pool after a Hop is not recorded,** because it is always the next
+  Hop's pool, and computing it separately would mean a second full survey.
+
+**The limit to know:** headings describe a screen, not every change on it. A
+number changing in a plain paragraph shows only as `changed`. If that matters,
+the next step is recording the changed text itself, which costs more.
+
+**What checks it.** Seven tests of `effectOf` over snapshots shaped as
+Playwright gives them, covering appearing and going away, a change that moves
+no heading, no change at all, an unreadable effect, repeated headings and the
+listing limit. One Route test against `buggy`: a Fix step opening the summary
+records "Total weight" appearing, and its positive control, a step that does
+nothing, records no change, so a comparison that always said "changed" would
+fail. On a real Journey the lines read as intended, for instance
+`select Clothing` with "5 items" appearing and "12 items" going away, and two
+runs of one seed still matched line for line, effects included. 107 tests
+pass. On an IDE, resource monitors would mark every Hop as changed; that is
+recorded among the IDEs' needs in `OUTSTANDING.md`.
+
 ## 2026-09-24: a quiet window for the settle wait
 
 **The defect.** The settle wait read the accessibility tree, waited one frame,
@@ -56,7 +100,7 @@ not to be the actions' effect at all: it was resource monitors, RStudio's
 memory readings and Positron's CPU and memory readings, ticking roughly once a
 second. They leave gaps well over 400 ms between ticks, so they do not stop a
 400 ms window from settling. Their other consequences, for R31 and for replay
-on RStudio, are recorded in `OUTSTANDING.md` 1.10 for the IDEs' turn. A
+on RStudio, are recorded in `OUTSTANDING.md` among the IDEs' needs. A
 `Sys.sleep(1)` in the console produced a real change after about 1.2 seconds,
 which is computation; no window should be expected to wait it out, and the
 wait's two-second limit returns unsettled instead.

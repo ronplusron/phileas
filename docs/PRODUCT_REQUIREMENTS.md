@@ -6,9 +6,9 @@ nothing about how any of it is built, so it stays true when that changes.
 Requirements are numbered and marked Must, Should or Could. Each is written so
 a finished build can be held up to it and answered yes or no.
 
-Most of what is described here is not built. R23, R24, C1 and C5 are, and
-`../docs/HISTORY.md` records what was measured; everything about traveling,
-seeding, recording and checking is not. Where a requirement exists because
+What is built is not tracked here: `../ORIENTATION.md` says where the build
+stands, and `HISTORY.md` records what was measured, so this file keeps no
+second copy to go stale. Where a requirement exists because
 something specific went wrong, the failure is named, since those are the ones
 most likely to be relaxed by someone who never saw it.
 

@@ -306,47 +306,7 @@ that read contents, files or a driver. What is beyond Playwright is narrower:
 the operating system's own popups and dialogs, and anything drawn on a canvas,
 which offers pixels and no text.
 
-### 1.9 What each hop did to the screen, R31, before phase 5
-
-Agreed 2026-09-23 as a Must, after a journal was read that said a Hop clicked
-"Compare" and nothing about what followed. The only trace of an effect was the
-next Hop drawing from a different pool, a fingerprint no reader can turn back
-into a screen.
-
-**The design, decided in conversation and measured on trickster-tales:**
-
-- **Two readings are compared:** the accessibility tree the survey read before
-  the Hop, and the last one the settle wait read after it. Both are already
-  taken, so the effect costs nothing extra. The second is taken once the page
-  has stayed unchanged for the settle wait's quiet window, so it is not read
-  mid-change.
-- **`changed`** says whether anything in the tree differs. It is kept separate
-  from the headings because headings can miss a change entirely: on
-  trickster-tales, clicking a facet value left every heading in place.
-- **Headings that appeared and went away,** listed up to five each with a count
-  of the rest, rather than the screen's whole list of headings. The whole list
-  is noise: on trickster-tales the application's title and a sidebar heading
-  sit on every screen, and the library and facet screens repeat all eight
-  tales' titles. The difference is what reads -- going from a tale to Compare
-  is "+ Compare, - the tale's title, - How this tale works, - Thompson
-  motifs".
-- **An effect that could not be read is recorded as such,** never as "nothing
-  changed". A page that stopped answering and a Hop that did nothing would
-  otherwise leave the same record, and only the first is a finding.
-- **Fix hops get a reading too,** one after each step, taken after a full
-  settle wait as for a Trip hop. Chosen 2026-09-24 over a single snapshot,
-  which could record a change half finished; the wait costs once per Fix
-  step, and a Fix is usually a handful of steps.
-- **Dropped: the pool afterwards.** It was proposed, and it is always the next
-  Hop's pool; computing it separately would mean a second full survey on every
-  Hop, including another call of the adapter's exclusion predicate.
-
-**The limit to know:** headings describe a screen, not every change on it. A
-number that changes in a plain paragraph shows only as `changed`. If that
-proves to matter, the next step is recording the changed text itself, which
-costs more.
-
-### 1.10 What the two IDEs need that nothing supplies yet
+### 1.9 What the two IDEs need that nothing supplies yet
 
 Recorded 2026-09-23, and scheduled the same day at the review before phase 5,
 by approving a proposal made at the end of the session that recorded them:
@@ -421,7 +381,7 @@ Already recorded and scheduled: key presses and typing (1.6), main-process
 errors, log checks and narrowing (phase 5), and expected results from files,
 R or a driver (phase 6).
 
-### 1.11 Default exclusions for the menu entries every Electron application has
+### 1.10 Default exclusions for the menu entries every Electron application has
 
 Raised 2026-09-23. Writing an adapter for trickster-tales meant excluding, by
 hand, the standard menu entries Electron gives every application: Quit, Hide,

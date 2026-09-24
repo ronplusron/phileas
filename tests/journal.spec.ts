@@ -42,6 +42,14 @@ function hop(index: number) {
     durationMs: 1,
     settled: true,
     settleMs: 1,
+    effect: {
+      readable: true as const,
+      changed: false,
+      appeared: [],
+      appearedMore: 0,
+      wentAway: [],
+      wentAwayMore: 0,
+    },
     checks: [],
   };
 }

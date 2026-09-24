@@ -144,6 +144,12 @@ export interface SurveyResult {
   readonly excluded: readonly ExcludedCandidate[];
   readonly unnamed: readonly UnnamedElement[];
   readonly menuSource: MenuSourceVerdict;
+  /**
+   * The accessibility tree this survey read, which is the "before" half of the
+   * Hop's effect (R31). Handed back rather than read again, so the effect costs
+   * nothing extra.
+   */
+  readonly tree: unknown;
 }
 
 /**
@@ -238,7 +244,7 @@ export interface SurveyOptions {
 export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   const { page, app, exclusions, hopIndex, tally, timeoutMs } = options;
 
-  const { candidates: pageCandidates, unnamed } = await surveyPage(page, timeoutMs);
+  const { candidates: pageCandidates, unnamed, tree } = await surveyPage(page, timeoutMs);
   const { menuCandidates, menuSource } = await surveyMenu(app);
 
   const found: SurveyedCandidate[] = [...pageCandidates, ...menuCandidates];
@@ -269,6 +275,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
     menuSource: menuSource.offered
       ? { offered: true, count: candidates.filter((c) => c.source === 'menu').length }
       : menuSource,
+    tree,
   };
 }
 
@@ -355,7 +362,7 @@ interface AriaNode {
 async function surveyPage(
   page: Page,
   timeoutMs: number | undefined
-): Promise<{ candidates: PageCandidate[]; unnamed: UnnamedElement[] }> {
+): Promise<{ candidates: PageCandidate[]; unnamed: UnnamedElement[]; tree: unknown }> {
   const snapshot = (await page
     .locator('body')
     .ariaSnapshotJSON(timeoutMs === undefined ? {} : { timeout: timeoutMs })) as
@@ -402,7 +409,11 @@ async function surveyPage(
   // Disabled controls are found and then dropped from the draw. Hopping to one
   // does nothing, which would be journaled as a Hop that happened; the check
   // that cares about them is the accessibility one, not the Route.
-  return { candidates: candidates.filter((candidate) => !candidate.disabled), unnamed };
+  return {
+    candidates: candidates.filter((candidate) => !candidate.disabled),
+    unnamed,
+    tree: snapshot,
+  };
 }
 
 /** Candidates from the native menu, or the reason there are none. */

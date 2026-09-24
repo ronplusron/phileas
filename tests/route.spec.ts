@@ -412,6 +412,57 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
   expect(entries.some((entry) => entry.kind === 'trip-hop')).toBe(false);
 });
 
+test('every hop records what it did to the screen, Fix and Trip alike (R31)', async ({
+  page,
+  app,
+}) => {
+  const dir = scratch();
+  const streams = deriveRouteStreams('effect-seed', 0);
+
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams,
+    journeySeed: 'effect-seed',
+    routeIndex: 0,
+    tripLength: 5,
+    journalDir: dir,
+    fix: async ({ step }) => {
+      await step('open the summary', async () => {
+        await page.getByRole('button', { name: 'Summary', exact: true }).click();
+      });
+      await step('do nothing', async () => {});
+    },
+  });
+
+  const entries = readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`));
+  const [opened, idle] = entries.filter((entry) => entry.kind === 'fix-hop');
+
+  // Opening the summary brings its heading onto the screen. Read from the real
+  // application rather than a fabricated tree, so this fails if the headings
+  // the survey reads stop being the ones a person sees.
+  expect(opened?.kind === 'fix-hop' ? opened.effect : undefined).toMatchObject({
+    readable: true,
+    changed: true,
+    appeared: expect.arrayContaining(['Total weight']),
+  });
+
+  // The positive control for "changed": a step that does nothing reads as
+  // unchanged. Without it, a comparison that always said "changed" would pass
+  // the assertion above.
+  expect(idle?.kind === 'fix-hop' ? idle.effect : undefined).toMatchObject({
+    readable: true,
+    changed: false,
+  });
+
+  const tripHops = entries.filter((entry) => entry.kind === 'trip-hop');
+  expect(tripHops.length).toBe(5);
+  for (const hop of tripHops) {
+    expect(hop.kind === 'trip-hop' ? hop.effect.readable : undefined).toBe(true);
+  }
+});
+
 test('a value is drawn on every hop, including hops that never type it', async ({
   page,
   app,
