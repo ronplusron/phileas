@@ -64,6 +64,9 @@ export {
 export {
   survey,
   takesTypedValue,
+  printedShortcut,
+  COMMON_KEYS,
+  type KeyCandidate,
   toCandidate,
   createExclusionTally,
   neverMatched,
@@ -101,6 +104,8 @@ export {
   hopDelayFromEnvironment,
   HOP_DELAY_VARIABLE,
   seededChooser,
+  COMMON_KEY_SHARE,
+  isCommonKey,
   seededValues,
   FixFailure,
   PageUnreachable,

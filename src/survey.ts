@@ -52,7 +52,7 @@ export const HOPPABLE_ROLES = [
   'treeitem',
 ] as const;
 
-/** Roles a Hop fills with a generated value rather than clicking. */
+/** Roles a Hop types a generated value into rather than clicking. */
 const TEXT_ENTRY_ROLES = new Set<string>(['searchbox', 'spinbutton', 'textbox']);
 
 /** Whether acting on this candidate means typing into it. */
@@ -96,13 +96,108 @@ export interface MenuCandidate {
   readonly menuPath: readonly string[];
 }
 
-export type SurveyedCandidate = PageCandidate | MenuCandidate;
+/**
+ * A key to press on whatever has focus.
+ *
+ * Two kinds. The common keys -- Enter, Escape, Tab and the arrows -- are always
+ * offered, one candidate each, because they reach what no control shows: a
+ * console bringing back its last line on Up is the case they are for. And a
+ * shortcut printed in a control's accessible name, such as "Save current
+ * document (⌘S)", is offered as the key it names, read from what the survey
+ * already reads and never from source.
+ *
+ * Native menu accelerators are not offered. Measured on 2026-09-24, a key
+ * pressed through Playwright reaches the page and never a native accelerator,
+ * so pressing one would be a Hop that did nothing, journaled as one that did.
+ * The menu entry itself stays reachable by clicking it.
+ */
+export interface KeyCandidate {
+  readonly source: 'key';
+  readonly role: 'key' | 'shortcut';
+  readonly name: string;
+  /** The key as Playwright presses it. */
+  readonly key: string;
+  /**
+   * For a shortcut, every control whose name shows it. The shortcut is
+   * excluded whenever any of them is, so a key cannot slip past a rail that
+   * names the control it belongs to.
+   */
+  readonly controls: readonly PageCandidate[];
+}
+
+export type SurveyedCandidate = PageCandidate | MenuCandidate | KeyCandidate;
 
 /** The shape an exclusion predicate is handed, without the locator. */
 export function toCandidate(candidate: SurveyedCandidate): Candidate {
-  return candidate.source === 'menu'
-    ? { source: 'menu', role: candidate.role, name: candidate.name, menuPath: candidate.menuPath }
-    : { source: 'page', role: candidate.role, name: candidate.name };
+  if (candidate.source === 'menu') {
+    return { source: 'menu', role: candidate.role, name: candidate.name, menuPath: candidate.menuPath };
+  }
+  if (candidate.source === 'key') {
+    return { source: 'key', role: candidate.role, name: candidate.name, key: candidate.key };
+  }
+  return { source: 'page', role: candidate.role, name: candidate.name };
+}
+
+/** The common keys, offered on every Hop, one candidate each, in this order. */
+export const COMMON_KEYS = [
+  'Enter',
+  'Escape',
+  'Tab',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+] as const;
+
+/** macOS modifier glyphs, as applications print them, and what Playwright calls them. */
+const MODIFIER_GLYPHS: Readonly<Record<string, string>> = {
+  '⌃': 'Control',
+  '⌥': 'Alt',
+  '⇧': 'Shift',
+  '⌘': 'Meta',
+};
+
+/**
+ * The shortcut a control's name prints, if it prints one.
+ *
+ * Matches the macOS convention both IDEs use: modifier glyphs and one key in
+ * parentheses, such as "(⌘S)" or "(⌥⌘S)". A name printing its shortcut any
+ * other way is not read, and that shortcut waits for the optional map.
+ */
+export function printedShortcut(name: string): { label: string; key: string } | undefined {
+  const match = /\(([⌃⌥⇧⌘]+)([^\s)])\)/.exec(name);
+  if (!match) return undefined;
+  const [, glyphs = '', char = ''] = match;
+  const modifiers = [...glyphs].map((glyph) => MODIFIER_GLYPHS[glyph]).filter(Boolean);
+  return { label: `${glyphs}${char}`, key: [...modifiers, char.toLowerCase()].join('+') };
+}
+
+/** The keys a survey offers, shortcuts first in document order, then the common keys. */
+function keyCandidates(pageCandidates: readonly PageCandidate[]): KeyCandidate[] {
+  const shortcuts = new Map<string, { label: string; controls: PageCandidate[] }>();
+  for (const control of pageCandidates) {
+    const printed = printedShortcut(control.name);
+    if (!printed) continue;
+    const existing = shortcuts.get(printed.key);
+    if (existing) existing.controls.push(control);
+    else shortcuts.set(printed.key, { label: printed.label, controls: [control] });
+  }
+  return [
+    ...[...shortcuts].map(([key, { label, controls }]) => ({
+      source: 'key' as const,
+      role: 'shortcut' as const,
+      name: label,
+      key,
+      controls,
+    })),
+    ...COMMON_KEYS.map((key) => ({
+      source: 'key' as const,
+      role: 'key' as const,
+      name: key,
+      key,
+      controls: [],
+    })),
+  ];
 }
 
 /**
@@ -247,7 +342,11 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   const { candidates: pageCandidates, unnamed, tree } = await surveyPage(page, timeoutMs);
   const { menuCandidates, menuSource } = await surveyMenu(app);
 
-  const found: SurveyedCandidate[] = [...pageCandidates, ...menuCandidates];
+  const found: SurveyedCandidate[] = [
+    ...pageCandidates,
+    ...menuCandidates,
+    ...keyCandidates(pageCandidates),
+  ];
 
   // One candidate per survey gets the predicate run twice, rotating by hop so
   // that a Route covers a different one each time. Every candidate would be a
@@ -257,11 +356,32 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
 
   const candidates: SurveyedCandidate[] = [];
   const excluded: ExcludedCandidate[] = [];
+  const excludedControls = new Map<PageCandidate, string>();
+  let focusOnExcluded: string | undefined;
 
   for (const candidate of found) {
-    const rule = await excludedBy(candidate, { exclusions, page, tally, control });
-    if (rule) excluded.push({ candidate: toCandidate(candidate), rule });
-    else candidates.push(candidate);
+    let rule: string | undefined;
+
+    if (candidate.source === 'key') {
+      // Page and menu candidates come first in `found`, so every control's
+      // verdict is known by the time its shortcut is reached.
+      const blocked = candidate.controls.find((c) => excludedControls.has(c));
+      if (blocked) rule = `control: ${blocked.name} (${excludedControls.get(blocked)})`;
+
+      // A common key acts on whatever has focus. Enter on a focused outbound
+      // link follows it, so a Tab that moved focus onto an excluded control
+      // would otherwise hand the next Enter a way past the rail.
+      if (!rule && candidate.role === 'key') {
+        focusOnExcluded ??= await focusedExcluded(excludedControls, timeoutMs);
+        if (focusOnExcluded) rule = `focus: ${focusOnExcluded}`;
+      }
+    }
+
+    rule ??= await excludedBy(candidate, { exclusions, page, tally, control });
+    if (rule) {
+      excluded.push({ candidate: toCandidate(candidate), rule });
+      if (candidate.source === 'page') excludedControls.set(candidate, rule);
+    } else candidates.push(candidate);
   }
 
   return {
@@ -277,6 +397,29 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
       : menuSource,
     tree,
   };
+}
+
+/**
+ * The name of the excluded control that has focus, if one does.
+ *
+ * An empty string, not undefined, when none does, so a survey asks the page
+ * once however many keys it reaches.
+ */
+async function focusedExcluded(
+  excludedControls: ReadonlyMap<PageCandidate, string>,
+  timeoutMs: number | undefined
+): Promise<string> {
+  for (const control of excludedControls.keys()) {
+    const focused = await control.locator
+      .evaluate(
+        (element) => element.contains(document.activeElement),
+        undefined,
+        timeoutMs === undefined ? {} : { timeout: timeoutMs }
+      )
+      .catch(() => false);
+    if (focused) return control.name;
+  }
+  return '';
 }
 
 /** Which exclusion rule keeps this candidate out of the draw, if any. */
@@ -295,7 +438,7 @@ async function excludedBy(
   // page control and a menu entry sharing a label, where only one should be
   // excluded, sets it false and uses menuPaths for the other.
   const namesCoverMenus = exclusions.namesCoverMenuEntries ?? true;
-  const nameApplies = candidate.source === 'page' || namesCoverMenus;
+  const nameApplies = candidate.source !== 'menu' || namesCoverMenus;
 
   if (nameApplies && tally.names.has(candidate.name)) {
     tally.names.set(candidate.name, (tally.names.get(candidate.name) ?? 0) + 1);

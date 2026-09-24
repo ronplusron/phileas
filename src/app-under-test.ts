@@ -45,6 +45,16 @@ export type Candidate = {
        */
       readonly menuPath: readonly string[];
     }
+  | {
+      /**
+       * A key to press on whatever has focus. `role` is 'key' for one of the
+       * common keys, or 'shortcut' for one printed in a control's accessible
+       * name, and `name` is how it is written there, such as '⌘S'.
+       */
+      readonly source: 'key';
+      /** The key as Playwright presses it, such as 'Meta+s' or 'ArrowUp'. */
+      readonly key: string;
+    }
 );
 
 /**

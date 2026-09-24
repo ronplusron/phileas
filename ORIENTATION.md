@@ -40,7 +40,7 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and seven tests. Seven launch it,
+through, and `npm test` runs one hundred and eleven tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -49,7 +49,7 @@ generator's output. Twelve record what `buggy` correctly does, so a defect
 planted later can be told apart from an accidental one. Seven assert that a
 guard refuses rather than answering when it has no evidence. Seven work out
 what a Hop did to the screen from two readings, without launching anything.
-Twenty travel through the application, and ten cover the journal, including
+Twenty-four travel through the application, and ten cover the journal, including
 one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
 cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
@@ -65,13 +65,11 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: eleven phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**The work before phase 5 is the next thing to do.** Running the engine
-against real applications for a demo found gaps phase 5 would otherwise build
-on, and `docs/PLAN.md` lists them under "Before phase 5", in the order a
-review of what the two IDEs need settled. The keyboard is all that is left of it.
-Phase 5 itself -- the universal tier
-of checks, and the point where a Route can fail for a reason rather than only
-for not finishing -- starts once that list is empty. `journal.ts` already
+**Phase 5 is the next thing to do.** Running the engine against real
+applications for a demo found gaps phase 5 would otherwise have built on, and
+all of them closed before it on 2026-09-24; `docs/PLAN.md` lists them under
+"Before phase 5". Phase 5 itself is the universal tier of checks, and the point
+where a Route can fail for a reason rather than only for not finishing. `journal.ts` already
 carries an empty `checks` field on every Hop for it to fill.
 
 **Read `docs/DEFECTS.md` before writing any of it.** One defect is open, and
@@ -102,8 +100,8 @@ postinstall in this environment, so the types arrive and the binary does not.
 `testbed/buggy/` separately. It looks like a broken checkout and is not.
 
 `docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
-opinion. `docs/DEFECTS.md` holds what is wrong.
-Both carry items that the work before phase 5 closes.
+opinion. `docs/DEFECTS.md` holds what is wrong, and phase 5 closes its one
+entry.
 
 **Two research readings are recorded in `docs/HISTORY.md` and worth knowing
 before designing anything.** Discovery by accessibility role was measured
@@ -146,7 +144,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and seven tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and eleven tests against `testbed/buggy/`.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them. It prints the Journey seed; set

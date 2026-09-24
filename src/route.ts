@@ -53,13 +53,50 @@ export interface Chooser {
 export interface Choice {
   readonly target: SurveyedCandidate;
   readonly draw?: number;
+  /**
+   * The draw that decided between a common key and everything else, where a
+   * seeded draw did. See `COMMON_KEY_SHARE`.
+   */
+  readonly shareDraw?: number;
 }
 
-/** The only chooser there is today: one candidate, drawn from the seed. */
+/**
+ * The share of Hops that press one of the common keys, when anything else is
+ * on offer too.
+ *
+ * Chosen on 2026-09-24. Drawn as seven equal candidates among the rest, the
+ * keys took 7 Hops in 8 on a screen with one control, crowding out the
+ * controls where there are fewest of them. So a first draw decides between the
+ * keys and everything else, with the keys getting this share, and a second
+ * draw picks within whichever side won. At a quarter, Up is pressed about one
+ * Hop in 28 on any screen, which is what reaches a console's history, and
+ * controls keep three quarters of every Trip. Printed shortcuts are drawn with
+ * the controls, since each belongs to one.
+ */
+export const COMMON_KEY_SHARE = 1 / 4;
+
+/** Whether a candidate is one of the common keys, which draw from their own share. */
+export function isCommonKey(candidate: SurveyedCandidate): boolean {
+  return candidate.source === 'key' && candidate.role === 'key';
+}
+
+/**
+ * The only chooser there is today: drawn from the seed, in two steps.
+ *
+ * The share draw is taken on every Hop, even when one side is empty, so the
+ * stream advances the same way whatever the screen offered. The journal
+ * records both draws, and the target is always the entry the second draw
+ * points at within the side the first chose, in pool order.
+ */
 export const seededChooser: Chooser = {
   choose: (candidates, rng) => {
-    const { item, draw } = rng.pickWithDraw(candidates);
-    return { target: item, draw };
+    const keys = candidates.filter(isCommonKey);
+    const rest = candidates.filter((candidate) => !isCommonKey(candidate));
+    const sides = Math.round(1 / COMMON_KEY_SHARE);
+    const share = rng.pickWithDraw(Array.from({ length: sides }, (_, index) => index === 0));
+    const side = (share.item && keys.length) || !rest.length ? keys : rest;
+    const { item, draw } = rng.pickWithDraw(side);
+    return { target: item, draw, shareDraw: share.draw };
   },
 };
 
@@ -379,7 +416,10 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         });
       }
 
-      if (found.candidates.length === 0) {
+      // The common keys alone do not keep a Route going: they are always on
+      // offer, so counting them would mean no Route ever stranded, and a dead
+      // end or a trap would read as passed. Decided 2026-09-24.
+      if (found.candidates.every(isCommonKey)) {
         // R5. Naming the hop is the requirement, and it is what separates "this
         // application has a dead end at hop 3" from "this Route found nothing
         // to do", which are different findings about different things.
@@ -394,7 +434,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       }
 
       const startedAt = new Date();
-      const { target, draw } = await chooser.choose(found.candidates, streams.trip);
+      const { target, draw, shareDraw } = await chooser.choose(found.candidates, streams.trip);
       lastTarget = `${target.role} "${target.name}"`;
       const action = await actionFor(target, hopTimeoutMs);
 
@@ -414,7 +454,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // question, and it needs the Route alive to ask it.
       let abandoned: string | undefined;
       try {
-        await act(app, target, action, value, hopTimeoutMs);
+        await act(app, page, target, action, value, hopTimeoutMs);
       } catch (error) {
         abandoned = error instanceof Error ? error.message.split('\n')[0] : String(error);
       }
@@ -432,7 +472,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         action,
         pool,
         ...(draw === undefined ? {} : { draw }),
-        ...(action === 'fill' ? { value } : {}),
+        ...(shareDraw === undefined ? {} : { shareDraw }),
+        ...(action === 'type' ? { value } : {}),
         ...(abandoned === undefined ? {} : { abandoned }),
         startedAt: startedAt.toISOString(),
         durationMs: Date.now() - startedAt.getTime(),
@@ -487,7 +528,10 @@ function strandedReason(found: SurveyResult): string {
       `${found.unnamed.map((element) => element.role).join(', ')}.`
     );
   }
-  return 'No candidate was available: the survey found nothing with a hoppable role.';
+  return (
+    'No candidate was available but the common keys: the survey found nothing ' +
+    'with a hoppable role.'
+  );
 }
 
 /** Run the Fix, journaling each step, and wrap any failure as R11 asks. */
@@ -572,6 +616,15 @@ async function runFix(
 
 /** The plain-data form of a candidate, for the record. */
 function journaled(candidate: SurveyedCandidate): JournaledCandidate {
+  if (candidate.source === 'key') {
+    return {
+      source: 'key',
+      role: candidate.role,
+      name: candidate.name,
+      key: candidate.key,
+      ...(candidate.controls.length ? { controls: candidate.controls.map((c) => c.name) } : {}),
+    };
+  }
   return candidate.source === 'menu'
     ? {
         source: 'menu',
@@ -592,7 +645,8 @@ function journaled(candidate: SurveyedCandidate): JournaledCandidate {
  */
 async function actionFor(target: SurveyedCandidate, timeoutMs: number): Promise<HopAction> {
   if (target.source === 'menu') return 'menu-click';
-  if (takesTypedValue(target)) return 'fill';
+  if (target.source === 'key') return 'press';
+  if (takesTypedValue(target)) return 'type';
   if (target.role === 'option' || target.role === 'combobox') {
     const part = await nativeDropdownPart(target, timeoutMs);
     if (part === 'option') return 'select';
@@ -645,6 +699,7 @@ async function nativeDropdownPart(
  */
 async function act(
   app: ElectronApplication,
+  page: Page,
   target: SurveyedCandidate,
   action: HopAction,
   value: string,
@@ -655,8 +710,25 @@ async function act(
     return;
   }
 
-  if (action === 'fill') {
-    await target.locator.fill(value, { timeout: timeoutMs });
+  if (target.source === 'key') {
+    // Bounded like every other action. A key press has no timeout of its own,
+    // and one that opened something holding the page would otherwise hang the
+    // Hop.
+    await Promise.race([
+      page.keyboard.press(target.key),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`press ${target.key} timed out`)), timeoutMs)
+      ),
+    ]);
+    return;
+  }
+
+  if (action === 'type') {
+    // Emptied first, so the field ends up holding the drawn value as `fill` used
+    // to leave it; the emptying is not keystrokes. Then one key per character,
+    // which is what reaches a handler that reacts as you type.
+    await target.locator.fill('', { timeout: timeoutMs });
+    if (value) await target.locator.pressSequentially(value, { timeout: timeoutMs });
     return;
   }
 

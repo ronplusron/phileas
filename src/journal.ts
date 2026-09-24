@@ -30,13 +30,17 @@ import type { HopEffect } from './effect';
  * rather than an approximation of it.
  */
 export interface JournaledCandidate {
-  readonly source: 'page' | 'menu';
+  readonly source: 'page' | 'menu' | 'key';
   readonly role: string;
   readonly name: string;
   /** Which of the controls sharing this role and name, in document order. */
   readonly nth?: number;
   /** The label path from the menu root, for a menu entry. */
   readonly menuPath?: readonly string[];
+  /** The key as pressed, for a key. */
+  readonly key?: string;
+  /** For a shortcut, the names of the controls that print it. */
+  readonly controls?: readonly string[];
 }
 
 /**
@@ -76,10 +80,14 @@ export interface JournaledCheck {
  * one, against about 40ms otherwise. Focusing reaches the dropdown the way
  * tabbing to it would, without the list.
  *
- * `press` is planned, for when a Hop can press a key; `docs/OUTSTANDING.md`
- * section 1.6 has what has to be settled first.
+ * `type` empties a field and then presses one key per character, so a defect
+ * in a key handler is in reach. It replaced `fill` on 2026-09-24; `fill` stays
+ * in this type only so that journals written before then still read.
+ *
+ * `press` presses one key on whatever has focus: a common key, or a shortcut
+ * printed in a control's name.
  */
-export type HopAction = 'click' | 'fill' | 'select' | 'focus' | 'menu-click';
+export type HopAction = 'click' | 'fill' | 'type' | 'press' | 'select' | 'focus' | 'menu-click';
 
 /**
  * A candidate list, written once and referred to by id.
@@ -162,7 +170,16 @@ export interface TripHopEntry {
    * draw.
    */
   readonly draw?: number;
-  /** What was filled in, where the action was `fill`. */
+  /**
+   * The raw 32-bit draw that decided between the common keys and everything
+   * else, taken before `draw`. Below a quarter of 2^32, the keys won, and
+   * `draw` then points into the pool's common keys, in pool order; otherwise
+   * into the rest. When one side was empty, the other was used whatever this
+   * says. Absent in journals written before 2026-09-24, where `draw` points
+   * into the whole pool.
+   */
+  readonly shareDraw?: number;
+  /** What was typed, where the action was `type`, or filled, for `fill`. */
   readonly value?: string;
   /**
    * Why the action was given up on, where it did not complete in time.

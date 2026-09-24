@@ -101,72 +101,23 @@ three sides, expresses it without changing any runtime shape. Left as its own
 change rather than folded into the review fixes, because turning on `checkJs`
 will surface more than it fixes.
 
-### 1.6 The keyboard: key presses, shortcuts and typing, before phase 5
+### 1.6 The keyboard: what it left open
 
-Raised 2026-09-22 as shortcuts alone. Agreed on 2026-09-23 as work before
-phase 5, widened to the whole keyboard, since both target IDEs need it: their
-consoles recall history on Up Arrow, and editors act on keystrokes. The
-worked cases are in 1.8.
+The keyboard work landed on 2026-09-24, and `HISTORY.md` records what it does
+and why. Two things stayed open.
 
-**Today no Hop presses a key.** A click is a mouse click, a menu entry is
-clicked through the menu, and text goes in by `fill`. Keyboard-only paths are
-a natural place for defects to live, and a Route that cannot press a key can
-never reach them.
+**An assessment to make: different likelihoods per common key.** Up, Escape
+and Enter could be drawn more often than Tab or the other arrows. Fixed
+weights would keep replay intact, being part of the seeded draw. Not done yet,
+because nothing measured says one key finds more than another, and weights
+chosen without that are guesses about where bugs are. Assess it once Journeys
+on a real IDE have run: if a key-only behavior, such as console history on
+Up, is being reached too rarely, the journals are the evidence to weight from.
 
-**Filling a field is not typing into it.** `fill` sets the whole value at once
-and fires a single input event. So a defect in a key handler -- one that fires
-on each keystroke, validates as you type, or reacts to a particular key -- is
-out of every Route's reach, and nothing says so: the journal records `fill`
-and the value, and a reader could reasonably assume the value was typed.
-**Chosen 2026-09-24: a Hop types, always.** Typing each character reaches key
-handlers, at a round trip per character, and adds no draw, though the
-application may respond differently and so send a Route elsewhere. The journal
-records it as `type`, so it never implies typing where it filled. Chosen over
-choosing between filling and typing by a draw, which would reach key handlers
-only some of the time and would shift every recorded seed, and over keeping
-`fill`.
-
-**The `select` action has the same shape.** It chooses an option in a native
-dropdown directly and never opens the list, so moving through a dropdown's
-options by keyboard, and anything an application does while its list is
-open, is out of reach in the same way. A focused dropdown, which `focus`
-already leaves, is where arrow keys would go; whether they change the choice
-on macOS is unmeasured.
-
-**The exclusion predicate makes the gap sharper.** Its only measured case is a
-shortcut that closes an editor tab, and closes the application once no tabs
-remain. That case cannot currently arise, so the one rail designed around a
-shortcut guards against something the engine never does.
-
-Three questions shape the work. Discovery and exclusion are answered;
-triggering waits on a measurement:
-
-- **Discovery.** A shortcut is not a thing in the accessibility tree, so
-  discovery by role does not find it. Menu accelerators are readable from the
-  menu in the main process. Shortcuts the page handles itself are discoverable
-  only where the application declares `aria-keyshortcuts`, which few do;
-  finding the rest would mean reading source, which `survey` must not do.
-  `../CLAUDE.md` says why. **Chosen 2026-09-24:** those two sources, plus a
-  small fixed set of ordinary keys -- Enter, Escape, Tab and the arrows --
-  pressed on whatever has focus. The fixed set is what reaches a console's
-  history on Up without anyone declaring it. Anything else waits for the
-  optional map (1.7).
-- **Triggering.** Playwright cannot press a native accelerator, which is why
-  `src/menu.ts` clicks menu entries instead. Whether a key event sent to the
-  renderer reaches a native menu accelerator is unmeasured, and it decides
-  whether menu accelerators are reachable at all.
-- **Exclusion.** A menu entry and its accelerator are two candidates,
-  excluded together, chosen 2026-09-24: clicking the entry and pressing the
-  accelerator are separate moves in the pool, since they can run different
-  code, and excluding either one, by name or by menu path, excludes both.
-  Excluding Quit by its menu path and leaving Cmd+Q reachable would otherwise
-  be a rail with a gap in it that no test notices. Chosen over one candidate,
-  which would need a draw between clicking and pressing and so shift recorded
-  seeds. How the predicate applies to a shortcut is still for the work.
-
-When a Hop presses a key, the journal records it as a `press` action, with
-which key, and text typed into a field as a `type` action, replacing `fill`.
-`action` today is `click`, `fill`, `select`, `focus` or `menu-click`.
+**Moving through a native dropdown by keyboard is unmeasured.** `select`
+chooses an option directly and never opens the list. The arrows are now
+pressed on whatever has focus, including a focused dropdown, and whether they
+change its choice on macOS has not been checked.
 
 ### 1.7 An optional map, in phase 10
 
@@ -190,7 +141,8 @@ is what answers them:
 
 - **What a map entry does.** It could add candidates discovery cannot find --
   a canvas surface, the rows a virtualized list is not rendering, a keyboard
-  shortcut, which would also answer the discovery question in 1.6. It could
+  shortcut shown nowhere on screen, which the keyboard work leaves to a map. It
+  could
   annotate candidates discovery already found. Or it could steer the draw,
   which would be a new chooser behind the choosing seam rather than a change
   to the hop loop. The third needs care: steering is what planner-assigned
@@ -289,10 +241,10 @@ engine is useful on either application:
   through the reachable controls that switch views and save. A check compares
   the saved file's text with what was typed. It has to compare text, not
   rendered output, since `*text*` and `_text_` both render as italics. Needs
-  phase 6, and needs real typing (1.6) if the editor converts only on
+  phase 6, and real typing, now built, if the editor converts only on
   keystrokes.
 - **Console history:** submit a line, press Up, and the line comes back. Needs
-  key presses (1.6), a console input discovery can reach, which is unmeasured
+  key presses, now built, a console input discovery can reach, which is unmeasured
   on both applications, and a relation check (R20, phase 6). The value is not
   repeating the sequence a scripted test already covers, but checking the
   relation still holds after whatever arbitrary hops came before it.
@@ -301,7 +253,7 @@ engine is useful on either application:
 accessibility tree does: an editor's text layer, a canvas, a windowed list.
 That is neither Playwright's limit nor a permanent one. Playwright can type
 into and read those surfaces through the page, and the ways past it are key
-presses (1.6), the optional map (1.7), and checks written for the application
+presses, the optional map (1.7), and checks written for the application
 that read contents, files or a driver. What is beyond Playwright is narrower:
 the operating system's own popups and dialogs, and anything drawn on a canvas,
 which offers pixels and no text.
@@ -332,7 +284,8 @@ Where an item is already recorded elsewhere, this points there rather than
 repeating it.
 
 - **More kinds of action:** scrolling, right-click, double-click, dragging and
-  hovering. A Hop today can click, fill, select, focus and click a menu entry.
+  hovering. A Hop today can click, type, press a key, select, focus and click a
+  menu entry.
   Virtualized lists and long panes need scrolling before their contents exist
   to be found. How much either IDE puts in context menus is unmeasured.
 - **Other windows.** A Route surveys one window, the page the adapter selects.
@@ -377,7 +330,7 @@ repeating it.
   check watching that close could catch RStudio's first recorded bug without a
   Route ever hopping to Quit. Phase 5 decides the main-process check.
 
-Already recorded and scheduled: key presses and typing (1.6), main-process
+Already built: key presses and typing. Recorded and scheduled: main-process
 errors, log checks and narrowing (phase 5), and expected results from files,
 R or a driver (phase 6).
 

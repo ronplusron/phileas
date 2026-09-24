@@ -30,16 +30,18 @@ phases are marked by number.
 |---|---|
 | Page | The contents of the application's window, which Electron draws as a web page. The native menu is not part of it. |
 | Survey | Finding what the page offers right now by reading its controls' accessibility roles and names, plus the native menu. Nobody lists an application's controls for it. |
-| Candidate | One thing a Hop could act on: a visible, enabled control with an accessible name, or a menu entry. |
+| Candidate | One thing a Hop could act on: a visible, enabled control with an accessible name, a menu entry, or a key. |
+| Common keys | Enter, Escape, Tab and the four arrows, offered on every Hop and pressed on whatever has focus. Together they get a fixed quarter of the draw whenever anything else is on offer, and they alone never keep a Route from stranding. They are withheld while an excluded control has focus. |
+| Printed shortcut | A shortcut shown in a control's accessible name, such as ⌘S in "Save current document (⌘S)", offered as a key to press and drawn with the controls. Excluded whenever its control is. Native menu accelerators are not offered, since a key sent through Playwright never reaches one. |
 | Exclusion list | What a Route must never touch, such as Quit or outbound links, supplied by the adapter. A safety rail, not a map. |
 | Map | What someone who knows the application can hand the engine about it, full or partial. Never required; discovery covers whatever it leaves out (R29). *Planned, phase 10*; what an entry does is still open. |
 | Menu source | Menu entries as candidates. Withheld when no window has focus, because a menu click would then do nothing while reporting success. |
 | Pool | The candidates at one moment, after exclusions. The draw is made over it, and the journal writes each distinct pool once. |
 | Chooser | The named seam that picks a target from the pool. Today it's always the seeded draw. |
-| Draw | The number from the seeded stream that picked the target, recorded as a raw 32-bit integer. |
+| Draw | The number from the seeded stream that picked the target, recorded as a raw 32-bit integer. Each Hop takes two: a share draw deciding between the common keys and everything else, then the draw picking within that side. |
 | Target | What a Hop acted on, or tried to. |
-| Action | What was done to the target: `click`, `fill`, `select`, `focus` or `menu-click`, with `press` planned, and `type` planned to replace `fill`. `fill` sets a value without pressing keys; `type` presses one key per character. In a native dropdown, `select` chooses an option without opening the list, and `focus` reaches the dropdown itself, since clicking it opens a list the engine cannot use. |
-| Value | The text a `fill` put in, or a `type` once it replaces `fill`, from a second seam separate from the chooser. |
+| Action | What was done to the target: `click`, `type`, `press`, `select`, `focus` or `menu-click`. `type` empties a field and presses one key per character; it replaced `fill`, which set a value without pressing keys and appears only in older journals. `press` presses one key on whatever has focus. In a native dropdown, `select` chooses an option without opening the list, and `focus` reaches the dropdown itself, since clicking it opens a list the engine cannot use. |
+| Value | The text a `type` put in, or a `fill` in older journals, from a second seam separate from the chooser. |
 | Settle | What the page does when it stops changing after a Hop. The engine waits for it, up to a limit, by reading the page until it has stayed unchanged for a quiet window: 400 ms by default, which an adapter can change with `settleQuietMs`. |
 
 ## Seeds and replay

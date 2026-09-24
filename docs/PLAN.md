@@ -480,16 +480,9 @@ missing is any notion of something being wrong.
 Phase 4 ended, and running the engine against real applications for a demo
 found gaps that phase 5 would otherwise have built on top of. Decided on
 2026-09-23 that these come first and that phase 5 starts only once they are
-done. A review of what the two IDEs need came first and closed on
-2026-09-24, and so did the clipboard, journals and settle fixes and R31 that
-followed it; `HISTORY.md` records each. The order below was accepted at that
-review, from a proposal made there; the reasons given with it are the
-proposal's:
-
-1. **The keyboard:** key presses, shortcuts and real typing, `OUTSTANDING.md`
-   1.6.
-
-Each item leaves this list when it merges, and `HISTORY.md` records it.
+done. **All of it is done**, as of 2026-09-24: a review of what the two IDEs
+need, then the clipboard, journals and settle fixes, R31 and the keyboard, in
+the order that review settled. `HISTORY.md` records each. Phase 5 is next.
 
 ### Phase 5: the universal tier, and the Route as a test
 

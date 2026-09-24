@@ -13,6 +13,8 @@ import {
   seededValues,
   settle,
   DEFAULT_SETTLE_QUIET_MS,
+  COMMON_KEY_SHARE,
+  printedShortcut,
   survey,
   takesTypedValue,
   NondeterministicExclusion,
@@ -71,6 +73,14 @@ test('survey finds the application controls by role, with no enumeration of them
     'option "Luggage"',
     'option "Instruments"',
     'option "Clothing"',
+    // The common keys, always offered after everything else, in this order.
+    'key "Enter"',
+    'key "Escape"',
+    'key "Tab"',
+    'key "ArrowUp"',
+    'key "ArrowDown"',
+    'key "ArrowLeft"',
+    'key "ArrowRight"',
   ]);
 });
 
@@ -198,7 +208,7 @@ test('menu candidates are withheld, with a reason, when no window has focus', as
     expect(found.menuSource.reason).toMatch(/no application window holds focus/i);
     expect(found.menuSource.reason).toMatch(/PHILEAS_SHOW/);
   }
-  expect(found.candidates.every((candidate) => candidate.source === 'page')).toBe(true);
+  expect(found.candidates.every((candidate) => candidate.source !== 'menu')).toBe(true);
 });
 
 test('a Route completes its Trip and journals every hop', async ({ page, app }) => {
@@ -240,7 +250,7 @@ test('a Route completes its Trip and journals every hop', async ({ page, app }) 
     const pool = pools.get(entry.pool);
     expect(pool, `hop ${entry.hop} names pool ${entry.pool}, which is not in the file`).toBeDefined();
     expect(pool).toContainEqual(entry.target);
-    expect(['click', 'fill', 'select', 'focus', 'menu-click']).toContain(entry.action);
+    expect(['click', 'type', 'press', 'select', 'focus', 'menu-click']).toContain(entry.action);
   }
 });
 
@@ -248,11 +258,12 @@ test('every target is the pool entry its draw points at, from the file alone', a
   page,
   app,
 }) => {
-  // The consistency check that needs no replay. The seeded chooser always links
-  // three recorded things by one rule, target = pool[floor(draw / 2^32 x size)],
-  // so a journal can be checked against itself with nothing launched. A line
-  // that breaks the rule means the engine acted on something other than what
-  // its draw picked, or recorded the wrong pool or target.
+  // The consistency check that needs no replay. The seeded chooser links the
+  // recorded things by one rule: the share draw picks a side, the common keys
+  // below a quarter of 2^32 and the rest otherwise, and the target is
+  // side[floor(draw / 2^32 x size)] in pool order. So a journal can be checked
+  // against itself with nothing launched. A line that breaks the rule means the
+  // engine acted on something other than what its draws picked.
   const dir = scratch();
   const streams = deriveRouteStreams('consistency-seed', 0);
   await runRoute({
@@ -273,9 +284,14 @@ test('every target is the pool entry its draw points at, from the file alone', a
     if (entry.kind !== 'trip-hop') continue;
 
     expect(entry.draw, `hop ${entry.hop} has no draw, and the seeded chooser always draws`).toBeDefined();
+    expect(entry.shareDraw, `hop ${entry.hop} has no share draw`).toBeDefined();
     const pool = pools.get(entry.pool) ?? [];
-    const position = Math.floor(((entry.draw ?? 0) / 4_294_967_296) * pool.length);
-    expect(pool[position], `hop ${entry.hop}`).toEqual(entry.target);
+    const keys = pool.filter((c) => c.source === 'key' && c.role === 'key');
+    const rest = pool.filter((c) => !(c.source === 'key' && c.role === 'key'));
+    const keysWon = (entry.shareDraw ?? 0) < 4_294_967_296 * COMMON_KEY_SHARE;
+    const side = (keysWon && keys.length) || !rest.length ? keys : rest;
+    const position = Math.floor(((entry.draw ?? 0) / 4_294_967_296) * side.length);
+    expect(side[position], `hop ${entry.hop}`).toEqual(entry.target);
     checked += 1;
   }
 
@@ -304,7 +320,7 @@ test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
         // The draw is compared as well as the target. A broken sequence can land
         // on the same target by chance, and only the draw tells the two apart.
         entry.kind === 'trip-hop'
-          ? `${entry.target.name}/${entry.value ?? ''}/${String(entry.draw)}`
+          ? `${entry.target.name}/${entry.value ?? ''}/${String(entry.shareDraw)}/${String(entry.draw)}`
           : ''
       );
   };
@@ -722,4 +738,93 @@ test('settle reports what it cost, and says when a page never stopped moving', a
   // seconds and is what an unbounded snapshot would have cost.
   expect(noisy.ms).toBeGreaterThan(400);
   expect(noisy.ms).toBeLessThan(2_000);
+});
+
+test('a shortcut printed in a name is read as the key it names', () => {
+  expect(printedShortcut('Save current document (⌘S)')).toEqual({ label: '⌘S', key: 'Meta+s' });
+  expect(printedShortcut('Save all open documents (⌥⌘S)')).toEqual({
+    label: '⌥⌘S',
+    key: 'Alt+Meta+s',
+  });
+  expect(printedShortcut('Explorer (⇧⌘E)')?.key).toBe('Shift+Meta+e');
+  expect(printedShortcut('Terminal (⌃`)')?.key).toBe('Control+`');
+  // Parentheses with no modifier are ordinary text, not a shortcut.
+  expect(printedShortcut('Extensions (2 require restart)')).toBeUndefined();
+  expect(printedShortcut('Clear search')).toBeUndefined();
+});
+
+test('a shortcut is excluded whenever its control is', async ({ page, app }) => {
+  await page.evaluate(() => {
+    const quit = document.createElement('button');
+    quit.textContent = 'Quit the probe (⌘Q)';
+    document.body.append(quit);
+  });
+
+  const shortcuts = async (exclusions: AppUnderTest['exclusions']) =>
+    (
+      await survey({ page, app, exclusions, hopIndex: 0, tally: createExclusionTally(exclusions) })
+    ).candidates
+      .filter((c) => c.source === 'key' && c.role === 'shortcut')
+      .map((c) => c.name);
+
+  // The positive control: with nothing excluded, the shortcut is offered.
+  expect(await shortcuts({})).toEqual(['⌘Q']);
+  // Excluding the control by name takes its key with it, so the rail that
+  // names Quit cannot be walked past on the keyboard.
+  expect(await shortcuts({ names: ['Quit the probe (⌘Q)'] })).toEqual([]);
+});
+
+test('the common keys are withheld while an excluded control has focus', async ({
+  page,
+  app,
+}) => {
+  // Enter on a focused outbound link follows it, so a Tab that landed on an
+  // excluded control would otherwise hand the next Enter a way past the rail.
+  await page.getByRole('button', { name: 'Summary', exact: true }).click();
+  const exclusions = { names: ['Read about the journey'] };
+  const keys = async () =>
+    (
+      await survey({ page, app, exclusions, hopIndex: 0, tally: createExclusionTally(exclusions) })
+    ).candidates.filter((c) => c.source === 'key' && c.role === 'key').length;
+
+  // The positive control: with focus elsewhere, all seven are offered.
+  await page.getByRole('button', { name: 'Summary', exact: true }).focus();
+  expect(await keys()).toBe(7);
+
+  await page.getByRole('link', { name: 'Read about the journey' }).focus();
+  expect(await keys()).toBe(0);
+});
+
+test('typing arrives as one keystroke per character', async ({ page, app }) => {
+  // The reason `type` replaced `fill`: a key handler sees nothing from a fill.
+  await page.evaluate(() => {
+    const w = window as unknown as { typed: number };
+    w.typed = 0;
+    document.querySelector('#search')?.addEventListener('keydown', (event) => {
+      if ((event as KeyboardEvent).key.length === 1) w.typed += 1;
+    });
+  });
+
+  const dir = scratch();
+  const streams = deriveRouteStreams('typing-seed', 0);
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams,
+    journeySeed: 'typing-seed',
+    routeIndex: 0,
+    tripLength: 30,
+    journalDir: dir,
+  });
+
+  const typed = readJournal(path.join(dir, `route-000-${streams.routeSeed}.jsonl`)).filter(
+    (entry): entry is TripHopEntry =>
+      entry.kind === 'trip-hop' && entry.action === 'type' && entry.target.name === 'Search items'
+  );
+  const characters = typed.reduce((sum, entry) => sum + (entry.value ?? '').length, 0);
+
+  // Without this, a Route that never typed anything would pass trivially.
+  expect(characters).toBeGreaterThan(0);
+  expect(await page.evaluate(() => (window as unknown as { typed: number }).typed)).toBe(characters);
 });

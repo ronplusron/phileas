@@ -25,6 +25,101 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: the keyboard, and the end of the work before phase 5
+
+**Before this, no Hop pressed a key.** Text went in by `fill`, which sets a
+value at once and fires no keystrokes, so a defect in a key handler was out of
+every Route's reach, and nothing reached what only a key does, such as a
+console bringing back its last line on Up.
+
+**What a Route can do now.**
+
+- **Type.** A text field is emptied, then given one keystroke per character,
+  recorded as `type`. The emptying is not keystrokes, so the field ends up
+  holding the drawn value as it did before.
+- **Press a common key.** Enter, Escape, Tab and the four arrows are offered
+  on every Hop, one candidate each, pressed on whatever has focus, recorded as
+  `press`.
+- **Press a printed shortcut.** A shortcut shown in a control's accessible
+  name, such as "Save current document (⌘S)", is offered as the key it names.
+  Two controls printing one key make one candidate. Native menu accelerators
+  are not offered; the entry below has the measurement.
+
+**How they are drawn.** Seven equal key candidates took 7 Hops in 8 on a
+screen with one control, so the draw now takes two steps: a share draw gives
+the common keys a quarter of Hops whenever anything else is on offer, and a
+second draw picks within the winning side. Printed shortcuts are drawn with
+the controls, since each belongs to one. The share draw is taken on every Hop,
+so the stream advances the same way whatever the screen offered, and both
+draws are journaled, so a journal can still be checked against itself. A
+quarter was chosen because it presses Up about one Hop in 28 on any screen.
+Per-key weights were considered and left as an assessment for after Journeys
+on a real IDE, in `OUTSTANDING.md`.
+
+**Three rails, each for a reason found while building.**
+
+- **The common keys alone never keep a Route going.** They are always on
+  offer, so counting them would mean no Route ever stranded, and a dead end or
+  a trap would read as passed. A screen with nothing but the keys strands.
+- **A printed shortcut is excluded whenever its control is,** so a rail that
+  names Quit cannot be walked past on the keyboard.
+- **The common keys are withheld while an excluded control has focus.** Enter
+  on a focused outbound link follows it, so a Tab that landed there would
+  otherwise hand the next Enter a way past the rail. This was not decided
+  beforehand; it was found while building, and closes a gap the keys opened.
+
+The exclusion predicate is now also handed key candidates, with `source`
+'key' and the key, so an adapter can exclude one the names cannot express.
+
+**What checks it.** Four new tests. Shortcuts are read from names in the
+glyph forms both IDEs print, and ordinary parentheses are not read as one. A
+shortcut disappears when its control is excluded, with the unexcluded case as
+the control. The common keys disappear while an excluded link has focus, with
+focus elsewhere as the control; with the rule switched off, that test failed.
+And typing arrives as one keystroke per character, counted by a listener on
+the search box against the journal's typed values; with `fill` put back, that
+test failed. Existing tests were updated for the larger pool and the two-step
+draw, including the check that every target is the entry its draws point at.
+Two runs of one seed matched line for line, and 26 of their 100 Hops pressed a
+key. 111 tests pass.
+
+**Every seed recorded before this no longer replays,** since the pool and the
+draw both changed.
+
+This closes the work `PLAN.md` put before phase 5: a review of what the two
+IDEs need, then the clipboard, journals and settle fixes, R31, and this.
+
+## 2026-09-24: which keys a Route can press, measured
+
+Three measurements before the keyboard work, each changing an answer the
+review had already given.
+
+**A native menu accelerator cannot be pressed through Playwright.** On
+`buggy`, View > Show Summary was given an accelerator at run time and the key
+pressed through `page.keyboard`. The page received the key, as a listener
+added for the purpose showed, and the Summary view never appeared, with
+windows hidden and with them shown and focused. The control was clicking the
+same menu entry, which showed Summary in both modes. So the review's answers
+that menu accelerators are a source of keys, and that an accelerator and its
+entry are two candidates excluded together, were withdrawn: a pressed
+accelerator would be a Hop that did nothing, journaled as one that did.
+
+**Shortcuts the page handles itself can be pressed.** In RStudio and Positron,
+a file opened in the editor, a line typed into it, and Cmd-S pressed through
+`page.keyboard` saved it to disk in both. Both handle the key in the renderer:
+RStudio stopped the event in the page, and Positron marked it handled. The
+first Positron run read as not saving, and it had not typed into the editor at
+all, so there was nothing to save; the rerun typed first and saved.
+
+**Neither IDE declares its shortcuts, and both print them.** Neither has a
+single element carrying `aria-keyshortcuts`. Both put shortcuts in accessible
+names, such as "Save current document (⌘S)": 4 on RStudio's resting screen
+and 12 on Positron's. So the agreed sources would never have pressed a
+shortcut on either IDE, and shortcuts printed in names were added as a
+source, read from what the survey already reads.
+
+`OUTSTANDING.md` 1.6 holds the answers as they now stand.
+
 ## 2026-09-24: R31, what each Hop did to the screen
 
 **Why.** A journal was read that said a Hop clicked "Compare" and nothing about
