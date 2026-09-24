@@ -355,6 +355,24 @@ so every default exclusion is written in the journal the way the adapter's own
 are, never applied silently. `buggy`'s adapter excludes its own clipboard
 entries in the meantime.
 
+### 1.11 Whether a dialog hides what is behind it from the survey, to measure
+
+Raised 2026-09-24, agreed as a measurement, not yet scheduled. The survey
+returns a flat list of every visible, named control, in page order, and
+records nothing about what contains what. So with a dialog open, its buttons
+and text area are candidates like any others, and whether the controls behind
+the dialog are still offered depends entirely on the accessibility tree.
+
+A true modal, one that makes everything behind it inert, should drop those
+controls from the tree; a dialog that only looks modal may leave them in, and
+then a Route can act behind it, which no person could. Neither case has been
+measured, on `buggy` or on either IDE.
+
+It bears on phase 5 in two places. A planted dialog with no way out is meant
+to strand, which it cannot if the controls behind it are still offered. And
+the "no unexpected dialog" check needs to know what a Route can reach while a
+dialog is open.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
