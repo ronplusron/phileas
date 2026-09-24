@@ -65,19 +65,21 @@ verification points rather than bookkeeping.
 
 **The work before phase 5 is the next thing to do.** Running the engine
 against real applications for a demo found gaps phase 5 would otherwise build
-on, and `docs/PLAN.md` lists them under "Before phase 5", in order, starting
-with a review of what the two IDEs need. Phase 5 itself -- the universal tier
+on, and `docs/PLAN.md` lists them under "Before phase 5", in the order a
+review of what the two IDEs need settled, starting with the clipboard fix.
+Phase 5 itself -- the universal tier
 of checks, and the point where a Route can fail for a reason rather than only
 for not finishing -- starts once that list is empty. `journal.ts` already
 carries an empty `checks` field on every Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Three defects are open.
-Two close before phase 5: a shown run reaching the system clipboard, and an
-earlier run's journals sitting beside a new run's. Phase 5 closes the third:
-the external-link stub can install successfully and do nothing, and it stays
-open until a second source of evidence exists that does not depend on the stub
-having worked. That file holds what is wrong, confirmed by reading the code,
-and nothing here restates it.
+**Read `docs/DEFECTS.md` before writing any of it.** Four defects are open.
+Three close before phase 5: a shown run reaching the system clipboard, an
+earlier run's journals sitting beside a new run's, and the settle wait calling
+a moving page settled. Phase 5 closes the fourth: the external-link stub can
+install successfully and do nothing, and it stays open until a second source
+of evidence exists that does not depend on the stub having worked. That file
+holds what is wrong, confirmed by reading the code, and nothing here restates
+it.
 
 **Two things phase 5 must not undo**, both measured earlier and carried in
 `docs/PLAN.md`. A hop must not wait for navigation to finish, or a single
@@ -99,8 +101,8 @@ postinstall in this environment, so the types arrive and the binary does not.
 `node node_modules/electron/install.js` fetches it, in the engine and in
 `testbed/buggy/` separately. It looks like a broken checkout and is not.
 
-`docs/OUTSTANDING.md` holds what is open, and opens with the questions the
-review before phase 5 is waiting on. `docs/DEFECTS.md` holds what is wrong.
+`docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
+opinion. `docs/DEFECTS.md` holds what is wrong.
 Both carry items that the work before phase 5 closes.
 
 **Two research readings are recorded in `docs/HISTORY.md` and worth knowing

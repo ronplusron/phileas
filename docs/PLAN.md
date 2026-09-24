@@ -476,19 +476,23 @@ missing is any notion of something being wrong.
 Phase 4 ended, and running the engine against real applications for a demo
 found gaps that phase 5 would otherwise have built on top of. Decided on
 2026-09-23 that these come first and that phase 5 starts only once they are
-done. The first three are in the order that was set; where the last two fall
-is open, and is settled at the review:
+done. A review of what the two IDEs need came first and closed on
+2026-09-24, and `HISTORY.md` records it. The order below was accepted at that
+review, from a proposal made there; the reasons given with it are the
+proposal's:
 
-1. **A review of what the two IDEs need**, `OUTSTANDING.md` 1.10, before any of
-   the work below starts, so its order is settled with those needs in view.
-2. **What each hop did to the screen,** R31, `OUTSTANDING.md` 1.9.
-3. **The keyboard:** key presses, shortcuts and real typing, `OUTSTANDING.md`
+1. **The clipboard,** a defect in `DEFECTS.md`: `buggy`'s adapter lets a shown
+   run cut, copy and paste. Closed by that adapter's exclusion alone; the
+   engine excluding the standard menu entries by default, `OUTSTANDING.md`
+   1.11, is agreed and built separately. First because it can leak data
+   today.
+2. **An earlier run's journals sitting beside a new run's,** a defect in
+   `DEFECTS.md`. Small, and every run adds to it.
+3. **The settle wait calling a moving page settled,** a defect in
+   `DEFECTS.md`. Before R31, because R31 reads the same readings.
+4. **What each hop did to the screen,** R31, `OUTSTANDING.md` 1.9.
+5. **The keyboard:** key presses, shortcuts and real typing, `OUTSTANDING.md`
    1.6.
-4. **The clipboard,** a defect in `DEFECTS.md`: `buggy`'s adapter lets a shown
-   run cut, copy and paste. Whether the engine excludes the standard menu
-   entries by default is `OUTSTANDING.md` 2.4, decided alongside it.
-5. **An earlier run's journals sitting beside a new run's,** a defect in
-   `DEFECTS.md`.
 
 Each item leaves this list when it merges, and `HISTORY.md` records it.
 

@@ -3,11 +3,11 @@
 Everything not settled that is not itself a defect: what is agreed and
 unbuilt, what nobody has decided, and what was declined.
 
-**Questions waiting on an answer have a section of their own**, first and
-unnumbered, so that adding or emptying it never renumbers the items that
-other documents cite. It holds the review `PLAN.md` puts first under "Before
-phase 5". When it empties, it goes, as it did once the three questions that
-gated phase 1 were settled on 2026-09-21.
+**Nothing currently waits on an opinion**, so there is no section for it. When
+something does, it gets a section of its own, first and unnumbered, so that
+adding or emptying it never renumbers the items other documents cite. The
+last one held the review before phase 5 and emptied on 2026-09-24;
+`HISTORY.md` records its answers.
 
 **An item leaves this file when it closes.** It is not marked done and it is
 not kept for the record, because `HISTORY.md` is the record. A file that only
@@ -16,77 +16,8 @@ accumulates is how a section grows until nobody reads it.
 **These headings are judgments.** Placing an item is a decision about what
 kind of thing it is, and worth making deliberately.
 
-`DEFECTS.md` is what is wrong: three entries, two of them to close before phase
-5.
-
-## Waiting on an answer: the review before phase 5
-
-Pooled on 2026-09-23, at the start of the review, and grouped by area. Each
-question points at where its detail lives rather than restating it. A
-recommendation made in a session is marked as one, and is not a decision. A
-question leaves here when it is answered, and the answer goes where its area
-is recorded.
-
-**What the two IDEs need (1.10), and a probe of RStudio**
-
-1. **Whether to accept this schedule for the items in 1.10.** Proposed at the
-   end of the session that recorded them, and not yet answered:
-   - Measured before phase 5, by one probe of RStudio: frames and webviews,
-     the cost of surveying and settling on a large application, and a page
-     that never stops moving.
-   - Designed before phase 9: other windows, and more kinds of action.
-   - In phase 5, where `PLAN.md` already has them: native dialogs, and bugs
-     that happen on quitting.
-   - At RStudio's turn, after phase 9: the debugging-port launch, or a build
-     from source.
-
-   A reason offered for measuring before R31 rather than only before phase 5,
-   not a decision: R31 compares readings the settle wait takes, so whether a
-   page that never stops moving settles at all bears on its design.
-2. **Whether to run that probe.** The installed RStudio is the hardened
-   release, so a probe reaches it only over the debugging port, cannot keep
-   its window off the screen, and has to run with a throwaway profile and
-   configuration so it touches none of the machine's own settings, projects
-   or R session.
-3. **Whether to install Positron so the probe covers it too,** or leave it
-   unmeasured for now. It is not installed.
-
-**The clipboard, and the menu entries every Electron application has**
-
-4. **Where the clipboard fix falls** among the work before phase 5.
-   Recommended, not decided: right after this review and ahead of the
-   journals fix, because it can leak data today.
-5. **Whether to close it before deciding 2.4.** `PLAN.md` has 2.4 decided
-   alongside the fix, and `DEFECTS.md` says `buggy`'s adapter excluding the
-   clipboard entries closes the defect on its own. Recommended, not decided:
-   the adapter's exclusion first, 2.4 afterwards.
-6. **2.4 itself:** whether the engine excludes the standard menu entries by
-   default.
-
-**An earlier run's journals beside a new run's**
-
-7. **Where this fix falls.** Recommended, not decided: right after the
-   clipboard fix.
-8. **Clearing the seed's folder, or a folder per run.** `DEFECTS.md` has both.
-
-**What each hop did to the screen, R31 (1.9)**
-
-9. **A single snapshot or a full settle wait after each Fix hop.** 1.9 leaves
-   it to the work; it is here so it is weighed with the rest.
-
-**The keyboard (1.6)**
-
-10. **Filling or typing:** always type, or choose between them by a draw,
-    which changes every recorded seed.
-11. **Whether a menu entry and its accelerator are one candidate or two**,
-    which decides whether excluding Quit also excludes Cmd+Q.
-12. **Whether menu accelerators and `aria-keyshortcuts` are enough to
-    discover shortcuts by**, since `survey` reads no source.
-
-Whether a key event sent to the page reaches a native menu accelerator is
-unmeasured, and measuring it may settle 11 and 12. Whether arrow keys change
-a focused dropdown's choice on macOS is unmeasured too; it bears on `select`
-rather than on either question.
+`DEFECTS.md` is what is wrong: four entries, three of them to close before
+phase 5 and one in phase 5.
 
 ## 1. Agreed, not built
 
@@ -188,11 +119,13 @@ and fires a single input event. So a defect in a key handler -- one that fires
 on each keystroke, validates as you type, or reacts to a particular key -- is
 out of every Route's reach, and nothing says so: the journal records `fill`
 and the value, and a reader could reasonably assume the value was typed.
-Typing each character instead would reach key handlers, at a round trip per
-character, and changes no draw, though the application may respond
-differently and so send a Route elsewhere. Choosing between filling and
-typing by a draw would reach them some of the time, and adding that draw
-changes every recorded seed.
+**Chosen 2026-09-24: a Hop types, always.** Typing each character reaches key
+handlers, at a round trip per character, and adds no draw, though the
+application may respond differently and so send a Route elsewhere. The journal
+records it as `type`, so it never implies typing where it filled. Chosen over
+choosing between filling and typing by a draw, which would reach key handlers
+only some of the time and would shift every recorded seed, and over keeping
+`fill`.
 
 **The `select` action has the same shape.** It chooses an option in a native
 dropdown directly and never opens the list, so moving through a dropdown's
@@ -206,26 +139,35 @@ shortcut that closes an editor tab, and closes the application once no tabs
 remain. That case cannot currently arise, so the one rail designed around a
 shortcut guards against something the engine never does.
 
-Three questions have to be answered in the work:
+Three questions shape the work. Discovery and exclusion are answered;
+triggering waits on a measurement:
 
 - **Discovery.** A shortcut is not a thing in the accessibility tree, so
   discovery by role does not find it. Menu accelerators are readable from the
   menu in the main process. Shortcuts the page handles itself are discoverable
   only where the application declares `aria-keyshortcuts`, which few do;
   finding the rest would mean reading source, which `survey` must not do.
-  `../CLAUDE.md` says why.
+  `../CLAUDE.md` says why. **Chosen 2026-09-24:** those two sources, plus a
+  small fixed set of ordinary keys -- Enter, Escape, Tab and the arrows --
+  pressed on whatever has focus. The fixed set is what reaches a console's
+  history on Up without anyone declaring it. Anything else waits for the
+  optional map (1.7).
 - **Triggering.** Playwright cannot press a native accelerator, which is why
   `src/menu.ts` clicks menu entries instead. Whether a key event sent to the
   renderer reaches a native menu accelerator is unmeasured, and it decides
   whether menu accelerators are reachable at all.
-- **Exclusion.** How `names` and the predicate apply to a shortcut, including
-  whether a menu entry and its accelerator are one candidate or two. Excluding
-  Quit by its menu path and leaving Cmd+Q reachable would be a rail with a gap
-  in it that no test notices.
+- **Exclusion.** A menu entry and its accelerator are two candidates,
+  excluded together, chosen 2026-09-24: clicking the entry and pressing the
+  accelerator are separate moves in the pool, since they can run different
+  code, and excluding either one, by name or by menu path, excludes both.
+  Excluding Quit by its menu path and leaving Cmd+Q reachable would otherwise
+  be a rail with a gap in it that no test notices. Chosen over one candidate,
+  which would need a draw between clicking and pressing and so shift recorded
+  seeds. How the predicate applies to a shortcut is still for the work.
 
 When a Hop presses a key, the journal records it as a `press` action, with
-which key. `action` today is `click`, `fill`, `select`, `focus` or
-`menu-click`.
+which key, and text typed into a field as a `type` action, replacing `fill`.
+`action` today is `click`, `fill`, `select`, `focus` or `menu-click`.
 
 ### 1.7 An optional map, in phase 10
 
@@ -376,7 +318,8 @@ into a screen.
 
 - **Two readings are compared:** the accessibility tree the survey read before
   the Hop, and the last one the settle wait read after it. Both are already
-  taken, so the effect costs nothing extra.
+  taken, so the effect costs nothing extra. That second reading can come from
+  a page still changing, which `DEFECTS.md` records against the settle wait.
 - **`changed`** says whether anything in the tree differs. It is kept separate
   from the headings because headings can miss a change entirely: on
   trickster-tales, clicking a facet value left every heading in place.
@@ -390,8 +333,10 @@ into a screen.
 - **An effect that could not be read is recorded as such,** never as "nothing
   changed". A page that stopped answering and a Hop that did nothing would
   otherwise leave the same record, and only the first is a finding.
-- **Fix hops get a reading too,** one after each step. Whether that is a single
-  snapshot or a full settle wait is decided in the work.
+- **Fix hops get a reading too,** one after each step, taken after a full
+  settle wait as for a Trip hop. Chosen 2026-09-24 over a single snapshot,
+  which could record a change half finished; the wait costs once per Fix
+  step, and a Fix is usually a handful of steps.
 - **Dropped: the pool afterwards.** It was proposed, and it is always the next
   Hop's pool; computing it separately would mean a second full survey on every
   Hop, including another call of the adapter's exclusion predicate.
@@ -403,9 +348,28 @@ costs more.
 
 ### 1.10 What the two IDEs need that nothing supplies yet
 
-Recorded 2026-09-23, to be reviewed before the work that comes before phase 5
-starts, so that its order can be settled with these in view. Where an item is
-already recorded elsewhere, this points there rather than repeating it.
+Recorded 2026-09-23, and scheduled the same day at the review before phase 5,
+by approving a proposal made at the end of the session that recorded them:
+
+- **Measured before phase 5, by one probe of RStudio:** frames and webviews,
+  the cost on a large application, and a page that never stops moving.
+  Measured 2026-09-24, on Positron as well; `HISTORY.md` has the results.
+- **Designed before phase 9:** other windows, and more kinds of action.
+- **At the IDEs' turn, after phase 9 and before the engine meets either:**
+  reading inside frames and webviews, decided 2026-09-24 once the probes
+  showed the need. Nothing earlier is known to need it, though whether the
+  testbed's siblings or the two first consumers use frames is unmeasured.
+- **In phase 5, where `PLAN.md` already has them:** native dialogs, and bugs
+  that happen on quitting.
+- **At RStudio's turn, after phase 9:** the debugging-port launch, or a build
+  from source.
+
+A reading, not a reason given with the approval: the three measured items
+bear on what phase 5 and R31 build on, since both rest on the survey and the
+settle wait, and the rest matter only once the engine meets a real IDE.
+
+Where an item is already recorded elsewhere, this points there rather than
+repeating it.
 
 - **More kinds of action:** scrolling, right-click, double-click, dragging and
   hovering. A Hop today can click, fill, select, focus and click a menu entry.
@@ -414,24 +378,30 @@ already recorded elsewhere, this points there rather than repeating it.
 - **Other windows.** A Route surveys one window, the page the adapter selects.
   The first of RStudio's recorded bugs starts in a second one, its plot zoom
   window. How many others either IDE opens is unmeasured.
-- **Frames and webviews.** An IDE commonly draws some panes -- help, previews,
-  rendered output -- in a frame or webview, a page inside the page. Which of
-  either IDE's panes are drawn that way, and whether the accessibility
-  snapshot the survey reads reaches inside them, are both unmeasured.
+- **Frames and webviews.** The survey does not read inside a frame, measured
+  on both IDEs. RStudio's Help, Viewer and data viewer are each an iframe, and
+  none of their controls reach the survey, 57 of them in the data viewer
+  alone, which is where one of RStudio's recorded bugs sits. Positron's Help
+  and Viewer are webviews and equally out of reach; its data explorer is drawn
+  in the page and is reachable. Scheduled above, at the IDEs' turn.
 - **The debugging-port launch** that a hardened release needs is named in the
   engine's types and has never been built. For RStudio the chosen remedy is a
   build without the hardening instead, and how hard that build is has not been
-  measured.
+  measured. Whichever way in, each Route needs its own Electron profile,
+  through `--user-data-dir`: measured on RStudio, the profile ignores `HOME`,
+  so without it every Route shares one profile's cookies and storage, which is
+  the inherited state R3 forbids. The folder needs a short path: Positron
+  fails to start when its profile's path pushes a socket inside it past 103
+  characters.
 - **Native dialogs,** such as Open and Save, which file work in either IDE
   reaches. `PLAN.md` carries them as a hazard with the answer undecided.
-- **Cost on a large application.** The survey and the settle wait each read the
-  whole page's accessibility tree, several times per Hop. That has been
-  measured only on applications far smaller than either IDE. So has the
-  journal's size: each distinct pool is written once, and one screen of a
-  large application could offer hundreds of candidates.
-- **A page that never stops moving:** a blinking cursor, a spinner, a live
-  console. The settle wait might never see two readings agree, and would then
-  spend its whole limit on every Hop. Unmeasured.
+- **Cost on a large application** is small on both IDEs, measured: a survey
+  takes 7 to 66 ms over at most 72 candidates, so neither the per-Hop reads
+  nor the journal's pools need work.
+- **A page that never stops moving** turned out to be two findings, the same
+  on both IDEs. A blinking cursor is not in the accessibility tree, so it does
+  not register at all. A live console does, and the settle wait can return
+  settled while it is still changing, which is now in `DEFECTS.md`.
 - **Bugs that happen on quitting.** Quit is excluded, so no Hop reaches it, but
   every Route already ends by closing the application. A main-process error
   check watching that close could catch RStudio's first recorded bug without a
@@ -440,6 +410,27 @@ already recorded elsewhere, this points there rather than repeating it.
 Already recorded and scheduled: key presses and typing (1.6), main-process
 errors, log checks and narrowing (phase 5), and expected results from files,
 R or a driver (phase 6).
+
+### 1.11 Default exclusions for the menu entries every Electron application has
+
+Raised 2026-09-23. Writing an adapter for trickster-tales meant excluding, by
+hand, the standard menu entries Electron gives every application: Quit, Hide,
+Hide Others and Services; Reload and Force Reload; Toggle Developer Tools and
+Toggle Full Screen; Minimize; Show Substitutions; Start and Stop Speaking; and
+Cut, Copy, Paste and Paste and Match Style, for the reasons `DEFECTS.md` gives
+under the clipboard. Every adapter for every application would otherwise
+write the same list, and one that forgot an entry would find out from a Route
+that quit, reloaded, spoke aloud or read the clipboard.
+
+**Agreed 2026-09-24, and not yet scheduled:** the engine excludes these by
+default, and an adapter can allow any of them back. Two things the agreement
+carries with it. A menu candidate carries its label path and not the role
+Electron built it from, and labels include the application's name (`Quit
+Trickster Tales`), so the default matches by role, which the menu source will
+have to read. And a default the engine applies is an input to the seeded draw,
+so every default exclusion is written in the journal the way the adapter's own
+are, never applied silently. The clipboard fix in `buggy`'s adapter does not
+wait for it.
 
 ## 2. Undecided
 
@@ -527,25 +518,7 @@ Kept here rather than under Declined because parking it was deliberate. If
 the terms of a Journey ever need a collective noun, this is the candidate
 already considered.
 
-### 2.4 Default exclusions for the menu entries every Electron application has
-
-Raised 2026-09-23. Writing an adapter for trickster-tales meant excluding, by
-hand, the standard menu entries Electron gives every application: Quit, Hide,
-Hide Others and Services; Reload and Force Reload; Toggle Developer Tools and
-Toggle Full Screen; Minimize; Show Substitutions; Start and Stop Speaking; and
-Cut, Copy, Paste and Paste and Match Style, for the reasons `DEFECTS.md` gives
-under the clipboard. Every adapter for every application would otherwise
-write the same list, and one that forgot an entry would find out from a Route
-that quit, reloaded, spoke aloud or read the clipboard.
-
-Undecided: whether the engine excludes these by default, with an adapter able
-to allow any of them back. Two things decide it. A menu candidate carries its
-label path and not the role Electron built it from, and labels include the
-application's name (`Quit Trickster Tales`), so a default would need the role.
-And a default the engine applies silently is an input to the seeded draw the
-adapter cannot see, so it has to be as visible as the adapter's own list.
-
-### 2.5 Different Fixes for different Routes of one Journey
+### 2.4 Different Fixes for different Routes of one Journey
 
 `../CLAUDE.md` names this as a wanted option, raised when the Fix was
 designed, and it was not tracked here until 2026-09-23. A Journey has one Fix

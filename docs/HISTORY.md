@@ -25,6 +25,106 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: the review before phase 5, and what it settled
+
+The work before phase 5 opened with a review of what the two IDEs need, so
+that its order would be settled with those needs in view. The open questions
+were pooled into one section of `OUTSTANDING.md` on 2026-09-23, grouped by
+area, and each was answered by choosing among options put to the user, most
+of them with a recommendation marked. What was chosen, and where it now
+lives:
+
+- **The schedule for the IDE items** was approved as proposed: three measured
+  before phase 5, two designed before phase 9, two in phase 5, and the
+  debugging-port launch at RStudio's turn. The measuring became the probe in
+  the entry below.
+- **Reading inside frames** goes at the IDEs' turn, after phase 9, since
+  nothing earlier is known to need it.
+- **The order of the work before phase 5:** the clipboard fix, then the
+  journals fix, then the settle fix, then R31, then the keyboard. `PLAN.md`
+  has it, with a reason for each place.
+- **The clipboard fix** is `buggy`'s adapter exclusion alone. Default
+  exclusions for the standard menu entries were agreed separately: by role,
+  written in the journal, and allowed back by an adapter.
+- **Journals** go to a folder per run rather than clearing the seed's folder,
+  so earlier runs stay available for replay.
+- **The settle fix** is a quiet window, its length set by measurement.
+- **Fix hops** get a full settle wait before R31 reads their effect.
+- **Text goes in by typing**, always, recorded as `type`.
+- **A menu entry and its accelerator** are two candidates, excluded together.
+- **Keys to press** come from menu accelerators, `aria-keyshortcuts`, and a
+  fixed set of ordinary keys pressed on whatever has focus.
+
+`OUTSTANDING.md` and `DEFECTS.md` carry each answer where its area is
+recorded, and the section that pooled the questions is gone.
+
+## 2026-09-24: a probe of RStudio and Positron, and a flaw in the settle wait
+
+The review before phase 5 scheduled three of the IDE items to be measured
+first, by one probe of RStudio: frames and webviews, the cost on a large
+application, and a page that never stops moving. The probe ran against the
+installed release, 2026.09.1, over the debugging port, since that release is
+hardened. It was a throwaway script outside the repository, carrying copies of
+`surveyPage` and `settle` as they stood at `2397b44`, because the engine's
+TypeScript does not run under plain `node`. Every result below was read against
+a control.
+
+**Frames are a real gap.** Help, the Viewer and the data viewer each render in
+an iframe, and the survey reads none of them: the page's accessibility snapshot
+held no iframe nodes, and text rendered in the Viewer was absent from it. The
+control was the same string test finding "Console" and "Environment" in the
+page. The data viewer's frame alone held 57 named controls the survey cannot
+see, and the data viewer is where the second of RStudio's recorded bugs sits.
+The first run of the probe got this wrong: the Viewer text it looked for was
+also echoed by the console, so it was found in the page for the wrong reason.
+The rerun built the text in R, so the echo could not match.
+
+**Cost is small at this size.** A survey took 10 to 20 ms, found at most 62
+candidates and produced at most 38 KB of snapshot, including with the data
+viewer open and 40 objects in the environment. Over the debugging port there
+is no menu source, so menu entries are not in those numbers.
+
+**A blinking cursor does not register.** Sampled every 250 ms for three
+seconds, idle and with the console focused, the tree was the same all twelve
+times. The cursor is not in the accessibility tree.
+
+**The settle wait can call a moving page settled.** With the console printing
+a line every 200 ms, all twelve samples differed, and the control confirmed
+the printed lines were in the tree. The settle wait still returned settled
+every time, in about 35 ms over two reads: its two reads are one frame apart,
+so they fall between updates and agree. With a line every 5 ms it did the
+opposite, spending its whole two-second limit on four tries of five. The
+first is the worse of the two, since it is silent, and `DEFECTS.md` carries
+it.
+
+**The debugging port needs its own Electron profile.** Pointing `HOME` at a
+throwaway folder kept RStudio's own configuration and R's out of the real
+ones, and did not move Electron's: the first run wrote caches, cookies and
+local and session storage into the machine's real profile. Adding
+`--user-data-dir` moved all of it into the throwaway folder, and a checksum
+comparison of the real profile showed no change.
+
+**Positron was probed the same way the same day**, version 1.130.0, over the
+debugging port with its own `--user-data-dir` and `--extensions-dir`, and an R
+4.6.0 session started from its picker. The same controls passed.
+
+- **Frames:** Help and the Viewer are webviews, each a nested iframe, and the
+  survey reads neither; the Viewer's text was found in one of the frames and
+  not in the page. The data explorer is different: it is drawn in the page
+  itself, and opening it raised the survey's count from 57 to 72.
+- **Cost:** a survey took 7 to 66 ms over at most 72 candidates and 34 KB,
+  slower than RStudio with webviews open and still small.
+- **Settling:** the cursor again did not register. With a line every 200 ms,
+  all twelve samples differed and every settle returned settled. With a line
+  every 5 ms, every settle also returned settled, in 47 to 85 ms, where
+  RStudio's ran out its limit: Positron appears to batch console output, so
+  even a fast stream reads as still between batches. The flaw in `DEFECTS.md`
+  is therefore not one application's.
+- **A profile folder's path has to be short.** Positron refused to start with
+  its profile in a deep folder: its IPC socket lives inside the profile, and a
+  socket path over 103 characters fails to bind. A per-Route profile folder
+  needs a short path for that reason.
+
 ## 2026-09-23: everything open written down before any of it is built
 
 Asked what was still only in the conversation, and the answer was a lot: an

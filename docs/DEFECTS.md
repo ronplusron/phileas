@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Three defects are recorded.** The launch layer landed in phase 1, so this file
+**Four defects are recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows is three defects, then the two things most likely to be filed here
+What follows is four defects, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -111,9 +111,9 @@ Copy 3 and Paste 4. A hidden run is unaffected, because it withholds the menu.
 not reproduce, and it leaks data, and every Journey still passes.
 
 **What closes it:** `buggy`'s adapter excluding the clipboard entries, before
-phase 5. Whether the engine should exclude them by default for every
-application is undecided and is in `OUTSTANDING.md`, beside the other standard
-menu entries every Electron application carries.
+phase 5. The engine excluding them by default for every application, beside
+the other standard menu entries every Electron application carries, is agreed
+and is in `OUTSTANDING.md`; the adapter's fix does not wait for it.
 
 ## An earlier run's journals sit beside a new run's
 
@@ -129,9 +129,41 @@ at 06:55.
 folder, or the phase 7 report reading it, takes five files as one Journey, and
 four of them describe a run that is not the one being looked at.
 
-**What closes it,** before phase 5: a run either clears its seed's folder before
-writing, or writes each run to a folder of its own. Which is undecided. The
-second keeps earlier runs available for comparison, which a replay wants.
+**What closes it,** before phase 5: each run writes to a folder of its own,
+under its seed's folder and named for when the run started. Chosen on
+2026-09-24 over clearing the seed's folder before writing, because it keeps
+earlier runs available for comparison, which a replay wants. How long those
+folders are kept stays an open question in `PRODUCT_REQUIREMENTS.md`.
+
+## The settle wait can call a moving page settled
+
+**Filed 2026-09-24, measured on RStudio.** `settle` in `src/route.ts` reads the
+accessibility tree, waits one frame, reads it again, and returns settled when
+the two agree. A page that changes more slowly than a frame passes that test
+between changes. With RStudio's console printing a line every 200 ms, the tree
+differed at every one of twelve samples, and `settle` still returned settled
+in about 35 ms, every time. Positron did the same, and also returned settled
+with a line every 5 ms. `HISTORY.md` has the measurements and their controls.
+
+**Why a defect:** it produces a wrong answer that reads as a right one. The
+survey that follows is taken from a page mid-change, so the pool the next Hop
+draws from depends on timing, and a replay can diverge with nothing in the
+journal to say why (R8). R31 records a Hop's effect from the settle wait's last
+reading, so it would record a half-finished change as the Hop's effect.
+Nothing reports it: the journal says settled.
+
+**Not the same as a page that never settles.** On RStudio at a line every 5 ms
+the wait ran out its limit and returned unsettled, which is the designed
+behavior and is recorded honestly. This entry is the case that returns
+settled.
+
+**What closes it,** chosen 2026-09-24: a quiet window. The page counts as
+settled only when the whole tree stays unchanged for a stretch of time, rather
+than across one frame. The stretch is paid on every Hop, so its length is set
+by measuring `buggy` and both IDEs, not chosen in advance. Chosen over
+comparing only the pool, which would let R31 read an effect before its text
+finished changing. It comes before R31, since R31 builds on the same readings,
+and `PLAN.md` has it in the work before phase 5.
 
 ## Two things that will look like candidates, and are not
 
