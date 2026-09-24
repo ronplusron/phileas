@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { FullConfig } from '@playwright/test';
-import { resolveSeed } from '@drugstoresushi/phileas';
+import { resolveRun, resolveSeed } from '@drugstoresushi/phileas';
 import { exploration } from './journeys/exploration';
 
 /** Where this run's seed is written, for a Route to check its own against. */
@@ -30,5 +30,10 @@ export default function globalSetup(config: FullConfig): void {
   // what lets a Route notice a seed that did not survive being handed to its worker.
   fs.writeFileSync(seedRecordPath(config.rootDir), seed, 'utf8');
 
+  // Named here, once, for the same reason as the seed: every worker has to
+  // write its Routes' journals into the same run's folder.
+  const run = resolveRun();
+
   console.log(`Journey seed: ${seed}`);
+  console.log(`Run: ${run}`);
 }

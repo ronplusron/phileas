@@ -25,6 +25,41 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: a folder per run, for journals
+
+**The defect.** A run wrote each Route's journal into
+`.phileas-journals/<journey seed>/` and never cleared it, so a rerun of a seed
+rewrote only the files it wrote. A rerun with fewer Routes left the earlier
+run's extra files beside its own, under the same seed, with nothing to tell
+them apart: in one folder, Route 0 had been written by a one-Route run and
+Routes 1 to 4 by an earlier five-Route run.
+
+**The fix,** chosen at the review over clearing the seed's folder: each run
+writes to a folder of its own under its seed, named for when it started, in
+UTC to the millisecond, so folders sort in the order the runs happened and
+every run of a seed is kept for a replay to compare against. The name is
+settled once in global setup by `resolveRun()` and read inside each Route by
+`requireRun()`, through `PHILEAS_RUN`, for the same reason the seed is: a
+worker that named its own run would write into a folder no other worker
+shares. `resolveRun()` always makes a fresh name and replaces one left in the
+environment, since a leftover name would put a second run into the first
+one's folder.
+
+**And a journal now refuses to overwrite.** `Journal.open` creates its file
+with `wx` rather than `w`, so a journal already at its path is refused with an
+error naming it, and the earlier record is kept. With a folder per run that
+should never happen; if two runs are ever handed one folder, it fails there
+rather than being discovered later.
+
+**What checks it.** Three new tests: a run gets a fresh name even with one
+left in the environment, and the names sort and hold nothing a file name
+cannot; a missing run name is an error; and an existing journal is refused,
+its contents unchanged. The last one's positive control: with `w` put back,
+it failed. Two Journeys of one seed, run with a stale `PHILEAS_RUN` set, wrote
+two folders of five journals each, and the two sets matched line for line
+once timings were ignored, so replay still retraces. 97 tests pass. How long
+run folders are kept is still the open question it was.
+
 ## 2026-09-24: the clipboard fix
 
 **The defect.** With windows shown, the menu source is offered, and `buggy`'s

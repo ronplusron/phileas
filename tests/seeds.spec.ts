@@ -9,6 +9,9 @@ import {
   resolveSeed,
   generateSeed,
   SEED_VARIABLE,
+  resolveRun,
+  requireRun,
+  RUN_VARIABLE,
   SHORTEST_DEADLINE_MS,
   playwrightTimeouts,
 } from '../src/index';
@@ -287,4 +290,37 @@ test('a pinned seed wins over the environment, which wins over a fresh one', () 
 test('generated seeds differ', () => {
   const seeds = new Set(Array.from({ length: 50 }, () => generateSeed()));
   expect(seeds.size).toBe(50);
+});
+
+test('every run gets a fresh name, even with one left in the environment', () => {
+  // A run name left over in a shell must not send a second run's journals into
+  // the first run's folder, which is the defect this closes.
+  const before = process.env[RUN_VARIABLE];
+  try {
+    process.env[RUN_VARIABLE] = 'left-over-from-an-earlier-run';
+    const run = resolveRun(new Date('2026-09-24T09:12:33.456Z'));
+    expect(run).toBe('2026-09-24T09-12-33-456Z');
+    expect(process.env[RUN_VARIABLE]).toBe(run);
+    expect(requireRun()).toBe(run);
+
+    // Names sort in the order the runs happened, and hold nothing a file name
+    // cannot.
+    const later = resolveRun(new Date('2026-09-24T09:12:33.457Z'));
+    expect([later, run].sort()).toEqual([run, later]);
+    expect(later).not.toMatch(/[:/\\]/);
+  } finally {
+    if (before === undefined) delete process.env[RUN_VARIABLE];
+    else process.env[RUN_VARIABLE] = before;
+  }
+});
+
+test('a missing run name is an error, never an invented one', () => {
+  const before = process.env[RUN_VARIABLE];
+  try {
+    delete process.env[RUN_VARIABLE];
+    expect(() => requireRun()).toThrow(/is not set/);
+  } finally {
+    if (before === undefined) delete process.env[RUN_VARIABLE];
+    else process.env[RUN_VARIABLE] = before;
+  }
 });

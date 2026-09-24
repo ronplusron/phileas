@@ -234,3 +234,45 @@ export function requireSeed(): string {
   }
   return seed;
 }
+
+/**
+ * The environment variable that carries this run's name to its workers.
+ *
+ * The run is named separately from the seed because a seed is replayed and a
+ * run is not: two runs of one seed are two runs, and their journals must not
+ * land in the same folder.
+ */
+export const RUN_VARIABLE = 'PHILEAS_RUN';
+
+/**
+ * Name this run. Global setup only, for the same reason as `resolveSeed`.
+ *
+ * Always a fresh name, never one already in the environment. A run name left
+ * over in a shell would otherwise send a second run's journals into the first
+ * one's folder, which is the defect this exists to close. The name is when the
+ * run started, in UTC to the millisecond, with the colons a file name cannot
+ * hold replaced, so that folders sort in the order the runs happened.
+ */
+export function resolveRun(now: Date = new Date()): string {
+  const run = now.toISOString().replace(/:/g, '-').replace('.', '-');
+  process.env[RUN_VARIABLE] = run;
+  return run;
+}
+
+/**
+ * Read this run's name. Inside a Route's body only.
+ *
+ * Throws rather than inventing one, for the reason `requireSeed` gives: a
+ * worker that named its own run would write its Routes' journals into a folder
+ * no other worker of the run shares.
+ */
+export function requireRun(): string {
+  const run = process.env[RUN_VARIABLE];
+  if (!run) {
+    throw new Error(
+      `${RUN_VARIABLE} is not set. The run is named once by resolveRun() in global ` +
+        `setup and read inside a Route's body, like the seed.`
+    );
+  }
+  return run;
+}

@@ -5,6 +5,7 @@ import {
   createTest,
   expect,
   deriveRouteStreams,
+  requireRun,
   requireSeed,
   routeIndices,
   runRoute,
@@ -33,20 +34,22 @@ const test = createTest(buggy);
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Where this run's journals are written, one directory per Journey seed.
+ * Where this run's journals are written: a folder per run, under its seed.
  *
- * Under the seed rather than under a timestamp, so that the journals for a seed
- * named in a report are found by looking for that seed. A re-run of the same
- * seed rewrites them, which is what makes two runs comparable at all: the
- * comparison is done by copying the first set aside rather than by
- * accumulating, and a directory that only grows is one nobody reads.
+ * Under the seed first, so that the journals for a seed named in a report are
+ * found by looking for that seed. Then a folder per run, so that a re-run of a
+ * seed never lands beside or on top of an earlier run's files: every run of a
+ * seed is kept, which is what a replay compares against. That was chosen on
+ * 2026-09-24 over clearing the seed's folder before each run; how long the
+ * folders are kept is still an open question.
  */
-const journalDir = (journeySeed: string): string =>
-  path.join(here, '.phileas-journals', journeySeed);
+const journalDir = (journeySeed: string, run: string): string =>
+  path.join(here, '.phileas-journals', journeySeed, run);
 
 for (const routeIndex of routeIndices(exploration)) {
   test(`route ${routeIndex}`, async ({ page, app }, testInfo) => {
     const journeySeed = requireSeed();
+    const run = requireRun();
     const streams = deriveRouteStreams(journeySeed, routeIndex);
 
     // Annotated rather than only logged, so that the seed travels with the
@@ -75,7 +78,7 @@ for (const routeIndex of routeIndices(exploration)) {
       journeySeed,
       routeIndex,
       tripLength: exploration.tripLength,
-      journalDir: journalDir(journeySeed),
+      journalDir: journalDir(journeySeed, run),
     });
 
     testInfo.annotations.push({
@@ -99,7 +102,7 @@ for (const routeIndex of routeIndices(exploration)) {
       `Route ${routeIndex} ended ${outcome.kind} after ${outcome.hops} of ` +
         `${exploration.tripLength} hops` +
         (outcome.kind === 'stranded' ? `: ${outcome.reason}` : '') +
-        `. Route seed ${streams.routeSeed}; journal in ${journalDir(journeySeed)}.`
+        `. Route seed ${streams.routeSeed}; journal in ${journalDir(journeySeed, run)}.`
     ).toBe('passed');
   });
 }

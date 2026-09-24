@@ -286,11 +286,23 @@ export class Journal {
     const journal = new Journal(
       journalPath(directory, opening.routeIndex, opening.routeSeed)
     );
-    // 'w', not 'a'. One Journal instance owns the file for the whole Route, and
-    // appending would mean a re-run of a seed silently glued a second Route's
-    // entries onto the first. Every write after this one goes to the same open
-    // descriptor, so the file is still built one flushed entry at a time.
-    journal.fd = fs.openSync(journal.file, 'w');
+    // 'wx': create, and refuse if the file already exists. Appending would glue
+    // a second Route's entries onto the first, and overwriting would destroy an
+    // earlier run's record, which a replay wants to compare against. Each run
+    // writes to a folder of its own, so an existing file means two runs were
+    // given one folder, and that is refused here rather than discovered later.
+    // Every write after this one goes to the same open descriptor, so the file
+    // is still built one flushed entry at a time.
+    try {
+      journal.fd = fs.openSync(journal.file, 'wx');
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      throw new Error(
+        `A journal already exists at ${journal.file}. Each run writes to a folder of ` +
+          `its own, so two runs were given the same folder; the earlier record is ` +
+          `kept rather than overwritten.`
+      );
+    }
     journal.write({ kind: 'route', ...opening, startedAt: new Date().toISOString() });
     return journal;
   }

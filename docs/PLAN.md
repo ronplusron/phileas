@@ -477,17 +477,15 @@ Phase 4 ended, and running the engine against real applications for a demo
 found gaps that phase 5 would otherwise have built on top of. Decided on
 2026-09-23 that these come first and that phase 5 starts only once they are
 done. A review of what the two IDEs need came first and closed on
-2026-09-24, and so did the clipboard fix that followed it; `HISTORY.md`
-records both. The order below was accepted at that
+2026-09-24, and so did the clipboard and journals fixes that followed it;
+`HISTORY.md` records each. The order below was accepted at that
 review, from a proposal made there; the reasons given with it are the
 proposal's:
 
-1. **An earlier run's journals sitting beside a new run's,** a defect in
-   `DEFECTS.md`. Small, and every run adds to it.
-2. **The settle wait calling a moving page settled,** a defect in
+1. **The settle wait calling a moving page settled,** a defect in
    `DEFECTS.md`. Before R31, because R31 reads the same readings.
-3. **What each hop did to the screen,** R31, `OUTSTANDING.md` 1.9.
-4. **The keyboard:** key presses, shortcuts and real typing, `OUTSTANDING.md`
+2. **What each hop did to the screen,** R31, `OUTSTANDING.md` 1.9.
+3. **The keyboard:** key presses, shortcuts and real typing, `OUTSTANDING.md`
    1.6.
 
 Each item leaves this list when it merges, and `HISTORY.md` records it.

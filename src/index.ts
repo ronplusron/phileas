@@ -48,6 +48,9 @@ export {
   requireSeed,
   generateSeed,
   SEED_VARIABLE,
+  resolveRun,
+  requireRun,
+  RUN_VARIABLE,
   type Journey,
   type JourneyTerms,
 } from './journey';

@@ -198,3 +198,17 @@ test('a pool id depends on order, not only on membership', () => {
   expect(journal.pool([a, b])).not.toBe(journal.pool([b, a]));
   journal.abandon();
 });
+
+test('an existing journal is refused, never overwritten', () => {
+  // Each run writes to a folder of its own, so a journal already at this path
+  // means two runs were handed one folder. The earlier record is what a replay
+  // compares against, so it is kept and the second open fails loudly.
+  const dir = scratch();
+  const first = Journal.open(dir, opening);
+  first.write(hop(0));
+  first.close({ outcome: 'passed', hops: 1 });
+  const before = fs.readFileSync(first.file, 'utf8');
+
+  expect(() => Journal.open(dir, opening)).toThrow(/already exists/);
+  expect(fs.readFileSync(first.file, 'utf8')).toBe(before);
+});

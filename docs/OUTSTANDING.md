@@ -16,8 +16,8 @@ accumulates is how a section grows until nobody reads it.
 **These headings are judgments.** Placing an item is a decision about what
 kind of thing it is, and worth making deliberately.
 
-`DEFECTS.md` is what is wrong: three entries, two of them to close before
-phase 5 and one in phase 5.
+`DEFECTS.md` is what is wrong: two entries, one to close before phase 5 and
+one in phase 5.
 
 ## 1. Agreed, not built
 

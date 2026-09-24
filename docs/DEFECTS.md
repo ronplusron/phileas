@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Three defects are recorded.** The launch layer landed in phase 1, so this file
+**Two defects are recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows is three defects, then the two things most likely to be filed here
+What follows is two defects, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -85,26 +85,6 @@ sound for an application nobody has read, which is the whole hazard.
 **This entry leaves when phase 5's second evidence source exists**, and on
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
-
-## An earlier run's journals sit beside a new run's
-
-**Filed 2026-09-23, found by listing a Journey's journal folder.** A run writes
-each Route's journal into `.phileas-journals/<journey seed>/` and never clears
-that folder. A rerun of the same seed rewrites only the files it writes, so a
-rerun with fewer Routes leaves the earlier run's extra files in place, under
-the same seed. Measured: in the `demo1` folder, Route 0's journal was written
-at 07:19 by a one-Route run, and Routes 1 to 4 were left from a five-Route run
-at 06:55.
-
-**Why a defect:** nothing distinguishes the stale files. A person reading the
-folder, or the phase 7 report reading it, takes five files as one Journey, and
-four of them describe a run that is not the one being looked at.
-
-**What closes it,** before phase 5: each run writes to a folder of its own,
-under its seed's folder and named for when the run started. Chosen on
-2026-09-24 over clearing the seed's folder before writing, because it keeps
-earlier runs available for comparison, which a replay wants. How long those
-folders are kept stays an open question in `PRODUCT_REQUIREMENTS.md`.
 
 ## The settle wait can call a moving page settled
 
