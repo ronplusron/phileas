@@ -48,9 +48,9 @@ recognized, and `OUTSTANDING.md` 1.11 has what that leaves open.
 **The demo, stage one.** `demo/rail-itinerary/`, planned in
 `DEMO_PLAN_TRAIN.md`: a train travel planner that uses none of Phileas's own
 terms, packaged with its own adapter. `npm run demo:train` runs three Routes
-of twenty Hops with the window forward and a pause per Hop, prints a plain
+of fifty Hops with the window forward and a 300 ms pause per Hop, prints a plain
 line per Hop from its journal as it is written, and replays Route 0 to show it
-retraces; on the default seed it did, all twenty Hops. 114 tests pass.
+retraces; on the default seed, at twenty Hops a Route, it did, all twenty. 114 tests pass.
 
 ## 2026-09-24: the engine owns where journals go
 

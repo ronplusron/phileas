@@ -65,10 +65,11 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: eleven phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 5 is the next thing to do.** Running the engine against real
-applications for a demo found gaps phase 5 would otherwise have built on, and
-all of them closed before it on 2026-09-24; `docs/PLAN.md` lists them under
-"Before phase 5". Phase 5 itself is the universal tier of checks, and the point
+**A `phileas` command is the next thing to do, then phase 5.** Running the
+engine against real applications for a demo found gaps phase 5 would otherwise
+have built on, and all of them closed on 2026-09-24. One item was added after:
+a command for setting a Journey's settings for one run, `docs/OUTSTANDING.md`
+1.12. `docs/PLAN.md` lists it under "Before phase 5". Phase 5 itself is the universal tier of checks, and the point
 where a Route can fail for a reason rather than only for not finishing. `journal.ts` already
 carries an empty `checks` field on every Hop for it to fill.
 

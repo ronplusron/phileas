@@ -35,6 +35,7 @@ th, td { padding: 0.35rem 0.7rem; border-bottom: 1px solid #cfc8b8; text-align: 
 form label { display: block; margin: 0.6rem 0; }
 input, select { font: inherit; padding: 0.25rem 0.4rem; }
 .actions { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
+.note { margin: -0.4rem 0 0.6rem; font-size: 0.85rem; opacity: 0.75; }
 #ticketed { color: #2e7d32; font-weight: 600; }
 dialog { border: 2px solid #16425b; border-radius: 10px; padding: 1.4rem; }
 dialog::backdrop { background: rgb(22 66 91 / 0.45); }

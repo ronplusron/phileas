@@ -85,7 +85,8 @@
     <dialog id="purchase-dialog" aria-labelledby="purchase-title">
       <form method="dialog" id="purchase-form">
         <h2 id="purchase-title">Ticket purchase</h2>
-        <label>Ticket holder's name <input id="holder" type="text" /></label>
+        <label>Ticket holder's name <input id="holder" type="text" required aria-describedby="holder-note" /></label>
+        <p id="holder-note" class="note">Required.</p>
         <label>Number of tickets
           <select id="ticket-count">
             <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>

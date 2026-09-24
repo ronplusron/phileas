@@ -9,5 +9,5 @@ import { defineJourney } from '@drugstoresushi/phileas';
  */
 export const demo = defineJourney({
   routes: 3,
-  tripLength: 20,
+  tripLength: 50,
 });

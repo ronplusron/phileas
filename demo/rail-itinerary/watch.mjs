@@ -24,7 +24,7 @@ const env = {
   ...process.env,
   PHILEAS_SEED: seed,
   PHILEAS_SHOW: process.env.PHILEAS_SHOW || 'front',
-  PHILEAS_HOP_DELAY_MS: process.env.PHILEAS_HOP_DELAY_MS || '800',
+  PHILEAS_HOP_DELAY_MS: process.env.PHILEAS_HOP_DELAY_MS || '300',
 };
 delete env.PHILEAS_RUN;
 
@@ -52,7 +52,10 @@ function targetText(entry) {
 
 function lineFor(route, entry) {
   if (entry.kind === 'trip-hop') {
-    const value = entry.action === 'type' ? `"${entry.value ?? ''}"` : '';
+    // Long values are shortened for the screen; the journal keeps them whole.
+    const typed = entry.value ?? '';
+    const shown = typed.length > 12 ? `${typed.slice(0, 8)}... (${typed.length} characters)` : typed;
+    const value = entry.action === 'type' ? `"${shown}"` : '';
     const abandoned = entry.abandoned ? '   (gave up: took too long)' : '';
     return (
       `route ${route}  hop ${pad(entry.hop, 3)}${pad(entry.action, 11)}` +

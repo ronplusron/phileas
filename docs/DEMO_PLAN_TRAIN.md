@@ -51,7 +51,8 @@ totals computed from rows, forms, and a search.
   leg, buy tickets, and go back.
 - **Ticket purchase.** A modal dialog that opens over the itinerary, built
   so that nothing behind it can be reached while it is open: the ticket
-  holder's name in a text field, the number of tickets in a native dropdown
+  holder's name in a required text field, which Purchase refuses to leave
+  blank, the number of tickets in a native dropdown
   from 1 to 5, the total price for that many, and Purchase and Cancel.
   Purchase closes the dialog and marks the itinerary as ticketed. Nothing is
   paid for and no card details are asked for; it is a pretend purchase.
@@ -92,8 +93,8 @@ with nothing handed to it:
 
 **The watched run.** One command runs a Journey with the window brought
 forward and a pause after each Hop, so a person can follow it:
-`PHILEAS_SHOW=front` and `PHILEAS_HOP_DELAY_MS` at about 800. A few Routes of
-about twenty Hops each, a fixed seed by default so the demo is the same every
+`PHILEAS_SHOW=front` and `PHILEAS_HOP_DELAY_MS` at 300. Three Routes of fifty
+Hops each, a fixed seed by default so the demo is the same every
 time, and an easy way to pass another.
 
 **The per-hop log.** Beside the window, `watch.mjs` follows the run's journal

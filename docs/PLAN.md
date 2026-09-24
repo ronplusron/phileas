@@ -480,9 +480,17 @@ missing is any notion of something being wrong.
 Phase 4 ended, and running the engine against real applications for a demo
 found gaps that phase 5 would otherwise have built on top of. Decided on
 2026-09-23 that these come first and that phase 5 starts only once they are
-done. **All of it is done**, as of 2026-09-24: a review of what the two IDEs
-need, then the clipboard, journals and settle fixes, R31 and the keyboard, in
-the order that review settled. `HISTORY.md` records each. Phase 5 is next.
+done. As of 2026-09-24, a review of what the two IDEs need, then the
+clipboard, journals and settle fixes, R31 and the keyboard, are done, in the
+order that review settled, and `HISTORY.md` records each. One item was added
+the same day, and is what remains:
+
+1. **A `phileas` command,** for setting a Journey's seed, Routes, Trip length
+   and deadlines from the command line, `OUTSTANDING.md` 1.12. Before phase 5
+   because phase 5 is the largest phase and runs Journeys many times over,
+   once per planted defect, which is when per-run settings help most.
+
+Each item leaves this list when it merges, and `HISTORY.md` records it.
 
 ### Phase 5: the universal tier, and the Route as a test
 
