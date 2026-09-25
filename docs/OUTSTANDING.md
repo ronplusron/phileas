@@ -543,6 +543,30 @@ That is one way to make a Route more semirandom than random.
   chosen before that is a guess about where bugs are, the same caution 1.6
   gives for weighting the keys.
 
+### 2.7 A Fix step naming a control that two controls share
+
+Noticed 2026-09-24 and recorded unraised; nothing is decided. A Fix's
+`hop('button "X"')` acts on the first control whose survey line matches, in
+survey order, and says nothing when a second one matches too. `phileas survey`
+prints one identical line for each, so the person writing the Fix cannot tell
+from the listing which one a step will reach, and there is no way to name the
+second.
+
+A replay is unaffected, since survey order is the same each time. What is at
+risk is the Fix doing something other than what its author meant, silently,
+which is a latent hazard rather than a cosmetic one. Open: whether a step
+naming more than one control should be refused, like one naming none, or
+whether the line should be able to say which.
+
+### 2.8 Playwright's own output around `phileas survey`
+
+Noticed 2026-09-24 and recorded unraised; nothing is decided. `phileas survey`
+runs through Playwright, so its listing arrives between Playwright's block of
+settings and a closing "1 passed". Neither says anything about what the
+engine sees, and "1 passed" reads as a verdict on a command that judges
+nothing. Open: whether it is worth quieting, and how, without hiding a real
+failure to launch.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias
