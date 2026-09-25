@@ -72,6 +72,9 @@ test('the command refuses what it cannot read, by name', () => {
   expect(() => parse(['run', '--follow=yes'])).toThrow(/--follow takes no value/);
   expect(() => parse(['show', 'a', 'b'])).toThrow(/one thing to show/);
   expect(() => parse(['show', '--routes'])).toThrow(/show takes no flags/);
+  expect(parse(['survey'])).toEqual({ command: 'survey', config: 'phileas' });
+  expect(parse(['survey', 'testbed/buggy/phileas'])).toEqual({ command: 'survey', config: 'testbed/buggy/phileas' });
+  expect(() => parse(['survey', '--routes', '3'])).toThrow(/survey takes one config|survey takes no flags/);
   // A flag Playwright knows is still refused here unless it comes after --, so
   // that nothing reaches Playwright by accident.
   expect(() => parse(['run', '--grep', 'x'])).toThrow(/unknown flag --grep/);

@@ -5,6 +5,7 @@ import { effectOf, type HopEffect } from './effect';
 import { Journal, journalFolder, type HopAction, type JournaledCandidate } from './journal';
 import { requireRun } from './journey';
 import { clickMenuItem } from './menu';
+import { targetText } from './report/render.mjs';
 import {
   createExclusionTally,
   neverMatched,
@@ -13,6 +14,7 @@ import {
   takesTypedValue,
   type SurveyedCandidate,
   type SurveyResult,
+  type ExclusionTally,
 } from './survey';
 
 /**
@@ -244,6 +246,18 @@ export interface FixContext {
   readonly rng: Rng;
   /** Record one step of the Fix, and run it. */
   step(name: string, action: () => Promise<void>): Promise<void>;
+  /**
+   * One step that acts on a control by the name the engine gives it, exactly
+   * as `phileas survey` and `phileas show` print it: `button "Open Alps by
+   * rail"`, `menu View > Show Timetable`, `key Enter`. It is acted on the way a
+   * Trip hop would act on it, and `value` is what to type into a text field.
+   *
+   * So a Fix can be written by copying a line from `phileas survey`, with no
+   * reading of the application's code. A name that is not on screen fails the
+   * Fix and lists what is, so a wrong name says what the right one is. The
+   * first control with that name is used, and the exclusion list still applies.
+   */
+  hop(target: string, value?: string): Promise<void>;
 }
 
 /**
@@ -368,6 +382,8 @@ export interface RunRouteOptions {
    * `hopDelayFromEnvironment`.
    */
   readonly hopDelayMs?: number;
+  /** Only print what the start screen offers, and stop. See `SURVEY_VARIABLE`. */
+  readonly surveyOnly?: boolean;
   /**
    * Print the journal as it is written. Read from the environment when left
    * out, as `followFromEnvironment`.
@@ -422,6 +438,37 @@ export const HOP_DELAY_VARIABLE = 'PHILEAS_HOP_DELAY_MS';
  * default, so an unattended run's output stays one line per Route.
  */
 export const FOLLOW_VARIABLE = 'PHILEAS_FOLLOW';
+
+/**
+ * Whether a Route only prints what it sees at its start, before any Fix, and
+ * stops: no Fix, no Trip, no journal. `phileas survey` sets it, so that a Fix
+ * can be written by copying lines from what the engine itself finds.
+ */
+export const SURVEY_VARIABLE = 'PHILEAS_SURVEY';
+
+/** Read whether to survey only, refusing anything but on or off. */
+export function surveyFromEnvironment(): boolean {
+  const raw = (process.env[SURVEY_VARIABLE] ?? '').trim();
+  if (raw === '' || raw === '0') return false;
+  if (raw === '1') return true;
+  throw new RangeError(`${SURVEY_VARIABLE}=${JSON.stringify(raw)} is not on or off. Use 1 or 0.`);
+}
+
+/**
+ * What a survey found, as lines a person can copy into a Fix's `hop()`.
+ *
+ * The common keys are on one line rather than seven, since they are on offer
+ * everywhere. An excluded control is listed with its rule, because a Fix that
+ * names it will be refused and should be refused by name.
+ */
+export function surveyLines(found: SurveyResult): string[] {
+  const keys = found.candidates.filter(isCommonKey).map((c) => c.name);
+  return [
+    ...found.candidates.filter((c) => !isCommonKey(c)).map((c) => targetText(journaled(c))),
+    ...found.excluded.map((entry) => `${targetText(entry.candidate)}   (excluded: ${entry.rule})`),
+    ...(keys.length ? [`and the common keys: ${keys.join(', ')}`] : []),
+  ];
+}
 
 /** Read whether to follow, refusing anything but on or off. */
 export function followFromEnvironment(): boolean {
@@ -483,10 +530,28 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     settleTimeoutMs = DEFAULT_SETTLE_TIMEOUT_MS,
     hopDelayMs = hopDelayFromEnvironment(),
     follow = followFromEnvironment(),
+    surveyOnly = surveyFromEnvironment(),
   } = options;
   const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
   const shares = sharesFor(cfg);
   const chooser = options.chooser ?? createSeededChooser(shares);
+
+  // Before the journal opens, so that a survey leaves no record behind that
+  // could be mistaken for a Route that traveled nowhere.
+  if (surveyOnly) {
+    const found = await survey({
+      page,
+      app,
+      exclusions: cfg.exclusions,
+      hopIndex: 0,
+      tally: createExclusionTally(cfg.exclusions),
+      timeoutMs: hopTimeoutMs,
+    });
+    console.log(`What the engine sees at the start, before any Fix:\n`);
+    for (const line of surveyLines(found)) console.log(`  ${line}`);
+    console.log('');
+    return { kind: 'passed', hops: 0 };
+  }
 
   // Opened and flushed before the Route does anything, so that a Route which
   // dies inside its Fix still leaves a file naming the seed that produced it.
@@ -512,6 +577,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         journal,
         settleTimeoutMs,
         settleQuietMs,
+        exclusions: cfg.exclusions,
+        tally,
+        hopTimeoutMs,
       });
     }
 
@@ -681,9 +749,13 @@ async function runFix(
     journal: Journal;
     settleTimeoutMs: number;
     settleQuietMs: number;
+    exclusions: AppUnderTest['exclusions'];
+    tally: ExclusionTally;
+    hopTimeoutMs: number;
   }
 ): Promise<void> {
-  const { page, app, rng, journal, settleTimeoutMs, settleQuietMs } = context;
+  const { page, app, rng, journal, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs } =
+    context;
   let steps = 0;
 
   // The "before" of the first step. Every later step's "before" is the reading
@@ -707,11 +779,7 @@ async function runFix(
     return effect;
   };
 
-  await fix({
-    page,
-    app,
-    rng,
-    step: async (name, action) => {
+  const step: FixContext['step'] = async (name, action) => {
       const startedAt = new Date();
       const hop = steps + 1;
       try {
@@ -747,8 +815,31 @@ async function runFix(
         checks: [],
       });
       steps += 1;
-    },
-  });
+  };
+
+  const hop: FixContext['hop'] = (target, value) =>
+    step(value === undefined ? target : `${target}, typing ${JSON.stringify(value)}`, async () => {
+      const found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
+      const match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+      if (!match) {
+        const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
+        throw new Error(
+          refused
+            ? `${target} is on screen but excluded (${refused.rule}), so a Fix cannot act on it either.`
+            : `${target} is not on screen. What is: ${found.candidates
+                .filter((candidate) => !isCommonKey(candidate))
+                .map((candidate) => targetText(journaled(candidate)))
+                .join('; ')}.`
+        );
+      }
+      const action = await actionFor(match, hopTimeoutMs);
+      if (action === 'type' && value === undefined) {
+        throw new Error(`${target} takes typing, so give the value to type: hop(target, value).`);
+      }
+      await act(app, page, match, action, value ?? '', hopTimeoutMs);
+    });
+
+  await fix({ page, app, rng, step, hop });
 }
 
 /** The plain-data form of a candidate, for the record. */

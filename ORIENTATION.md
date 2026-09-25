@@ -40,7 +40,7 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and thirty-two tests. Seven launch it,
+through, and `npm test` runs one hundred and thirty-eight tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -53,7 +53,8 @@ Thirty-two travel through the application, and ten cover the journal, including
 one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
 cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. Seven cover the `phileas`
 command and the overrides it carries, one of them running it for real, and six
-cover reading a journal, following a run and showing one. The last three cover the
+cover reading a journal, following a run and showing one. Six cover writing a
+Fix from `phileas survey`'s lines. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
 `npm run typecheck` enforces.
 
@@ -147,7 +148,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and thirty-two tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and thirty-eight tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the
@@ -184,6 +185,14 @@ the same way: with no argument the latest run under `phileas/.phileas-journals/`
 or a seed's name, a seed's folder, a run folder or one journal file. A journal
 cut off mid-write reads up to the cut and says the Route did not finish.
 `jq . route-000-*.jsonl` still prints every line in full.
+
+**Writing a Fix starts from `phileas survey`,** which launches the application
+and prints what the engine sees at the start, one control per line in the
+engine's own form: `button "Open Alps by rail"`, `menu View > Show Timetable`.
+A Fix step takes a line as it is: `({ hop }) => hop('button "Open Alps by
+rail"')`, with a second argument for text to type. A name that is not on screen
+fails the Fix and lists what is, and the exclusion list applies to a Fix too.
+`step()` with Playwright code stays available for anything else.
 
 **A replay used to need the same window mode as the run it retraces,** because
 a shown run offered menu entries a hidden one withheld. Since 2026-09-24 every

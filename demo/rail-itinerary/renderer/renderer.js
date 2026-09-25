@@ -60,6 +60,8 @@ function openItinerary(itinerary) {
     })
   );
   $('fare-total').textContent = `Fare total: ${money(fareTotal(itinerary))}`;
+  // An itinerary with no legs has nothing to ticket.
+  $('buy-tickets').disabled = itinerary.legs.length === 0;
 }
 
 function renderTimetable() {
@@ -110,6 +112,12 @@ function updateTicketTotal() {
 }
 
 function purchase() {
+  // Refused here too, not only by disabling Buy tickets, in case the last leg
+  // is removed some other way while the dialog is open.
+  if (current.legs.length === 0) {
+    $('purchase-message').textContent = 'This itinerary has no legs, so there is nothing to ticket.';
+    return;
+  }
   if (!$('holder').value.trim()) {
     $('purchase-message').textContent = "Enter the ticket holder's name.";
     return;

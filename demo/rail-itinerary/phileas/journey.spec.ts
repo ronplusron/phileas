@@ -8,7 +8,7 @@ import {
   routeIndices,
   runRoute,
 } from '@drugstoresushi/phileas';
-import { demo } from './journeys/demo';
+import { demo, openAlps } from './journeys/demo';
 import { railItinerary } from './adapter';
 
 /** One test per Route, and nothing else. */
@@ -29,6 +29,7 @@ for (const routeIndex of routeIndices(demo)) {
       journeySeed,
       routeIndex,
       tripLength: demo.tripLength,
+      fix: openAlps,
       journalsRoot: path.join(here, '.phileas-journals'),
     });
 

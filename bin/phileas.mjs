@@ -3,6 +3,7 @@
 //
 //   phileas run [config] [flags] [-- extra Playwright arguments]
 //   phileas show [run folder, seed folder, journal file or seed]
+//   phileas survey [config]
 //
 // `run` runs a Journey with its settings changed for one run. Real flags need
 // a command of their own, because Playwright refuses any it does not know
@@ -12,6 +13,10 @@
 //
 // `show` prints a finished run's journals, one readable line per Hop, through
 // the same renderer `run --follow` uses.
+//
+// `survey` launches the application and prints what the engine sees at the
+// start, in the form a Fix's hop() takes, so a Fix is written by copying lines
+// rather than by reading the application's code.
 //
 // docs/HISTORY.md has the reasoning for both.
 //
@@ -53,6 +58,7 @@ const DEFAULT_JOURNALS = path.join(DEFAULT_CONFIG, '.phileas-journals');
 const USAGE = `Usage:
   phileas run [config] [flags] [-- extra Playwright arguments]
   phileas show [what]
+  phileas survey [config]
 
 run: run a Journey, with its settings changed for this run only.
   config    A Playwright config file, or a folder holding playwright.config.ts.
@@ -70,7 +76,12 @@ ${Object.entries(FLAGS)
 show: print a finished run, one line per Hop.
   what      A run folder, a seed's folder or a journals folder (its latest run),
             one journal file, or a seed's name under ${DEFAULT_JOURNALS}/.
-            Defaults to the latest run under ${DEFAULT_JOURNALS}/.`;
+            Defaults to the latest run under ${DEFAULT_JOURNALS}/.
+
+survey: print what the engine sees when the application starts, one line per
+  control, each in the form a Fix's hop() takes. Nothing travels and no journal
+  is written.
+  config    As for run. Defaults to ${DEFAULT_CONFIG}/.`;
 
 /**
  * @param {string} message
@@ -84,7 +95,8 @@ function refuse(message) {
 /**
  * @typedef {{ command: 'help' }
  *   | { command: 'run', config: string, settings: Record<string, string>, passThrough: string[] }
- *   | { command: 'show', what: string | undefined }} Parsed
+ *   | { command: 'show', what: string | undefined }
+ *   | { command: 'survey', config: string }} Parsed
  */
 
 /**
@@ -105,8 +117,16 @@ export function parse(args) {
     if (what?.startsWith('-')) throw new Error(`show takes no flags, and was given ${what}`);
     return { command: 'show', what };
   }
+  if (command === 'survey') {
+    if (rest.length > 1) throw new Error(`survey takes one config, and was given ${rest.length}`);
+    const [config] = rest;
+    if (config?.startsWith('-')) throw new Error(`survey takes no flags, and was given ${config}`);
+    return { command: 'survey', config: config ?? DEFAULT_CONFIG };
+  }
   if (command !== 'run') {
-    throw new Error(command ? `unknown command ${command}; the commands are run and show` : 'no command given');
+    throw new Error(
+      command ? `unknown command ${command}; the commands are run, show and survey` : 'no command given'
+    );
   }
 
   const separator = rest.indexOf('--');
@@ -288,6 +308,8 @@ function main() {
   }
   if (parsed.command === 'help') console.log(USAGE);
   else if (parsed.command === 'show') show(parsed.what);
+  // One Route is enough to see the start, since every Route starts the same way.
+  else if (parsed.command === 'survey') run(parsed.config, { PHILEAS_SURVEY: '1', PHILEAS_ROUTES: '1' }, []);
   else run(parsed.config, parsed.settings, parsed.passThrough);
 }
 

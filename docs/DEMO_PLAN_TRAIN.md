@@ -48,7 +48,8 @@ totals computed from rows, forms, and a search.
   itineraries"). Each opens its legs. A button adds one.
 - **Itinerary.** Its legs, one row each: from, to, train, departure and
   arrival, class. Beneath them, a fare total. Buttons to add a leg, remove a
-  leg, buy tickets, and go back.
+  leg, buy tickets, and go back. Buy tickets is disabled while the itinerary
+  has no legs, decided 2026-09-24: an empty itinerary has nothing to ticket.
 - **Ticket purchase.** A modal dialog that opens over the itinerary, built
   so that nothing behind it can be reached while it is open: the ticket
   holder's name in a required text field, which Purchase refuses to leave
@@ -74,6 +75,11 @@ watching a demo where a Route's Trip clicks "Add a trip" cannot tell the
 engine's terms from the application's, so the application uses none of them,
 in its screens, its data or its code. It plans itineraries made of legs, and
 names a leg by its end stations. The Fix is left alone as well.
+
+**The demo's Fix opens "Alps by rail"**, one `hop()` line copied from `phileas
+survey`, so the demo shows a Fix and shows one being written without reading
+the application's code. It was proposed to make the demo livelier and
+measured not to: `HISTORY.md` has the numbers.
 
 **Designed for discovery,** since the point is to watch Phileas find its way
 with nothing handed to it:

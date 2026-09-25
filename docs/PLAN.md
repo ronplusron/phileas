@@ -484,7 +484,10 @@ done. As of 2026-09-24 all of it is done: a review of what the two IDEs need,
 then the clipboard, journals and settle fixes, R31 and the keyboard, in the
 order that review settled, and last a `phileas` command for a Journey's
 settings on the command line, added the same day because phase 5 runs Journeys
-many times over. `HISTORY.md` records each. Phase 5 is next.
+many times over. Added after it the same day, and done: `phileas survey` and
+Fix steps that name a control as the engine prints it, because writing a Fix
+meant reading the application's code to find what the engine already finds.
+`HISTORY.md` records each. Phase 5 is next.
 
 ### Phase 5: the universal tier, and the Route as a test
 

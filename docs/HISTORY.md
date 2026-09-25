@@ -25,6 +25,66 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-24: writing a Fix from what the engine sees, and the demo's Fix
+
+**The question that started it.** Adding a Fix to the train demo raised how
+anyone knows what a Fix can act on. The answer was a journal from an earlier
+run, the app's source, or Playwright's inspector, which drew the question "So
+I have to scour the code to find a control that the app discovers on its
+own?" The reply was that the engine should hand over what it finds, and the
+two pieces below were proposed. Asked for before phase 5, in one branch with
+the demo work and the overview.
+
+**`phileas survey [config]`** launches the application, surveys the first
+screen before any Fix, prints one control per line and stops. It sets
+`PHILEAS_SURVEY=1` and one Route; the Route prints and returns before its
+journal opens, so a survey leaves no record that could read as a Route that
+traveled nowhere. Each line is in the renderer's form, `button "Open Alps by
+rail"` or `menu View > Show Timetable`; excluded controls are listed with
+their rule, and the common keys on one line.
+
+**`hop(target, value?)` in a Fix** takes one of those lines as it is. It
+surveys, finds the first candidate whose text matches, and acts on it the way a
+Trip hop would, typing `value` into a text field. It is a Fix step like any
+other, named by the target. A name not on screen fails the Fix and lists what
+is on screen, so a wrong name says what the right one is; an excluded control
+is refused to a Fix too, by its rule, since the list is a safety rail; a text
+field without a value is refused. `step()` with Playwright code stays.
+
+**The demo's Fix, and a measurement that changed what it is for.** It opens
+"Alps by rail", as one `hop()` line. It was proposed to make the demo livelier,
+since most hops started on a list where little changed. Measured with the same
+seed and settings, hidden: 61 of 150 hops changed nothing with the Fix and 62
+without. Routes leave the itinerary within a few hops, and most unchanged hops
+are on the timetable screen, which offers three ways to reach itself -- its
+tab button (11 unchanged hops), the ⌘F shortcut (10) and `View > Show
+Timetable` (7) -- plus Clear on an empty search (6). So the cause is a sparse
+screen offering moves to where the Route already is, which is the case the
+weighting idea recorded in `OUTSTANDING.md` 2.6 aims at, not the starting
+point. Whether to keep the Fix was asked and not answered; it was kept as the
+session's own call, because it costs nothing, it is the only place the demo
+shows a Fix, and it is now the worked example of `hop()`. Dropping it is one
+line.
+
+**The demo refuses to ticket an empty itinerary**, decided the same day:
+Buy tickets is disabled while an itinerary has no legs, and Purchase refuses
+too in case the last leg goes some other way while the dialog is open.
+Checked on the repackaged build: enabled with legs, disabled once every leg
+was removed.
+
+**An overview for a reader outside the project**, `OVERVIEW.md`: a short
+paragraph, then the same in more detail. Asked for as a file in the
+repository, written for a manager, knowingly against the rule that nothing is
+summarized across documents; it is dated, and says `../ORIENTATION.md` wins
+where the two disagree.
+
+**Tested.** Six tests: the survey's lines, a named step acting and its effect
+recorded, typing and its refusal without a value, a wrong name listing what is
+on screen, an excluded control refused, and a survey-only Route writing no
+journal; the command's parser takes `survey`. 138 passed on Node 24.21.0.
+Positive controls: with names never matching, the two tests of a working step
+failed; with survey mode ignored, its test failed.
+
 ## 2026-09-24: a run removes the temporary folders it makes
 
 **What was wrong.** The suite and Journeys left folders in the system temp
