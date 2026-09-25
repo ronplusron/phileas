@@ -80,10 +80,10 @@ for (const routeIndex of routeIndices(exploration)) {
       description: `${outcome.kind} after ${outcome.hops} hop(s)`,
     });
 
-    // **Completing the Journey is itself an assertion.** If the survey returns
+    // **Completing the Trip is itself an assertion.** If the survey returns
     // nothing actionable at hop 23 the Route cannot complete its Trip, and no
     // invariant catches that, because the page is structurally fine. A Route
-    // that fails for not finishing is how dead ends, inescapable modals and
+    // that strands for not finishing is how dead ends, inescapable modals and
     // traps get caught without a check written for any of them.
     //
     // Stranded is its own outcome and is never folded into passed or failed.

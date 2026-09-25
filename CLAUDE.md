@@ -144,12 +144,13 @@ it a failure asserts a defect the engine has not found, which is the mistake
 the README made before this was settled. **It is not a pass either**, because
 the Route did not do what was asked of it.
 
-## Completing the Journey is itself an assertion
+## Completing the Trip is itself an assertion
 
 If `survey` returns nothing actionable at hop 23, the Route cannot complete its
 Trip. No invariant catches that, because the page is structurally fine. A
-Route that fails for not finishing means dead ends, inescapable modals and
-traps get caught without a check written for any of them.
+Route that strands for not finishing means dead ends, inescapable modals and
+traps get caught without a check written for any of them, and they are
+reported as stranded rather than failed, for the reason in the section above.
 
 ## A specified oracle never shares logic with what it judges
 
@@ -285,12 +286,23 @@ An unlucky seed would block unrelated work, and a gate that fires on unrelated
 work gets switched off. The scripted suite gates. Journeys run on demand or on
 a schedule, and report loudly.
 
-## The 60-30-10 ratio is a statement of weight, not a scheduler input
+## The 60-30-10 ratio is a sense of focus, not a weighting
 
-It describes where the product's testing weight sits. Do not implement it as
-literal percentages anywhere. Contract validation runs after every Hop
-regardless, so it does not share a denominator with the other two in the first
-place.
+The original specification named three methods, with a rough sense of how much
+of the product's focus each deserves:
+
+| Share | Method | Where it lives now |
+| --- | --- | --- |
+| 60% | Path entropy: unscripted travel through the application | `survey` and the Trip |
+| 30% | Contract validation: invariants and structure checked at every step | the checks, run after every Hop |
+| 10% | Fault injection: deliberate disruption, such as delays and malformed input, to test error handling | not built; `docs/PRODUCT_REQUIREMENTS.md` section 11 asks which kinds |
+
+**It was the impetus for the project, and it is guidance rather than a
+blueprint.** Neither the three methods nor the numbers are fixed, and the
+numbers say where to focus rather than how to divide anything. Do not implement
+them as percentages anywhere, or read them as a scheduler input. Contract
+validation runs after every Hop regardless, so it does not share a denominator
+with the other two in the first place.
 
 ## Naming
 

@@ -202,8 +202,8 @@ mode offers the same menu, but a replay across modes has not been measured, so
 match the mode until it is. The hop delay changes nothing.
 
 **None of it is evidence that the engine finds bugs**, because nothing is
-planted in `buggy` yet and nothing travels through it. They show the launch
-layer behaves as written and that a seed reproduces.
+planted in `buggy` yet and nothing checks anything. They show the launch
+layer and the Route behave as written and that a seed reproduces.
 
 The testbed application builds itself:
 
