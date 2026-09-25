@@ -39,7 +39,7 @@ const ENTRIES: JournalEntry[] = [
     kind: 'route',
     journeySeed: 'j',
     routeSeed: 'r0',
-    routeIndex: 2,
+    routeNumber: 3,
     tripLength: 3,
     settleQuietMs: 400,
     startedAt: '2026-09-24T00:00:00.000Z',
@@ -92,11 +92,11 @@ const text = (entries: readonly JournalEntry[]) => entries.map((e) => JSON.strin
 
 test('a journal reads as one line per Hop, with what each did', () => {
   expect(renderJournal(text(ENTRIES))).toEqual([
-    'route 2  seed r0, from Journey seed j, Trip of 3 hops',
-    `${'route 2  hop 1'.padEnd(18)}${'click'.padEnd(11)}${'button "Summary"'.padEnd(44)}+ Total weight   - Inventory`,
-    `${'route 2  hop 2'.padEnd(18)}${'type'.padEnd(11)}${'searchbox "Search items"'.padEnd(44)}"a value ..." (26 characters)   no change`,
-    `${'route 2  hop 3'.padEnd(18)}${'menu-click'.padEnd(11)}${'menu View > Show Summary'.padEnd(44)}could not read the screen: the page stopped answering`,
-    'route 2  passed after 3 hops',
+    'route 3  seed r0, from Journey seed j, Trip of 3 hops',
+    `${'route 3  hop 1'.padEnd(18)}${'click'.padEnd(11)}${'button "Summary"'.padEnd(44)}+ Total weight   - Inventory`,
+    `${'route 3  hop 2'.padEnd(18)}${'type'.padEnd(11)}${'searchbox "Search items"'.padEnd(44)}"a value ..." (26 characters)   no change`,
+    `${'route 3  hop 3'.padEnd(18)}${'menu-click'.padEnd(11)}${'menu View > Show Summary'.padEnd(44)}could not read the screen: the page stopped answering`,
+    'route 3  passed after 3 hops',
   ]);
 });
 
@@ -113,8 +113,17 @@ test('a broken line in the middle is reported where it sits, and reading goes on
   const lines = text(ENTRIES).split('\n');
   lines.splice(3, 0, '{"kind": "trip-hop", broken');
   const rendered = renderJournal(lines.join('\n'));
-  expect(rendered).toContain('route 2  line 4 of the journal cannot be read');
-  expect(rendered.at(-1)).toBe('route 2  passed after 3 hops');
+  expect(rendered).toContain('route 3  line 4 of the journal cannot be read');
+  expect(rendered.at(-1)).toBe('route 3  passed after 3 hops');
+});
+
+test('Routes read from 1, and a journal with no opening line names no Route', () => {
+  // The record's routeNumber is what a person reads.
+  expect(renderJournal(text(ENTRIES))[0]).toMatch(/^route 3  seed /);
+  // Without the opening line there is no index at all, and inventing one would
+  // point at a Route that may not be this one.
+  const headless = renderJournal(text(ENTRIES.slice(1)));
+  expect(headless.at(-1)).toBe('route ?  passed after 3 hops');
 });
 
 test('show finds the latest run from a run, a seed, or the journals folder', () => {
@@ -124,10 +133,10 @@ test('show finds the latest run from a run, a seed, or the journals folder', () 
       fs.mkdirSync(path.join(root, seed, run), { recursive: true });
       fs.writeFileSync(path.join(root, seed, run, route), text(ENTRIES));
     };
-    write('alpha', '2026-09-24T10-00-00-000Z', 'route-000-a.jsonl');
-    write('alpha', '2026-09-24T12-00-00-000Z', 'route-000-b.jsonl');
-    write('alpha', '2026-09-24T12-00-00-000Z', 'route-001-c.jsonl');
-    write('beta', '2026-09-24T11-00-00-000Z', 'route-000-d.jsonl');
+    write('alpha', '2026-09-24T10-00-00-000Z', 'route-001-a.jsonl');
+    write('alpha', '2026-09-24T12-00-00-000Z', 'route-001-b.jsonl');
+    write('alpha', '2026-09-24T12-00-00-000Z', 'route-002-c.jsonl');
+    write('beta', '2026-09-24T11-00-00-000Z', 'route-001-d.jsonl');
 
     const run = path.join(root, 'alpha', '2026-09-24T12-00-00-000Z');
     // A seed's folder and the journals folder both mean their latest run, which
@@ -135,10 +144,10 @@ test('show finds the latest run from a run, a seed, or the journals folder', () 
     expect(journalsFor(path.join(root, 'alpha')).from).toBe(run);
     expect(journalsFor(root).from).toBe(run);
     expect(journalsFor(run).files.map((f: string) => path.basename(f))).toEqual([
-      'route-000-b.jsonl',
-      'route-001-c.jsonl',
+      'route-001-b.jsonl',
+      'route-002-c.jsonl',
     ]);
-    const one = path.join(root, 'beta', '2026-09-24T11-00-00-000Z', 'route-000-d.jsonl');
+    const one = path.join(root, 'beta', '2026-09-24T11-00-00-000Z', 'route-001-d.jsonl');
     expect(journalsFor(one).files).toEqual([one]);
 
     const empty = path.join(root, 'empty');
@@ -174,11 +183,11 @@ test('run --follow prints what the journal records, and show prints the same', (
     { cwd: repo, env, encoding: 'utf8', timeout: 120_000 }
   );
   expect(followed.status, followed.stderr).toBe(0);
-  const printed = followed.stdout.split('\n').filter((line) => line.startsWith('route 0  '));
+  const printed = followed.stdout.split('\n').filter((line) => line.startsWith('route 1  '));
 
   // The positive control for the comparison below: four hops were printed, so
   // an empty match cannot pass it.
-  expect(printed.filter((line) => /^route 0 {2}hop \d/.test(line))).toHaveLength(4);
+  expect(printed.filter((line) => /^route 1 {2}hop \d/.test(line))).toHaveLength(4);
 
   const shown = spawnSync(
     process.execPath,
@@ -186,7 +195,7 @@ test('run --follow prints what the journal records, and show prints the same', (
     { cwd: repo, env, encoding: 'utf8' }
   );
   expect(shown.status, shown.stderr).toBe(0);
-  const fromShow = shown.stdout.split('\n').filter((line) => line.startsWith('route 0  '));
+  const fromShow = shown.stdout.split('\n').filter((line) => line.startsWith('route 1  '));
   // One renderer, so a Route followed live and the same Route shown later read
   // identically, line for line.
   expect(fromShow).toEqual(printed);

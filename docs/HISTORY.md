@@ -25,6 +25,72 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-25: a guided demo, Routes counted from 1, and a pause to watch a Fix
+
+**The question that started it.** A demo was asked for that conveys the
+Journey, Route, Hop and Fix, how controls are found, configuration, seeding,
+the output, and a Fix of one step and of several, for a mixed audience. Running
+it raised four more requests, each of which reached the engine.
+
+**The guided demo.** `npm run demo:present` runs ten sections against Rail
+Itinerary, live, with its window forward; `demo/rail-itinerary/PRESENTING.md`
+is the same demo as a script. Every command is printed exactly as it would be
+typed and waits for Enter before it runs, since a command printed as it starts
+scrolls away unread; that was asked for after the first version printed them
+as they ran. `--auto` plays through. Runs inherit no `PHILEAS_` settings from
+the shell, so what is shown is what runs. `explain-hop.mjs` works one Hop's
+choice out again from its journal line, and fails if its arithmetic lands on a
+different control than the journal names: it matched all 180 Hops of two
+fresh runs, and refused journals written before the shares were recorded.
+
+**Three Journeys for the demo**, chosen by `RAIL_DEMO_JOURNEY`, the demo's own
+switch: no Fix, for a first look; the one-step Fix; and a Fix of nine steps
+that adds a Geneva to Zurich leg and ends in the ticket purchase dialog, so
+every Route's Trip visibly starts inside it, which was asked for as showing a
+Fix "in an obvious way". One of its steps is Playwright code, because the From
+and To dropdowns list the same stations and a line copied from the survey
+always reaches From, the same-name question recorded as open.
+
+**The hop delay now pauses after each Fix step and each survey listing**, not
+only after Trip hops. Asked for because a surveyed window closed before anyone
+could see it: "The app instances that only show the main page need to stay up
+for at least two second". Chosen over a demo-only hold because the delay
+exists so a run can be watched, and a Fix or a survey that flashes past cannot
+be. It changes no draw, and sits after each record, so no step's recorded time
+includes it. With no Fix, the survey's one listing now says it is also where
+the Trip begins.
+
+**Routes count from 1**, asked for as "Humans should numbers starting with
+one." First done on screen only, with the seed still derived from a count from
+0; that left `routeIndex: 0` in every journal, and was reversed the same day
+to count from 1 all the way down: `routeSeed = hash(journeySeed, routeNumber)`,
+`routeNumbers()` in place of `routeIndices()`, and `routeNumber` in the
+journal. Recorded seeds from earlier runs now retrace different Routes, which
+was judged not to matter before phase 5. The pinned values for Routes 1 and 2
+equal those pinned for positions 1 and 2 before, which is the check that only
+the counting moved; the new pins came from a separate implementation in
+another language that first reproduced every earlier pin. The demo Fix's
+measurement was taken again under the new numbering: 51 of 150 hops changed
+nothing with it and 52 without, where the entry below has 61 and 62. `nth`,
+which of several controls sharing a role and name a candidate is, counts from
+1 too, since it shows in every journal line; Playwright's count from 0 is
+reached only where the locator is built.
+
+**A longer Trip retraces a shorter one**, measured on the train demo: the same
+seed for five Hops and then ten gave the same first five. The Trip length only
+decides where a Route stops. The documents had said a replay needs the same
+Route count and Trip length as the run it repeats; that was stricter than
+true, and was corrected.
+
+**Tested.** 143 passed on Node 24.21.0. New: the pause after a Fix step,
+measured as the gap between steps; the pause holding a survey; a longer Trip
+retracing a shorter one; Routes reading from 1, with a journal missing its
+opening line reading `route ?`; and two planted buttons sharing a name numbered
+1 and 2, with 2 reaching the second. Positive controls: with the pause switched
+off both pause tests failed; with the longer run given another Route's seed the
+retracing test failed; and without the conversion to Playwright's count the
+twins test failed.
+
 ## 2026-09-24: writing a Fix from what the engine sees, and the demo's Fix
 
 **The question that started it.** Adding a Fix to the train demo raised how

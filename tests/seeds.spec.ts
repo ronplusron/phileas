@@ -4,7 +4,7 @@ import {
   deriveRouteSeed,
   deriveRouteStreams,
   defineJourney,
-  routeIndices,
+  routeNumbers,
   requireSeed,
   resolveSeed,
   generateSeed,
@@ -67,18 +67,26 @@ test('the generator produces the sequence it produced when this was written', ()
 });
 
 test('route seeds are derived to the same values they were', () => {
-  expect([0, 1, 2].map((index) => deriveRouteSeed('stability', index))).toEqual([
-    '0321430daf79314e',
+  // Routes counted from 0 until 2026-09-25, when they began counting from 1 as
+  // a person does. Routes 1 and 2 kept the values pinned for positions 1 and 2
+  // before the change, which is the check that only the counting moved. Route
+  // 3's value was computed by the separate implementation described below.
+  expect([1, 2, 3].map((route) => deriveRouteSeed('stability', route))).toEqual([
     '1abf7e9d14678865',
     '667536290b279857',
+    '7ef2c53899dfdfbe',
   ]);
 });
 
 test('both of a Route\'s streams start where they started', () => {
-  const streams = deriveRouteStreams('split', 0);
-  expect(streams.routeSeed).toBe('8541bf9b5e3f115e');
+  // Route 1 since 2026-09-25, when Routes began counting from 1; this was
+  // position 0 before. The values below were computed by the separate
+  // implementation described next, which first reproduced every value this
+  // file pinned before the change, position 0's included.
+  const streams = deriveRouteStreams('split', 1);
+  expect(streams.routeSeed).toBe('73dcb0507149e195');
   expect([streams.fix.next(), streams.fix.next()]).toEqual([
-    0.035913600819185376, 0.5903206907678396,
+    0.8329266081564128, 0.654829035513103,
   ]);
   // Changed on 2026-09-23, deliberately: the second stream was renamed from
   // 'traversal' to 'trip', and its name is hashed into its seed. These values
@@ -88,7 +96,7 @@ test('both of a Route\'s streams start where they started', () => {
   // reproduce every value pinned in this file before the rename. The Fix
   // stream's values above did not move, and that is part of the check.
   expect([streams.trip.next(), streams.trip.next()]).toEqual([
-    0.2970382689964026, 0.29075332870706916,
+    0.8230849415995181, 0.3590010821353644,
   ]);
 });
 
@@ -123,34 +131,34 @@ test('int and pick refuse an empty range rather than inventing one', () => {
 test("route k's stream is unaffected by whether the routes before it ran", () => {
   const journeySeed = 'independence';
 
-  // Route 3 drawn on its own, as a replay of one Route would.
-  const alone = deriveRouteStreams(journeySeed, 3);
+  // Route 4 drawn on its own, as a replay of one Route would.
+  const alone = deriveRouteStreams(journeySeed, 4);
   const aloneDraws = Array.from({ length: 10 }, () => alone.trip.next());
 
-  // Route 3 drawn after routes 0 through 2 have each spent draws, as it would
+  // Route 4 drawn after Routes 1 through 3 have each spent draws, as it would
   // be inside a full Journey. One shared stream across Routes would make these
   // two differ, and every Route would still pass.
-  for (let index = 0; index < 3; index += 1) {
-    const earlier = deriveRouteStreams(journeySeed, index);
+  for (let route = 1; route <= 3; route += 1) {
+    const earlier = deriveRouteStreams(journeySeed, route);
     for (let draw = 0; draw < 50; draw += 1) {
       earlier.trip.next();
       earlier.fix.next();
     }
   }
-  const inJourney = deriveRouteStreams(journeySeed, 3);
+  const inJourney = deriveRouteStreams(journeySeed, 4);
   const inJourneyDraws = Array.from({ length: 10 }, () => inJourney.trip.next());
 
   expect(inJourneyDraws).toEqual(aloneDraws);
 });
 
 test('consuming from the Fix stream leaves the Trip stream unchanged', () => {
-  const untouched = deriveRouteStreams('split', 0);
+  const untouched = deriveRouteStreams('split', 1);
   const expected = Array.from({ length: 10 }, () => untouched.trip.next());
 
   // A Fix edited to make one more draw is the case this protects: without the
   // split, every Trip draw after it shifts, and a recorded failing seed
   // stops reproducing while reading as a fixed bug.
-  const consumed = deriveRouteStreams('split', 0);
+  const consumed = deriveRouteStreams('split', 1);
   for (let i = 0; i < 37; i += 1) consumed.fix.next();
   const after = Array.from({ length: 10 }, () => consumed.trip.next());
 
@@ -158,20 +166,21 @@ test('consuming from the Fix stream leaves the Trip stream unchanged', () => {
 });
 
 test('the Fix and Trip streams are not the same stream', () => {
-  const streams = deriveRouteStreams('split', 0);
+  const streams = deriveRouteStreams('split', 1);
   const fix = Array.from({ length: 10 }, () => streams.fix.next());
   const trip = Array.from({ length: 10 }, () => streams.trip.next());
   expect(fix).not.toEqual(trip);
 });
 
-test('each route index gets its own seed, stable across runs', () => {
-  const seeds = [0, 1, 2, 3, 4].map((index) => deriveRouteSeed('stability', index));
+test('each Route gets its own seed, stable across runs', () => {
+  const seeds = [1, 2, 3, 4, 5].map((route) => deriveRouteSeed('stability', route));
   expect(new Set(seeds).size).toBe(seeds.length);
-  expect(seeds).toEqual([0, 1, 2, 3, 4].map((index) => deriveRouteSeed('stability', index)));
+  expect(seeds).toEqual([1, 2, 3, 4, 5].map((route) => deriveRouteSeed('stability', route)));
 });
 
-test('a route seed refuses an index that is not a route', () => {
-  expect(() => deriveRouteSeed('seed', -1)).toThrow(/at least 0/);
+test('a route seed refuses a number that is not a Route', () => {
+  expect(() => deriveRouteSeed('seed', 0)).toThrow(/at least 1/);
+  expect(() => deriveRouteSeed('seed', -1)).toThrow(/at least 1/);
   expect(() => deriveRouteSeed('seed', 1.5)).toThrow(/whole number/);
 });
 
@@ -181,9 +190,9 @@ test('a Journey refuses terms that cannot fail', () => {
   expect(() => defineJourney({ routes: 5, tripLength: 10, seed: '' })).toThrow(/empty string/);
 });
 
-test('a Journey registers one index per Route', () => {
+test('a Journey registers one number per Route, counting from 1', () => {
   const journey = defineJourney({ routes: 4, tripLength: 10 });
-  expect(routeIndices(journey)).toEqual([0, 1, 2, 3]);
+  expect(routeNumbers(journey)).toEqual([1, 2, 3, 4]);
 });
 
 test('requireSeed returns the seed that was settled, not a fresh one', () => {

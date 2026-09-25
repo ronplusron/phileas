@@ -15,9 +15,11 @@ import { followFromEnvironment, hopDelayFromEnvironment } from './route';
  * Route. Read here, it is refused before anything launches.
  *
  * **Every setting is printed, and each one set for this run is marked.**
- * Overriding the Route count or the Trip length changes what a seed produces,
- * so a replay needs the same settings, and a changed run must never be mistaken
- * for the default. The engine prints them rather than the consumer, so that no
+ * Overriding the Route count or the Trip length changes how much of a seed a
+ * run covers: which Routes run, and how far each travels. It never changes a
+ * Hop any Route takes on the way, since no Route's seed depends on the count
+ * and every Hop draws the same whatever the Trip length. Still, a changed run
+ * must never be mistaken for the default. The engine prints them rather than the consumer, so that no
  * consumer prints half of them.
  */
 export function startJourney(journey: Journey): {

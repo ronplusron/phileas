@@ -34,7 +34,7 @@ process.env[RUN_VARIABLE] = TEST_RUN;
 /** Run a Route with a Fix and a one-hop Trip, and hand back its journal. */
 async function routeWithFix(page: Parameters<Fix>[0]['page'], app: Parameters<Fix>[0]['app'], fix: Fix) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-fix-hop-test-'));
-  const streams = deriveRouteStreams('fix-hop-seed', 0);
+  const streams = deriveRouteStreams('fix-hop-seed', 1);
   try {
     const outcome = await runRoute({
       page,
@@ -42,12 +42,12 @@ async function routeWithFix(page: Parameters<Fix>[0]['page'], app: Parameters<Fi
       cfg: buggy,
       streams,
       journeySeed: 'fix-hop-seed',
-      routeIndex: 0,
+      routeNumber: 1,
       tripLength: 1,
       journalsRoot: root,
       fix,
     }).catch((error: unknown) => error);
-    const file = path.join(journalFolder(root, 'fix-hop-seed', TEST_RUN), `route-000-${streams.routeSeed}.jsonl`);
+    const file = path.join(journalFolder(root, 'fix-hop-seed', TEST_RUN), `route-001-${streams.routeSeed}.jsonl`);
     return { outcome, entries: readJournal(file) };
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -114,9 +114,9 @@ test('a survey-only Route runs the Fix, travels nowhere, and writes no journal',
       page,
       app,
       cfg: buggy,
-      streams: deriveRouteStreams('survey-seed', 0),
+      streams: deriveRouteStreams('survey-seed', 1),
       journeySeed: 'survey-seed',
-      routeIndex: 0,
+      routeNumber: 1,
       tripLength: 5,
       journalsRoot: root,
       surveyOnly: true,
@@ -131,4 +131,55 @@ test('a survey-only Route runs the Fix, travels nowhere, and writes no journal',
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test('the hop delay pauses after each Fix step, outside the time the step records', async ({ page, app }) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-fix-hop-test-'));
+  const streams = deriveRouteStreams('delay-seed', 1);
+  try {
+    await runRoute({
+      page,
+      app,
+      cfg: buggy,
+      streams,
+      journeySeed: 'delay-seed',
+      routeNumber: 1,
+      tripLength: 1,
+      journalsRoot: root,
+      hopDelayMs: 600,
+      fix: async ({ hop }) => {
+        await hop('button "Summary"');
+        await hop('button "Summary"');
+      },
+    });
+    const file = path.join(journalFolder(root, 'delay-seed', TEST_RUN), `route-001-${streams.routeSeed}.jsonl`);
+    const [first, second] = readJournal(file).filter((entry) => entry.kind === 'fix-hop');
+    if (first?.kind !== 'fix-hop' || second?.kind !== 'fix-hop') throw new Error('expected two Fix steps');
+    // The gap between one step ending and the next starting is the pause. Were
+    // it inside the step, the gap would be close to nothing and durationMs
+    // would carry it instead.
+    const gap = Date.parse(second.startedAt) - (Date.parse(first.startedAt) + first.durationMs);
+    expect(gap).toBeGreaterThanOrEqual(550);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('the hop delay holds a survey on screen after it prints', async ({ page, app }) => {
+  const started = Date.now();
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('survey-delay-seed', 1),
+    journeySeed: 'survey-delay-seed',
+    routeNumber: 1,
+    tripLength: 1,
+    journalsRoot: os.tmpdir(),
+    surveyOnly: true,
+    hopDelayMs: 1500,
+  });
+  // A survey with no Fix prints one listing, so it pauses once. Without the
+  // pause it takes a fraction of this.
+  expect(Date.now() - started).toBeGreaterThanOrEqual(1450);
 });

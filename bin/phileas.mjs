@@ -72,7 +72,7 @@ ${Object.entries(FLAGS)
   .join('\n')}
   ${'--follow'.padEnd(32)}PHILEAS_FOLLOW   print each Hop as it happens
 
-  Anything after -- is handed to Playwright, such as -- --grep "route 0$".
+  Anything after -- is handed to Playwright, such as -- --grep "route 1$".
 
 show: print a finished run, one line per Hop.
   what      A run folder, a seed's folder or a journals folder (its latest run),

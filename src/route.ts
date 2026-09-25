@@ -359,7 +359,8 @@ export interface RunRouteOptions {
   readonly cfg: AppUnderTest;
   readonly streams: RouteStreams;
   readonly journeySeed: string;
-  readonly routeIndex: number;
+  /** Which Route of the Journey this is, counting from 1. */
+  readonly routeNumber: number;
   readonly tripLength: number;
   /**
    * The folder all journals go under. The engine writes this Route's journal
@@ -375,7 +376,9 @@ export interface RunRouteOptions {
   /** How long to wait for the page to stop moving after a Hop. */
   readonly settleTimeoutMs?: number;
   /**
-   * How long to pause after each Hop so a person can watch.
+   * How long to pause after each Hop so a person can watch: every Trip hop,
+   * every step of the Fix, and each listing a survey prints, since a Fix or a
+   * survey that flashes past cannot be watched either.
    *
    * Defaults to whatever `PHILEAS_HOP_DELAY_MS` says, so a run can be slowed
    * down from the command line without editing a Journey. See
@@ -522,7 +525,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     cfg,
     streams,
     journeySeed,
-    routeIndex,
+    routeNumber,
     tripLength,
     journalsRoot,
     fix,
@@ -553,9 +556,16 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       console.log(`${heading}\n`);
       for (const line of surveyLines(found)) console.log(`  ${line}`);
       console.log('');
+      await pauseToWatch(hopDelayMs);
     };
 
-    await print('What the engine sees at the start, before any Fix:');
+    // With no Fix, the start is where the Trip begins, so the one listing says
+    // both rather than leaving the second to be inferred from its absence.
+    await print(
+      fix
+        ? 'What the engine sees at the start, before any Fix:'
+        : 'What the engine sees at the start, which is where the Trip begins, since there is no Fix:'
+    );
     if (fix) {
       // The Fix runs as it would on a Route, with each step printed instead of
       // journaled, so a Fix of several steps can be written one step at a time:
@@ -567,7 +577,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         rng: streams.fix,
         journal: {
           write: (entry) => {
-            const line = renderEntry(entry, routeIndex);
+            const line = renderEntry(entry, routeNumber);
             if (line) console.log(line);
           },
         },
@@ -576,6 +586,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         exclusions: cfg.exclusions,
         tally,
         hopTimeoutMs,
+        hopDelayMs,
       });
       console.log('');
       await print('What the engine sees after the Fix, where the Trip begins:');
@@ -588,7 +599,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   const journal = Journal.open(journalFolder(journalsRoot, journeySeed, requireRun()), {
     journeySeed,
     routeSeed: streams.routeSeed,
-    routeIndex,
+    routeNumber,
     tripLength: tripLength,
     settleQuietMs,
     ...shares,
@@ -610,6 +621,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         exclusions: cfg.exclusions,
         tally,
         hopTimeoutMs,
+        hopDelayMs,
       });
     }
 
@@ -726,7 +738,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // Hop's own cost and a watched journal is comparable with an unwatched
       // one. The pause is for eyes; it must not end up in the record as though
       // the application took that long.
-      if (hopDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, hopDelayMs));
+      await pauseToWatch(hopDelayMs);
     }
 
     journal.close({ outcome: 'passed', hops, exclusionsNeverMatched: neverMatched(tally) });
@@ -770,6 +782,11 @@ function strandedReason(found: SurveyResult): string {
 }
 
 /** Run the Fix, journaling each step, and wrap any failure as R11 asks. */
+/** The pause for watching, which changes no draw and is never recorded as time a Hop took. */
+async function pauseToWatch(ms: number): Promise<void> {
+  if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function runFix(
   fix: Fix,
   context: {
@@ -783,9 +800,11 @@ async function runFix(
     exclusions: AppUnderTest['exclusions'];
     tally: ExclusionTally;
     hopTimeoutMs: number;
+    /** The pause after each step, for watching; see `RunRouteOptions.hopDelayMs`. */
+    hopDelayMs: number;
   }
 ): Promise<void> {
-  const { page, app, rng, journal, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs } =
+  const { page, app, rng, journal, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs, hopDelayMs } =
     context;
   let steps = 0;
 
@@ -846,6 +865,9 @@ async function runFix(
         checks: [],
       });
       steps += 1;
+      // After the entry, as on a Trip hop, so the pause never reads as the
+      // step's own cost.
+      await pauseToWatch(hopDelayMs);
   };
 
   const hop: FixContext['hop'] = (target, value) =>

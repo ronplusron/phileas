@@ -34,7 +34,7 @@ export interface JournaledCandidate {
   readonly source: 'page' | 'menu' | 'key';
   readonly role: string;
   readonly name: string;
-  /** Which of the controls sharing this role and name, in document order. */
+  /** Which of the controls sharing this role and name, in document order, counting from 1. */
   readonly nth?: number;
   /** The label path from the menu root, for a menu entry. */
   readonly menuPath?: readonly string[];
@@ -224,7 +224,8 @@ export interface OpeningEntry {
   readonly kind: 'route';
   readonly journeySeed: string;
   readonly routeSeed: string;
-  readonly routeIndex: number;
+  /** Which Route of the Journey this is, counting from 1. */
+  readonly routeNumber: number;
   readonly tripLength: number;
   /** The quiet window the settle wait used for this Route. See `settle`. */
   readonly settleQuietMs: number;
@@ -300,12 +301,13 @@ export function journalFolder(root: string, journeySeed: string, run: string): s
 /**
  * Where a Route's journal is written.
  *
- * One file per Route, named by index and seed. The seed is in the name as well
- * as in the opening entry so that a directory listing is enough to find the
- * journal for a seed named in a report, without opening anything.
+ * One file per Route, named by its number and seed, so Route 1's journal is
+ * `route-001-...`. The seed is in the name as well as in the opening entry so that a directory
+ * listing is enough to find the journal for a seed named in a report, without
+ * opening anything.
  */
-export function journalPath(directory: string, routeIndex: number, routeSeed: string): string {
-  return path.join(directory, `route-${String(routeIndex).padStart(3, '0')}-${routeSeed}.jsonl`);
+export function journalPath(directory: string, routeNumber: number, routeSeed: string): string {
+  return path.join(directory, `route-${String(routeNumber).padStart(3, '0')}-${routeSeed}.jsonl`);
 }
 
 /**
@@ -324,7 +326,7 @@ export class Journal {
 
   private constructor(
     readonly file: string,
-    private readonly routeIndex: number,
+    private readonly routeNumber: number,
     private readonly follow: boolean
   ) {}
 
@@ -343,8 +345,8 @@ export class Journal {
   ): Journal {
     fs.mkdirSync(directory, { recursive: true });
     const journal = new Journal(
-      journalPath(directory, opening.routeIndex, opening.routeSeed),
-      opening.routeIndex,
+      journalPath(directory, opening.routeNumber, opening.routeSeed),
+      opening.routeNumber,
       follow
     );
     // 'wx': create, and refuse if the file already exists. Appending would glue
@@ -389,7 +391,7 @@ export class Journal {
     // Printed after the entry is on disk, never before, so what a person sees
     // following a run is never ahead of the record. See `phileas run --follow`.
     if (this.follow) {
-      const line = renderEntry(entry, this.routeIndex);
+      const line = renderEntry(entry, this.routeNumber);
       if (line) console.log(line);
     }
   }

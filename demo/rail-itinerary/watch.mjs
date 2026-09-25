@@ -1,6 +1,6 @@
 // The watched demo: runs the Journey with the window on screen and a pause per
 // Hop, prints one plain line per Hop as its journal is written, and ends by
-// running Route 0 again from its seed to show it retraces hop for hop.
+// running Route 1 again from its seed to show it retraces hop for hop.
 //
 // The per-Hop lines are the engine's own, from `phileas run --follow`'s
 // renderer, so the demo keeps no journal reader of its own. It reads journals
@@ -71,7 +71,7 @@ function run(extraArgs, { follow = false } = {}) {
   });
 }
 
-/** What a replay must reproduce: each Hop's target, action, value and draws. */
+/** What a replay must reproduce: each Hop's target, action, value and draws. `route` counts from 1. */
 function hopsOf(folder, route) {
   const file = fs.readdirSync(folder).find((f) => f.startsWith(`route-${String(route).padStart(3, '0')}-`));
   return fs
@@ -91,18 +91,18 @@ if (first.code !== 0 || !first.folder) {
 }
 
 if (!process.argv.includes('--no-replay')) {
-  console.log(`Replaying route 0 from the same seed ...\n`);
-  const again = await run(['--grep', 'route 0$']);
+  console.log(`Replaying route 1 from the same seed ...\n`);
+  const again = await run(['--grep', 'route 1$']);
   if (again.code !== 0 || !again.folder) {
     console.log(again.output);
     process.exit(again.code || 1);
   }
-  const a = hopsOf(first.folder, 0);
-  const b = hopsOf(again.folder, 0);
+  const a = hopsOf(first.folder, 1);
+  const b = hopsOf(again.folder, 1);
   const same = a.length === b.length && a.every((hop, i) => hop === b[i]);
   console.log(
     same
-      ? `Route 0 retraced all ${a.length} hops exactly.`
-      : `Route 0 did not retrace: the runs first differ at hop ${a.findIndex((hop, i) => hop !== b[i]) + 1}.`
+      ? `Route 1 retraced all ${a.length} hops exactly.`
+      : `Route 1 did not retrace: the runs first differ at hop ${a.findIndex((hop, i) => hop !== b[i]) + 1}.`
   );
 }

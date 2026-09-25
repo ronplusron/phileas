@@ -28,7 +28,7 @@ function scratch(): string {
 const opening = {
   journeySeed: 'abc123',
   routeSeed: 'def456',
-  routeIndex: 3,
+  routeNumber: 3,
   tripLength: 5,
   settleQuietMs: 400,
 };
@@ -37,7 +37,7 @@ function hop(index: number) {
   return {
     kind: 'trip-hop' as const,
     hop: index + 1,
-    target: { source: 'page' as const, role: 'button', name: `Button ${index}`, nth: 0 },
+    target: { source: 'page' as const, role: 'button', name: `Button ${index}`, nth: 1 },
     action: 'click' as const,
     pool: 'pool-id',
     startedAt: new Date().toISOString(),
@@ -67,7 +67,7 @@ test('every hop is on disk before the next one starts', () => {
   // exactly what this engine is hunting.
   for (let index = 0; index < 3; index += 1) {
     journal.write(hop(index));
-    const entries = readJournal(journalPath(dir, opening.routeIndex, opening.routeSeed));
+    const entries = readJournal(journalPath(dir, opening.routeNumber, opening.routeSeed));
     expect(entries.filter((entry) => entry.kind === 'trip-hop')).toHaveLength(index + 1);
   }
 
@@ -82,7 +82,7 @@ test('the opening entry is written before the Route does anything', () => {
   // created lazily on the first successful hop would not exist at all for
   // exactly that failure. The seed has to be recoverable from a Route that
   // never traveled.
-  const entries = readJournal(journalPath(dir, opening.routeIndex, opening.routeSeed));
+  const entries = readJournal(journalPath(dir, opening.routeNumber, opening.routeSeed));
   expect(entries).toHaveLength(1);
   expect(entries[0]).toMatchObject({ kind: 'route', routeSeed: 'def456', tripLength: 5 });
 
@@ -99,7 +99,7 @@ test('a journal truncated mid-write still reads back every completed hop', () =>
   // leaves behind. A single JSON array would be unparseable from end to end
   // here, taking the three complete hops with it; that is the whole reason for
   // one object per line.
-  const file = journalPath(dir, opening.routeIndex, opening.routeSeed);
+  const file = journalPath(dir, opening.routeNumber, opening.routeSeed);
   const whole = fs.readFileSync(file, 'utf8');
   const lastLineStart = whole.lastIndexOf('\n', whole.length - 2) + 1;
   fs.writeFileSync(file, whole.slice(0, lastLineStart + 30));
@@ -115,7 +115,7 @@ test('a broken line in the MIDDLE is refused rather than skipped', () => {
   for (let index = 0; index < 3; index += 1) journal.write(hop(index));
   journal.close({ outcome: 'passed', hops: 3 });
 
-  const file = journalPath(dir, opening.routeIndex, opening.routeSeed);
+  const file = journalPath(dir, opening.routeNumber, opening.routeSeed);
   const lines = fs.readFileSync(file, 'utf8').split('\n');
   lines[2] = '{"kind":"hop", this is not json';
   fs.writeFileSync(file, lines.join('\n'));
@@ -134,7 +134,7 @@ test('an unfinished Route leaves no outcome line, rather than a guessed one', ()
   journal.write(hop(0));
   journal.abandon();
 
-  const entries = readJournal(journalPath(dir, opening.routeIndex, opening.routeSeed));
+  const entries = readJournal(journalPath(dir, opening.routeNumber, opening.routeSeed));
   expect(entries.some((entry) => entry.kind === 'outcome')).toBe(false);
 });
 
@@ -150,22 +150,22 @@ test('writing after the outcome is refused', () => {
 });
 
 test('the file name carries the seed, so a report names a findable journal', () => {
-  const file = journalPath('/tmp/journeys', 7, 'abcdef0123456789');
+  const file = journalPath('/tmp/journeys', 8, 'abcdef0123456789');
 
   // R12: someone who did not run the Journey reproduces a finding from the
   // report alone. The report names a route seed, and a directory listing has to
   // be enough to find the journal for it without opening anything.
-  expect(path.basename(file)).toBe('route-007-abcdef0123456789.jsonl');
+  expect(path.basename(file)).toBe('route-008-abcdef0123456789.jsonl');
 });
 
 test('a pool is written once, and before the first hop that names it', () => {
   const dir = scratch();
   const journal = Journal.open(dir, opening);
   const inventory = [
-    { source: 'page' as const, role: 'button', name: 'Inventory', nth: 0 },
-    { source: 'page' as const, role: 'button', name: 'Summary', nth: 0 },
+    { source: 'page' as const, role: 'button', name: 'Inventory', nth: 1 },
+    { source: 'page' as const, role: 'button', name: 'Summary', nth: 1 },
   ];
-  const summary = [{ source: 'page' as const, role: 'button', name: 'Inventory', nth: 0 }];
+  const summary = [{ source: 'page' as const, role: 'button', name: 'Inventory', nth: 1 }];
 
   // Three hops over two distinct lists, the way a Route moves between two views
   // and back.
@@ -183,7 +183,7 @@ test('a pool is written once, and before the first hop that names it', () => {
   expect(third).toBe(first);
   expect(second).not.toBe(first);
 
-  const entries = readJournal(journalPath(dir, opening.routeIndex, opening.routeSeed));
+  const entries = readJournal(journalPath(dir, opening.routeNumber, opening.routeSeed));
   const pools = entries.filter((entry) => entry.kind === 'pool');
   expect(pools).toHaveLength(2);
 
@@ -200,8 +200,8 @@ test('a pool is written once, and before the first hop that names it', () => {
 test('a pool id depends on order, not only on membership', () => {
   const dir = scratch();
   const journal = Journal.open(dir, opening);
-  const a = { source: 'page' as const, role: 'button', name: 'A', nth: 0 };
-  const b = { source: 'page' as const, role: 'button', name: 'B', nth: 0 };
+  const a = { source: 'page' as const, role: 'button', name: 'A', nth: 1 };
+  const b = { source: 'page' as const, role: 'button', name: 'B', nth: 1 };
 
   // The draw picks by position, so a list that only reordered sends the same
   // draw to a different target. Treating [A, B] and [B, A] as one pool would let

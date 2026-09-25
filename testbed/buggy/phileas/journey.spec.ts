@@ -8,7 +8,7 @@ import {
   journalFolder,
   requireRun,
   requireSeed,
-  routeIndices,
+  routeNumbers,
   runRoute,
 } from '@drugstoresushi/phileas';
 import { exploration } from './journeys/exploration';
@@ -40,11 +40,11 @@ const here = path.dirname(fileURLToPath(import.meta.url));
  */
 const journalsRoot = path.join(here, '.phileas-journals');
 
-for (const routeIndex of routeIndices(exploration)) {
-  test(`route ${routeIndex}`, async ({ page, app }, testInfo) => {
+for (const routeNumber of routeNumbers(exploration)) {
+  test(`route ${routeNumber}`, async ({ page, app }, testInfo) => {
     const journeySeed = requireSeed();
     const run = requireRun();
-    const streams = deriveRouteStreams(journeySeed, routeIndex);
+    const streams = deriveRouteStreams(journeySeed, routeNumber);
 
     // Annotated rather than only logged, so that the seed travels with the
     // test's own result and a failure names what would retrace it.
@@ -70,7 +70,7 @@ for (const routeIndex of routeIndices(exploration)) {
       cfg: buggy,
       streams,
       journeySeed,
-      routeIndex,
+      routeNumber,
       tripLength: exploration.tripLength,
       journalsRoot,
     });
@@ -93,7 +93,7 @@ for (const routeIndex of routeIndices(exploration)) {
     // found.
     expect(
       outcome.kind,
-      `Route ${routeIndex} ended ${outcome.kind} after ${outcome.hops} of ` +
+      `Route ${routeNumber} ended ${outcome.kind} after ${outcome.hops} of ` +
         `${exploration.tripLength} hops` +
         (outcome.kind === 'stranded' ? `: ${outcome.reason}` : '') +
         `. Route seed ${streams.routeSeed}; journal in ${journalFolder(journalsRoot, journeySeed, run)}.`

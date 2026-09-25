@@ -53,12 +53,12 @@ function withEnvironment<T>(values: Record<string, string>, body: () => T): T {
 test('the command reads its flags, a config, and what goes to Playwright', () => {
   expect(parse(['run'])).toEqual({ command: 'run', config: 'phileas', settings: {}, passThrough: [] });
   expect(
-    parse(['run', 'testbed/buggy/phileas', '--routes', '3', '--show=front', '--', '--grep', 'route 0$'])
+    parse(['run', 'testbed/buggy/phileas', '--routes', '3', '--show=front', '--', '--grep', 'route 1$'])
   ).toEqual({
     command: 'run',
     config: 'testbed/buggy/phileas',
     settings: { PHILEAS_ROUTES: '3', PHILEAS_SHOW: 'front' },
-    passThrough: ['--grep', 'route 0$'],
+    passThrough: ['--grep', 'route 1$'],
   });
 });
 

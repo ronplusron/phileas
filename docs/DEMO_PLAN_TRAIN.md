@@ -29,8 +29,10 @@ demo/rail-itinerary/
   main.cjs, preload.cjs, renderer/   the application
   data/                              stations, timetable and fares, as JSON
   package.json                       packages the application
-  phileas/                           adapter, journey, spec, global setup, config
+  phileas/                           adapter, journeys, spec, global setup, config
   watch.mjs                          the per-hop log for a watched run
+  present.mjs, PRESENTING.md         the guided demo, and its script
+  explain-hop.mjs                    one Hop's choice, told from its journal line
 ```
 
 Packaged like `buggy`, with the bundle id `com.drugstoresushi.railitinerary`
@@ -80,6 +82,16 @@ names a leg by its end stations. The Fix is left alone as well.
 survey`, so the demo shows a Fix and shows one being written without reading
 the application's code. It was proposed to make the demo livelier and
 measured not to: `HISTORY.md` has the numbers.
+
+**A second Journey has a Fix of nine steps**, added 2026-09-25 so the demo
+can show a Fix built one step at a time. It opens the same itinerary, adds a
+leg from Geneva to Zurich, and opens the ticket purchase dialog, so every
+Route's Trip visibly starts inside the dialog. One step is Playwright code
+rather than a copied line, because the From and To dropdowns list the same
+stations and a copied line always reaches From, which is `OUTSTANDING.md` 2.7;
+the demo keeps that visible rather than hiding it. A third runs with no Fix, for
+a first look before the Fix is introduced. `RAIL_DEMO_JOURNEY` chooses among
+them, `no-fix`, `open-alps` or `tickets`, a switch of the demo's own.
 
 **Designed for discovery,** since the point is to watch Phileas find its way
 with nothing handed to it:
@@ -167,9 +179,12 @@ reproduces it, and a replay that walks straight back to it.
 
 ## Build order for stage one
 
-Built 2026-09-24, all but the presenting script. `npm run demo:train` runs it.
+Built 2026-09-24, and the presenting script on 2026-09-25. `npm run demo:train`
+runs the watched run; `npm run demo:present` runs the guided demo, which
+`demo/rail-itinerary/PRESENTING.md` scripts.
 
 1. The application and its data, packaged, with a staleness-guarded adapter.
 2. The Journey and its one-command watched run.
 3. The per-hop log.
-4. A short script for presenting it, in this file or beside the application.
+4. A script for presenting it, beside the application, and a command that
+   runs it section by section.

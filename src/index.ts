@@ -40,7 +40,7 @@ export {
 export { stubOpenExternal, openedExternally, clearOpenExternal } from './external';
 export {
   defineJourney,
-  routeIndices,
+  routeNumbers,
   SHORTEST_DEADLINE_MS,
   playwrightTimeouts,
   resolveSeed,

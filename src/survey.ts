@@ -68,7 +68,7 @@ export function takesTypedValue(candidate: SurveyedCandidate): boolean {
  * the right shape for both: it is how the Hop reaches the element, through
  * Playwright's own documented `getByRole(...).nth()`, and it is what the
  * journal records. A reader retracing a Route a week later can find
- * `button "Summary" #0`, which is the whole point of writing a journal down.
+ * `button "Summary" #1`, which is the whole point of writing a journal down.
  *
  * Playwright's snapshot also offers an opaque per-element handle, and it was
  * rejected on 2026-09-22 for both halves of that. It is undocumented, absent
@@ -81,7 +81,7 @@ export interface PageCandidate {
   readonly source: 'page';
   readonly role: string;
   readonly name: string;
-  /** Which of the controls sharing this role and name, in document order. */
+  /** Which of the controls sharing this role and name, in document order, counting from 1. */
   readonly nth: number;
   /** Whether the control is disabled. Kept, because it is still a finding. */
   readonly disabled: boolean;
@@ -539,7 +539,9 @@ async function surveyPage(
   const hoppable = new Set<string>(HOPPABLE_ROLES);
 
   // Counted per role and name, so that two controls sharing both are told apart
-  // by their position in document order, which is what getByRole().nth() takes.
+  // by their position in document order. Counted from 1, as a person counts
+  // them; getByRole().nth() counts from 0, and the conversion happens there
+  // and nowhere else.
   const seen = new Map<string, number>();
 
   const walk = (node: AriaNode | string): void => {
@@ -548,8 +550,8 @@ async function surveyPage(
     if (node.role && hoppable.has(node.role)) {
       if (node.name) {
         const key = `${node.role}\u0000${node.name}`;
-        const nth = seen.get(key) ?? 0;
-        seen.set(key, nth + 1);
+        const nth = (seen.get(key) ?? 0) + 1;
+        seen.set(key, nth);
         candidates.push({
           source: 'page',
           role: node.role,
@@ -559,7 +561,7 @@ async function surveyPage(
           locator: root.getByRole(node.role as Parameters<Page['getByRole']>[0], {
             name: node.name,
             exact: true,
-          }).nth(nth),
+          }).nth(nth - 1),
         });
       } else {
         unnamed.push(node.text ? { role: node.role, text: node.text } : { role: node.role });

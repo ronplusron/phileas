@@ -115,6 +115,39 @@ test('survey finds the application controls by role, with no enumeration of them
   ]);
 });
 
+test('two controls sharing a name are counted from 1, and the second is the one reached', async ({
+  page,
+  app,
+}) => {
+  // Planted rather than built into buggy, which has no two controls sharing a
+  // name, and whose baseline this would otherwise move.
+  await page.evaluate(() => {
+    for (const which of ['first', 'second']) {
+      const button = document.createElement('button');
+      button.textContent = 'Twin';
+      button.addEventListener('click', () => document.body.setAttribute('data-twin-clicked', which));
+      document.body.append(button);
+    }
+  });
+  const found = await survey({
+    page,
+    app,
+    exclusions: NO_EXCLUSIONS,
+    hopIndex: 0,
+    tally: createExclusionTally(NO_EXCLUSIONS),
+  });
+  const twins = found.candidates.filter((candidate) => candidate.source === 'page' && candidate.name === 'Twin');
+  expect(twins.map((twin) => (twin.source === 'page' ? twin.nth : undefined))).toEqual([1, 2]);
+
+  // The number a person reads must reach the control it names: an off-by-one
+  // between counting from 1 and Playwright's count from 0 would click the
+  // first twin here, or nothing.
+  const second = twins[1];
+  if (second?.source !== 'page') throw new Error('expected a second twin on the page');
+  await second.locator.click();
+  await expect(page.locator('body')).toHaveAttribute('data-twin-clicked', 'second');
+});
+
 test('survey offers nothing that is hidden', async ({ page, app }) => {
   const options = {
     page,
@@ -265,7 +298,7 @@ test('a menu hop hands its handler the Route window, as a click on the menu woul
 
 test('a Route completes its Trip and journals every hop', async ({ page, app }) => {
   const dir = scratch();
-  const streams = deriveRouteStreams('test-seed', 0);
+  const streams = deriveRouteStreams('test-seed', 1);
 
   const outcome = await runRoute({
     page,
@@ -273,7 +306,7 @@ test('a Route completes its Trip and journals every hop', async ({ page, app }) 
     cfg: buggy,
     streams,
     journeySeed: 'test-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 6,
     journalsRoot: dir,
   });
@@ -281,7 +314,7 @@ test('a Route completes its Trip and journals every hop', async ({ page, app }) 
   expect(outcome).toEqual({ kind: 'passed', hops: 6 });
 
   const entries = readJournal(
-    path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`)
+    path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`)
   );
   const pools = new Map<string, readonly JournaledCandidate[]>();
   const hops: TripHopEntry[] = [];
@@ -318,14 +351,14 @@ test('every target is the pool entry its draw points at, from the file alone', a
   // against itself with nothing launched. A line that breaks the rule means the
   // engine acted on something other than what its draws picked.
   const dir = scratch();
-  const streams = deriveRouteStreams('consistency-seed', 0);
+  const streams = deriveRouteStreams('consistency-seed', 1);
   await runRoute({
     page,
     app,
     cfg: buggy,
     streams,
     journeySeed: 'consistency-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 12,
     journalsRoot: dir,
   });
@@ -334,7 +367,7 @@ test('every target is the pool entry its draw points at, from the file alone', a
   let checked = 0;
   let keyShare = NaN;
   let menuShare = NaN;
-  for (const entry of readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`))) {
+  for (const entry of readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`))) {
     // The shares come from the file too, which is what makes this "from the
     // file alone": a reader with only the journal can check it.
     if (entry.kind === 'route') {
@@ -372,18 +405,18 @@ test('every target is the pool entry its draw points at, from the file alone', a
 test("a Route draws with the adapter's shares, and journals them", async ({ page, app }) => {
   const sidesDrawn = async (cfg: AppUnderTest) => {
     const dir = scratch();
-    const streams = deriveRouteStreams('shares-seed', 0);
+    const streams = deriveRouteStreams('shares-seed', 1);
     await runRoute({
       page,
       app,
       cfg,
       streams,
       journeySeed: 'shares-seed',
-      routeIndex: 0,
+      routeNumber: 1,
       tripLength: 20,
       journalsRoot: dir,
     });
-    const entries = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`));
+    const entries = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`));
     const opening = entries.find((entry) => entry.kind === 'route');
     const hops = entries.filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
     return {
@@ -410,18 +443,18 @@ test("a Route draws with the adapter's shares, and journals them", async ({ page
 test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
   const targets = async (): Promise<string[]> => {
     const dir = scratch();
-    const streams = deriveRouteStreams('replay-seed', 2);
+    const streams = deriveRouteStreams('replay-seed', 3);
     await runRoute({
       page,
       app,
       cfg: buggy,
       streams,
       journeySeed: 'replay-seed',
-      routeIndex: 2,
+      routeNumber: 3,
       tripLength: 8,
       journalsRoot: dir,
     });
-    return readJournal(path.join(inRun(dir), `route-002-${streams.routeSeed}.jsonl`))
+    return readJournal(path.join(inRun(dir), `route-003-${streams.routeSeed}.jsonl`))
       .filter((entry) => entry.kind === 'trip-hop')
       .map((entry) =>
         // The draw is compared as well as the target. A broken sequence can land
@@ -446,6 +479,48 @@ test('one seed retraces one Route, hop for hop', async ({ page, app }) => {
   expect(first.length).toBe(8);
 });
 
+test('a longer Trip from the same seed retraces a shorter one, then carries on', async ({ page, app }) => {
+  // The Trip length decides where a Route stops and nothing else: every Hop
+  // takes the same draws whatever the length, so the moves along the way are
+  // the same. That is what lets a longer run replay a shorter one's Hops.
+  const targets = async (tripLength: number): Promise<string[]> => {
+    const dir = scratch();
+    const streams = deriveRouteStreams('longer-seed', 1);
+    await runRoute({
+      page,
+      app,
+      cfg: buggy,
+      streams,
+      journeySeed: 'longer-seed',
+      routeNumber: 1,
+      tripLength,
+      journalsRoot: dir,
+    });
+    return readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`))
+      .filter((entry) => entry.kind === 'trip-hop')
+      .map((entry) =>
+        entry.kind === 'trip-hop'
+          ? `${entry.target.name}/${entry.value ?? ''}/${String(entry.shareDraw)}/${String(entry.draw)}`
+          : ''
+      );
+  };
+
+  const short = await targets(4);
+
+  // Back to where the Route started, as in the test above.
+  await page.getByRole('button', { name: 'Inventory', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+
+  const long = await targets(8);
+
+  expect(short.length).toBe(4);
+  expect(long.length).toBe(8);
+  expect(long.slice(0, 4)).toEqual(short);
+  // The four Hops after the shorter Trip ended are more of the Route, not a
+  // repeat of its start, or the prefix above would match for the wrong reason.
+  expect(long.slice(4)).not.toEqual(short);
+});
+
 test('a Route with nowhere to go is stranded, not failed, and names the hop', async ({
   page,
   app,
@@ -461,9 +536,9 @@ test('a Route with nowhere to go is stranded, not failed, and names the hop', as
     page,
     app,
     cfg: buggy,
-    streams: deriveRouteStreams('stranded-seed', 0),
+    streams: deriveRouteStreams('stranded-seed', 1),
     journeySeed: 'stranded-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 10,
     journalsRoot: dir,
   });
@@ -480,7 +555,7 @@ test('a Route with nowhere to go is stranded, not failed, and names the hop', as
   // The journal is where that lands, and an outcome line saying only
   // "stranded" would leave a reader nothing to act on.
   const entries = readJournal(
-    path.join(inRun(dir), `route-000-${deriveRouteStreams('stranded-seed', 0).routeSeed}.jsonl`)
+    path.join(inRun(dir), `route-001-${deriveRouteStreams('stranded-seed', 1).routeSeed}.jsonl`)
   );
   const closing = entries.find((entry) => entry.kind === 'outcome');
   expect(closing).toMatchObject({ outcome: 'stranded', hops: 0 });
@@ -498,9 +573,9 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
     page,
     app,
     cfg: buggy,
-    streams: deriveRouteStreams('fix-seed', 0),
+    streams: deriveRouteStreams('fix-seed', 1),
     journeySeed: 'fix-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 5,
     journalsRoot: dir,
     fix: async ({ step }) => {
@@ -522,7 +597,7 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
   // apart from a failed Route, which means saying which step broke rather than
   // leaving it as a sentence inside the outcome's reason.
   const entries = readJournal(
-    path.join(inRun(dir), `route-000-${deriveRouteStreams('fix-seed', 0).routeSeed}.jsonl`)
+    path.join(inRun(dir), `route-001-${deriveRouteStreams('fix-seed', 1).routeSeed}.jsonl`)
   );
   const fixHops = entries.filter((entry) => entry.kind === 'fix-hop');
   expect(fixHops.map((entry) => (entry.kind === 'fix-hop' ? entry.hop : 0))).toEqual([1, 2]);
@@ -540,7 +615,7 @@ test('every hop records what it did to the screen, Fix and Trip alike (R31)', as
   app,
 }) => {
   const dir = scratch();
-  const streams = deriveRouteStreams('effect-seed', 0);
+  const streams = deriveRouteStreams('effect-seed', 1);
 
   await runRoute({
     page,
@@ -548,7 +623,7 @@ test('every hop records what it did to the screen, Fix and Trip alike (R31)', as
     cfg: buggy,
     streams,
     journeySeed: 'effect-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 5,
     journalsRoot: dir,
     fix: async ({ step }) => {
@@ -559,7 +634,7 @@ test('every hop records what it did to the screen, Fix and Trip alike (R31)', as
     },
   });
 
-  const entries = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`));
+  const entries = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`));
   const [opened, idle] = entries.filter((entry) => entry.kind === 'fix-hop');
 
   // Opening the summary brings its heading onto the screen. Read from the real
@@ -606,9 +681,9 @@ test('a value is drawn on every hop, including hops that never type it', async (
     page,
     app,
     cfg: buggy,
-    streams: deriveRouteStreams('unconditional-draw', 0),
+    streams: deriveRouteStreams('unconditional-draw', 1),
     journeySeed: 'unconditional-draw',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 5,
     journalsRoot: scratch(),
     chooser: {
@@ -642,7 +717,7 @@ test('an option in a native dropdown is chosen through the dropdown, and takes e
   // options in its two Compare pickers. The chooser here always draws the
   // Luggage option, so every Hop exercises exactly that case.
   const dir = scratch();
-  const streams = deriveRouteStreams('select-seed', 0);
+  const streams = deriveRouteStreams('select-seed', 1);
 
   await runRoute({
     page,
@@ -650,7 +725,7 @@ test('an option in a native dropdown is chosen through the dropdown, and takes e
     cfg: buggy,
     streams,
     journeySeed: 'select-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 2,
     journalsRoot: dir,
     hopTimeoutMs: 1_000,
@@ -665,7 +740,7 @@ test('an option in a native dropdown is chosen through the dropdown, and takes e
     },
   });
 
-  const hops = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`)).filter(
+  const hops = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`)).filter(
     (entry) => entry.kind === 'trip-hop'
   );
   expect(hops).toHaveLength(2);
@@ -687,7 +762,7 @@ test('a native dropdown itself is focused, not clicked open', async ({ page, app
   // reaches it the way tabbing to it would. The chooser always draws the
   // dropdown, so every Hop exercises exactly that case.
   const dir = scratch();
-  const streams = deriveRouteStreams('focus-seed', 0);
+  const streams = deriveRouteStreams('focus-seed', 1);
 
   await runRoute({
     page,
@@ -695,7 +770,7 @@ test('a native dropdown itself is focused, not clicked open', async ({ page, app
     cfg: buggy,
     streams,
     journeySeed: 'focus-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 2,
     journalsRoot: dir,
     chooser: {
@@ -707,7 +782,7 @@ test('a native dropdown itself is focused, not clicked open', async ({ page, app
     },
   });
 
-  const hops = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`)).filter(
+  const hops = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`)).filter(
     (entry) => entry.kind === 'trip-hop'
   );
   expect(hops.map((entry) => (entry.kind === 'trip-hop' ? entry.action : ''))).toEqual([
@@ -734,9 +809,9 @@ test('a prevented navigation ends the Route once, rather than timing out every h
     app,
     // No exclusions, so the link is reachable. The adapter's own list names it.
     cfg: { ...buggy, exclusions: {} },
-    streams: deriveRouteStreams('abandon-seed', 0),
+    streams: deriveRouteStreams('abandon-seed', 1),
     journeySeed: 'abandon-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 3,
     journalsRoot: dir,
     hopTimeoutMs: 700,
@@ -758,7 +833,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
   await expect(outcome).rejects.toThrow(/exclusion list/);
 
   const entries = readJournal(
-    path.join(inRun(dir), `route-000-${deriveRouteStreams('abandon-seed', 0).routeSeed}.jsonl`)
+    path.join(inRun(dir), `route-001-${deriveRouteStreams('abandon-seed', 1).routeSeed}.jsonl`)
   );
 
   // The hop that did it is still in the record, marked abandoned. Dropping it
@@ -955,19 +1030,19 @@ test('typing arrives as one keystroke per character', async ({ page, app }) => {
   });
 
   const dir = scratch();
-  const streams = deriveRouteStreams('typing-seed', 0);
+  const streams = deriveRouteStreams('typing-seed', 1);
   await runRoute({
     page,
     app,
     cfg: buggy,
     streams,
     journeySeed: 'typing-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 30,
     journalsRoot: dir,
   });
 
-  const typed = readJournal(path.join(inRun(dir), `route-000-${streams.routeSeed}.jsonl`)).filter(
+  const typed = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`)).filter(
     (entry): entry is TripHopEntry =>
       entry.kind === 'trip-hop' && entry.action === 'type' && entry.target.name === 'Search items'
   );
@@ -982,19 +1057,19 @@ test('the engine lays journals out under the root as seed, then run', async ({ p
   // Only the root is the consumer's. Phase 7's report and replay find journals
   // by this layout, so it is asserted from the outside, by path.
   const root = scratch();
-  const streams = deriveRouteStreams('layout-seed', 3);
+  const streams = deriveRouteStreams('layout-seed', 4);
   await runRoute({
     page,
     app,
     cfg: buggy,
     streams,
     journeySeed: 'layout-seed',
-    routeIndex: 3,
+    routeNumber: 4,
     tripLength: 1,
     journalsRoot: root,
   });
 
-  const expected = path.join(root, 'layout-seed', TEST_RUN, `route-003-${streams.routeSeed}.jsonl`);
+  const expected = path.join(root, 'layout-seed', TEST_RUN, `route-004-${streams.routeSeed}.jsonl`);
   expect(fs.existsSync(expected)).toBe(true);
   // Nothing else anywhere under the root: one seed folder, one run folder, one file.
   expect(fs.readdirSync(root)).toEqual(['layout-seed']);
@@ -1050,9 +1125,9 @@ test('a modal dialog with no way out strands the Route', async ({ page, app }) =
     page,
     app,
     cfg: buggy,
-    streams: deriveRouteStreams('trap-seed', 0),
+    streams: deriveRouteStreams('trap-seed', 1),
     journeySeed: 'trap-seed',
-    routeIndex: 0,
+    routeNumber: 1,
     tripLength: 5,
     journalsRoot: scratch(),
   });

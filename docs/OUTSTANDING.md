@@ -564,6 +564,10 @@ click on the second control would write a line that replays onto the first,
 and nobody would see two of anything. `PLAN.md` has recording after phase 5
 and says this has to be met first.
 
+**The rail demo meets it,** since 2026-09-25: its add-a-leg Fix cannot name the
+To dropdown's stations, which repeat the From dropdown's, so that one step is
+Playwright code. A real case to design against.
+
 ### 2.8 Playwright's own output around `phileas survey`
 
 Noticed 2026-09-24 and recorded unraised; nothing is decided. `phileas survey`

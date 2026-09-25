@@ -214,9 +214,9 @@ function requireWholeNumberAtLeastOne(name: string, value: number): void {
   }
 }
 
-/** The indices a Journey's Routes are registered under. */
-export function routeIndices(journey: Journey): number[] {
-  return Array.from({ length: journey.routes }, (_, index) => index);
+/** The numbers a Journey's Routes are registered under, counting from 1. */
+export function routeNumbers(journey: Journey): number[] {
+  return Array.from({ length: journey.routes }, (_, index) => index + 1);
 }
 
 /**

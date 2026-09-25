@@ -40,7 +40,7 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and thirty-eight tests. Seven launch it,
+through, and `npm test` runs one hundred and forty-three tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -49,12 +49,13 @@ generator's output. Twelve record what `buggy` correctly does, so a defect
 planted later can be told apart from an accidental one. Seven assert that a
 guard refuses rather than answering when it has no evidence. Seven work out
 what a Hop did to the screen from two readings, without launching anything.
-Thirty-two travel through the application, and ten cover the journal, including
+Thirty-four travel through the application, and ten cover the journal, including
 one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
 cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. Seven cover the `phileas`
-command and the overrides it carries, one of them running it for real, and six
-cover reading a journal, following a run and showing one. Six cover writing a
-Fix from `phileas survey`'s lines. The last three cover the
+command and the overrides it carries, one of them running it for real, and seven
+cover reading a journal, following a run and showing one. Eight cover writing a
+Fix from `phileas survey`'s lines, two of them the hop delay's pause in a Fix
+and a survey. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
 `npm run typecheck` enforces.
 
@@ -148,7 +149,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and thirty-eight tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and forty-three tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the
@@ -163,9 +164,11 @@ editing its file: `phileas run [config] --routes 3 --trip-length 50 --seed
 abc --show back --hop-delay-ms 300`, and `--route-deadline-ms` and
 `--journey-deadline-ms`. The config defaults to `phileas/`, the consumer
 layout's folder, and anything after `--` goes to Playwright. From this
-repository, `npm run journey -- --routes 1` passes flags through. Replaying a
-seed needs the same Route count and Trip length as the run it retraces, which
-is what the printout is for. `phileas --help` lists each flag with the
+repository, `npm run journey -- --routes 1` passes flags through. A replay
+needs the seed, and enough of the rest to reach what it is retracing: the Route
+count only has to include the Route, since no Route's seed depends on it, and
+a longer Trip retraces a shorter one's Hops and then carries on, measured on
+2026-09-25. The printout says what a run used. `phileas --help` lists each flag with the
 environment variable it travels in, which is what a refusal names.
 
 Each Route writes a journal to
@@ -184,7 +187,7 @@ typed, and what appeared and went away. `phileas show` prints a finished run
 the same way: with no argument the latest run under `phileas/.phileas-journals/`,
 or a seed's name, a seed's folder, a run folder or one journal file. A journal
 cut off mid-write reads up to the cut and says the Route did not finish.
-`jq . route-000-*.jsonl` still prints every line in full.
+`jq . route-001-*.jsonl` still prints every line in full.
 
 **Writing a Fix starts from `phileas survey`,** which launches the application
 and prints what the engine sees at the start, one control per line in the
@@ -243,8 +246,9 @@ sits behind what you are looking at, and does not appear at all if that is
 full-screen in its own Space. Every reading from inside the process says the
 window is fine.
 
-`PHILEAS_HOP_DELAY_MS` pauses that many milliseconds after each Hop, so a run
-can be watched at all: a Route otherwise travels twenty Hops in about a second,
+`PHILEAS_HOP_DELAY_MS` pauses that many milliseconds after each Hop, Fix steps
+included, and after each listing `phileas survey` prints, so a run can be
+watched at all: a Route otherwise travels twenty Hops in about a second,
 and showing windows is pointless if what they show is a blur. It changes no
 draw and no verdict, so a seed retraces the same Route with any delay, but it
 does land inside the Route deadline and the Journey deadline, where either is

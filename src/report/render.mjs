@@ -20,6 +20,18 @@
 /** @typedef {import('../journal').JournaledCandidate} JournaledCandidate */
 
 /**
+ * A Route as a person reads it. Routes count from 1, as Hops do.
+ *
+ * A journal whose opening line is missing has no Route number, and says so
+ * rather than printing one.
+ * @param {number} routeNumber
+ * @returns {string}
+ */
+export function routeLabel(routeNumber) {
+  return routeNumber >= 1 ? `route ${routeNumber}` : 'route ?';
+}
+
+/**
  * The effect of a Hop, as a person reads it.
  * @param {HopEffect | undefined} effect
  * @returns {string}
@@ -62,14 +74,14 @@ function valueText(value) {
  * One journal entry as one line, or nothing for an entry a person has no use
  * for, which is a pool: every Hop already names what it acted on.
  *
- * The Route's index comes from the caller for every entry but the opening one,
+ * The Route's number comes from the caller for every entry but the opening one,
  * since a Hop line does not carry it.
  * @param {JournalEntry} entry
- * @param {number} routeIndex
+ * @param {number} routeNumber
  * @returns {string | undefined}
  */
-export function renderEntry(entry, routeIndex) {
-  const route = `route ${routeIndex}`;
+export function renderEntry(entry, routeNumber) {
+  const route = routeLabel(routeNumber);
   switch (entry.kind) {
     case 'route':
       return (
@@ -118,7 +130,7 @@ export function renderJournal(text) {
   const lines = text.split('\n');
   /** @type {string[]} */
   const out = [];
-  let routeIndex = -1;
+  let routeNumber = 0; // unknown until the opening line is read
   let finished = false;
   for (const [index, raw] of lines.entries()) {
     if (raw.trim() === '') continue;
@@ -130,16 +142,16 @@ export function renderJournal(text) {
       const last = lines.slice(index + 1).every((rest) => rest.trim() === '');
       out.push(
         last
-          ? `route ${routeIndex}  the journal ends partway through a line, where the Route stopped`
-          : `route ${routeIndex}  line ${index + 1} of the journal cannot be read`
+          ? `${routeLabel(routeNumber)}  the journal ends partway through a line, where the Route stopped`
+          : `${routeLabel(routeNumber)}  line ${index + 1} of the journal cannot be read`
       );
       continue;
     }
-    if (entry.kind === 'route') routeIndex = entry.routeIndex;
+    if (entry.kind === 'route') routeNumber = entry.routeNumber;
     if (entry.kind === 'outcome') finished = true;
-    const line = renderEntry(entry, routeIndex);
+    const line = renderEntry(entry, routeNumber);
     if (line) out.push(line);
   }
-  if (!finished) out.push(`route ${routeIndex}  no outcome recorded: the Route did not finish`);
+  if (!finished) out.push(`${routeLabel(routeNumber)}  no outcome recorded: the Route did not finish`);
   return out;
 }

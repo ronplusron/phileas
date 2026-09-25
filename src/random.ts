@@ -178,7 +178,13 @@ export function createRng(seed: string): Rng {
 }
 
 /**
- * The seed for one Route, derived from the Journey's seed and its index.
+ * The seed for one Route, derived from the Journey's seed and its number.
+ *
+ * Routes count from 1, here as everywhere a person reads them, so Route 1's
+ * seed is `hash(journeySeed, 1)`. Counting from 0 here and from 1 on screen was
+ * tried and dropped on 2026-09-25: it left a second numbering in the journal for
+ * anyone reading it, and changing it later would change every Route of every
+ * recorded seed.
  *
  * Derived rather than drawn from a shared stream. One stream across all Routes
  * would make route 7 reproducible only by replaying routes 1 through 6, which
@@ -186,11 +192,11 @@ export function createRng(seed: string): Rng {
  * and it would hide quietly: every Route would still pass, and re-running one
  * on its own would produce a different route than it produced in the Journey.
  */
-export function deriveRouteSeed(journeySeed: string, routeIndex: number): string {
-  if (!Number.isInteger(routeIndex) || routeIndex < 0) {
-    throw new RangeError(`routeIndex must be a whole number of at least 0, got ${routeIndex}`);
+export function deriveRouteSeed(journeySeed: string, routeNumber: number): string {
+  if (!Number.isInteger(routeNumber) || routeNumber < 1) {
+    throw new RangeError(`routeNumber must be a whole number of at least 1, got ${routeNumber}`);
   }
-  return digest(journeySeed, routeIndex);
+  return digest(journeySeed, routeNumber);
 }
 
 /**
@@ -199,8 +205,8 @@ export function deriveRouteSeed(journeySeed: string, routeIndex: number): string
  * Each stream is seeded from its own digest of the Route's seed, so the two
  * never share a position and consuming from one cannot move the other.
  */
-export function deriveRouteStreams(journeySeed: string, routeIndex: number): RouteStreams {
-  const routeSeed = deriveRouteSeed(journeySeed, routeIndex);
+export function deriveRouteStreams(journeySeed: string, routeNumber: number): RouteStreams {
+  const routeSeed = deriveRouteSeed(journeySeed, routeNumber);
   return {
     routeSeed,
     fix: createRng(digest(routeSeed, 'fix')),

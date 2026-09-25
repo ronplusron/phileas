@@ -19,7 +19,8 @@
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
     "journey": "node bin/phileas.mjs run testbed/buggy/phileas",
-    "demo:train": "node demo/rail-itinerary/watch.mjs"
+    "demo:train": "node demo/rail-itinerary/watch.mjs",
+    "demo:present": "node demo/rail-itinerary/present.mjs"
   },
   "engines": {
     "node": ">=24"

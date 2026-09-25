@@ -49,9 +49,9 @@ phases are marked by number.
 | Term | Meaning |
 |---|---|
 | Journey seed | The one seed a run is defined by, settled once before any Route starts. `phileas run --seed`, or `PHILEAS_SEED`, replays it, and wins over a seed pinned in the Journey file. |
-| Route seed | Derived from the Journey seed and the Route's index, so any Route can be replayed on its own. |
+| Route seed | Derived from the Journey seed and the Route's number, so any Route can be replayed on its own. Routes are numbered from 1, in the seed as everywhere else. |
 | Fix stream / Trip stream | Two separate seeded streams of numbers per Route, so editing the Fix never shifts the Trip's draws. |
-| Replay | Re-running a recorded seed to retrace a Route hop for hop. Only meaningful against the same build. Since 2026-09-24 the window mode no longer changes what is offered, though a replay across modes has not been measured. The hop delay changes nothing. |
+| Replay | Re-running a recorded seed to retrace a Route hop for hop. Only meaningful against the same build. A longer Trip retraces a shorter one's Hops and then carries on. Since 2026-09-24 the window mode no longer changes what is offered, though a replay across modes has not been measured. The hop delay changes nothing. |
 
 ## Recording
 
@@ -97,7 +97,7 @@ phases are marked by number.
 | `PHILEAS_ROUTES`, `PHILEAS_TRIP_LENGTH`, `PHILEAS_ROUTE_DEADLINE_MS`, `PHILEAS_JOURNEY_DEADLINE_MS` | Override the Journey file's terms for one run, set by `--routes`, `--trip-length`, `--route-deadline-ms` and `--journey-deadline-ms`. Applied in `defineJourney`, checked like the file's own terms, and marked in the printout. |
 | `PHILEAS_RUN` | The run's name, which `startJourney` in global setup sets fresh on every run, while printing every setting in force, and each Route reads to find its journal folder. Not set by hand: one left over in the environment is replaced. |
 | `PHILEAS_SHOW` | `hidden` (default), `back` (shown behind), `front` (shown and activated), or `top` (always on top). Set by `--show`. |
-| `PHILEAS_HOP_DELAY_MS` | Pauses after each Hop so a Route can be watched. It changes no draw. Set by `--hop-delay-ms`. |
+| `PHILEAS_HOP_DELAY_MS` | Pauses after each Hop, Fix steps included, and after each listing `phileas survey` prints, so a Route can be watched. It changes no draw. Set by `--hop-delay-ms`. |
 | `PHILEAS_SURVEY` | `1` makes a Route print what it sees at its start, run its Fix printing each step, print what it sees after, and stop, with no Trip or journal. Set by `phileas survey`. |
 | `PHILEAS_FOLLOW` | `1` prints each Route's journal as it is written, one line per Hop; `0` or unset, one line per Route. Changes no draw. Set by `--follow`. |
 | `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |

@@ -347,7 +347,7 @@ kit was in its origin and is now consumable.
 `journey.ts` holds what defines a Journey under R1: seed, routes, Trip length,
 and the optional Journey and Route deadlines. `random.ts` holds a small
 seedable generator and the per-Route derivation
-`routeSeed = hash(journeySeed, routeIndex)`, split into a Fix stream and a Trip
+`routeSeed = hash(journeySeed, routeNumber)`, split into a Fix stream and a Trip
 stream, exactly as `../CLAUDE.md` decides.
 
 **Write the generator in the repository rather than taking a dependency.** It

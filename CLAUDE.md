@@ -40,8 +40,9 @@ All Routes in a Journey share one Fix and know nothing of each other. Two
 consequences, both painful to retrofit once routes exist:
 
 **Derive a per-Route seed from the Journey seed**, as
-`routeSeed = hash(journeySeed, routeIndex)`. One shared PRNG stream would make
-route 7 reproducible only by replaying routes 1 through 6, which reintroduces
+`routeSeed = hash(journeySeed, routeNumber)`, with Routes counted from 1 as a
+person counts them. One shared PRNG stream would make route 7 reproducible
+only by replaying routes 1 through 6, which reintroduces
 exactly the dependence the design is built to avoid -- quietly, because
 everything still passes.
 
