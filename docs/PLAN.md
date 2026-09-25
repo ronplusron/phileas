@@ -108,6 +108,8 @@ come after the universal tier because they need a traveling engine to hang off.
 Each planted defect is planted in the phase where its detection path lands,
 and the assembled measure, every defect found by one Journey, is the last real
 point. The optional map comes after all of it, for the reason phase 10 gives.
+Recording a Fix sits between phases 5 and 6 without a number of its own, so
+that the phases other documents cite keep theirs.
 
 ### Phase 0: dependencies, and a package that typechecks
 
@@ -619,6 +621,41 @@ whole Journey, is phase 7's, and phase 7 is where they stop depending on how a
 test runner happens to print things. A reader who stops here has an
 exploratory tester that finds the R17 class and strands on traps: the product
 with its shallowest tier only.
+
+### Between phases 5 and 6: recording a Fix
+
+Raised 2026-09-25 and asked to be considered high priority. Writing a Fix
+today alternates `phileas survey` with editing the journey file, one step per
+round, and the person writing it never sees the application, so every step
+depends on already knowing a control's name. That is slow, and blind.
+
+**Placed here on 2026-09-25, chosen from three places offered:** before phase
+5, right after it, or before phase 9. Right after it, because phase 5 has no
+safe place to stop inside it and had only just been cleared to start, and
+because a recorder can then use phase 5's naming check to say when a click
+landed on a control with no name. The investigation waits too: "investigate
+after phase 5 is done."
+
+**Investigate three options first, then build one:**
+
+- **A `phileas record` command.** It launches the application with its window
+  shown and the person uses it. After each click or typed entry it surveys,
+  matches what was acted on to a candidate, and prints that candidate's line;
+  on stopping it writes the Fix as ordinary `hop()` lines, so replay is
+  unchanged. A click on a control with no accessible name cannot become a
+  line, and it says so.
+- **An interactive survey.** It shows the window, numbers the controls, takes
+  a number, hops there and lists again, and prints the whole Fix at the end.
+  Cheaper, but the person still picks from a list rather than clicking.
+- **Playwright's own recorder.** It writes Playwright code, not the engine's
+  control names, and whether it works against Electron is unchecked.
+
+**Whatever is built has to meet `OUTSTANDING.md` 2.7 first.** A recorder
+that clicks the second of two controls sharing a name writes a line that
+replays onto the first.
+
+Boundary: bookkeeping. It adds a way of writing a Fix and changes nothing a
+Route does.
 
 ### Phase 6: app-declared checks
 
