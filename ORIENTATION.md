@@ -189,6 +189,8 @@ cut off mid-write reads up to the cut and says the Route did not finish.
 **Writing a Fix starts from `phileas survey`,** which launches the application
 and prints what the engine sees at the start, one control per line in the
 engine's own form: `button "Open Alps by rail"`, `menu View > Show Timetable`.
+Where a Fix exists it then runs it, printing each step, and prints what the
+engine sees after it, so a Fix of several steps is written one at a time.
 A Fix step takes a line as it is: `({ hop }) => hop('button "Open Alps by
 rail"')`, with a second argument for text to type. A name that is not on screen
 fails the Fix and lists what is, and the exclusion list applies to a Fix too.

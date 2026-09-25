@@ -92,13 +92,13 @@ phases are marked by number.
 
 | Term | Meaning |
 |---|---|
-| `phileas` command | `phileas run [config] [flags]`: runs a Journey with its settings changed for that run only, without editing its file. Each flag travels to the run as one of the variables below. The config defaults to `phileas/`. `phileas show [what]` prints a finished run's journals, one line per Hop, and defaults to the latest run under `phileas/.phileas-journals/`. `phileas survey [config]` prints what the engine sees at the start, one control per line in the form a Fix's `hop()` takes. |
+| `phileas` command | `phileas run [config] [flags]`: runs a Journey with its settings changed for that run only, without editing its file. Each flag travels to the run as one of the variables below. The config defaults to `phileas/`. `phileas show [what]` prints a finished run's journals, one line per Hop, and defaults to the latest run under `phileas/.phileas-journals/`. `phileas survey [config]` prints what the engine sees at the start and after the Fix, one control per line in the form a Fix's `hop()` takes. |
 | `PHILEAS_SEED` | Replays a Journey with a given seed. Set by `--seed`. |
 | `PHILEAS_ROUTES`, `PHILEAS_TRIP_LENGTH`, `PHILEAS_ROUTE_DEADLINE_MS`, `PHILEAS_JOURNEY_DEADLINE_MS` | Override the Journey file's terms for one run, set by `--routes`, `--trip-length`, `--route-deadline-ms` and `--journey-deadline-ms`. Applied in `defineJourney`, checked like the file's own terms, and marked in the printout. |
 | `PHILEAS_RUN` | The run's name, which `startJourney` in global setup sets fresh on every run, while printing every setting in force, and each Route reads to find its journal folder. Not set by hand: one left over in the environment is replaced. |
 | `PHILEAS_SHOW` | `hidden` (default), `back` (shown behind), `front` (shown and activated), or `top` (always on top). Set by `--show`. |
 | `PHILEAS_HOP_DELAY_MS` | Pauses after each Hop so a Route can be watched. It changes no draw. Set by `--hop-delay-ms`. |
-| `PHILEAS_SURVEY` | `1` makes a Route print what it sees at its start and stop, with no Fix, Trip or journal. Set by `phileas survey`. |
+| `PHILEAS_SURVEY` | `1` makes a Route print what it sees at its start, run its Fix printing each step, print what it sees after, and stop, with no Trip or journal. Set by `phileas survey`. |
 | `PHILEAS_FOLLOW` | `1` prints each Route's journal as it is written, one line per Hop; `0` or unset, one line per Route. Changes no draw. Set by `--follow`. |
 | `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |
 | `PHILEAS_ALLOW_STALE` | Runs even when the staleness guard finds a mismatch, and the run says the guard was overridden. |

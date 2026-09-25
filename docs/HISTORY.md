@@ -36,7 +36,10 @@ two pieces below were proposed. Asked for before phase 5, in one branch with
 the demo work and the overview.
 
 **`phileas survey [config]`** launches the application, surveys the first
-screen before any Fix, prints one control per line and stops. It sets
+screen, prints one control per line, then runs the Fix if there is one,
+printing each step, surveys again where the Trip would begin, and stops. The
+second survey was asked for after the first version showed only the start,
+which left a Fix's second step to be found by guessing. It sets
 `PHILEAS_SURVEY=1` and one Route; the Route prints and returns before its
 journal opens, so a survey leaves no record that could read as a Route that
 traveled nowhere. Each line is in the renderer's form, `button "Open Alps by
@@ -80,8 +83,8 @@ where the two disagree.
 
 **Tested.** Six tests: the survey's lines, a named step acting and its effect
 recorded, typing and its refusal without a value, a wrong name listing what is
-on screen, an excluded control refused, and a survey-only Route writing no
-journal; the command's parser takes `survey`. 138 passed on Node 24.21.0.
+on screen, an excluded control refused, and a survey-only Route running its
+Fix and writing no journal; the command's parser takes `survey`. 138 passed on Node 24.21.0.
 Positive controls: with names never matching, the two tests of a working step
 failed; with survey mode ignored, its test failed.
 

@@ -107,7 +107,7 @@ test('an excluded control is refused to a Fix, by its rule', async ({ page, app 
   expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBeGreaterThan(0);
 });
 
-test('a survey-only Route prints what it sees and writes no journal', async ({ page, app }) => {
+test('a survey-only Route runs the Fix, travels nowhere, and writes no journal', async ({ page, app }) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-fix-hop-test-'));
   try {
     const outcome = await runRoute({
@@ -120,11 +120,11 @@ test('a survey-only Route prints what it sees and writes no journal', async ({ p
       tripLength: 5,
       journalsRoot: root,
       surveyOnly: true,
-      fix: async () => {
-        throw new Error('a survey runs no Fix');
-      },
+      fix: ({ hop }) => hop('button "Summary"'),
     });
     expect(outcome).toEqual({ kind: 'passed', hops: 0 });
+    // The Fix ran, so a survey can show where the Trip would begin.
+    await expect(page.getByRole('heading', { name: 'Total weight' })).toBeVisible();
     // Nothing at all under the root: a journal here would read as a Route that
     // traveled nowhere.
     expect(fs.readdirSync(root)).toEqual([]);

@@ -5,7 +5,7 @@ import { effectOf, type HopEffect } from './effect';
 import { Journal, journalFolder, type HopAction, type JournaledCandidate } from './journal';
 import { requireRun } from './journey';
 import { clickMenuItem } from './menu';
-import { targetText } from './report/render.mjs';
+import { renderEntry, targetText } from './report/render.mjs';
 import {
   createExclusionTally,
   neverMatched,
@@ -440,8 +440,9 @@ export const HOP_DELAY_VARIABLE = 'PHILEAS_HOP_DELAY_MS';
 export const FOLLOW_VARIABLE = 'PHILEAS_FOLLOW';
 
 /**
- * Whether a Route only prints what it sees at its start, before any Fix, and
- * stops: no Fix, no Trip, no journal. `phileas survey` sets it, so that a Fix
+ * Whether a Route only prints what it sees and stops: the start screen, then,
+ * where there is a Fix, each Fix step and the screen after it, where the Trip
+ * would begin. No Trip and no journal. `phileas survey` sets it, so that a Fix
  * can be written by copying lines from what the engine itself finds.
  */
 export const SURVEY_VARIABLE = 'PHILEAS_SURVEY';
@@ -539,17 +540,46 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   // Before the journal opens, so that a survey leaves no record behind that
   // could be mistaken for a Route that traveled nowhere.
   if (surveyOnly) {
-    const found = await survey({
-      page,
-      app,
-      exclusions: cfg.exclusions,
-      hopIndex: 0,
-      tally: createExclusionTally(cfg.exclusions),
-      timeoutMs: hopTimeoutMs,
-    });
-    console.log(`What the engine sees at the start, before any Fix:\n`);
-    for (const line of surveyLines(found)) console.log(`  ${line}`);
-    console.log('');
+    const tally = createExclusionTally(cfg.exclusions);
+    const print = async (heading: string) => {
+      const found = await survey({
+        page,
+        app,
+        exclusions: cfg.exclusions,
+        hopIndex: 0,
+        tally,
+        timeoutMs: hopTimeoutMs,
+      });
+      console.log(`${heading}\n`);
+      for (const line of surveyLines(found)) console.log(`  ${line}`);
+      console.log('');
+    };
+
+    await print('What the engine sees at the start, before any Fix:');
+    if (fix) {
+      // The Fix runs as it would on a Route, with each step printed instead of
+      // journaled, so a Fix of several steps can be written one step at a time:
+      // write a step, survey, copy the next line from what it now shows. A step
+      // that fails stops the survey with the list of what was on screen.
+      await runFix(fix, {
+        page,
+        app,
+        rng: streams.fix,
+        journal: {
+          write: (entry) => {
+            const line = renderEntry(entry, routeIndex);
+            if (line) console.log(line);
+          },
+        },
+        settleTimeoutMs,
+        settleQuietMs,
+        exclusions: cfg.exclusions,
+        tally,
+        hopTimeoutMs,
+      });
+      console.log('');
+      await print('What the engine sees after the Fix, where the Trip begins:');
+    }
     return { kind: 'passed', hops: 0 };
   }
 
@@ -746,7 +776,8 @@ async function runFix(
     page: Page;
     app: ElectronApplication;
     rng: Rng;
-    journal: Journal;
+    /** Where each step is recorded: the Route's journal, or a survey's printout. */
+    journal: Pick<Journal, 'write'>;
     settleTimeoutMs: number;
     settleQuietMs: number;
     exclusions: AppUnderTest['exclusions'];
