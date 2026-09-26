@@ -69,7 +69,13 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: eleven phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Phase 5 is the next thing to do.** Running the engine against real
+**A measured trial on Positron is the next thing to do,** decided
+2026-09-26: part of phase 5's checks, a Positron adapter, and runs against old
+releases carrying known bugs, judged against a bar set in advance.
+`docs/PLAN.md` has it under "Before the rest of phase 5", and the rest of
+phase 5 waits for its answer.
+
+**Phase 5 was next until then.** Running the engine against real
 applications for a demo found gaps phase 5 would otherwise have built on, and
 all of them closed on 2026-09-24, the last being a `phileas` command for a
 Journey's settings on the command line. Phase 5 is the universal tier of

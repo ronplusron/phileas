@@ -23,7 +23,8 @@ kind of thing it is, and worth making deliberately.
 ### 1.1 The engine
 
 Everything in `PLAN.md` from phase 5 on, after the work `PLAN.md` lists as
-coming before phase 5. Phases 0 through 4 are done and
+coming before phase 5, which since 2026-09-26 includes a measured trial on
+Positron. Phases 0 through 4 are done and
 `HISTORY.md` records them: the toolchain, the launch layer lifted and
 hardened, a packaged application it can launch, the seeds that make a run
 reproducible, and the Routes that travel through it and write down where
@@ -202,6 +203,9 @@ and a search against the tales whose text matches.
 - **Before its Journeys mean anything:** it writes to the console in normal
   operation, so the console-error check needs narrowing (R19), and it keeps
   four separate kinds of dialog.
+- **How much of its bug stream is in reach** was measured on 2026-09-26, on a
+  random sample of 100, and it is no better than RStudio's:
+  `research/positron-effectiveness.md`.
 
 **RStudio.**
 
@@ -219,7 +223,9 @@ and a search against the tales whose text matches.
 - **All three of its recorded bugs sit in the reachable part** -- a plot window
   left open while quitting, a dismissed summary returning on pagination, a
   preview that fails silently on a fresh profile -- and its scripted suite
-  missed all three. That is the case for it.
+  missed all three. That is the case for it. **How common such bugs are was
+  measured on 2026-09-26, on a random sample of 100**, and the answer is far
+  fewer than three of three suggests: `research/rstudio-effectiveness.md`.
 - **Its expected results come from R and the file system**, never from its own
   code or its automation bridge. A separate R process running the same code
   gives the values the Environment pane and the data viewer should show; the

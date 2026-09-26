@@ -491,6 +491,64 @@ Fix steps that name a control as the engine prints it, because writing a Fix
 meant reading the application's code to find what the engine already finds.
 `HISTORY.md` records each. Phase 5 is next.
 
+### Before the rest of phase 5: a measured trial on Positron
+
+**Decided 2026-09-26, in the words it was put:** "Instead of all of phase 5 at
+once, we'll do the above." The above was the list below, proposed as what it
+would take to see whether Phileas is effective on Positron. It came from two
+studies of real bug reports, `research/rstudio-effectiveness.md` and
+`research/positron-effectiveness.md`, which found about five bugs in a
+hundred within reach on either IDE, and could not count the bugs nobody
+reported. A run is the measurement those studies could not make.
+
+The rest of phase 5 waits until the trial has an answer. Phase 5's own text
+below is unchanged, and what the trial builds is the first part of it.
+
+1. **Part of phase 5's checks:** uncaught error in the renderer and the main
+   process, console error, still responding, window gone blank, and
+   unexpected dialog, each written into the journal. **Each ships with a
+   planted defect in `buggy` that makes it fire**, as phase 5 already
+   requires. Narrowing for the console-error check is built here, since
+   Positron writes to the console in normal operation. Named controls and the
+   foreign-process check wait.
+2. **A Positron adapter against the installed application.** Its own profile
+   and its own extensions folder, both on short paths, since Positron fails to
+   start when its profile's path pushes a socket past 103 characters.
+   Telemetry, update checks, the welcome page and the workspace trust prompt
+   turned off before launch. R and Python installed on the machine running
+   it. Quit, sign-in and outbound links excluded. The extension host log named
+   for the log check. The staleness guard cannot run, since there are no
+   sources.
+3. **Three rules written for Positron**, from what the study found within
+   reach: Positron's error notification never appears, narrowed for the ones
+   that are expected; the Variables pane lists exactly the running sessions;
+   a data explorer whose session ended says so.
+4. **Journeys with different Fixes:** none, a notebook open, the data explorer
+   showing a dataset, and a Quarto document open.
+5. **Known bugs in old releases, as positive controls.** Three bugs from the
+   study, each run against a release that still has it: 5460, a notebook
+   kernel restart that times out, on 2024.11.0-140; 6029, stale sessions in
+   the Variables pane, on 2025.01.0-159; 6480, a data explorer that does not
+   show its session ended, on 2025.02.0-171. Each release's macOS build is
+   attached to its GitHub release. **Confirm by hand that each bug reproduces
+   in its release before the run**: a bug that is not there makes a miss mean
+   nothing. The two bugs the universal checks would find, 7776 and 7098, were
+   the first choice and cannot be used: both were fixed during the pre-releases
+   of March to June 2025, whose macOS builds exist only on Positron's download
+   server under `dailies/`, and every one checked on 2026-09-26 returned 403.
+   Releases up to 2025.02 carry their builds on GitHub, and official releases
+   from 2025.07.0 on still download, checked the same day. Building one from
+   source is the way back to them.
+6. **The current release, for 500 Routes**, every finding triaged as a new
+   real bug, a known one, or a false alarm.
+
+**The bar, set before the run and agreed 2026-09-26:** the trial finds at
+least 2 of the 3 known bugs, and at least one new real bug in the current
+release, with false alarms few enough to triage in minutes rather than hours.
+Missing it is an answer too, and is recorded as one. The bar was agreed
+while the known bugs were still 7776, 7098 and 5460; applying it unchanged
+to the three above is a reading, not yet confirmed.
+
 ### Phase 5: the universal tier, and the Route as a test
 
 The journal already exists from phase 4; this phase fills in its check-results

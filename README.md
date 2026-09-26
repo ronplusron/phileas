@@ -98,6 +98,7 @@ Journey is shown finding each one.
 | `docs/OUTSTANDING.md` | What is open and is not a defect. |
 | `docs/DEFECTS.md` | What is wrong, confirmed by reading the code. |
 | `docs/HISTORY.md` | What has landed, with the measurements behind it. |
+| `docs/research/` | Studies of whether the engine suits a particular application, measured against that application's real bugs. |
 | `src/` | The engine. Its planned file layout is in `docs/PLAN.md`. |
 | `src/oracles/` | The check runner and the implicit tier. |
 | `tests/` | This engine's own tests. |
