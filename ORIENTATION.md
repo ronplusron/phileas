@@ -24,7 +24,8 @@ summarized here -- read them.
 
 ## 2. Current state
 
-**It travels, it writes down where it went, and it judges nothing.** `src/`
+**It travels, it writes down where it went, and since 2026-09-26 it judges
+some of it.** `src/`
 holds the seven files lifted from `trickster-tales` and hardened: launching a
 packaged build, refusing a stale one, keeping windows off the screen, reaching
 the native menu, stubbing outbound links, and the `AppUnderTest` interface the
@@ -32,15 +33,21 @@ whole thing talks through. `journey.ts` and `random.ts` joined them in phase 3.
 `survey.ts`, `route.ts` and `journal.ts` joined them in phase 4: discovery by
 accessibility role, one Route's Fix and Trip with the choosing and value seams,
 and the per-Hop record. `effect.ts` joined them before phase 5, for what each
-Hop did to the screen. `src/oracles/` still contains nothing but `.gitkeep`.
+Hop did to the screen. `src/oracles/` joined them for the Positron trial:
+six checks run after every Hop and every Fix step, uncaught errors in either
+process, console errors, still responding, the window still showing
+something, no unexpected dialog, and an error in a log the adapter names. The
+first failure ends the Route.
 
-**What is genuinely absent is every check.** Nothing yet decides whether
-anything a Route walked past is wrong, so a green Journey today is consistent
-with an engine that checks nothing at all.
+**Two checks are absent, and every Hop says so.** No navigation away and named
+controls are not built yet, and each Hop's journal line records them as not
+run. So is the log check wherever the adapter names no log. The open defect
+in `docs/DEFECTS.md` stays open until the foreign-process half of no
+navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and forty-six tests. Seven launch it,
+through, and `npm test` runs one hundred and fifty-nine tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -57,7 +64,9 @@ cover reading a journal, following a run and showing one. Eight cover writing a
 Fix from `phileas survey`'s lines, two of them the hop delay's pause in a Fix
 and a survey. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
-`npm run typecheck` enforces.
+`npm run typecheck` enforces. Thirteen make each check fire on a defect planted
+in `buggy` behind its own launch flag, and show nothing firing on `buggy`
+launched without one.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -73,7 +82,10 @@ verification points rather than bookkeeping.
 2026-09-26: part of phase 5's checks, a Positron adapter, and runs against old
 releases carrying known bugs, judged against a bar set in advance.
 `docs/PLAN.md` has it under "Before the rest of phase 5", and the rest of
-phase 5 waits for its answer.
+phase 5 waits for its answer. Its first step, the checks, is done; the
+Positron adapter is next. The three old releases and the current one are
+installed as `Positron-2024.11.app`, `Positron-2025.01.app`,
+`Positron-2025.02.app` and `Positron.app`.
 
 **Phase 5 was next until then.** Running the engine against real
 applications for a demo found gaps phase 5 would otherwise have built on, and
@@ -156,7 +168,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and forty-six tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and fifty-nine tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the
@@ -211,9 +223,10 @@ a shown run offered menu entries a hidden one withheld. Since 2026-09-24 every
 mode offers the same menu, but a replay across modes has not been measured, so
 match the mode until it is. The hop delay changes nothing.
 
-**None of it is evidence that the engine finds bugs**, because nothing is
-planted in `buggy` yet and nothing checks anything. They show the launch
-layer and the Route behave as written and that a seed reproduces.
+**None of it is evidence that the engine finds bugs.** Each check is shown to
+fire on a planted defect that a test steers a Route straight to, which proves
+the check and not the search. They show the launch layer, the Route and the
+checks behave as written and that a seed reproduces.
 
 The testbed application builds itself:
 
@@ -282,10 +295,11 @@ outbound-link stub took effect, travel through the application, and show that
 one seed retraces one Route hop for hop. That is genuinely checked rather than
 inherited.
 
-**It says nothing about whether the engine finds bugs.** Nothing is planted in
-the application and nothing yet checks anything, so a green run here is
-consistent with an engine that checks nothing at all. That stays true until
-phase 8 points one Journey at planted defects and asserts each is found.
+**It says nothing about whether the engine finds bugs.** The planted defects
+are reached by a chooser that picks them, not by traveling, so a green run
+here shows the checks work and not that a Journey would find anything. That
+stays true until the Positron trial measures it against real bugs, and phase 8
+points one seeded Journey at every planted defect and asserts each is found.
 
 **The limit worth knowing before writing any of it:** a bug-finder that passes
 its own tests has demonstrated nothing about whether it finds bugs. Its own

@@ -10,9 +10,10 @@ through an application it was never told about, chooses each move from what
 the screen offers, writes down every move and what it did, and can retrace a
 run exactly from its seed.
 
-**What it cannot show yet.** Phileas judges nothing until phase 5, when the
-checks arrive. Until then a demo shows exploring, not finding. So the demo is
-built in two stages, and the second waits on phase 5.
+**What it cannot show yet.** Phileas judged nothing until phase 5's checks
+began arriving on 2026-09-26, and until the rest arrive a demo shows
+exploring more than finding. So the demo is built in two stages, and the
+second waits on phase 5.
 
 ## Where it lives
 

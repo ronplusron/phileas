@@ -108,6 +108,23 @@ function valueText(value) {
 }
 
 /**
+ * The checks that failed on a Hop, as a suffix to its line, or nothing.
+ *
+ * Only failures are printed. A line listing eight passes per Hop would bury
+ * the one Hop that matters, and the journal keeps every result, not-run
+ * included, for anyone who wants them.
+ * @param {readonly { check: string, result?: string, observation?: string }[] | undefined} checks
+ * @returns {string}
+ */
+function failedText(checks) {
+  const failed = (checks ?? []).filter((check) => check.result === 'failed');
+  if (!failed.length) return '';
+  return `   CHECK FAILED: ${failed
+    .map((check) => `${check.check}: ${(check.observation ?? '').split('\n')[0]}`)
+    .join('; ')}`;
+}
+
+/**
  * One journal entry as one line, or nothing for an entry a person has no use
  * for, which is a pool: every Hop already names what it acted on.
  *
@@ -132,6 +149,7 @@ export function renderEntry(entry, routeNumber) {
         column(`${route}  fix ${entry.hop}`, 18),
         column(shortened(entry.name, 39), 40),
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
+        failedText(entry.checks),
       ].join('');
     case 'trip-hop': {
       const value = entry.action === 'type' || entry.action === 'fill' ? valueText(entry.value) : '';
@@ -142,6 +160,7 @@ export function renderEntry(entry, routeNumber) {
         value ? `${value}   ` : '',
         effectText(entry.effect),
         entry.abandoned ? `   (gave up: ${entry.abandoned})` : '',
+        failedText(entry.checks),
       ].join('');
     }
     case 'note':

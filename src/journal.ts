@@ -47,15 +47,21 @@ export interface JournaledCandidate {
 /**
  * The result of one check after one Hop.
  *
- * Written empty by phase 4 and filled by phase 5. The field exists now because
- * R10 names it as part of a hop's record, and adding it later would leave every
- * journal written before that point silently different in shape from every one
- * written after.
+ * Written empty by phase 4, and filled since 2026-09-26. **Every check is
+ * written on every Hop, including one that did not run**, with the reason it
+ * did not. A check left out of the line would read exactly like one that
+ * passed, which is a clean result claiming evidence nobody gathered.
  */
 export interface JournaledCheck {
   readonly check: string;
-  readonly passed: boolean;
+  readonly result: 'passed' | 'failed' | 'not-run';
+  /**
+   * What the check saw: the violation for a failure, why it did not run, or
+   * what a narrowing accepted on a pass.
+   */
   readonly observation?: string;
+  /** The adapter's reason, where it narrowed or switched off this check (R19). */
+  readonly narrowed?: string;
 }
 
 /**
@@ -139,8 +145,9 @@ export interface FixHopEntry {
   /** What the step did to the screen (R31), read after a full settle wait. */
   readonly effect: HopEffect;
   /**
-   * Empty until phase 5, which runs the checks after Fix hops too. A check
-   * failing here is a Fix failure, for the same reason as `error`.
+   * Every check's result after this step, since the checks run after Fix
+   * steps too. A check failing here is a Fix failure, for the same reason as
+   * `error`. Empty in journals written before 2026-09-26, and for a survey.
    */
   readonly checks: readonly JournaledCheck[];
 }
@@ -215,7 +222,7 @@ export interface TripHopEntry {
    * headings appeared and went away. See `effectOf`.
    */
   readonly effect: HopEffect;
-  /** Empty until phase 5. */
+  /** Every check's result after this Hop. Empty in journals written before 2026-09-26. */
   readonly checks: readonly JournaledCheck[];
 }
 

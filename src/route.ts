@@ -2,10 +2,11 @@ import type { ElectronApplication, Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test';
 import type { Rng, RouteStreams } from './random';
 import { effectOf, type HopEffect } from './effect';
-import { Journal, journalFolder, type HopAction, type JournaledCandidate } from './journal';
+import { Journal, journalFolder, type HopAction, type JournaledCandidate, type JournaledCheck } from './journal';
 import { requireRun } from './journey';
 import { clickMenuItem } from './menu';
 import { renderEntry, targetText } from './report/render.mjs';
+import { CheckFailure, failedChecks, startWatching, STALLED, type Watch } from './oracles/index';
 import {
   createExclusionTally,
   neverMatched,
@@ -376,6 +377,11 @@ export interface RunRouteOptions {
   /** How long to wait for the page to stop moving after a Hop. */
   readonly settleTimeoutMs?: number;
   /**
+   * How long each process has to answer the still-responding check's round
+   * trip. See `DEFAULT_RESPONSIVE_TIMEOUT_MS`.
+   */
+  readonly responsiveTimeoutMs?: number;
+  /**
    * How long to pause after each Hop so a person can watch: every Trip hop,
    * every step of the Fix, and each listing a survey prints, since a Fix or a
    * survey that flashes past cannot be watched either.
@@ -535,6 +541,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     hopDelayMs = hopDelayFromEnvironment(),
     follow = followFromEnvironment(),
     surveyOnly = surveyFromEnvironment(),
+    responsiveTimeoutMs,
   } = options;
   const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
   const shares = sharesFor(cfg);
@@ -611,12 +618,18 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   let menuVerdictNoted = false;
 
   try {
+    // Started before the Fix, since the checks run after Fix steps too, and
+    // inside the try, so a Route whose watching cannot start still closes its
+    // journal with the reason.
+    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs });
+
     if (fix) {
       await runFix(fix, {
         page,
         app,
         rng: streams.fix,
         journal,
+        watch,
         settleTimeoutMs,
         settleQuietMs,
         exclusions: cfg.exclusions,
@@ -698,14 +711,28 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // had, which is the cost the bound exists to prevent in the first place.
       // Whether an action that never returns is itself a finding is phase 5's
       // question, and it needs the Route alive to ask it.
+      //
+      // Timed from this side too, through the watch: an application that has
+      // stopped answering holds back even the action's own timeout, and how
+      // long it held it back is what the still-responding check reads.
       let abandoned: string | undefined;
       try {
-        await act(app, page, target, action, value, hopTimeoutMs);
+        const acted = await watch.bounded(
+          `hop ${hops + 1}'s ${action} on ${lastTarget}`,
+          act(app, page, target, action, value, hopTimeoutMs),
+          hopTimeoutMs
+        );
+        if (acted === STALLED) abandoned = 'the application stopped answering';
       } catch (error) {
         abandoned = error instanceof Error ? error.message.split('\n')[0] : String(error);
       }
 
-      const settling = await settle(page, settleTimeoutMs, settleQuietMs);
+      const settling = await settledOrStalled(watch, page, settleTimeoutMs, settleQuietMs);
+
+      // After the settle wait, so the checks judge the page the Hop left
+      // rather than one still changing, and before the line is written, so the
+      // line carries them (R10).
+      const checks = await watch.check(settling.tree);
 
       // The pool is written first, if this file has not seen it, so the Hop
       // line below never names a pool that is not already on disk.
@@ -730,10 +757,16 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
           settling.tree,
           'The page stopped answering while the settle wait read it, so what the Hop did could not be read.'
         ),
-        checks: [],
+        checks,
       });
 
       hops += 1;
+
+      // The first violation ends the Route (R16). Hops after it would only
+      // record what a known-broken state does next, and bury the Hop that
+      // mattered.
+      const failed = failedChecks(checks);
+      if (failed.length) throw new CheckFailure(`hop ${hops}, which acted on ${lastTarget}`, failed);
 
       // After the entry is written, not before, so that `durationMs` stays the
       // Hop's own cost and a watched journal is comparable with an unwatched
@@ -782,12 +815,28 @@ function strandedReason(found: SurveyResult): string {
   );
 }
 
-/** Run the Fix, journaling each step, and wrap any failure as R11 asks. */
+/**
+ * The settle wait, timed through the watch so a hang is noticed there too. A
+ * wait the application never let finish reads as unsettled, with no tree, so
+ * the Hop's effect is recorded as unreadable rather than as nothing changed.
+ */
+async function settledOrStalled(
+  watch: Watch,
+  page: Page,
+  timeoutMs: number,
+  quietMs: number
+): Promise<{ settled: boolean; ms: number; tree?: unknown }> {
+  const startedAt = Date.now();
+  const settling = await watch.bounded('the settle wait', settle(page, timeoutMs, quietMs), timeoutMs);
+  return settling === STALLED ? { settled: false, ms: Date.now() - startedAt } : settling;
+}
+
 /** The pause for watching, which changes no draw and is never recorded as time a Hop took. */
 async function pauseToWatch(ms: number): Promise<void> {
   if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Run the Fix, journaling each step, and wrap any failure as R11 asks. */
 async function runFix(
   fix: Fix,
   context: {
@@ -796,6 +845,8 @@ async function runFix(
     rng: Rng;
     /** Where each step is recorded: the Route's journal, or a survey's printout. */
     journal: Pick<Journal, 'write'>;
+    /** The checks, run after every step. Absent for a survey, which judges nothing. */
+    watch?: Watch;
     settleTimeoutMs: number;
     settleQuietMs: number;
     exclusions: AppUnderTest['exclusions'];
@@ -805,7 +856,7 @@ async function runFix(
     hopDelayMs: number;
   }
 ): Promise<void> {
-  const { page, app, rng, journal, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs, hopDelayMs } =
+  const { page, app, rng, journal, watch, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs, hopDelayMs } =
     context;
   let steps = 0;
 
@@ -819,15 +870,20 @@ async function runFix(
   // A full settle wait after each step, as after a Trip hop, rather than one
   // snapshot, which could catch the screen mid-change and record the wrong
   // effect. Decided 2026-09-24; a Fix is usually a handful of steps.
-  const effectAfter = async (): Promise<HopEffect> => {
-    const settling = await settle(page, settleTimeoutMs, settleQuietMs);
+  const effectAfter = async (): Promise<{ effect: HopEffect; checks: JournaledCheck[] }> => {
+    const settling = watch
+      ? await settledOrStalled(watch, page, settleTimeoutMs, settleQuietMs)
+      : await settle(page, settleTimeoutMs, settleQuietMs);
     const effect = effectOf(
       before,
       settling.tree,
       'The page did not answer before or after this step, so what it did could not be read.'
     );
     before = settling.tree;
-    return effect;
+    // The checks run after every Fix step as after every Trip hop, decided
+    // 2026-09-23: a Fix that breaks the application should be caught at the
+    // step that broke it, not by whichever Trip hop meets it first.
+    return { effect, checks: watch ? await watch.check(settling.tree) : [] };
   };
 
   const step: FixContext['step'] = async (name, action) => {
@@ -840,7 +896,7 @@ async function runFix(
         // failure is thrown. R11 wants a broken Fix told apart from a failed
         // Route, and that means saying which step broke rather than leaving it
         // as a sentence inside the outcome's reason.
-        const effect = await effectAfter();
+        const { effect, checks } = await effectAfter();
         journal.write({
           kind: 'fix-hop',
           hop,
@@ -849,13 +905,13 @@ async function runFix(
           startedAt: startedAt.toISOString(),
           durationMs: Date.now() - startedAt.getTime(),
           effect,
-          checks: [],
+          checks,
         });
         throw new FixFailure(name, error);
       }
       // Before the entry, as for a Trip hop, so that `durationMs` includes the
       // settle wait on both kinds of Hop.
-      const effect = await effectAfter();
+      const { effect, checks } = await effectAfter();
       journal.write({
         kind: 'fix-hop',
         hop,
@@ -863,9 +919,14 @@ async function runFix(
         startedAt: startedAt.toISOString(),
         durationMs: Date.now() - startedAt.getTime(),
         effect,
-        checks: [],
+        checks,
       });
       steps += 1;
+
+      // A check failing after a Fix step is a Fix failure, not a failed Route
+      // (R11): ten Routes failing on one broken step is one problem.
+      const failed = failedChecks(checks);
+      if (failed.length) throw new FixFailure(name, new CheckFailure(`Fix step ${hop}, "${name}"`, failed));
       // After the entry, as on a Trip hop, so the pause never reads as the
       // step's own cost.
       await pauseToWatch(hopDelayMs);

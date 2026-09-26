@@ -65,6 +65,46 @@ function reportBootFailure(error) {
   status.textContent = `failed: ${error?.message ?? String(error)}`;
 }
 
+/**
+ * The planted defects' buttons, one per flag buggy was launched with.
+ *
+ * Added before the ready marker is set, so a Route's first survey sees them.
+ * Named as ordinary controls in the application's own terms, so nothing about
+ * them says to the engine that they are planted.
+ */
+const PLANTED = {
+  'renderer-throw': ['Weigh the trunk', () => {
+    throw new Error('the trunk is too heavy to weigh');
+  }],
+  'main-throw': ['Strap the trunk', () => window.buggy.plant('main-throw')],
+  'console-error': ['Check the tickets', () => console.error('the tickets could not be checked')],
+  'renderer-hang': ['Wait for the tide', () => {
+    const until = Date.now() + 6000;
+    while (Date.now() < until) {
+      // Busy on purpose: the renderer answers nothing until this ends.
+    }
+  }],
+  'main-hang': ['Wait at the port', () => window.buggy.plant('main-hang')],
+  blank: ['Fold the map', () => document.body.replaceChildren()],
+  dialog: ['Ring the bell', () => alert('the bell rang')],
+  'log-error': ['Write in the logbook', () => window.buggy.plant('log-error')],
+};
+
+async function addPlanted() {
+  const plants = await window.buggy.plants();
+  if (!plants.length) return;
+  const box = document.createElement('div');
+  box.className = 'controls';
+  for (const plant of plants) {
+    const [label, act] = PLANTED[plant];
+    const button = document.createElement('button');
+    button.textContent = label;
+    button.addEventListener('click', act);
+    box.append(button);
+  }
+  el('inventory').prepend(box);
+}
+
 try {
   el('search').addEventListener('input', (event) => {
     query = event.target.value;
@@ -91,9 +131,10 @@ try {
 
   window.buggy
     .items()
-    .then((items) => {
+    .then(async (items) => {
       all = items;
       render();
+      await addPlanted();
       // Set after render, so the marker means the data arrived and is on the
       // screen. That is what lets the adapter stop here rather than waiting for
       // a list item, which would never appear for an empty inventory.

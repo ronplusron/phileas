@@ -7,7 +7,9 @@
 // native dropdown filtering by category, two views to navigate between, a menu holding Quit, an outbound link, and a
 // total derived from a data file that ships with the application.
 //
-// Nothing here is deliberately broken yet. Phase 2 is the unbroken version.
+// Nothing is broken unless a flag says so. Launched plainly, this is the
+// unbroken version its own baseline tests record; the planted defects below are
+// each switched on by a --buggy-plant flag.
 const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -55,6 +57,56 @@ function createWindow() {
 
   return win;
 }
+
+// Planted defects, each switched on by its own flag: --buggy-plant=<name>, which
+// may be given more than once. Off by default, so buggy stays the unbroken
+// baseline its own tests record and no recorded seed moves. Each exists to make
+// one of the engine's checks fire, since a check that cannot be made to fire
+// does not ship. The renderer asks for the list and adds one button per plant.
+const PLANTS = [
+  'renderer-throw',
+  'main-throw',
+  'console-error',
+  'renderer-hang',
+  'main-hang',
+  'blank',
+  'dialog',
+  'log-error',
+];
+const plants = process.argv
+  .filter((arg) => arg.startsWith('--buggy-plant='))
+  .map((arg) => arg.slice('--buggy-plant='.length));
+for (const plant of plants) {
+  if (!PLANTS.includes(plant)) throw new Error(`--buggy-plant=${plant} is not a planted defect: ${PLANTS.join(', ')}`);
+}
+
+// How long a planted hang lasts. Long enough to outlast a test's shortened
+// waits, and finite, so a test that trips it can still close the application.
+const HANG_MS = 6000;
+
+ipcMain.handle('plants:list', () => plants);
+
+ipcMain.handle('plant:main-throw', () => {
+  // Thrown outside the handler, so nothing catches it: an uncaught exception
+  // in the main process, which the renderer never sees.
+  setTimeout(() => {
+    throw new Error('the trunk strap snapped in the main process');
+  }, 0);
+});
+
+ipcMain.handle('plant:main-hang', () => {
+  const until = Date.now() + HANG_MS;
+  while (Date.now() < until) {
+    // Busy on purpose: the main process answers nothing until this ends.
+  }
+});
+
+ipcMain.handle('plant:log-error', () => {
+  // The log's location comes from the environment, so a test names the same
+  // file in its adapter's logPaths.
+  const log = process.env.BUGGY_LOG;
+  if (log) fs.appendFileSync(log, `${new Date().toISOString()} ERROR the logbook page is torn\n`);
+});
 
 // A deliberate fault-injection switch. It exists so that a test can drive a
 // real boot failure through the application's own path, rather than writing the

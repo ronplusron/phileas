@@ -161,7 +161,12 @@ export interface StalenessGuard {
 
 /**
  * A check that ships with the engine and assumes nothing about any
- * application. R17 in docs/PRODUCT_REQUIREMENTS.md names the set.
+ * application. R17 in docs/PRODUCT_REQUIREMENTS.md names the first seven.
+ *
+ * `log-error` is the eighth, placed in this tier on 2026-09-26: it assumes
+ * nothing about an application beyond where its logs are, and it does not run
+ * unless the adapter names one in `logPaths`, which the journal says on every
+ * Hop.
  */
 export type UniversalCheck =
   | 'uncaught-error'
@@ -170,7 +175,8 @@ export type UniversalCheck =
   | 'window-showing-content'
   | 'no-navigation-away'
   | 'no-unexpected-dialog'
-  | 'named-controls';
+  | 'named-controls'
+  | 'log-error';
 
 /**
  * Switching off or narrowing a built-in check, with the reason recorded.

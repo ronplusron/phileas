@@ -25,6 +25,84 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-26: the first checks, for the Positron trial
+
+**Why these and not all of phase 5.** Two studies of real bug reports, in
+`research/`, found about five bugs in a hundred within reach on either IDE,
+and could not count bugs nobody reported. A run against Positron is the
+measurement they could not make, so the plan changed to a trial first, and
+this is its first step: six of the universal checks, each with a planted
+defect in `buggy`, as `PLAN.md` sets out under "Before the rest of phase 5".
+
+**What landed.** `src/oracles/index.ts` runs six checks after every Trip hop
+and every Fix step: uncaught errors in the renderer and the main process,
+console errors, still responding, the window still showing something, no
+unexpected dialog, and an error appended to a log the adapter names in
+`logPaths`. The first failure ends the Route with a `CheckFailure`; after a
+Fix step it arrives inside a `FixFailure` (R11). Narrowing (R19) applies to
+every check, where it used to reach only the fixture's end-of-test renderer
+check. `phileas show` and `--follow` print a failed check on its Hop's line.
+
+**Four decisions, each made with a proposal before building:**
+
+- **A check that could not run says so on every Hop.** Each Hop's journal line
+  carries all eight checks, as passed, failed, or not run with the reason.
+  The two not built yet, no navigation away and named controls, and the log
+  check where no log is named, are recorded as not run rather than left out.
+  This was an open question about how a report should name a check that did
+  not run on a given system. Whether a setting should fail a run on any
+  not-run check stays with R27's degraded-run setting in phase 7.
+- **The log check sits in the universal tier,** doing nothing unless a log is
+  named, which settles the question phase 5 carried about where it belongs.
+- **Each planted defect has its own launch flag,** `--buggy-plant=<name>`,
+  like `--buggy-fail-items` before it. Launched plainly, `buggy` is unchanged,
+  so its baseline tests and every recorded seed still hold. Eight flags, one
+  per way a check fires: a renderer throw, a main-process throw, a console
+  error, a renderer hang, a main-process hang, the window blanked, an alert,
+  and an error written to a log.
+- **A test reaches its planted control through the choosing seam,** with a
+  chooser that always picks it. This was an open question about how a test
+  makes a seeded Trip reach a planted defect; a long enough Trip, or a seed
+  recorded as reaching it, both fail whenever the draw shifts, for reasons
+  that say nothing about the check.
+
+**A hang shows in the engine's own calls, not in a later round trip.**
+Measured on the planted hangs, each six seconds long: a click bounded to one
+second returned after 6.4 seconds, the settle wait then passed, and the
+round trip to each process answered at once, because the hang was over. So
+the first build of still-responding passed on both hangs. Electron's main
+process serves the debugging connection every Playwright call goes through,
+and a busy renderer holds back the answer to the very click that made it
+busy, so no call's own timeout can fire while the application is not
+answering. The fix times the Hop's action and the settle wait from the
+test's side as well: a call that overruns its bound by more than the
+responsive wait, five seconds by default, is the finding, and one that has
+still not returned by then is given up on so a hung application cannot hang
+the Route.
+
+**The main-process listener replaces Electron's own handling of an uncaught
+exception,** which is a native dialog that blocks the process until someone
+dismisses it: C5 broken, and the check firing would have said the
+application stopped responding rather than that it threw. With the listener
+installed, the planted main-process throw is caught and the process answers
+on the same Hop, which the test asserts.
+
+**Blank is defined narrowly:** nothing in the accessibility tree a person
+could read, no text and no named element. One word on the screen is enough
+not to be blank. Tuned against `buggy`, and due to be tuned again against
+Positron.
+
+**Measured on healthy applications, with nothing firing.** `buggy` without a
+flag, three Routes of 40 Hops, and all three rail demo Journeys at the same
+size, every Route passed. Thirteen new tests, 159 in all, pass: one per
+check firing on its planted defect, the healthy run, a narrowing, a check
+switched off, a check failing after a Fix step, and blank's definition.
+
+**What is not closed.** The external-link stub defect stays open, since the
+foreign-process half of no navigation away is not built. An uncaught error
+during boot, before a Route starts watching, is still reported only by the
+fixture at the end of the test.
+
 ## 2026-09-26: standard menu entries skipped by default, and long names cut
 
 **The question that started it.** A run of 100 Hops on trickster-tales spent

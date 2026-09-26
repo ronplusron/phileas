@@ -133,4 +133,14 @@ export {
   type RouteOutcome,
   type RunRouteOptions,
 } from './route';
+export {
+  startWatching,
+  failedChecks,
+  showsNothing,
+  CheckFailure,
+  CHECK_ORDER,
+  DEFAULT_RESPONSIVE_TIMEOUT_MS,
+  type Watch,
+  type WatchOptions,
+} from './oracles/index';
 export { renderEntry, renderJournal, effectText, targetText, shortened } from './report/render.mjs';

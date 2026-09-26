@@ -511,6 +511,24 @@ below is unchanged, and what the trial builds is the first part of it.
    requires. Narrowing for the console-error check is built here, since
    Positron writes to the console in normal operation. Named controls and the
    foreign-process check wait.
+
+   **Decided 2026-09-26, before building it, each from a proposal made with
+   the question:**
+   - **The log check is included**, since step 2 names a log for it. It sits
+     in the universal tier and does nothing unless the adapter names a log.
+   - **A check that could not run says so on every Hop.** Each Hop's journal
+     line carries every check's result as passed, failed, or not run with the
+     reason, so an absent check is never read as a passing one. This settles
+     what a report says about the foreign-process check off macOS too.
+   - **Each planted defect is switched on by its own launch flag,** the way
+     `--buggy-fail-items` already is, so `buggy` stays the unbroken baseline
+     and no recorded seed moves.
+   - **A test reaches its planted control through the choosing seam:** it
+     hands `runRoute` a chooser that picks that control. The alternatives
+     were a Trip long enough to get there, or a seed recorded as reaching it,
+     and both fail whenever the draw shifts, for reasons that say nothing about
+     the check. Phase 8 keeps the seeded measure, one Journey finding every
+     defect.
 2. **A Positron adapter against the installed application.** Its own profile
    and its own extensions folder, both on short paths, since Positron fails to
    start when its profile's path pushes a socket past 103 characters.
@@ -546,8 +564,8 @@ below is unchanged, and what the trial builds is the first part of it.
 least 2 of the 3 known bugs, and at least one new real bug in the current
 release, with false alarms few enough to triage in minutes rather than hours.
 Missing it is an answer too, and is recorded as one. The bar was agreed
-while the known bugs were still 7776, 7098 and 5460; applying it unchanged
-to the three above is a reading, not yet confirmed.
+while the known bugs were still 7776, 7098 and 5460, and confirmed on
+2026-09-26 for the three above: "2 of 3 is correct."
 
 ### Phase 5: the universal tier, and the Route as a test
 

@@ -557,33 +557,6 @@ engine sees, and "1 passed" reads as a verdict on a command that judges
 nothing. Open: whether it is worth quieting, and how, without hiding a real
 failure to launch.
 
-### 2.9 How a test makes sure a Route reaches a planted defect
-
-Raised 2026-09-25 as a suggestion; nothing is decided. Phase 5 plants one
-defect per check and adds tests asserting a Journey finds each. A Route's
-Trip is a seeded random draw, so nothing makes it reach the planted control,
-and a test that happens not to reach it fails for a reason that says nothing
-about the check. `PLAN.md` does not say how this is met.
-
-The obvious answer is the wrong one: a Fix that hops to the planted control
-would report the check's violation as a Fix failure, which is phase 5's rule
-for a check failing after a Fix hop, so the test would be about the Fix
-channel rather than the Route. Candidates: a surface small enough that a Trip
-of a given length reaches it, a Trip long enough, or a seed recorded once as
-reaching it, which then breaks whenever `buggy` changes the draw. Decide in
-phase 5, when the tests are written.
-
-### 2.10 Saying that a check did not run
-
-Raised 2026-09-25 as a suggestion; nothing is decided. The foreign-process
-check phase 5 adds is expected to be macOS work first. On a system it does not
-yet support, a run that reports the check as passed is claiming evidence it
-never gathered, which is the stub hazard in `DEFECTS.md` again. The suggestion
-is that the report names every check that did not run on that system, the way
-it already has to for a log check when the adapter names no log. Open: whether
-that is a line in the report, a distinct result per check, or a setting that
-fails the run, R27's way.
-
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias

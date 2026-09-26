@@ -48,7 +48,7 @@ each one can and cannot catch.
 
 ## Status
 
-**It travels, it writes down where it went, and it judges nothing.** `src/`
+**It travels, it writes down where it went, and it judges some of it.** `src/`
 can launch a packaged Electron build, refuse a stale one, keep its windows off
 the screen, reach its native menu and stub its outbound links, all through the
 `AppUnderTest` interface an application implements. It states the terms of a
@@ -56,12 +56,14 @@ Journey and derives each Route's seeds from them. And it now travels: a Route
 finds what the screen offers by accessibility role, draws its next move from
 its seed, acts, waits for the page to stop moving, and writes a journal entry
 per Hop. `testbed/buggy/` is a packaged application built to be traveled
-through, and one hundred and forty-six tests run against it.
+through, and one hundred and fifty-nine tests run against it.
 
-What is still unwritten is every check. Nothing yet decides whether anything a
-Route walked past is wrong, so the engine can currently report only that a
-Route finished, ran out of moves, or threw. `docs/PLAN.md` names the files and
-the phase each one arrives in.
+Six checks run after every Hop: uncaught errors, console errors, still
+responding, the window still showing something, no unexpected dialog, and an
+error in a log the adapter names. A Route that fails one ends there and says
+which. The rest of the checks, and every check an application declares for
+itself, are unwritten; `docs/PLAN.md` names the files and the phase each one
+arrives in.
 
 ## Building and testing
 
