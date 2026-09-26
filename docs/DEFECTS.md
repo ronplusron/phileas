@@ -86,7 +86,6 @@ sound for an application nobody has read, which is the whole hazard.
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
 
-
 ## A Route that finds an endless hang can hang the Journey at teardown
 
 **Filed 2026-09-26, when the still-responding check landed.** The check
@@ -113,7 +112,6 @@ the forced kill as its own finding, the way a teardown that throws is already
 attached rather than swallowed. Proved by a planted hang that never ends,
 behind its own `--buggy-plant` flag, and a test asserting the Route fails on
 still-responding and the test itself finishes within a stated time.
-
 
 ## Two things that will look like candidates, and are not
 
@@ -144,5 +142,3 @@ not an entry yet because no oracle exists. `../CLAUDE.md` carries it as a
 standing commitment so it does not get built that way in the first place, and
 if it ever is built that way, the entry belongs here rather than being
 reasoned about as a design preference.
-
-
