@@ -86,6 +86,35 @@ sound for an application nobody has read, which is the whole hazard.
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
 
+
+## A Route that finds an endless hang can hang the Journey at teardown
+
+**Filed 2026-09-26, when the still-responding check landed.** The check
+catches a hang from the test's side: `Watch.bounded` gives up on a Hop's
+action or settle wait once it overruns its bound by the responsive wait, and
+the Route ends with still-responding failed. What follows is not bounded. The
+fixture's teardown calls `closeApp`, which runs the adapter's `shutdown` and
+then `app.close()`, and neither has a limit of its own. Against a process
+that never answers again, `app.close()` never returns.
+
+**Why it is a defect and not a limit.** The finding is made and then lost:
+the Route has found the hang, and the run sits at teardown instead of
+reporting it. With no Route deadline, which is the default, nothing ends the
+wait. An unattended scheduled Journey stops there with no result, which is
+the failure R27 names, and a hang is the finding most likely to trigger it.
+
+**Why nothing caught it.** `buggy`'s planted hangs last six seconds, so the
+process answers again before teardown and every test passes. No planted
+defect hangs forever.
+
+**What closes it.** A bounded close: give `shutdown` and `app.close()` a
+limit, then kill the application's process if it has not exited, and report
+the forced kill as its own finding, the way a teardown that throws is already
+attached rather than swallowed. Proved by a planted hang that never ends,
+behind its own `--buggy-plant` flag, and a test asserting the Route fails on
+still-responding and the test itself finishes within a stated time.
+
+
 ## Two things that will look like candidates, and are not
 
 Both are worth stating now, because each is more likely to be filed here
@@ -115,3 +144,5 @@ not an entry yet because no oracle exists. `../CLAUDE.md` carries it as a
 standing commitment so it does not get built that way in the first place, and
 if it ever is built that way, the entry belongs here rather than being
 reasoned about as a design preference.
+
+
