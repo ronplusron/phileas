@@ -7,7 +7,7 @@ way a curious tester would, clicking and typing its way through whatever is on
 screen, instead of following a script. Every run is seeded, so any problem it
 finds can be replayed exactly, and it records every step as it goes. Phases 0
 to 4 of 11 are done: it travels through apps, replays runs exactly, and
-records everything, with 143 automated tests behind it. It does not yet
+records everything, with 146 automated tests behind it. It does not yet
 judge whether anything went wrong; those checks are phase 5, which is next.
 
 ---
@@ -76,7 +76,7 @@ phases 0 through 4 are done:
 - Any run can be replayed exactly from its seed, and that is tested.
 - A command runs it with different settings, prints each step live if asked,
   and prints any finished run for a person to read.
-- 143 automated tests cover the engine itself, run against a small application
+- 146 automated tests cover the engine itself, run against a small application
   built for the purpose, and a demo application shows it at work.
 
 **What it does not do yet is judge anything.** The checks that decide whether

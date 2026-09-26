@@ -133,4 +133,4 @@ export {
   type RouteOutcome,
   type RunRouteOptions,
 } from './route';
-export { renderEntry, renderJournal, effectText, targetText } from './report/render.mjs';
+export { renderEntry, renderJournal, effectText, targetText, shortened } from './report/render.mjs';

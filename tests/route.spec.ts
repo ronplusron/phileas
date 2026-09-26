@@ -94,14 +94,11 @@ test('survey finds the application controls by role, with no enumeration of them
     'option "Luggage"',
     'option "Instruments"',
     'option "Clothing"',
-    // The menu bar, in menu order, offered in every window mode. Nothing is
-    // excluded here, so Quit and the clipboard entries are among them.
+    // The menu bar, in menu order, offered in every window mode. The adapter
+    // excludes nothing here, and still Quit and the Edit entries are absent:
+    // they are standard entries, which the engine skips by default. The three
+    // below are buggy's own.
     'menuitem "About Buggy"',
-    'menuitem "Quit Buggy"',
-    'menuitem "Cut"',
-    'menuitem "Copy"',
-    'menuitem "Paste"',
-    'menuitem "Select All"',
     'menuitem "Show Inventory"',
     'menuitem "Show Summary"',
     // The common keys, always offered after everything else, in this order.
@@ -146,6 +143,36 @@ test('two controls sharing a name are counted from 1, and the second is the one 
   if (second?.source !== 'page') throw new Error('expected a second twin on the page');
   await second.locator.click();
   await expect(page.locator('body')).toHaveAttribute('data-twin-clicked', 'second');
+});
+
+test('standard menu entries are skipped unless their role is allowed back, and a stale role is reported', async ({
+  page,
+  app,
+}) => {
+  const exclusions: AppUnderTest['exclusions'] = { allowStandardMenuRoles: ['selectall', 'selectal'] };
+  const tally = createExclusionTally(exclusions);
+  const found = await survey({ page, app, exclusions, hopIndex: 0, tally });
+
+  const offered = found.candidates.filter((c) => c.source === 'menu').map((c) => c.name);
+  // Select All came back; the other standard entries stayed out.
+  expect(offered).toEqual(['About Buggy', 'Select All', 'Show Inventory', 'Show Summary']);
+  expect(found.excluded.map((entry) => entry.rule)).toEqual([
+    'standard menu entry: quit',
+    'standard menu entry: cut',
+    'standard menu entry: copy',
+    'standard menu entry: paste',
+  ]);
+  // The misspelled role matched nothing, and says so rather than failing open.
+  expect(neverMatched(tally)).toEqual(['allowStandardMenuRoles: selectal']);
+});
+
+test('a menu path excludes an entry the application wrote itself', async ({ page, app }) => {
+  const exclusions: AppUnderTest['exclusions'] = { menuPaths: [['View', 'Show Summary']] };
+  const tally = createExclusionTally(exclusions);
+  const found = await survey({ page, app, exclusions, hopIndex: 0, tally });
+  expect(found.candidates.map((c) => c.name)).not.toContain('Show Summary');
+  expect(found.excluded.map((entry) => entry.rule)).toContain('menuPaths: View > Show Summary');
+  expect(neverMatched(tally)).toEqual([]);
 });
 
 test('survey offers nothing that is hidden', async ({ page, app }) => {
@@ -245,7 +272,11 @@ test('a deterministic predicate is not accused of being one', async ({ page, app
   });
 
   expect(found.candidates.map((candidate) => candidate.name)).not.toContain('Clear search');
-  expect(found.excluded.map((entry) => entry.rule)).toEqual(['exclude()']);
+  // The standard menu entries are skipped by their own rule and say nothing
+  // about the predicate.
+  expect(
+    found.excluded.map((entry) => entry.rule).filter((rule) => !rule.startsWith('standard menu entry'))
+  ).toEqual(['exclude()']);
 });
 
 test('menu candidates are offered whether or not a window has focus', async ({ page, app }) => {
@@ -373,6 +404,9 @@ test('every target is the pool entry its draw points at, from the file alone', a
     if (entry.kind === 'route') {
       keyShare = entry.keyShare ?? NaN;
       menuShare = entry.menuShare ?? NaN;
+      // Skipping the standard menu entries is an input to the draw as well, so
+      // the journal says which roles were allowed back: none, by default.
+      expect(entry.allowStandardMenuRoles).toEqual([]);
     }
     if (entry.kind === 'pool') pools.set(entry.id, entry.candidates);
     if (entry.kind !== 'trip-hop') continue;
@@ -1029,14 +1063,18 @@ test('typing arrives as one keystroke per character', async ({ page, app }) => {
     });
   });
 
+  // typing-seed-3 since 2026-09-26: skipping the standard menu entries changed
+  // what every seed draws, and typing-seed no longer typed in thirty Hops,
+  // which the positive control below caught. A seed is chosen to reach the
+  // search box; docs/OUTSTANDING.md records that choosing one is fragile.
   const dir = scratch();
-  const streams = deriveRouteStreams('typing-seed', 1);
+  const streams = deriveRouteStreams('typing-seed-3', 1);
   await runRoute({
     page,
     app,
     cfg: buggy,
     streams,
-    journeySeed: 'typing-seed',
+    journeySeed: 'typing-seed-3',
     routeNumber: 1,
     tripLength: 30,
     journalsRoot: dir,

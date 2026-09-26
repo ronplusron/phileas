@@ -103,9 +103,9 @@ with nothing handed to it:
   keyboard work has something to press.
 - The ticket purchase dialog puts typing, a dropdown and a total in one
   place, and is a real dialog over another screen, which is what
-  `OUTSTANDING.md` 1.11 needs measured.
-- The native menu holds the standard entries, and the adapter excludes Quit,
-  the clipboard entries and the outbound link, as `buggy`'s does.
+  `OUTSTANDING.md` 1.10 needs measured.
+- The native menu holds the standard entries, which the engine skips by
+  default, and the adapter excludes the outbound link, as `buggy`'s does.
 
 ## Stage one: exploring, now
 
@@ -175,7 +175,7 @@ reproduces it, and a replay that walks straight back to it.
   Building stage one exposed that the survey offered the controls behind the
   ticket dialog, a flaw now fixed and recorded in `HISTORY.md`, so a native
   modal with no way out now strands. The seating chart must be a native modal
-  too, or `OUTSTANDING.md` 1.11 applies.
+  too, or `OUTSTANDING.md` 1.10 applies.
 
 ## Build order for stage one
 

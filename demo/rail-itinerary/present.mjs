@@ -298,8 +298,8 @@ const sections = [
       const lines = await phileasShown('survey', ['demo/rail-itinerary/phileas'],
         { RAIL_DEMO_JOURNEY: 'no-fix', ...SURVEY_HOLD });
       print(startListing(lines));
-      say('"excluded" marks what it is told never to touch, such as Quit. The keys are offered on');
-      say('every screen.');
+      say('"excluded" marks what it never touches: the standard menu entries every app gets, such');
+      say('as Quit, and whatever the adapter lists. The keys are offered on every screen.');
     },
   },
   {

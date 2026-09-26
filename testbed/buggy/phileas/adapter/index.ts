@@ -32,34 +32,23 @@ export const buggy: AppUnderTest = {
   },
 
   exclusions: {
-    // Both kinds of exclusion, each covering something different, which is
-    // what a reference implementation should show. It used to cover Quit
-    // twice -- once by name and once by path -- leaving a copier unable to tell
-    // which entry did the work or whether both were needed.
+    // The outbound link is a page element and is excluded by name.
     //
-    // The outbound link is a page element and is excluded by name. Quit is a
-    // menu entry and is excluded by its path, which is the form that survives
-    // a page control later appearing with the same label.
+    // No menu entry is listed. Quit, Cut, Copy, Paste and Select All are the
+    // standard entries Electron builds from a role, and the engine skips every
+    // one of those by default since 2026-09-26; this adapter used to list
+    // Quit and the clipboard by hand. The clipboard mattered because a shown
+    // run reaches the real one through them, overwriting what the person
+    // running the Journey had copied and putting state from outside the seed
+    // into the page. The menu entries buggy's own code wrote, Show Inventory,
+    // Show Summary and About Buggy, carry no role and stay in the draw.
     //
-    // Cut, Copy and Paste are excluded because a shown run reaches the system
-    // clipboard through them: they overwrite what the person running the
-    // Journey had copied, can carry it into a failure screenshot, and put
-    // state from outside the seed into the page, so a replay diverges with
-    // nothing in the journal to say why. They are excluded here rather than
-    // by the engine, whose default exclusions are agreed and not yet built.
-    //
-    // All of it is written by hand rather than derived from the application's
+    // The name is written by hand rather than derived from the application's
     // source. A derived list is what keeps a rail from going stale the day
     // another way out appears, and docs/DEFECTS.md carries that it is not
-    // built; tests/testbed-baseline.spec.ts at least fails when an entry stops
-    // naming anything real, or when a clipboard entry is left reachable.
+    // built; tests/testbed-baseline.spec.ts at least fails when a clipboard
+    // entry is left reachable.
     names: ['Read about the journey'],
-    menuPaths: [
-      ['Buggy', 'Quit Buggy'],
-      ['Edit', 'Cut'],
-      ['Edit', 'Copy'],
-      ['Edit', 'Paste'],
-    ],
   },
 
   /**

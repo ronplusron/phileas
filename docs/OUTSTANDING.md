@@ -271,7 +271,7 @@ by approving a proposal made at the end of the session that recorded them:
   showed the need. Nothing earlier is known to need it, though whether the
   testbed's siblings or the two first consumers use frames is unmeasured.
 - **At the IDEs' turn, asked for 2026-09-24:** revisit the draw shares for
-  the keys and the menu, 1.12, once a Journey has run against either IDE.
+  the keys and the menu, 1.11, once a Journey has run against either IDE.
 - **In phase 5, where `PLAN.md` already has them:** native dialogs, and bugs
   that happen on quitting.
 - **At RStudio's turn, after phase 9:** the debugging-port launch, or a build
@@ -335,33 +335,7 @@ Already built: key presses and typing. Recorded and scheduled: main-process
 errors, log checks and narrowing (phase 5), and expected results from files,
 R or a driver (phase 6).
 
-### 1.10 Default exclusions for the menu entries every Electron application has
-
-Raised 2026-09-23. Writing an adapter for trickster-tales meant excluding, by
-hand, the standard menu entries Electron gives every application: Quit, Hide,
-Hide Others and Services; Reload and Force Reload; Toggle Developer Tools and
-Toggle Full Screen; Minimize; Show Substitutions; Start and Stop Speaking; and
-Cut, Copy, Paste and Paste and Match Style, for the reasons `HISTORY.md` gives
-under the clipboard fix. Every adapter for every application would otherwise
-write the same list, and one that forgot an entry would find out from a Route
-that quit, reloaded, spoke aloud or read the clipboard.
-
-**Agreed 2026-09-24, and not yet scheduled:** the engine excludes these by
-default, and an adapter can allow any of them back. Two things the agreement
-carries with it. A menu candidate carries its label path and not the role
-Electron built it from, and labels include the application's name (`Quit
-Trickster Tales`), so the default matches by role, which the menu source will
-have to read. And a default the engine applies is an input to the seeded draw,
-so every default exclusion is written in the journal the way the adapter's own
-are, never applied silently. `buggy`'s adapter excludes its own clipboard
-entries in the meantime.
-
-**More pressing since 2026-09-24.** Hidden runs used to offer no menu, so an
-unattended Journey could not reach any of these entries. The menu is now
-offered in every window mode, so an adapter missing one of them meets it in
-an ordinary run.
-
-### 1.11 Dialogs that are not native modals
+### 1.10 Dialogs that are not native modals
 
 Raised 2026-09-24. A native modal dialog, opened with `showModal()`, is now
 handled: the survey reads only the dialog, and `HISTORY.md` has the
@@ -389,7 +363,7 @@ that nothing behind a named dialog may be reached, which is a structural
 check (R18, phase 6); or a pattern of abandoned Hops whose clicks were
 intercepted, as evidence of an overlay.
 
-### 1.12 The draw shares for the keys and the menu, provisional
+### 1.11 The draw shares for the keys and the menu, provisional
 
 Chosen 2026-09-24: the common keys and the menu bar each get an eighth of the
 share draw, and the page three quarters. Those are the defaults; an adapter

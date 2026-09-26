@@ -61,7 +61,7 @@ test("the survey's lines are what the start screen offers, in hop()'s form", asy
   );
   expect(lines).toContain('button "Summary"');
   expect(lines).toContain('menu View > Show Summary');
-  expect(lines).toContain('menu Buggy > Quit Buggy   (excluded: menuPaths: Buggy > Quit Buggy)');
+  expect(lines).toContain('menu Buggy > Quit Buggy   (excluded: standard menu entry: quit)');
   expect(lines.at(-1)).toBe('and the common keys: Enter, Escape, Tab, ArrowUp, ArrowDown, ArrowLeft, ArrowRight');
 });
 
@@ -102,7 +102,7 @@ test('an excluded control is refused to a Fix, by its rule', async ({ page, app 
   const { outcome, entries } = await routeWithFix(page, app, ({ hop }) => hop('menu Buggy > Quit Buggy'));
   expect(outcome).toBeInstanceOf(FixFailure);
   const step = entries.find((entry) => entry.kind === 'fix-hop');
-  expect(step?.kind === 'fix-hop' ? step.error : '').toMatch(/on screen but excluded \(menuPaths: Buggy > Quit Buggy\)/);
+  expect(step?.kind === 'fix-hop' ? step.error : '').toMatch(/on screen but excluded \(standard menu entry: quit\)/);
   // And the application is still there to be asked.
   expect(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length)).toBeGreaterThan(0);
 });

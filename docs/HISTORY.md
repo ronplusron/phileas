@@ -25,6 +25,52 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-26: standard menu entries skipped by default, and long names cut
+
+**The question that started it.** A run of 100 Hops on trickster-tales spent
+Hops on Edit > Redo, Delete, the Zoom entries, Window > Zoom, Bring All to
+Front and Substitutions, each changing nothing, and printed tale cards whose
+names ran straight into what changed. Default exclusions for Electron's
+standard entries had been agreed on 2026-09-24 as a list of risky ones, and
+not built.
+
+**Measured first.** Every menu entry of `buggy`, Rail Itinerary and
+trickster-tales was read with its Electron role. Every standard entry carried
+one, from `quit` to `front`, and none of the entries the applications' own
+authors wrote did. So "has a role" is exactly "is standard", read from the
+running menu with no list of labels, which would carry the application's name
+("Quit Trickster Tales").
+
+**What landed.** The engine skips every standard entry, chosen over the agreed
+risky list, which would have left most of the wasted Hops in place, and over
+the risky list plus the entries acting only on the window. The cost weighed:
+Undo and Redo after typing can find real bugs, so an adapter allows roles back
+with `allowStandardMenuRoles`, and a role allowed back that is never on offer
+is reported as stale like any exclusion. The roles allowed back are written
+on each Route's opening journal line, since the default is an input to the
+draw. The adapter's own `names` and `menuPaths` are checked first, so an entry
+they name is counted against them. `buggy`'s and Rail Itinerary's
+hand-written Quit and clipboard exclusions were removed, as the default now
+covers them.
+
+**Long names are cut to their column** in `phileas show` and `--follow`, with
+a space always before what changed; the journal keeps names whole, and a Fix
+step still names a control by its full line. A menu path is cut in the middle,
+keeping its first menu and the entry clicked, chosen over cutting at the end,
+which could hide which entry it was.
+
+**One seed moved.** Fewer menu entries changes what every seed draws, and the
+test that counts keystrokes from Trip typing stopped typing under its seed. Its
+positive control caught it, and it now uses `typing-seed-3`, found to type five
+times in thirty Hops; `typing-seed` typed none, matching the failure.
+
+**Tested.** 146 passed on Node 24.21.0. New: a role allowed back and a
+misspelled one reported, a menu path excluding an entry the application wrote,
+the journal recording the allowed roles, cutting names to the column, and the
+baseline reading buggy's menu from the running application to check every
+standard entry is skipped and every own entry offered. Positive control: with
+the skip switched off, the six tests relying on it failed.
+
 ## 2026-09-25: a guided demo, Routes counted from 1, and a pause to watch a Fix
 
 **The question that started it.** A demo was asked for that conveys the

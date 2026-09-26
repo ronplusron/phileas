@@ -603,6 +603,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     tripLength: tripLength,
     settleQuietMs,
     ...shares,
+    allowStandardMenuRoles: (cfg.exclusions.allowStandardMenuRoles ?? []).map((role) => role.toLowerCase()),
   }, { follow });
 
   const tally = createExclusionTally(cfg.exclusions);

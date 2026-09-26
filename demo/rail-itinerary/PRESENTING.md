@@ -84,8 +84,10 @@ application: it reads the screen the way a screen reader does, and keeps what
 is visible, enabled and named. Each line is one thing it could act on. The
 menu bar is read too, and the keys are offered on every screen.
 
-Point at an "excluded" line. The adapter lists what must never be touched, such
-as Quit, and Phileas still shows it so nobody wonders whether it was missed.
+Point at an "excluded" line. Phileas skips the standard menu entries every
+Electron application gets, such as Quit and Cut, and anything the adapter
+lists, and still shows each one with its reason so nobody wonders whether it
+was missed.
 
 ## 4. How it decides each move
 

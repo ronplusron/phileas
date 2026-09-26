@@ -78,6 +78,26 @@ export interface Exclusions {
   menuPaths?: string[][];
 
   /**
+   * Standard menu entries to offer after all, named by their Electron role in
+   * lower case, such as `['undo', 'redo']`.
+   *
+   * Every menu entry Electron builds from a standard role is skipped by
+   * default: Quit, Hide, Reload, the clipboard, Undo and Redo, the Zoom
+   * entries, Substitutions, Speech, Minimize and the rest. Entries the
+   * application's own authors wrote carry no role and are always offered.
+   * Measured on three applications on 2026-09-26: every standard entry
+   * carried a role, and none of the applications' own did. Decided the same
+   * day, over skipping only the risky ones, because a run on trickster-tales
+   * spent Hops on Redo, Delete, the Zoom entries and Bring All to Front, and
+   * each changed nothing.
+   *
+   * The default is an input to the seeded draw like any exclusion, so the
+   * roles allowed back are written on each Route's opening journal line, and
+   * one that is never on offer is reported as stale.
+   */
+  allowStandardMenuRoles?: string[];
+
+  /**
    * For an exclusion a list of names cannot express.
    *
    * The case this exists for, measured on a real application: the keyboard

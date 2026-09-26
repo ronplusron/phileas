@@ -3,7 +3,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect, type Page } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
-import { closeApp, makeUserDataDir, menuLabels, clickMenuItem } from '../src/index';
+import {
+  closeApp,
+  makeUserDataDir,
+  menuLabels,
+  menuEntries,
+  clickMenuItem,
+  survey,
+  createExclusionTally,
+} from '../src/index';
 import type { AppUnderTest } from '../src/index';
 import { launchOrRemove } from './scratch';
 
@@ -194,27 +202,39 @@ test('the native menu has the shape the adapter and phase 4 expect', async () =>
   }
 });
 
-test('every menu path the adapter excludes still names a real menu item', async () => {
-  // The check docs/PLAN.md asks for and docs/DEFECTS.md says is missing: a
-  // hand-written exclusion list goes stale silently the day upstream renames
-  // something, and a rail that names nothing guards nothing. This does not
-  // derive the list from source, which is the fuller answer, but it does fail
-  // when an entry stops matching.
+test('every standard entry in the menu is skipped, and buggy\'s own entries are not', async () => {
+  // Read from the running application rather than from a list, so an entry
+  // added to buggy's menu later is checked too. A standard entry is one
+  // Electron built from a role; buggy's own carry none.
   const dir = await makeUserDataDir(buggy);
   const launched = await launchOrRemove(buggy, dir);
   try {
-    await buggy.waitForReady(await launched.app.firstWindow());
+    const page = await launched.app.firstWindow();
+    await buggy.waitForReady(page);
 
-    const paths = buggy.exclusions.menuPaths ?? [];
-    expect(paths.length, 'no menu paths are excluded, so this asserts nothing').toBeGreaterThan(0);
+    const entries = await menuEntries(launched.app);
+    const standard = entries.filter((entry) => entry.electronRole);
+    const own = entries.filter((entry) => !entry.electronRole);
+    expect(standard.length, 'no standard entries found, so this asserts nothing').toBeGreaterThan(0);
+    expect(own.length, 'no entries of buggy\'s own found, so this asserts nothing').toBeGreaterThan(0);
 
-    for (const menuPath of paths) {
-      const parent = menuPath.slice(0, -1);
-      const leaf = menuPath[menuPath.length - 1];
-      expect(await menuLabels(launched.app, parent), `${menuPath.join(' > ')} is stale`).toContain(
-        leaf
+    const found = await survey({
+      page,
+      app: launched.app,
+      exclusions: buggy.exclusions,
+      hopIndex: 0,
+      tally: createExclusionTally(buggy.exclusions),
+    });
+    const excluded = new Map(
+      found.excluded.filter((e) => e.candidate.source === 'menu').map((e) => [e.candidate.name, e.rule])
+    );
+    for (const entry of standard) {
+      expect(excluded.get(entry.label), `${entry.path.join(' > ')} is reachable`).toBe(
+        `standard menu entry: ${entry.electronRole}`
       );
     }
+    const offered = found.candidates.filter((c) => c.source === 'menu').map((c) => c.name);
+    for (const entry of own) expect(offered, `${entry.path.join(' > ')} was skipped`).toContain(entry.label);
   } finally {
     await closeApp(buggy, launched).catch(() => {});
     await fs.promises.rm(dir, { recursive: true, force: true });
@@ -222,23 +242,30 @@ test('every menu path the adapter excludes still names a real menu item', async 
 });
 
 test('every clipboard entry in the menu is excluded', async () => {
-  // Read from the running application rather than from the list, so an entry
-  // added to the Edit menu later, such as Paste and Match Style, fails here
-  // instead of being reached by a shown run.
+  // A shown run reaches the real clipboard through these. Read from the running
+  // application, so an entry added to the Edit menu later, such as Paste and
+  // Match Style, fails here instead of being reached. Any rule may keep one
+  // out; today the standard-entry default does.
   const dir = await makeUserDataDir(buggy);
   const launched = await launchOrRemove(buggy, dir);
   try {
-    await buggy.waitForReady(await launched.app.firstWindow());
+    const page = await launched.app.firstWindow();
+    await buggy.waitForReady(page);
 
     const clipboard = (await menuLabels(launched.app, ['Edit'])).filter((label) =>
       /^(Cut|Copy|Paste)\b/.test(label)
     );
     expect(clipboard.length, 'no clipboard entries found, so this asserts nothing').toBeGreaterThan(0);
 
-    const excluded = (buggy.exclusions.menuPaths ?? []).map((p) => p.join(' > '));
-    for (const label of clipboard) {
-      expect(excluded, `Edit > ${label} is reachable by a shown run`).toContain(`Edit > ${label}`);
-    }
+    const found = await survey({
+      page,
+      app: launched.app,
+      exclusions: buggy.exclusions,
+      hopIndex: 0,
+      tally: createExclusionTally(buggy.exclusions),
+    });
+    const offered = found.candidates.filter((c) => c.source === 'menu').map((c) => c.name);
+    for (const label of clipboard) expect(offered, `Edit > ${label} is reachable by a shown run`).not.toContain(label);
   } finally {
     await closeApp(buggy, launched).catch(() => {});
     await fs.promises.rm(dir, { recursive: true, force: true });

@@ -107,6 +107,12 @@ export interface MenuEntry {
   readonly path: readonly string[];
   readonly label: string;
   readonly enabled: boolean;
+  /**
+   * The Electron role the entry was built from, such as `quit` or `zoomin`,
+   * or absent for an entry the application's own authors wrote. See
+   * `Exclusions.allowStandardMenuRoles` for why that difference matters.
+   */
+  readonly electronRole?: string;
 }
 
 /**
@@ -123,7 +129,7 @@ export interface MenuEntry {
  */
 export function menuEntries(app: ElectronApplication): Promise<MenuEntry[]> {
   return app.evaluate(({ Menu }) => {
-    const entries: { path: string[]; label: string; enabled: boolean }[] = [];
+    const entries: { path: string[]; label: string; enabled: boolean; electronRole?: string }[] = [];
 
     const walk = (items: Electron.MenuItem[], prefix: string[]): void => {
       for (const item of items) {
@@ -131,7 +137,13 @@ export function menuEntries(app: ElectronApplication): Promise<MenuEntry[]> {
         const path = [...prefix, item.label];
         const submenu = item.submenu?.items ?? [];
         if (submenu.length) walk(submenu, path);
-        else entries.push({ path, label: item.label, enabled: item.enabled });
+        else
+          entries.push({
+            path,
+            label: item.label,
+            enabled: item.enabled,
+            ...(item.role ? { electronRole: item.role.toLowerCase() } : {}),
+          });
       }
     };
 

@@ -40,7 +40,7 @@ with an engine that checks nothing at all.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and forty-three tests. Seven launch it,
+through, and `npm test` runs one hundred and forty-six tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -49,10 +49,10 @@ generator's output. Twelve record what `buggy` correctly does, so a defect
 planted later can be told apart from an accidental one. Seven assert that a
 guard refuses rather than answering when it has no evidence. Seven work out
 what a Hop did to the screen from two readings, without launching anything.
-Thirty-four travel through the application, and ten cover the journal, including
+Thirty-six travel through the application, and ten cover the journal, including
 one cut off mid-write and one refusing to overwrite an earlier run. Fourteen
 cover the window modes, the hop delay and the application's checkout, and two keep every source file searchable. Seven cover the `phileas`
-command and the overrides it carries, one of them running it for real, and seven
+command and the overrides it carries, one of them running it for real, and eight
 cover reading a journal, following a run and showing one. Eight cover writing a
 Fix from `phileas survey`'s lines, two of them the hop delay's pause in a Fix
 and a survey. The last three cover the
@@ -94,10 +94,11 @@ stub that never took read identically.
 **The menu bar is offered in every window mode, hidden included,** since
 2026-09-24. A menu hop hands its handler the Route's own window, so focus
 decides nothing; `docs/HISTORY.md` has the measurement that overturned the
-earlier reading. So an unattended run now reaches the menu, and an adapter's
-`menuPaths` exclusions are what keep it off Quit and the clipboard. Default
-exclusions for the entries every Electron application has are agreed and not
-yet built, `docs/OUTSTANDING.md` 1.10, and matter more than they did.
+earlier reading. So an unattended run reaches the menu, and since 2026-09-26
+the engine skips every standard entry Electron builds from a role -- Quit,
+the clipboard, Undo, the Zoom entries and the rest -- unless an adapter allows
+a role back with `allowStandardMenuRoles`. Only the entries an application's
+own authors wrote are drawn from by default.
 
 **If `npm test` cannot find Electron:** `npm install` does not run Electron's
 postinstall in this environment, so the types arrive and the binary does not.
@@ -149,7 +150,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and forty-three tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and forty-six tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

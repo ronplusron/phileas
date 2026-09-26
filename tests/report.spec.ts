@@ -7,6 +7,8 @@ import { test, expect } from '@playwright/test';
 import {
   followFromEnvironment,
   renderJournal,
+  renderEntry,
+  shortened,
   FOLLOW_VARIABLE,
   type JournalEntry,
 } from '../src/index';
@@ -124,6 +126,30 @@ test('Routes read from 1, and a journal with no opening line names no Route', ()
   // point at a Route that may not be this one.
   const headless = renderJournal(text(ENTRIES.slice(1)));
   expect(headless.at(-1)).toBe('route ?  passed after 3 hops');
+});
+
+test('a long name is cut to its column, a menu path in the middle, and never runs into the effect', () => {
+  const long = 'x'.repeat(300);
+  const menu = 'menu Edit > Substitutions > Text Replacement';
+  expect(shortened(`button "${long}"`, 43)).toBe(`button "${'x'.repeat(32)}...`);
+  expect(menu).toHaveLength(44);
+  expect(shortened(menu, 44)).toBe(menu);
+  expect(shortened(menu, 43)).toBe('menu Edit > ... > Text Replacement');
+  expect(shortened('menu Window > Bring All to Front', 43)).toBe('menu Window > Bring All to Front');
+
+  const sample = ENTRIES.find((entry) => entry.kind === 'trip-hop');
+  if (sample?.kind !== 'trip-hop') throw new Error('the sample journal has no Trip hop');
+  const line = renderEntry(
+    {
+      ...sample,
+      action: 'click',
+      target: { source: 'page', role: 'button', name: long, nth: 1 },
+      effect: { readable: true, changed: false, appeared: [], appearedMore: 0, wentAway: [], wentAwayMore: 0 },
+    },
+    1
+  );
+  // The effect starts in its column, after the cut name and a space.
+  expect(line).toBe(`${'route 1  hop 1'.padEnd(18)}${'click'.padEnd(11)}${`button "${'x'.repeat(32)}...`} no change`);
 });
 
 test('show finds the latest run from a run, a seed, or the journals folder', () => {

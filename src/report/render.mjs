@@ -61,6 +61,43 @@ export function targetText(target) {
 }
 
 /**
+ * Text padded to a column, and never run into the next one: something that
+ * fills its column still gets one space after it.
+ * @param {string} text
+ * @param {number} width
+ * @returns {string}
+ */
+function column(text, width) {
+  return text.length < width ? text.padEnd(width) : `${text} `;
+}
+
+/**
+ * Text cut to fit `limit` characters, for the screen; the journal keeps it
+ * whole, and a Fix step still names a control by its full line.
+ *
+ * Measured on trickster-tales on 2026-09-26: a tale card is one button whose
+ * accessible name is the whole story, several hundred characters, which pushed
+ * what changed off the end of the line with no space before it.
+ *
+ * A menu path is cut in the middle, keeping its first menu and the entry
+ * itself, since the entry is what was clicked: `menu Edit > ... > Text
+ * Replacement`. Anything else, or a menu path still too long that way, is cut
+ * at the end.
+ * @param {string} text
+ * @param {number} limit
+ * @returns {string}
+ */
+export function shortened(text, limit) {
+  if (text.length <= limit) return text;
+  const parts = text.startsWith('menu ') ? text.slice('menu '.length).split(' > ') : [];
+  if (parts.length > 2) {
+    const middle = `menu ${parts[0]} > ... > ${parts[parts.length - 1]}`;
+    if (middle.length <= limit) return middle;
+  }
+  return `${text.slice(0, limit - 3)}...`;
+}
+
+/**
  * A typed value, shortened for the screen; the journal keeps it whole.
  * @param {string | undefined} value
  * @returns {string}
@@ -92,16 +129,16 @@ export function renderEntry(entry, routeNumber) {
       return undefined;
     case 'fix-hop':
       return [
-        `${route}  fix ${entry.hop}`.padEnd(18),
-        entry.name.padEnd(40),
+        column(`${route}  fix ${entry.hop}`, 18),
+        column(shortened(entry.name, 39), 40),
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
       ].join('');
     case 'trip-hop': {
       const value = entry.action === 'type' || entry.action === 'fill' ? valueText(entry.value) : '';
       return [
-        `${route}  hop ${entry.hop}`.padEnd(18),
-        entry.action.padEnd(11),
-        targetText(entry.target).padEnd(44),
+        column(`${route}  hop ${entry.hop}`, 18),
+        column(entry.action, 11),
+        column(shortened(targetText(entry.target), 43), 44),
         value ? `${value}   ` : '',
         effectText(entry.effect),
         entry.abandoned ? `   (gave up: ${entry.abandoned})` : '',

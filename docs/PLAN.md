@@ -762,7 +762,7 @@ hardened in phase 1, which is where that question did its real work.
 After the two confirmed consumers come Positron and RStudio. They are targets
 rather than candidates, and `OUTSTANDING.md` 1.8 records what each will need.
 At their turn, revisit the provisional draw shares for the keys and the menu,
-`OUTSTANDING.md` 1.12, once a Journey has run against either.
+`OUTSTANDING.md` 1.11, once a Journey has run against either.
 
 What the first real adapter discovers about the seam goes back into
 `AppUnderTest`. `HISTORY.md` records that the second adapter is what finds

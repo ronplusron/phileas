@@ -94,6 +94,8 @@ export interface MenuCandidate {
   readonly role: 'menuitem';
   readonly name: string;
   readonly menuPath: readonly string[];
+  /** The Electron role it was built from, for a standard entry. See `MenuEntry.electronRole`. */
+  readonly electronRole?: string;
 }
 
 /**
@@ -263,6 +265,12 @@ export interface SurveyResult {
 export interface ExclusionTally {
   readonly names: Map<string, number>;
   readonly menuPaths: Map<string, number>;
+  /**
+   * How often each standard role the adapter allowed back was on offer. A role
+   * allowed back that never appears is as stale as an exclusion that never
+   * matches, and is most likely misspelled.
+   */
+  readonly allowedStandardRoles: Map<string, number>;
   predicate: number;
 }
 
@@ -270,6 +278,9 @@ export function createExclusionTally(exclusions: Exclusions): ExclusionTally {
   return {
     names: new Map((exclusions.names ?? []).map((name) => [name, 0])),
     menuPaths: new Map((exclusions.menuPaths ?? []).map((path) => [path.join(' > '), 0])),
+    allowedStandardRoles: new Map(
+      (exclusions.allowStandardMenuRoles ?? []).map((role) => [role.toLowerCase(), 0])
+    ),
     predicate: 0,
   };
 }
@@ -279,6 +290,9 @@ export function neverMatched(tally: ExclusionTally): string[] {
   const stale: string[] = [];
   for (const [name, count] of tally.names) if (count === 0) stale.push(`names: ${name}`);
   for (const [path, count] of tally.menuPaths) if (count === 0) stale.push(`menuPaths: ${path}`);
+  for (const [role, count] of tally.allowedStandardRoles) {
+    if (count === 0) stale.push(`allowStandardMenuRoles: ${role}`);
+  }
   return stale;
 }
 
@@ -455,6 +469,15 @@ async function excludedBy(
       tally.menuPaths.set(key, (tally.menuPaths.get(key) ?? 0) + 1);
       return `menuPaths: ${key}`;
     }
+
+    // After the adapter's own rules, so that an entry it names is counted
+    // against the rule that names it. A standard entry is skipped unless the
+    // adapter allowed its role back; see Exclusions.allowStandardMenuRoles.
+    const role = candidate.electronRole;
+    if (role !== undefined) {
+      if (!tally.allowedStandardRoles.has(role)) return `standard menu entry: ${role}`;
+      tally.allowedStandardRoles.set(role, (tally.allowedStandardRoles.get(role) ?? 0) + 1);
+    }
   }
 
   if (!exclusions.exclude) return undefined;
@@ -599,6 +622,7 @@ async function surveyMenu(
       role: 'menuitem',
       name: entry.label,
       menuPath: entry.path,
+      ...(entry.electronRole ? { electronRole: entry.electronRole } : {}),
     }));
 
   return { menuCandidates, menuSource: { offered: true, count: menuCandidates.length } };

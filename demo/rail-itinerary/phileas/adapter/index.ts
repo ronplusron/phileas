@@ -17,18 +17,9 @@ export const railItinerary: AppUnderTest = {
   },
 
   exclusions: {
-    // The one way out of the application from the page.
+    // The one way out of the application from the page. Quit and the Edit
+    // menu's entries are standard ones, which the engine skips by default.
     names: ["Visit the rail network's site"],
-    // Quitting ends the demo, and the clipboard entries reach the watcher's own
-    // clipboard, for the reasons docs/HISTORY.md gives under the clipboard fix.
-    // Select All changes nothing a watcher can see, so it only slows the demo.
-    menuPaths: [
-      ['Rail Itinerary', 'Quit Rail Itinerary'],
-      ['Edit', 'Cut'],
-      ['Edit', 'Copy'],
-      ['Edit', 'Paste'],
-      ['Edit', 'Select All'],
-    ],
   },
 
   async waitForReady(page: Page): Promise<void> {

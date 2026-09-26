@@ -235,6 +235,14 @@ export interface OpeningEntry {
    */
   readonly keyShare?: number;
   readonly menuShare?: number;
+  /**
+   * The standard menu roles the adapter allowed back, empty when every
+   * standard entry was skipped, which is the default. Written because the
+   * default is an input to the draw, and a replay under a different setting
+   * would send the Route somewhere else. Absent in journals written before
+   * 2026-09-26, when standard entries were still offered.
+   */
+  readonly allowStandardMenuRoles?: readonly string[];
   readonly startedAt: string;
 }
 
