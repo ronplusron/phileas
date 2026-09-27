@@ -362,16 +362,23 @@
         if (!state.ticket) break;
         const berths = Number(state.ticket.berths.trim());
         const party = 1 + (state.passepartout ? 1 : 0) + (state.aouda ? 1 : 0);
-        // A number the clerk cannot book is corrected to the party's size, and
-        // said so, rather than refused until retyped: a Trip types only from a
-        // fixed list of values, none of them a berth count, so a refusal would
-        // leave the ticket office unbookable for the rest of the Route.
-        const valid = Number.isInteger(berths) && berths >= party && berths <= 3;
+        // Refused until it is retyped, as a real ticket office would. The game
+        // once corrected a bad count instead, which suited the engine rather
+        // than the game: no value the engine typed was a count. It types "1"
+        // and "2" now, and the arrow keys move the field; docs/HISTORY.md has
+        // the measurement either way.
+        if (!Number.isInteger(berths) || berths < 1 || berths > 3) {
+          state.ticket.message = 'Berths must be a number from 1 to 3.';
+          break;
+        }
+        if (berths < party) {
+          state.ticket.message = `The party is ${party}; book ${party} berths.`;
+          break;
+        }
         const d = world.departures.find((x) => x.id === state.ticket.departure);
         const coal = state.ticket.coal;
         state.ticket = null;
         travel(state, world, d, { coal });
-        if (!valid) state.notice = `The clerk writes ${party} ${party === 1 ? 'berth' : 'berths'} for the party. ${state.notice}`.trim();
         break;
       }
       case 'cancel':

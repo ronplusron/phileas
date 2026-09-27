@@ -185,25 +185,43 @@ draw toward new targets and away from the last one, scheduled by the Positron
 trial's session on its own branch, is aimed at exactly this, and Eighty Days
 is to be its first measure.
 
-## No typed value is a number a validated field will accept
+## Typed values reach only the counts 1 and 2
 
 `VALUE_CORPUS` in `src/route.ts` holds an empty string, "a", "travel",
-"Carpet", "0", two spaces and two hundred x's. None is a number from 1 up, so
-a field that accepts only a count in a range is never filled in validly by a
-Trip, and whatever lies behind a successful entry in it is never reached. The
-arrow keys can move a focused spin box, but a key is drawn an eighth of the
-time and a focused field rarely. Measured on Eighty Days as first built,
-whose ticket office refused a berth count outside 1 to 3 until it was
-retyped: a Route that typed into the field could never book that ticket, and
-across six Routes of 200 Hops the office was cancelled or escaped from 45
-times against 17 bookings.
+"Carpet", "0", "1", "2", two spaces and two hundred x's. A field that
+accepts only a count in a range is filled validly only when 1 or 2 is in it;
+a field that needs 3 or more, or a range such as 10 to 100, is reached only
+by the arrow keys on a focused field, which a key drawn an eighth of the time
+rarely does. Whatever lies behind a successful entry in such a field is then
+seldom reached.
 
-The game was changed to suit the engine here too: the clerk now corrects a
-bad count to the party's size and books. Refusing bad input until it is
-fixed is ordinary behavior for an application, and the gap is the engine's,
-so the demo no longer shows it. A value generator is a seam of its own, which
-is where a fix belongs: values drawn from the field's own range or the
-numbers on the screen, still from the seed, would reach it.
+Until 2026-09-27 it was worse: "0" was the only digit, so no count at all
+could be typed. Measured on Eighty Days, whose ticket office refuses a berth
+count outside 1 to 3, or smaller than the party, until it is retyped: across
+six Routes of 200 Hops the office was cancelled or escaped from 45 times
+against 17 bookings. The game was briefly changed to suit the engine, a
+clerk who corrected bad counts, and that was undone once "1" and "2" were
+added: `HISTORY.md` has both measurements. A party of three still needs a
+3, so the demo still meets what remains of this.
+
+**A range-aware generator was built and reverted the same day, unmerged.**
+It had `seededValues` read a spin button's declared `min` and `max` at the
+Hop and add its least, middle and greatest values to what its one draw
+picked from. Reverted for two reasons. It rested on the demo alone: across
+42 Positron Route journals, one pool offered a spin button, the Settings
+editor's `editor.fontSize`, and no Hop acted on it. And it carried a latent
+hazard to replay: a read that can time out on one run and not the next
+changes the list one draw indexes into, so one seed types two different
+values. Recording the range in the journal would not cure that, because a
+seeded replay reruns from the seed and never reads the old journal.
+
+If a range-aware generator returns, the design the Positron trial's session
+proposed on review: read the range in the survey, as part of the candidate,
+so a failed read shows as a different pool, which R13 and R14 already treat
+as divergence rather than a silent change of value; and keep the list the
+value draw picks from a fixed length, filling the range's places with fixed
+entries when no range is read, so a failed read changes a value and never an
+index. It waits for a real application to show the need.
 
 ## Two things that will look like candidates, and are not
 

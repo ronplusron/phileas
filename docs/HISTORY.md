@@ -25,6 +25,41 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: "1" and "2" join the typed values, and every seed types differently from today
+
+**What changed.** `VALUE_CORPUS` in `src/route.ts` gained "1" and "2", so a
+field that asks for a count can be filled. **From this change on, what every
+recorded seed types is different**: the share draws, the target draws and
+their order are untouched, but the value a Hop types comes from a list of
+nine rather than seven, so the same draw picks a different entry. The pinned
+draws in `tests/guarantees.spec.ts` were updated on purpose, and only their
+typed values moved; the rest of the engine's suite passed unchanged,
+`buggy`'s recorded baselines included.
+
+**Why.** "0" was the only digit, so a field that refuses anything outside a
+range until it is retyped was a dead end no chooser could get past. It was
+met in the Eighty Days demo, whose ticket office was briefly changed to
+correct bad counts, which suited the engine rather than the game. That was
+raised as "It feels like we cheated--we adjusted the demo so that Phileas
+would do better", and of three remedies proposed, fixing the engine where it
+is cheap, keeping the harder game available, and letting the default follow
+the engine, the answer was "Do all three."
+
+**What was tried first, and reverted.** A generator that read a spin
+button's declared range from the page at the Hop. It was reverted, unmerged,
+for resting on the demo alone and for a latent hazard to replay, and the
+Positron trial's session, asked for its view, agreed and proposed the fixed
+values instead. `DEFECTS.md` has the reasons and the design to use if the
+idea returns.
+
+**Measured.** With the ticket office strict again and the new values, six
+Routes of 200 Hops from Hong Kong reached 14 to 23 places, four lost and two
+still going, with six distinct sequences, as far as they went with the
+correcting clerk. Berths was typed "2" six times and "1" three times, and of
+26 presses of Book, 13 booked and 13 were refused until retyped. A party of
+three still needs a 3, which only the arrow keys reach, so `DEFECTS.md`
+keeps what remains of the gap.
+
 ## 2026-09-27: Eighty Days playable, and tuned until Routes travel, partly by working around the engine
 
 **What landed.** Build step 3 of `DEMO_PLAN_EIGHTY_DAYS.md`, less the

@@ -229,8 +229,17 @@ export interface ValueGenerator {
  * which is a later phase with its own reporting; a value generator that reached
  * for it now would make every Route's failures about the input rather than
  * about the application, and bury what the Route itself finds.
+ *
+ * **"1" and "2" are here so a field that asks for a count can be filled.**
+ * Until 2026-09-27 the only digit was "0", so a field that refuses anything
+ * outside a range until it is retyped was a dead end no chooser could get
+ * past. Measured on the Eighty Days demo's ticket office, whose berth count
+ * takes 1 to 3; docs/HISTORY.md has it. Fixed values rather than a range read
+ * from the page, because a read that can fail on one run and not the next
+ * would type different values from one seed. Adding them changed what every
+ * seed types from that day.
  */
-const VALUE_CORPUS = ['', 'a', 'travel', 'Carpet', '0', '  ', 'x'.repeat(200)] as const;
+const VALUE_CORPUS = ['', 'a', 'travel', 'Carpet', '0', '1', '2', '  ', 'x'.repeat(200)] as const;
 
 export const seededValues: ValueGenerator = {
   generate: (_candidate, rng) => rng.pick(VALUE_CORPUS),

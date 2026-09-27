@@ -278,12 +278,12 @@ number has to be reachable by clicking. This applies everywhere in the
 game, not only to Kiouni: the Hotel's stay is a dropdown ("an hour", "a
 night", "until the next sailing"), not a number of hours. The one number
 field left is the ticket office's berths, where what a Trip types is
-exactly the test: "0", "a" or empty is corrected by the clerk to the
-party's size, with a message saying so, and the ticket is booked. It was
-first refused until retyped, which measured as a trap: no value a Trip
-types is a berth count, so a Route that typed into the field could never
-book that ticket. **The gap is the engine's, not the game's**, since
-refusing bad input is ordinary, and `DEFECTS.md` records it.
+exactly the test: "0", "a" or empty is refused until it is retyped, as a
+real ticket office would. That measured first as a trap, since no value a
+Trip typed was a count. The game was briefly changed to correct bad counts,
+which suited the engine rather than the game, and was undone once the
+engine's typed values gained "1" and "2". A party of three still needs a 3,
+which only the arrow keys reach; `DEFECTS.md` records what remains.
 
 The Ledger shows the carpet-bag in one line under the days, and no check
 rests on it: the structural and specified checks in stage two are about
@@ -717,6 +717,15 @@ a Fix's path would fail every Route inside its Fix.
 
 Each answered 2026-09-27, in the words given:
 
+- **The harder game:** raised as "It feels like we cheated--we adjusted the
+  demo so that Phileas would do better", and of three remedies proposed, the
+  answer was "Do all three." So: the engine was fixed where it was cheap, and
+  the ticket office is strict again (`HISTORY.md`); a launch flag restoring
+  the original layout, with screens that replace the place, is built with
+  step 7's flags, so the demo can show the engine's limits and a better
+  chooser can be measured against it; and the default layout follows the
+  engine, switching back to the original once a chooser gets Routes out of
+  London in it, measured, with the panel then retired.
 - **The application's name** is "Eighty Days".
 - **The shared runner:** "Do this." The rail demo's runner is lifted into
   `demo/presenting.mjs` as the first step of the build.
@@ -738,15 +747,7 @@ Each answered 2026-09-27, in the words given:
 
 ## Open
 
-- **Whether to keep the harder game.** Two of the tunings changed the game to
-  suit the engine rather than the other way round, raised on 2026-09-27 as
-  "It feels like we cheated--we adjusted the demo so that Phileas would do
-  better." Proposed, and not decided: a launch flag that restores the
-  replacing screens and the strict berth count, so that a better chooser or
-  value generator can be measured against the game as it first was, and so
-  the demo can show an audience the engine's limits as well as its reach.
-  The weighting the Positron trial's session has scheduled would be its
-  first use.
+Nothing is open. New questions go here as building raises them.
 
 ## Build order
 

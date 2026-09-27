@@ -75,6 +75,10 @@ plain('a Hop draws the side, then the target, then the value, in that order, pin
   // stops reproducing. If this fails, a draw was reordered, added or removed,
   // and every recorded seed is invalid; do not update these to make it pass
   // without deciding that on purpose and saying so in the change.
+  //
+  // Updated once, on purpose, on 2026-09-27: "1" and "2" joined the value
+  // corpus, so the typed values below changed. The share draws, the target
+  // draws and their order did not, and that is what this test holds.
   const trip = deriveRouteStreams('pin', 1).trip;
   const chooser = createSeededChooser(sharesFor({}));
   const drawn = [];
@@ -87,12 +91,12 @@ plain('a Hop draws the side, then the target, then the value, in that order, pin
 });
 
 const PINNED: unknown[] = [
-  [3379927090, 3231284432, 'Category', '  '],
-  [2045533169, 2831561948, 'Search', 'x'.repeat(200)],
-  [184377609, 1420814704, 'Tab', '0'],
-  [2147008637, 1150354908, 'Summary', 'a'],
-  [313465525, 3832602742, 'Enter', '0'],
-  [2892804314, 221617084, 'Inventory', 'Carpet'],
+  [3379927090, 3231284432, 'Category', '2'],
+  [2045533169, 2831561948, 'Search', '  '],
+  [184377609, 1420814704, 'Tab', '2'],
+  [2147008637, 1150354908, 'Summary', 'travel'],
+  [313465525, 3832602742, 'Enter', '2'],
+  [2892804314, 221617084, 'Inventory', '0'],
 ];
 
 // ---------------------------------------------------------------------------
