@@ -28,10 +28,14 @@ argument, and re-deriving them would cost it again.
 ## 2026-09-27: "1" and "2" join the typed values, and every seed types differently from today
 
 **What changed.** `VALUE_CORPUS` in `src/route.ts` gained "1" and "2", so a
-field that asks for a count can be filled. **From this change on, what every
-recorded seed types is different**: the share draws, the target draws and
-their order are untouched, but the value a Hop types comes from a list of
-nine rather than seven, so the same draw picks a different entry. The pinned
+field that asks for a count can be filled. **From this change on, a recorded
+seed may not retrace.** The numbers drawn, and the order they are drawn in,
+are untouched, but the value a Hop types comes from a list of nine rather
+than seven, so the same draw picks a different entry; and a different value
+typed can change what the screen offers next, so a Route that typed into a
+field can go elsewhere from that Hop on. A Route that never typed retraces
+as before. Baselines taken before the change, such as the Positron trial's
+seeded-draw baselines for weighting, are to be taken again. The pinned
 draws in `tests/guarantees.spec.ts` were updated on purpose, and only their
 typed values moved; the rest of the engine's suite passed unchanged,
 `buggy`'s recorded baselines included.
