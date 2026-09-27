@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { test as base, expect, type ElectronApplication, type Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test';
-import { launchApp, closeApp, makeUserDataDir, type LaunchedApp } from './launch';
+import { launchApp, closeApp, makeUserDataDir, removeProfile, type LaunchedApp } from './launch';
 import { openedExternally } from './external';
 
 export type PhileasFixtures = {
@@ -45,7 +45,7 @@ export function createTest(cfg: AppUnderTest) {
     userDataDir: async ({}, use) => {
       const dir = await makeUserDataDir(cfg);
       await use(dir);
-      await fs.promises.rm(dir, { recursive: true, force: true });
+      await removeProfile(dir);
     },
 
     launched: async ({ userDataDir }, use, testInfo) => {

@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Three defects are recorded.** The launch layer landed in phase 1, so this file
+**Two defects are recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows are three defects, then the two things most likely to be filed here
+What follows are two defects, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -85,25 +85,6 @@ sound for an application nobody has read, which is the whole hazard.
 **This entry leaves when phase 5's second evidence source exists**, and on
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
-
-## A Route's profile folder can be left behind
-
-**Filed 2026-09-26, found on Positron.** The fixture deletes a Route's profile
-folder once, after the application has closed. Positron's child processes
-were still exiting and writing into it when that happened, and the delete
-failed with "directory not empty": two Positron profiles were left in the
-system temp folder that day, and one run's teardown reported the error. A
-profile holding a file the run made read-only fails the same way.
-
-**Why it is a defect and not a limit.** Each leftover is a profile a later
-reader has to find and remove by hand, and the engine's own suite fails when
-its runs leave one. The race depends only on how long an application's
-children take to exit, which the engine does not control.
-
-**What closes it.** Retry the delete while the folder is still changing, and
-make anything read-only writable before deleting it. Proved by a test that
-keeps writing into a profile while it is deleted, and one that makes part of
-it read-only.
 
 ## An application that opens no window is reported only as a timeout
 

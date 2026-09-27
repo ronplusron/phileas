@@ -17,6 +17,7 @@ export {
   closeApp,
   reloadRenderer,
   makeUserDataDir,
+  removeProfile,
   hideWindows,
   showWindows,
   windowMode,

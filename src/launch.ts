@@ -86,6 +86,39 @@ export async function makeUserDataDir(cfg: AppUnderTest): Promise<string> {
   return fs.promises.mkdtemp(path.join(os.tmpdir(), `phileas-${slug}-`));
 }
 
+/** Make everything under a folder writable by its owner, so it can be deleted. */
+async function makeWritable(dir: string): Promise<void> {
+  let entries: fs.Dirent[];
+  try {
+    await fs.promises.chmod(dir, 0o700);
+    entries = await fs.promises.readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) await makeWritable(full);
+  }
+}
+
+/**
+ * Delete a Route's profile folder, and keep trying while it is still changing.
+ *
+ * A single delete lost a race on Positron on 2026-09-26: the application's
+ * child processes were still exiting and writing into the profile, the
+ * delete failed with "directory not empty", and the folder was left in the
+ * system temp folder. So the delete retries with Node's own backoff, which
+ * covers exactly that error. A folder the run made read-only is made writable
+ * first, since otherwise nothing inside it can be removed.
+ *
+ * Throws if the folder still cannot be removed, rather than leaving it
+ * silently: the fixture's teardown then fails, naming it.
+ */
+export async function removeProfile(dir: string): Promise<void> {
+  await makeWritable(dir);
+  await fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+}
+
 /** The variable an adapter reads the application's checkout from. */
 export const APP_DIR_VARIABLE = 'PHILEAS_APP_DIR';
 

@@ -56,7 +56,7 @@ Journey and derives each Route's seeds from them. And it now travels: a Route
 finds what the screen offers by accessibility role, draws its next move from
 its seed, acts, waits for the page to stop moving, and writes a journal entry
 per Hop. `testbed/buggy/` is a packaged application built to be traveled
-through, and one hundred and seventy-seven tests run against it.
+through, and one hundred and seventy-nine tests run against it.
 
 Six checks run after every Hop: uncaught errors, console errors, still
 responding, the window still showing something, no unexpected dialog, and an

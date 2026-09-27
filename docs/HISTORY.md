@@ -25,6 +25,26 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-26: a Route's profile folder is removed even while it changes
+
+**The defect.** The fixture deleted a Route's profile once. Positron's child
+processes were still exiting and writing into it, the delete failed with
+"directory not empty", and two Positron profiles were left in the system
+temp folder. A profile with a read-only part failed the same way.
+
+**The fix.** `removeProfile` makes the profile writable, then deletes it
+with Node's own retries, which cover exactly that error, and throws if it
+still cannot. The fixture uses it.
+
+**How it was proved.** Two tests, each first showing the single delete
+failing on the same folder: one with a read-only part, and one another
+process writes into without pause while it is deleted. A writer pausing a
+millisecond between files let a fast delete through, so the control was
+flaky until the writer stopped pausing. With `removeProfile` cut back to a
+single delete both tests fail, and each passed twenty times running with
+it. Failed attempts while writing the tests left test profiles behind, and
+both tests now clean up after themselves however they end.
+
 ## 2026-09-26: hidden mode hides a window created already shown
 
 **The defect.** Hidden mode replaced Electron's `show()` and hid the windows
