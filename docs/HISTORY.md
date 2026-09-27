@@ -25,6 +25,29 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: Routes travel past a window reload, and known findings are asked for
+
+**The measurement.** Opening a folder reloads Positron's window, and every
+reload ended the Route twice over: Positron logged "[lifecycle]: Error during
+will-shutdown phase in default joiners (error: Canceled)" as a console error
+on three reloads of three, and issue 44's deactivation error reached the
+extension host log each time. A Route that opened a folder never got further.
+
+**What landed.** Two narrowings in the adapter, each matching one exact
+message and giving its issue as the reason: the cancellation, filed as a
+possible Positron bug, issue 46, and issue 44's two log lines. The first of
+those names the extension; the second does not, so it is matched by its
+exact text and would accept the same fault from another extension. A Route
+that opens a folder now travels past the reload, with both messages
+journaled as accepted.
+
+**Why it is not the answer.** A narrowing is meant for what is normal for an
+application, and each bug found this way would need another hand-written
+rule. Asked for on 2026-09-27, in the words it was put, as high priority:
+"constantly updating the adapter manually whenever a bug is discovered is
+untenable." `OUTSTANDING.md` 1.13 records known findings as the feature that
+replaces these rules.
+
 ## 2026-09-27: Positron's readiness refuses a boot into an error
 
 **The measurement.** A Positron boot into an error still showed its status
