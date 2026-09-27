@@ -38,7 +38,10 @@ six checks run after every Hop and every Fix step, uncaught errors in either
 process, console errors, still responding, the window still showing
 something, no unexpected dialog, and an error in a log the adapter names. The
 first failure ends the Route. An application that crashes, quits or closes
-its window fails still-responding rather than going unnoticed.
+its window fails still-responding rather than going unnoticed. Since
+2026-09-27 an adapter can declare checks of its own, run after those and
+judged the same way: `buggy`'s declares one, and Positron's one.
+`docs/PLAN.md` has where what such a check asserts must come from.
 
 **Two checks are absent, and every Hop says so.** No navigation away and named
 controls are not built yet, and each Hop's journal line records them as not
@@ -48,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and thirty-five tests, after a
+through, and `npm test` runs two hundred and forty tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -90,7 +93,9 @@ known-findings refusals, and the guarantees in `tests/guarantees.spec.ts`: a
 pinned draw order, the Fix's own stream, a fresh process per Route, a flush
 per Hop, and replay across launches. Three retry the first call into an
 application's main process, whose answer Positron 2024.11 drops on most
-launches.
+launches. Five came with checks an adapter declares: `buggy`'s own firing on
+a planted miscount, a declaration refused by name, a check that hangs or
+throws, and one matched against a known finding.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -229,7 +234,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and thirty-five tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and forty tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

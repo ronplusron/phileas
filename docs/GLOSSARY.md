@@ -71,7 +71,7 @@ phases are marked by number.
 | Check | A test of the application run after every Hop, fix hops included. The first failure ends the Route. Each Hop's journal line records every check as passed, failed, or not run with the reason, so a check that did not run never reads as one that passed. |
 | Universal checks | Checks that assume nothing about the application: no uncaught error, no console error, still responding, still showing something, no navigation away, no unexpected dialog, every control named, and no error in a log the adapter names, which does not run where it names none. The requirements call this tier **implicit** (R17). No navigation away and every control named are not built yet. |
 | Planted defect | A fault built into a testbed application on purpose, each switched on by its own launch flag, such as `buggy`'s `--buggy-plant=dialog`, so that a check can be shown to fire. Off by default, so the application stays the unbroken baseline. |
-| Structural check | Two things on the page agreeing with each other, such as a count matching its list (R18). Phase 6. |
+| Structural check | Two things on the page agreeing with each other, such as a count matching its list (R18), declared by the adapter. Pulled forward from phase 6 for the Positron trial. |
 | Metamorphic check | The application agreeing with itself over time, such as search then clear restoring the list (R20). Phase 6. |
 | Specified check, or oracle | An expected result computed independently of the application and compared against what the page shows (R21). It must never share logic with what it judges. |
 | Probe hop | A Hop the engine takes itself to test a relation, such as clearing a search it just made, marked as such in the journal. *Planned, phase 6.* |

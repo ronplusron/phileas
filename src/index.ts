@@ -5,6 +5,9 @@ export type {
   StalenessGuard,
   Narrowing,
   UniversalCheck,
+  AppCheck,
+  AppCheckContext,
+  AppCheckVerdict,
 } from './app-under-test';
 export { UNIVERSAL_CHECKS } from './app-under-test';
 export {
@@ -158,6 +161,8 @@ export {
   failedChecks,
   showsNothing,
   CheckFailure,
+  AdapterCheckError,
+  assertAppChecks,
   CHECK_ORDER,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,
   STALLED,

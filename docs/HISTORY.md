@@ -257,6 +257,53 @@ and more ways on is the branching that was asked for. Whether the demo keeps
 the harder game available, for measuring a better chooser against it, is
 open in the plan.
 
+## 2026-09-27: checks an adapter declares, and the trial's checks no longer written from its bugs
+
+**Why.** The trial's third step was to write three checks for Positron, and
+all three had been chosen by reading the bugs its fifth step then looks for,
+so finding those bugs would have shown only that Routes reach them. Raised
+as "The bigger gap is that Phileas is reliant on previous bugs". Checks now
+come from the application agreeing with itself and from its own markings,
+and the bugs only test them; `PLAN.md` has the decision. Either way the
+engine had no way to take a check from an adapter, which is phase 6's
+structural tier (R18), so that part of phase 6 came forward.
+
+**What landed.**
+- `AppUnderTest.checks`: each has a name, the reason it should hold, and a
+  `run` handed the page, the application and the settled tree, returning its
+  violations or why it could not look. It runs after every Hop and every Fix
+  step, after the built-in checks, and is judged exactly as they are: by
+  signature, a known finding carried past, anything else ending the Route.
+- A declaration is refused at a Route's start when a name is not lower-case
+  words joined by hyphens, is used twice or is a built-in check's, or when no
+  reason is given. A check that does not answer within the responsive wait is
+  recorded as not run; one that throws ends the Route as an
+  `AdapterCheckError`, a broken check rather than a finding.
+- `buggy`'s adapter declares `count-matches-list`, the heading above the item
+  list against the rows beneath it, and `--buggy-plant=miscount` puts the
+  heading one out.
+- Positron's adapter declares `no-error-notification`, from the icon
+  Positron draws on a notification of error severity.
+
+**Measured.** A built-in alert check was the first plan for the error
+notification and was dropped: on the current release a settings file that
+is not valid JSON raised a notification exposed as a `dialog` whose name
+begins "Error:", and its text went to an off-screen region marked `alert`
+that the accessibility snapshot shows empty; a healthy launch has the same
+regions, empty. On 2024.11 the same file raised no notification at all, so
+how that release draws one is still unmeasured. Against the current release,
+`no-error-notification` returned the notification's text on the broken launch
+and nothing on a healthy one.
+
+**Tested.** Five new tests, 240 in all: the miscount firing buggy's check and
+the healthy run listing it after the built-in ones, the refused declarations
+with well-formed ones as the control, a check that never answers, one that
+throws, and one whose violation is a known finding. Also fixed in passing:
+the Journey's-end tests read the leftover override from the shell that ran
+the suite, so a suite run with it set failed the test expecting the check to
+fire; they now clear it for each test and put it back. Run with the override
+set, that test failed before and passes after.
+
 ## 2026-09-27: the three old Positron releases through the adapter, and a launch that retries its first call
 
 **Why.** The trial's positive controls run known bugs on Positron 2024.11,

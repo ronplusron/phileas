@@ -667,7 +667,8 @@ below is unchanged, and what the trial builds is the first part of it.
 3. **Three rules written for Positron**, from what the study found within
    reach: Positron's error notification never appears, narrowed for the ones
    that are expected; the Variables pane lists exactly the running sessions;
-   a data explorer whose session ended says so.
+   a data explorer whose session ended says so. **Changed on 2026-09-27:**
+   the checks no longer come from the bugs; the decision is below the bar.
 4. **Journeys with different Fixes:** none, a notebook open, the data explorer
    showing a dataset, and a Quarto document open.
 5. **Known bugs in old releases, as positive controls.** Three bugs from the
@@ -693,6 +694,36 @@ release, with false alarms few enough to triage in minutes rather than hours.
 Missing it is an answer too, and is recorded as one. The bar was agreed
 while the known bugs were still 7776, 7098 and 5460, and confirmed on
 2026-09-26 for the three above: "2 of 3 is correct."
+
+**Where step 3's checks come from, changed 2026-09-27.** The three rules
+above were chosen by reading the three bugs step 5 then looks for, so a pass
+in step 5 would show that Routes reach those bugs and not that Phileas finds
+bugs nobody knew of. Raised in the words "The bigger gap is that Phileas is
+reliant on previous bugs", and answered, when an application's documentation
+was proposed as the source instead, "Can't count on documentation". What was
+proposed, and taken with "Do this":
+
+- **Checks come from the application agreeing with itself and from
+  conventions every application shares,** never from a bug report. Two
+  places on screen stating the same fact must agree (R18): for example, the
+  sessions the Variables pane lists and the sessions the console offers.
+- **The error notification was to become a universal check,** an element the
+  page marks as an alert being a finding in any application. **Measured the
+  same day and dropped:** on the current release, a settings file that is not
+  valid JSON raised an error notification exposed as a `dialog` whose name
+  begins "Error:", which is Positron's own wording; its text also went to an
+  off-screen region marked `alert`, which the accessibility snapshot shows
+  empty, and a healthy launch has the same regions, empty. On 2024.11 the
+  same file raised no notification at all. So it is a check in Positron's
+  adapter instead, chosen from three offered, reading Positron's own marking
+  for a notification of error severity rather than anything from a bug.
+- **The bugs only test the checks.** A known bug that no such check reaches
+  is recorded as a miss, not closed with a check written for it.
+- **The bar stays as agreed,** and is harder to meet for it.
+
+That means the engine taking checks from an adapter, which is phase 6's
+structural tier (R18) pulled forward. Metamorphic checks and independently
+computed answers stay in phase 6.
 
 **Order agreed 2026-09-27 for what remains of the trial,** proposed with the
 question and answered "OK let's do this in order": known findings, below;

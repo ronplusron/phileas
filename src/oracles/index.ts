@@ -1,6 +1,13 @@
 import fs from 'node:fs';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { UNIVERSAL_CHECKS, type AppUnderTest, type UniversalCheck } from '../app-under-test';
+import {
+  UNIVERSAL_CHECKS,
+  type AppCheck,
+  type AppCheckContext,
+  type AppUnderTest,
+  type Narrowing,
+  type UniversalCheck,
+} from '../app-under-test';
 import type { JournaledCheck } from '../journal';
 import { findingId, signatureOf, type KnownFindings } from '../known.mjs';
 
@@ -14,7 +21,9 @@ import { findingId, signatureOf, type KnownFindings } from '../known.mjs';
  * to a log the adapter names. Two are not built yet, no navigation away (none
  * of it: the stub's recorder is read only by a fixture, and the
  * foreign-process half does not exist) and named controls, and every Hop's
- * journal line says so rather than leaving them out.
+ * journal line says so rather than leaving them out. After them run the checks
+ * an adapter declares for its own application (R18), judged the same way;
+ * `AppCheck` says where what they assert must come from.
  *
  * **Every check here was made to fire on a planted defect before it shipped.**
  * `tests/checks.spec.ts` has one per check, against `buggy` launched with that
@@ -186,6 +195,10 @@ function resolveLogPaths(cfg: AppUnderTest, userDataDir: string | undefined): st
  */
 export async function startWatching(options: WatchOptions): Promise<Watch> {
   const { page, app, cfg } = options;
+  const appChecks = cfg.checks ?? [];
+  // Before anything is watched, so a mistake in the declaration stops the
+  // Route at its start rather than on its first Hop.
+  assertAppChecks(appChecks);
   const known = new Map((options.known?.entries ?? []).map((entry) => [entry.signature, entry]));
   const responsiveTimeoutMs = options.responsiveTimeoutMs ?? DEFAULT_RESPONSIVE_TIMEOUT_MS;
 
@@ -334,9 +347,9 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     bounded,
     async check(tree) {
       const judge = (check: UniversalCheck, run: () => Promise<Verdict> | Verdict) =>
-        judged(check, cfg, known, run);
+        judged(check, cfg.narrowedChecks?.[check], known, run);
 
-      return Promise.all(
+      const universal = await Promise.all(
         CHECK_ORDER.map((check) => {
           switch (check) {
             case 'uncaught-error':
@@ -374,8 +387,89 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
           }
         })
       );
+
+      // The adapter's own, after the built-in ones and one at a time, so each
+      // Hop's line lists them in the order they were declared. An adapter's
+      // check is never narrowed: the adapter wrote it.
+      const own: JournaledCheck[] = [];
+      for (const appCheck of appChecks) {
+        own.push(
+          await judged(appCheck.name, undefined, known, () =>
+            runAppCheck(appCheck, { page, app, tree }, responsiveTimeoutMs)
+          )
+        );
+      }
+      return [...universal, ...own];
     },
   };
+}
+
+/**
+ * An adapter's check broke, as opposed to finding something wrong.
+ *
+ * Its own class, and thrown rather than recorded as not run, so that a broken
+ * check fails loudly instead of reading on every Hop like one that could not
+ * look. A check that fails silently is the worst kind, since a Route that
+ * ends at the first violation would never end.
+ */
+export class AdapterCheckError extends Error {
+  constructor(
+    readonly check: string,
+    override readonly cause: unknown
+  ) {
+    super(`The adapter's check ${check} threw, which is a fault in the check rather than a finding: ${firstLine(cause)}`);
+    this.name = 'AdapterCheckError';
+  }
+}
+
+/**
+ * Refuse checks an adapter declared that could not be told apart in a
+ * journal or a signature: a name that is not lower-case words joined by
+ * hyphens, one used twice, one a built-in check already has, or a check with
+ * no reason given.
+ */
+export function assertAppChecks(checks: readonly AppCheck[]): void {
+  const builtIn = new Set<string>(UNIVERSAL_CHECKS);
+  const seen = new Set<string>();
+  for (const check of checks) {
+    if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(check.name)) {
+      throw new Error(`The adapter's check ${JSON.stringify(check.name)} is not named in lower-case words joined by hyphens.`);
+    }
+    if (builtIn.has(check.name)) {
+      throw new Error(`The adapter's check ${check.name} has the name of a built-in check. Name it for what it asserts.`);
+    }
+    if (seen.has(check.name)) {
+      throw new Error(`The adapter declares two checks named ${check.name}, and a journal could not tell them apart.`);
+    }
+    if (!check.why.trim()) {
+      throw new Error(`The adapter's check ${check.name} gives no reason in why, which the report needs.`);
+    }
+    seen.add(check.name);
+  }
+}
+
+/**
+ * One adapter check, bounded by the responsive wait.
+ *
+ * A check that does not answer in time, or cannot reach an application that
+ * has gone, could not look, and says so; still-responding is the check that
+ * judges a hang or a crash. Anything else it throws is the check's own fault.
+ */
+async function runAppCheck(check: AppCheck, context: AppCheckContext, responsiveTimeoutMs: number): Promise<Verdict> {
+  const answer = await within(
+    Promise.resolve().then(() => check.run(context)),
+    responsiveTimeoutMs,
+    'rejections-too'
+  );
+  if (answer === TIMED_OUT) return { notRun: `it did not answer within ${responsiveTimeoutMs} ms` };
+  if (!answer.ok) {
+    if (GONE.test(firstLine(answer.error))) {
+      return { notRun: `the application could not be reached: ${firstLine(answer.error)}` };
+    }
+    throw new AdapterCheckError(check.name, answer.error);
+  }
+  const verdict = answer.value;
+  return 'notRun' in verdict ? { notRun: verdict.notRun } : [...verdict];
 }
 
 /** What a check found: its violations, or why it could not look. */
@@ -388,12 +482,11 @@ type Verdict = string[] | { notRun: string };
  * and is never run at all, so a check that would hang is not waited on.
  */
 async function judged(
-  check: UniversalCheck,
-  cfg: AppUnderTest,
+  check: string,
+  narrowing: Narrowing | undefined,
   known: ReadonlyMap<string, { readonly issue?: string }>,
   run: () => Promise<Verdict> | Verdict
 ): Promise<JournaledCheck> {
-  const narrowing = cfg.narrowedChecks?.[check];
   if (narrowing?.kind === 'off') {
     return { check, result: 'not-run', observation: 'switched off by the adapter', narrowed: narrowing.reason };
   }

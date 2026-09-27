@@ -20,13 +20,21 @@ import {
 
 const journey = defineJourney({ routes: 1, tripLength: 1 });
 
+// The override as the suite was started with it. Cleared for each test and
+// put back after, because a suite run with the override set, which another
+// run making phileas- folders at the same time asks for, would otherwise skip
+// the very check these tests expect to fire.
+const callersOverride = process.env[ALLOW_TEMP_LEFTOVERS_VARIABLE];
+
 test.beforeEach(() => {
   process.env[SEED_VARIABLE] = 'journey-end';
+  delete process.env[ALLOW_TEMP_LEFTOVERS_VARIABLE];
 });
 test.afterEach(() => {
   delete process.env[SEED_VARIABLE];
   delete process.env[RUN_VARIABLE];
-  delete process.env[ALLOW_TEMP_LEFTOVERS_VARIABLE];
+  if (callersOverride === undefined) delete process.env[ALLOW_TEMP_LEFTOVERS_VARIABLE];
+  else process.env[ALLOW_TEMP_LEFTOVERS_VARIABLE] = callersOverride;
 });
 
 test('a Journey that left a profile behind fails, naming it', () => {

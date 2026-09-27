@@ -8,6 +8,8 @@
 let all = [];
 let query = '';
 let category = '';
+// Set by the miscount plant: the count above the list stops agreeing with it.
+let miscount = false;
 
 const el = (id) => document.getElementById(id);
 
@@ -23,7 +25,8 @@ function visible() {
 function render() {
   const shown = visible();
 
-  el('count').textContent = shown.length === 1 ? '1 item' : `${shown.length} items`;
+  const counted = shown.length + (miscount ? 1 : 0);
+  el('count').textContent = counted === 1 ? '1 item' : `${counted} items`;
 
   const list = el('items');
   list.replaceChildren();
@@ -91,6 +94,10 @@ const PLANTED = {
   'log-error': ['Write in the logbook', () => window.buggy.plant('log-error')],
   'renderer-crash': ['Drop the lantern', () => window.buggy.plant('renderer-crash')],
   'main-exit': ['Miss the boat', () => window.buggy.plant('main-exit')],
+  miscount: ['Count the luggage', () => {
+    miscount = true;
+    render();
+  }],
 };
 
 async function addPlanted() {

@@ -58,14 +58,14 @@ Journey and derives each Route's seeds from them. And it now travels: a Route
 finds what the screen offers by accessibility role, draws its next move from
 its seed, acts, waits for the page to stop moving, and writes a journal entry
 per Hop. `testbed/buggy/` is a packaged application built to be traveled
-through, and two hundred and thirty-five tests run against it.
+through, and two hundred and forty tests run against it.
 
 Six checks run after every Hop: uncaught errors, console errors, still
 responding, the window still showing something, no unexpected dialog, and an
 error in a log the adapter names. A Route that fails one ends there and says
-which. The rest of the checks, and every check an application declares for
-itself, are unwritten; `docs/PLAN.md` names the files and the phase each one
-arrives in.
+which. An adapter can declare checks of its own, run after those and judged
+the same way. The rest of the built-in checks are unwritten; `docs/PLAN.md`
+names the files and the phase each one arrives in.
 
 ## Building and testing
 

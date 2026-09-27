@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { expect } from '@playwright/test';
+import { expect, test, type ElectronApplication, type Page } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import {
   CHECK_ORDER,
@@ -16,6 +16,9 @@ import {
   runRoute,
   showsNothing,
   signatureOf,
+  AdapterCheckError,
+  assertAppChecks,
+  type AppCheck,
   type AppUnderTest,
   type Chooser,
   type FixHopEntry,
@@ -148,6 +151,9 @@ firesOn('dialog', 'Ring the bell', 'no-unexpected-dialog', /alert: the bell rang
 firesOn('renderer-crash', 'Drop the lantern', 'still-responding', /the renderer crashed/);
 // Which of its signs arrives first varies, and any of them is the finding.
 firesOn('main-exit', 'Miss the boat', 'still-responding', /the window closed|the main process exited|the application closed/);
+// A check of buggy's own, declared in its adapter (R18): the heading above the
+// list stops agreeing with the list beneath it.
+firesOn('miscount', 'Count the luggage', 'count-matches-list', /the heading says \d+ items and the list shows \d+/);
 
 // The log is found through the environment the adapter hands the application,
 // and named in logPaths, the way a real adapter names where its application
@@ -244,7 +250,8 @@ healthy('on the unplanted application, nothing fires, and what cannot run says w
   for (const hop of hops) {
     // Every check on every Hop, in a fixed order, including the ones that did
     // not run: an absent check would read exactly like a passing one.
-    expect(hop.checks.map((check) => check.check)).toEqual([...CHECK_ORDER]);
+    // The adapter's own checks follow the built-in ones, in declared order.
+    expect(hop.checks.map((check) => check.check)).toEqual([...CHECK_ORDER, 'count-matches-list']);
     expect(hop.checks.filter((check) => check.result === 'failed')).toEqual([]);
     expect(result(hop.checks, 'log-error')).toEqual({
       check: 'log-error',
@@ -520,4 +527,97 @@ writtenTest('a named log that does not exist is not run, and says so, rather tha
     expect(check?.result).toBe('not-run');
     expect(check?.observation).toMatch(/does not exist, so it could not be read/);
   }
+});
+
+/** A check of the adapter's own, for the tests below. */
+function ownCheck(name: string, run: AppCheck['run'], why = 'a stated reason'): AppCheck {
+  return { name, why, run };
+}
+
+test('an adapter check named like a built-in, twice, without a reason or out of form is refused', () => {
+  const quiet = () => [];
+  expect(() => assertAppChecks([ownCheck('console-error', quiet)])).toThrow(/name of a built-in check/);
+  expect(() => assertAppChecks([ownCheck('same', quiet), ownCheck('same', quiet)])).toThrow(/two checks named same/);
+  expect(() => assertAppChecks([ownCheck('no-reason', quiet, '  ')])).toThrow(/gives no reason/);
+  expect(() => assertAppChecks([ownCheck('Count Matches', quiet)])).toThrow(/lower-case words/);
+  // The control: well-formed checks pass.
+  expect(() => assertAppChecks([ownCheck('one', quiet), ownCheck('two-more', quiet)])).not.toThrow();
+});
+
+/** One Hop on the unplanted application with these checks of the adapter's own. */
+async function oneHopWith(page: Page, app: ElectronApplication, checks: AppCheck[], seed: string) {
+  const root = scratch();
+  const cfg: AppUnderTest = { ...buggy, checks };
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg,
+    streams: deriveRouteStreams(seed, 1),
+    journeySeed: seed,
+    routeNumber: 1,
+    tripLength: 1,
+    journalsRoot: root,
+    ...SHORT,
+  }).then(
+    (value) => ({ value }),
+    (thrown: unknown) => ({ thrown })
+  );
+  return { outcome, root };
+}
+
+const own = createTest(buggy);
+own.afterEach(removeScratch);
+
+own('an adapter check that does not answer in time is recorded as not run, and the Route goes on', async ({ page, app }) => {
+  const { outcome, root } = await oneHopWith(page, app, [ownCheck('never-answers', () => new Promise(() => {}))], 'own-hang');
+  expect(outcome).toEqual({ value: { kind: 'passed', hops: 1 } });
+  const hop = journalIn(root).find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  expect(result(hop?.checks ?? [], 'never-answers')).toEqual({
+    check: 'never-answers',
+    result: 'not-run',
+    observation: 'it did not answer within 1000 ms',
+  });
+});
+
+own('an adapter check that throws ends the Route as a broken check, not a finding', async ({ page, app }) => {
+  const { outcome } = await oneHopWith(
+    page,
+    app,
+    [ownCheck('breaks', () => {
+      throw new Error('a selector the check got wrong');
+    })],
+    'own-throw'
+  );
+  expect('thrown' in outcome && outcome.thrown).toBeInstanceOf(AdapterCheckError);
+  expect('thrown' in outcome && String(outcome.thrown)).toMatch(/breaks threw.*a selector the check got wrong/);
+});
+
+own("an adapter check's violation is matched against known findings like a built-in one", async ({ page, app }) => {
+  const violation = 'the ledger does not balance';
+  const signature = signatureOf('ledger-balances', violation);
+  const knownFile = path.join(scratch(), 'known-findings.json');
+  fs.writeFileSync(
+    knownFile,
+    JSON.stringify([{ id: findingId(signature), check: 'ledger-balances', signature, added: '2026-09-27', source: 'journey' }])
+  );
+  const root = scratch();
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: { ...buggy, checks: [ownCheck('ledger-balances', () => [violation])] },
+    streams: deriveRouteStreams('own-known', 1),
+    journeySeed: 'own-known',
+    routeNumber: 1,
+    tripLength: 1,
+    journalsRoot: root,
+    knownFindings: knownFile,
+    ...SHORT,
+  });
+  // Carried past, because it is known; the same check with no known file ends
+  // the Route, which the throw and miscount tests above already show.
+  expect(outcome.kind).toBe('passed');
+  const hop = journalIn(root).find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  expect(result(hop?.checks ?? [], 'ledger-balances')?.findings).toEqual([
+    { id: findingId(signature), signature, known: true },
+  ]);
 });

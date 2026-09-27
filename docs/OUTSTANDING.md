@@ -29,14 +29,16 @@ Positron. Phases 0 through 4 are done and
 hardened, a packaged application it can launch, the seeds that make a run
 reproducible, and the Routes that travel through it and write down where
 they went. Six of the universal checks landed on 2026-09-26 for the Positron
-trial. What is unwritten is the rest: no navigation away, named controls, and
-every check an application declares for itself.
+trial, and on 2026-09-27 an adapter's own checks of two things on screen
+agreeing (R18), pulled forward from phase 6. What is unwritten is the rest:
+no navigation away, named controls, and the rest of phase 6.
 
 ### 1.2 Planted defects, and the applications still to build
 
-`testbed/buggy` exists and is structurally ordinary on purpose. **Eight
-defects are planted in it**, one per way a universal check fires, each behind
-its own launch flag. A test steers a Route straight to each, which proves the
+`testbed/buggy` exists and is structurally ordinary on purpose. **Twelve
+defects are planted in it**, each behind its own launch flag: eleven make the
+universal checks fire, and one makes the check `buggy`'s adapter declares
+fire. A test steers a Route straight to each, which proves the
 check and not the search, so nothing here yet shows a Journey finds anything.
 `PLAN.md` plants the rest across phases 5, 6 and 8, and phase 8 is where one
 Journey has to find them all.
@@ -533,6 +535,16 @@ route ends at the first violation, so a judgment nobody can reproduce would end
 routes at random and a red result would stop being worth reading. If a model
 ever judges, it is a separate tier with its own reporting, never mixed with the
 deterministic ones.
+
+**Asked 2026-09-27, and not decided:** "could Phileas go through journeys and
+feed them to an LLM to analyze?" A reading, not a decision: two uses fit the
+places above. It could point a person at Hops that look wrong, as
+suggestions that never end a Route. Or it could read many journals for two
+places on screen stating the same fact, and propose structural checks for a
+person to accept, which is helping write an application's own checks. Either
+sends journals to the model, and C3 says nothing a run produces is sent
+anywhere, so a hosted model needs that constraint changed or a model run on
+the same machine.
 
 ### 2.2 Publishing, deferred with an expiry that nothing currently watches
 

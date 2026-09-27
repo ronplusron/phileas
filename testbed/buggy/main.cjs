@@ -80,6 +80,7 @@ const PLANTS = [
   'log-error',
   'renderer-crash',
   'main-exit',
+  'miscount',
 ];
 const plants = process.argv
   .filter((arg) => arg.startsWith('--buggy-plant='))

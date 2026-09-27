@@ -221,6 +221,55 @@ export type Narrowing =
       accept(observation: string): boolean;
     };
 
+/**
+ * A check the adapter declares for its own application, run after every Hop,
+ * Fix steps included, after the built-in ones (R18).
+ *
+ * **What it asserts comes from the application agreeing with itself,** such
+ * as two places on screen stating the same fact, never from a bug report and
+ * never from the application's own code. A check written by knowing a bug
+ * finds that bug and proves nothing else, and one copied from the code passes
+ * whatever the code does. docs/PLAN.md has the decision, and ../CLAUDE.md the
+ * trap.
+ *
+ * Judged exactly as a built-in check is: each violation by its signature, a
+ * known finding carried past, and any other violation ending the Route.
+ */
+export interface AppCheck {
+  /**
+   * Lower-case words joined by hyphens, unique, and not the name of a
+   * built-in check. It begins every signature this check produces, so
+   * renaming it turns each of its known findings into a new one.
+   */
+  readonly name: string;
+
+  /** What should be true, and why it should: the report's reason for the check. */
+  readonly why: string;
+
+  /**
+   * What is wrong right now: an empty list when nothing is, or why the check
+   * could not look.
+   *
+   * **It reads and never acts.** A check that clicked, typed or waited for
+   * something to change would change what the next Hop surveys, and a
+   * replay would go somewhere else. It must also be deterministic, for the
+   * reason `Narrowing.accept` gives. The engine bounds it by the responsive
+   * wait, and a check that does not answer in time is recorded as not run.
+   */
+  run(context: AppCheckContext): Promise<AppCheckVerdict> | AppCheckVerdict;
+}
+
+/** What an adapter's check is handed. */
+export interface AppCheckContext {
+  readonly page: Page;
+  readonly app: ElectronApplication;
+  /** The page's settled accessibility tree, as the survey read it, or undefined when the page did not answer. */
+  readonly tree: unknown;
+}
+
+/** Each violation as one observation, or why the check could not look. */
+export type AppCheckVerdict = readonly string[] | { readonly notRun: string };
+
 export interface AppUnderTest {
   /**
    * A readable name for the application, for reports and for naming temporary
@@ -354,6 +403,13 @@ export interface AppUnderTest {
    * indistinguishable from one that passed.
    */
   narrowedChecks?: Partial<Record<UniversalCheck, Narrowing>>;
+
+  /**
+   * Checks of this application's own, run after the built-in ones on every
+   * Hop, in this order. See `AppCheck` for where what they assert must come
+   * from.
+   */
+  checks?: readonly AppCheck[];
 
   /**
    * How long the page must stay unchanged after a Hop to count as settled, in
