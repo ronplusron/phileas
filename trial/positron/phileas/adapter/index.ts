@@ -15,6 +15,9 @@ import type { Page } from '@playwright/test';
  */
 const homeIn = (userDataDir: string) => path.join(userDataDir, 'home');
 
+/** How long readiness watches for an error notification after the status bar. */
+const BOOT_ERROR_WATCH_MS = 1_000;
+
 export const positron: AppUnderTest = {
   productName: 'Positron',
   bundleDir: requireAppDir(),
@@ -126,8 +129,29 @@ export const positron: AppUnderTest = {
     },
   },
 
+  /**
+   * Ready once the status bar shows, and refused, in Positron's own words,
+   * when it booted into an error it announced (R24).
+   *
+   * An error at boot shows as an error notification rather than as a missing
+   * workbench: measured on 2026-09-26 with a settings file that is not valid
+   * JSON, where the status bar appeared and "Unable to write into user
+   * settings" followed 21 to 24 ms later on three launches. So readiness
+   * watches for one second after the status bar, about forty times that, and
+   * healthy launches showed no error notification in fifteen seconds.
+   */
   async waitForReady(page: Page): Promise<void> {
     await page.locator('.monaco-workbench .part.statusbar').waitFor({ state: 'visible', timeout: 60_000 });
+
+    const errors = page.locator('.notification-list-item:has(.codicon-error) .notification-list-item-message');
+    const until = Date.now() + BOOT_ERROR_WATCH_MS;
+    while (Date.now() < until) {
+      const said = await errors.allTextContents();
+      if (said.length) {
+        throw new Error(`Positron booted into an error state: ${said.join(' | ')}`);
+      }
+      await page.waitForTimeout(100);
+    }
   },
 };
 

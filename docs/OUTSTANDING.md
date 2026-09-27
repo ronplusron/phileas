@@ -394,12 +394,8 @@ lands as its own change and says so.
 ### 1.12 What is left of the Positron adapter
 
 The adapter in `trial/positron/` works against the current release, and
-`PLAN.md` has what was measured and decided for it. Three things are open:
+`PLAN.md` has what was measured and decided for it. Two things are open:
 
-- **Readiness does not yet throw on a bad boot (R24).** `waitForReady` waits
-  for the status bar and nothing else. What Positron shows when it boots into
-  an error state has not been found, so a bad boot would end as a timeout
-  rather than in Positron's own words.
 - **The three old releases have not been launched through it.** They predate
   the current one by up to two years, and `--use-mock-keychain`,
   `--logsPath`, `--disable-extension`, the in-page menu and dialog settings,

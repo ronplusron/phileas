@@ -25,6 +25,21 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: Positron's readiness refuses a boot into an error
+
+**The measurement.** A Positron boot into an error still showed its status
+bar, so readiness passed it. With a settings file that is not valid JSON,
+Positron booted and showed an error notification, "Unable to write into user
+settings", 21 to 24 ms after the status bar on three launches; healthy
+launches showed none in fifteen seconds.
+
+**What landed.** The adapter's readiness watches for an error notification
+for one second after the status bar, about forty times the delay measured,
+and throws with its text, which is R24: a bad boot reported in Positron's own
+words rather than passed or timed out. It costs a second per Route. A broken
+boot now fails with that message and a healthy one passes, and three Routes
+of twenty Hops passed with it.
+
 ## 2026-09-27: a profile recreated after its delete is deleted again
 
 **The measurement.** With profiles deleted reliably, three still turned up in
