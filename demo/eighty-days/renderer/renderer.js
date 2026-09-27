@@ -599,7 +599,7 @@ function renderAbout() {
   $('about').replaceChildren(
     h('h2', {}, 'About'),
     h('p', {}, 'A game after Around the World in Eighty Days, by Jules Verne, in the translation by George M. Towle, built to show Phileas at work. Nothing in it is random: every event follows from where Fogg is, the date, and what was chosen.'),
-    h('p', {}, 'The pictures are engravings from the 1873 edition.'),
+    h('p', {}, 'The pictures are engravings after Alphonse de Neuville and L\u00e9on Benett, from the 1873 Boston edition of J. R. Osgood & Co., taken from the Internet Archive\u2019s scan of the New York Public Library\u2019s copy. They are out of copyright.'),
     h('a', { href: 'https://www.gutenberg.org/ebooks/103', id: 'book-link' }, 'Read the book at Project Gutenberg')
   );
 }

@@ -626,3 +626,49 @@ main.with-panel {
 #panel .place-head {
   grid-template-columns: 1fr;
 }
+
+/* --- the engravings ------------------------------------------------------ */
+
+/*
+  The 1873 edition's engravings, one per place and one for each ending.
+  renderer/engravings/CREDITS.md says where each came from. Shown as a
+  background, so the picture is never in the accessibility tree.
+*/
+.engraving {
+  height: 190px;
+  background-color: #efe3c5;
+  background-size: cover;
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  filter: sepia(0.25) contrast(1.05);
+}
+.ending .engraving {
+  height: 340px;
+  background-size: contain;
+  background-position: center;
+}
+.place-club { background-image: url(engravings/club.jpg); }
+.place-london { background-image: url(engravings/london.jpg); }
+.place-brindisi { background-image: url(engravings/brindisi.jpg); }
+.place-suez { background-image: url(engravings/suez.jpg); }
+.place-aden { background-image: url(engravings/aden.jpg); }
+.place-bombay { background-image: url(engravings/bombay.jpg); }
+.place-kholby { background-image: url(engravings/kholby.jpg); }
+.place-pillaji { background-image: url(engravings/pillaji.jpg); }
+.place-allahabad { background-image: url(engravings/allahabad.jpg); }
+.place-calcutta { background-image: url(engravings/calcutta.jpg); }
+.place-singapore { background-image: url(engravings/singapore.jpg); }
+.place-hongkong { background-image: url(engravings/hongkong.jpg); }
+.place-shanghai { background-image: url(engravings/shanghai.jpg); }
+.place-yokohama { background-image: url(engravings/yokohama.jpg); }
+.place-honolulu { background-image: url(engravings/honolulu.jpg); }
+.place-sanfrancisco { background-image: url(engravings/sanfrancisco.jpg); }
+.place-panama { background-image: url(engravings/panama.jpg); }
+.place-saltlake { background-image: url(engravings/saltlake.jpg); }
+.place-fortkearney { background-image: url(engravings/fortkearney.jpg); }
+.place-omaha { background-image: url(engravings/omaha.jpg); }
+.place-newyork { background-image: url(engravings/newyork.jpg); }
+.place-queenstown { background-image: url(engravings/queenstown.jpg); }
+.place-liverpool { background-image: url(engravings/liverpool.jpg); }
+.place-won { background-image: url(engravings/won.jpg); }
+.place-lost { background-image: url(engravings/lost.jpg); }
