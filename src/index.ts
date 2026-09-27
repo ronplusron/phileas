@@ -57,7 +57,7 @@ export {
   type Journey,
   type JourneyTerms,
 } from './journey';
-export { startJourney, finishJourney } from './start';
+export { startJourney, finishJourney, runEveryCheck, watchTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start';
 export {
   signatureOf,
   findingId,

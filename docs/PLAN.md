@@ -698,7 +698,8 @@ while the known bugs were still 7776, 7098 and 5460, and confirmed on
 question and answered "OK let's do this in order": known findings, below;
 a guard for profiles a Journey leaves in the temp folder; the three old
 releases through the adapter (`OUTSTANDING.md` 1.12); then steps 3, 4, 5 and
-6 as numbered above.
+6 as numbered above. The first two were done on 2026-09-27; `HISTORY.md`
+records each.
 
 ### Before the rest of the trial: known findings
 

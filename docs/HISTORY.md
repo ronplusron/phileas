@@ -25,6 +25,35 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: a Journey fails on a profile it left in the temp folder
+
+**Why.** The engine watches a deleted profile and deletes it again if a late
+helper recreates it, but a writer later than the watch still leaked one, and
+nothing looked at the temp folder after a Journey. `npm test` already failed
+on its own leftovers; a Journey did not.
+
+**What landed.** `startJourney` notes which `phileas-` folders are in the
+system temp folder, and `finishJourney` fails the run on any that appeared
+during the Journey and are still there, by name. It takes the same override
+as `npm test`'s check, `PHILEAS_ALLOW_TEMP_LEFTOVERS=1`, and says what it
+skipped. The check is one function, `watchTempFolder`, which `npm test`'s
+global setup now calls too, so the two cannot drift apart. The end of a
+Journey runs every check through `runEveryCheck` and then fails once with
+all of them, so a known findings file that cannot be written, or the trial's
+home folder guard, never hides a profile left behind, or the other way
+round. Known findings became optional in `finishJourney`, so every
+consumer can return it: `buggy`'s and the rail demo's global setups now do,
+as the trial's already did. This closes the late-writer entry in `DEFECTS.md`,
+whose own terms were that it leaves once a Journey reports a profile it left
+behind.
+
+**Tested.** Five new tests, 198 in all: a leftover fails the run naming it,
+nothing left passes, the override skips with a warning naming it, every end
+check runs when an earlier one fails, and a known findings failure still
+reports a leftover. The last two failed with `runEveryCheck` made to stop at
+the first failure. A one-Route `buggy` Journey exited 0, and exited 1 naming
+the folder when one was planted in the temp folder after it started.
+
 ## 2026-09-27: known findings, so a filed bug stops needing an adapter change
 
 **Why.** A failed check ends the Route, so a bug on a common path ended most

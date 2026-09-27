@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Three defects are recorded.** The launch layer landed in phase 1, so this file
+**Two defects are recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows are three defects, then the two things most likely to be filed here
+What follows are two defects, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -109,28 +109,6 @@ it had said nothing.
 that copies the application's standard error to a file in the profile, so
 nothing is lost. It puts a shell between the engine and the process the
 bounded close kills, which needs measuring before it is taken.
-
-## A helper later than the watch can recreate a deleted profile
-
-**Filed 2026-09-27, measured on Positron.** A Copilot helper started as
-Positron closed, lived 6 ms, and wrote its log into the Route's home folder
-after the profile had been deleted, bringing the folder back: three Positron
-profiles were left in the system temp folder by one evening's probes. The
-same helper is what had written into the real home folder before each Route
-had its own.
-
-**What is done, and what is not.** The engine now watches a deleted profile
-and deletes it again if it comes back, for 250 ms by default or what an
-adapter sets as `profileWatchMs`; the Positron adapter sets one second. A
-profile that keeps coming back fails the teardown by name. **A writer later
-than the watch still leaks a folder**, and silently: nothing checks the temp
-folder after a Journey. The alternative weighed was waiting for every
-process descended from the application before deleting, which a helper
-started during shutdown can still slip past.
-
-**This entry leaves when** either a Journey reports a profile it left
-behind, or the engine waits for the application's descendants and that is
-shown to catch a helper started during shutdown.
 
 ## Two things that will look like candidates, and are not
 

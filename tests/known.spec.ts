@@ -7,6 +7,7 @@ import {
   RUN_VARIABLE,
   SEED_VARIABLE,
   createTest,
+  defineJourney,
   deriveRouteStreams,
   findingId,
   finishJourney,
@@ -18,6 +19,7 @@ import {
   renderJourneyFindings,
   runRoute,
   signatureOf,
+  startJourney,
   type AppUnderTest,
   type Chooser,
   type KnownFinding,
@@ -145,16 +147,19 @@ test("a Journey's end adds what it found as unfiled, and says what was seen and 
 });
 
 test("finishJourney finds the Journey's run by its seed and run name", () => {
+  // Every scratch folder is made before the Journey starts, since one made
+  // after would count as something the Journey left behind.
   const root = scratch('phileas-known-test-');
+  const found = runWith([{ signature: 'console-error: from the run', known: false }]);
   process.env[SEED_VARIABLE] = 'known-seed';
-  process.env[RUN_VARIABLE] = 'known-run';
   try {
-    const run = journalFolder(root, 'known-seed', 'known-run');
-    fs.mkdirSync(run, { recursive: true });
-    fs.copyFileSync(path.join(runWith([{ signature: 'console-error: from the run', known: false }]), 'route-001-abc.jsonl'), path.join(run, 'route-001-abc.jsonl'));
+    const { run } = startJourney(defineJourney({ routes: 1, tripLength: 1 }));
+    const folder = journalFolder(root, 'known-seed', run);
+    fs.mkdirSync(folder, { recursive: true });
+    fs.copyFileSync(path.join(found, 'route-001-abc.jsonl'), path.join(folder, 'route-001-abc.jsonl'));
     const file = path.join(root, 'known-findings.json');
 
-    expect(finishJourney({ journalsRoot: root, knownFindings: file }).added.map((a) => a.signature)).toEqual([
+    expect(finishJourney({ journalsRoot: root, knownFindings: file })?.added.map((a) => a.signature)).toEqual([
       'console-error: from the run',
     ]);
   } finally {
