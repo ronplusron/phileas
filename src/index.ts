@@ -57,7 +57,19 @@ export {
   type Journey,
   type JourneyTerms,
 } from './journey';
-export { startJourney } from './start';
+export { startJourney, finishJourney } from './start';
+export {
+  signatureOf,
+  findingId,
+  readKnownFindings,
+  markFiled,
+  findingsInRun,
+  recordJourneyFindings,
+  renderJourneyFindings,
+  type KnownFinding,
+  type KnownFindings,
+  type JourneyFindings,
+} from './known.mjs';
 export {
   createRng,
   deriveRouteSeed,

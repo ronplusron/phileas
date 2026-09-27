@@ -113,15 +113,33 @@ function valueText(value) {
  * Only failures are printed. A line listing eight passes per Hop would bury
  * the one Hop that matters, and the journal keeps every result, not-run
  * included, for anyone who wants them.
- * @param {readonly { check: string, result?: string, observation?: string }[] | undefined} checks
+ * A failed check gives the id of what it found, which is what
+ * `phileas known add` takes to file it.
+ * @param {readonly { check: string, result?: string, observation?: string, findings?: readonly { id: string, known: boolean }[] }[] | undefined} checks
  * @returns {string}
  */
 function failedText(checks) {
   const failed = (checks ?? []).filter((check) => check.result === 'failed');
   if (!failed.length) return '';
   return `   CHECK FAILED: ${failed
-    .map((check) => `${check.check}: ${(check.observation ?? '').split('\n')[0]}`)
+    .map((check) => {
+      const ids = (check.findings ?? []).filter((finding) => !finding.known).map((finding) => finding.id);
+      return `${check.check}: ${(check.observation ?? '').split('\n')[0]}${ids.length ? ` (finding ${ids.join(', ')})` : ''}`;
+    })
     .join('; ')}`;
+}
+
+/**
+ * The known findings a Hop carried on past, as a suffix to its line, or
+ * nothing. Printed, since a Route travelling past a bug should never read as
+ * a Hop where nothing happened.
+ * @param {readonly { findings?: readonly { id: string, known: boolean, issue?: string }[] }[] | undefined} checks
+ * @returns {string}
+ */
+function knownText(checks) {
+  const known = (checks ?? []).flatMap((check) => (check.findings ?? []).filter((finding) => finding.known));
+  if (!known.length) return '';
+  return `   known: ${known.map((finding) => `${finding.id} (${finding.issue ? `issue ${finding.issue}` : 'unfiled'})`).join(', ')}`;
 }
 
 /**
@@ -149,6 +167,7 @@ export function renderEntry(entry, routeNumber) {
         column(`${route}  fix ${entry.hop}`, 18),
         column(shortened(entry.name, 39), 40),
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
+        knownText(entry.checks),
         failedText(entry.checks),
       ].join('');
     case 'trip-hop': {
@@ -160,6 +179,7 @@ export function renderEntry(entry, routeNumber) {
         value ? `${value}   ` : '',
         effectText(entry.effect),
         entry.abandoned ? `   (gave up: ${entry.abandoned})` : '',
+        knownText(entry.checks),
         failedText(entry.checks),
       ].join('');
     }

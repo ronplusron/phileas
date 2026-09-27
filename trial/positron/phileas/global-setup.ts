@@ -1,12 +1,17 @@
 import os from 'node:os';
-import { startJourney } from '@drugstoresushi/phileas';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { finishJourney, startJourney } from '@drugstoresushi/phileas';
 import { journey } from './journeys';
 import { guardHome } from './home-guard';
 
+const here = path.dirname(fileURLToPath(import.meta.url));
+
 /**
  * Settle the seed, name the run and print its settings, once, before any Route
- * starts. Returns the home folder guard, which Playwright runs as teardown
- * whether the Routes passed or not.
+ * starts. Returns what runs when the Journey ends, whether the Routes passed
+ * or not: the known findings brought up to date with what this Journey found,
+ * and the home folder guard.
  *
  * The folder the run was started from is watched as well, since that is where
  * an application's relative writes landed before the engine launched it from
@@ -14,8 +19,15 @@ import { guardHome } from './home-guard';
  */
 export default function globalSetup(): () => void {
   startJourney(journey);
-  return guardHome(os.homedir(), {
+  const checkHome = guardHome(os.homedir(), {
     dir: process.cwd(),
     ownEntries: ['.phileas-journals', 'test-results', 'playwright-report'],
   });
+  return () => {
+    finishJourney({
+      journalsRoot: path.join(here, '.phileas-journals'),
+      knownFindings: path.join(here, 'known-findings.json'),
+    });
+    checkHome();
+  };
 }

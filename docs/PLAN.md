@@ -694,6 +694,58 @@ Missing it is an answer too, and is recorded as one. The bar was agreed
 while the known bugs were still 7776, 7098 and 5460, and confirmed on
 2026-09-26 for the three above: "2 of 3 is correct."
 
+**Order agreed 2026-09-27 for what remains of the trial,** proposed with the
+question and answered "OK let's do this in order": known findings, below;
+a guard for profiles a Journey leaves in the temp folder; the three old
+releases through the adapter (`OUTSTANDING.md` 1.12); then steps 3, 4, 5 and
+6 as numbered above.
+
+### Before the rest of the trial: known findings
+
+Asked for on 2026-09-27 as high priority, in the words it was put:
+"constantly updating the adapter manually whenever a bug is discovered is
+untenable." `OUTSTANDING.md` 1.13 has what raised it: a failed check ends the
+Route, so a bug on a common path ends most Routes, and the only way past one
+today is a hand-written narrowing per bug.
+
+**Decided 2026-09-27, before building it, each from a proposal made with the
+question:**
+
+- **Matching is by a signature the engine makes,** over hand-written
+  patterns. It is the failed observation with what changes from run to run
+  taken out: temporary folders, timestamps, process ids, durations and Hop
+  numbers. Issue 44's log line becomes `log-error: [error] An error occurred
+  when deactivating the extension 'positron.positron-connections':`. A
+  message that changes its wording is a new finding.
+- **A Route that meets a known finding records it and carries on.** The
+  Hop's line says which issue it is; any other failed observation on the same
+  Hop still ends the Route. Chosen over ending the Route with the finding
+  classed as known, which would leave the trial blind past it.
+- **A bug becomes known two ways, asked for together: "Can we do 1 and 3".**
+  `phileas known add <signature> --issue <issue>` marks one as filed. And at
+  a Journey's end, every signature it found that the file does not hold is
+  added as known but unfiled, with no issue. An unfiled finding no longer
+  ends Routes from the next Journey on, and every Journey's summary keeps
+  listing it, with how often it was seen, until someone files it: it stops
+  blocking without going quiet.
+- **New entries take effect from the next Journey, never within one.**
+  Otherwise Route 7 would carry on past a bug only because Route 3 had found
+  it, and Route 7 replayed alone would end differently, which is the
+  dependence between Routes that `../CLAUDE.md` rules out. So every Route of
+  a Journey reads the same file, and it is written only when the Journey
+  ends.
+- **A known finding not seen in a Journey is reported,** as possibly fixed
+  or possibly not reached, which is the only way an entry for a bug Positron
+  fixed ever comes to light.
+- **The file is an input to outcomes, not to draws,** so each Route's opening
+  journal line records which version of it the Route ran with: a Route that
+  ended at hop 8 now goes on, while hops 1 to 8 retrace unchanged, and a
+  replay under a newer file must not read as a different application.
+- **Narrowings go back to meaning only "normal for this application".** The
+  two added for issues 44 and 46 become entries in the file.
+
+**Built 2026-09-27.** `HISTORY.md` has what landed and how it was proved.
+
 ### Phase 5: the universal tier, and the Route as a test
 
 The journal already exists from phase 4; this phase fills in its check-results

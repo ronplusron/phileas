@@ -62,6 +62,18 @@ export interface JournaledCheck {
   readonly observation?: string;
   /** The adapter's reason, where it narrowed or switched off this check (R19). */
   readonly narrowed?: string;
+  /**
+   * Each violation this check saw, by its signature, and whether it was a
+   * known finding, which lets the Route carry on. Read at a Journey's end to
+   * add what it found to the known findings. Absent in journals written
+   * before 2026-09-27, and where the check saw nothing.
+   */
+  readonly findings?: readonly {
+    readonly id: string;
+    readonly signature: string;
+    readonly known: boolean;
+    readonly issue?: string;
+  }[];
 }
 
 /**
@@ -250,6 +262,14 @@ export interface OpeningEntry {
    * 2026-09-26, when standard entries were still offered.
    */
   readonly allowStandardMenuRoles?: readonly string[];
+  /**
+   * Which known findings the Route ran with: the file's version and how many
+   * it held. Written because the file decides where a Route ends, though not
+   * what it draws, and a replay under a newer file would otherwise look like a
+   * different application. Absent where no known findings were given, and in
+   * journals written before 2026-09-27.
+   */
+  readonly knownFindings?: { readonly version: string; readonly entries: number };
   readonly startedAt: string;
 }
 

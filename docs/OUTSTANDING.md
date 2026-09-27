@@ -401,35 +401,6 @@ The adapter in `trial/positron/` works against the current release, and
   `--logsPath`, `--disable-extension`, the in-page menu and dialog settings,
   and the Copilot extension being there to disable all need checking on each
   before trial step 5 runs.
-### 1.13 Known findings, so a filed bug stops needing an adapter change
-
-Agreed 2026-09-27, and asked to be treated as high priority, in the words it
-was put: "constantly updating the adapter manually whenever a bug is
-discovered is untenable."
-
-**What raised it.** A failed check ends the Route (R16), so a bug on a path
-Routes take often ends a large share of them, and the trial sees nothing past
-it. The first Positron bug, issue 44, fires on every window reload, and so
-does a cancellation Positron logs as an error. The only way past either today
-is a narrowing in the adapter, one hand-written rule per bug: issue 44 and
-issue 46, the cancellation, each have one. A narrowing
-(R19) is meant for what is normal for an application, so this mixes "this is
-fine" with "this is broken and we know", and it is a hand-kept list that goes
-stale in silence: when Positron fixes the bug, the rule matches nothing and
-says nothing.
-
-**What is wanted, a reading and not yet a design:** a record of findings
-already filed, each with its issue, kept apart from narrowings. A Route that
-meets a known finding records it as known and carries on; a known finding
-that stops appearing across a Journey is reported as possibly fixed. It is
-also the first real case for the open question in `PRODUCT_REQUIREMENTS.md`
-section 11, what a Journey does with the same defect found on several
-Routes.
-
-**Where it goes in the build order is not yet placed.** The trial's run of
-500 Routes is where manual rules would pile up, so before that run is the
-obvious candidate; it has not been agreed.
-
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

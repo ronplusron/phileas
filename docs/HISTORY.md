@@ -25,6 +25,48 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: known findings, so a filed bug stops needing an adapter change
+
+**Why.** A failed check ends the Route, so a bug on a common path ended most
+Routes, and the only way past one was a narrowing in the adapter, written by
+hand per bug. Asked for as high priority: "constantly updating the adapter
+manually whenever a bug is discovered is untenable." The design, each part
+decided with a proposal, is in `PLAN.md` under "Before the rest of the trial:
+known findings".
+
+**What landed.** `src/known.mjs`, plain JavaScript so the `phileas` command
+can load it. Each violation a check sees gets a signature, the observation
+with what varies from run to run taken out, and a short id; every Hop's line
+lists its checks' findings. A consumer passes `knownFindings` to `runRoute`,
+read once at the Route's start and named by version on its opening line, and
+a finding it holds no longer fails the check. `finishJourney`, which a
+global setup returns, adds a Journey's new findings to the file unfiled when
+it ends and prints what was seen, what is unfiled and what was not seen.
+`phileas known add <id> --issue <issue>` files one. The renderer shows known
+findings on a Hop's line and a failed check's finding id.
+
+**The signature rules were measured, not guessed.** Every failed-check line
+in the trial's journals was read first: log lines vary in their profile path
+and timestamp, hangs in their Hop number and durations, deprecation warnings
+in their process id, and stacks in their frame positions. Two runs of issue
+44 on different days share id `baa530b2`.
+
+**The trial moved onto it.** Issues 44 and 46 left the adapter's narrowings
+for `trial/positron/phileas/known-findings.json`, and a Route that opens a
+folder on Positron travels past the reload on them alone, all three
+messages recorded as known. A three-Route Journey reported all three as not
+seen, since none opened a folder, which is the report working.
+
+**Tested.** Eleven new tests, 193 in all: signatures of real lines, the file
+refused when unreadable, filing by id, what a Journey's end adds and says,
+the command's parsing, and a real Route over `buggy` carrying on past a known
+log error, with its control ending there and naming the finding.
+
+**A partial answer to an open question.** `PRODUCT_REQUIREMENTS.md` section 11
+asks what a Journey does with one defect found on several Routes. The
+summary now lists each finding once, with how often it was seen; the
+question stays open there until it is taken up as a requirement.
+
 ## 2026-09-27: Routes travel past a window reload, and known findings are asked for
 
 **The measurement.** Opening a folder reloads Positron's window, and every

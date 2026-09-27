@@ -1,4 +1,7 @@
-import { overriddenTerms, resolveRun, resolveSeed, SEED_VARIABLE, type Journey } from './journey';
+import { overriddenTerms, requireRun, requireSeed, resolveRun, resolveSeed, SEED_VARIABLE, type Journey } from './journey';
+import path from 'node:path';
+import { journalFolder } from './journal';
+import { recordJourneyFindings, renderJourneyFindings, type JourneyFindings } from './known.mjs';
 import { windowMode } from './launch';
 import { followFromEnvironment, hopDelayFromEnvironment } from './route';
 
@@ -60,4 +63,25 @@ export function startJourney(journey: Journey): {
 
   for (const line of settings) console.log(line);
   return { seed, run, settings };
+}
+
+/**
+ * End a Journey: add what it found to the known findings, and say what was
+ * seen, what is still unfiled and what was not seen. For a consumer's global
+ * setup to return, so that Playwright runs it once every Route has ended,
+ * whether they passed or not.
+ *
+ * Here and nowhere else, so that every Route of a Journey read the same known
+ * findings. A Route that carried on past a bug only because an earlier Route
+ * in the same Journey had found it would end differently replayed alone,
+ * which is the dependence between Routes the design rules out.
+ */
+export function finishJourney(options: { journalsRoot: string; knownFindings: string }): JourneyFindings {
+  const run = journalFolder(options.journalsRoot, requireSeed(), requireRun());
+  const findings = recordJourneyFindings(run, options.knownFindings);
+  console.log('');
+  // Named from where the run was started, so a summary names no home folder.
+  const shown = path.relative(process.cwd(), options.knownFindings) || options.knownFindings;
+  for (const line of renderJourneyFindings(findings, shown)) console.log(line);
+  return findings;
 }

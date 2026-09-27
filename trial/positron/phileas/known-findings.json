@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1759e6e8",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 [lifecycle]: Error during will-shutdown phase in default joiners (error: Canceled)",
+    "issue": "ronplusron/phileas#46",
+    "added": "2026-09-27",
+    "source": "command"
+  },
+  {
+    "id": "baa530b2",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] An error occurred when deactivating the extension 'positron.positron-connections':",
+    "issue": "ronplusron/phileas#44",
+    "added": "2026-09-27",
+    "source": "command"
+  },
+  {
+    "id": "1f937235",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] TypeError: Cannot read properties of undefined (reading 'subscriptions')",
+    "issue": "ronplusron/phileas#44",
+    "added": "2026-09-27",
+    "source": "command"
+  }
+]

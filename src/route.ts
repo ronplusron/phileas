@@ -6,6 +6,7 @@ import { Journal, journalFolder, type HopAction, type JournaledCandidate, type J
 import { requireRun } from './journey';
 import { clickMenuItem } from './menu';
 import { renderEntry, targetText } from './report/render.mjs';
+import { readKnownFindings } from './known.mjs';
 import { CheckFailure, failedChecks, startWatching, STALLED, type Watch } from './oracles/index';
 import {
   createExclusionTally,
@@ -403,6 +404,13 @@ export interface RunRouteOptions {
    * only where the adapter's `logPaths` is written as a function of it.
    */
   readonly userDataDir?: string;
+  /**
+   * The consumer's known findings file, which may not exist yet. A violation
+   * it holds is recorded and the Route carries on. Read once, here, and never
+   * written during a Journey: `finishJourney` adds what a Journey found when
+   * it ends. See `known.mjs`.
+   */
+  readonly knownFindings?: string;
 }
 
 /**
@@ -557,6 +565,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     surveyOnly = surveyFromEnvironment(),
     responsiveTimeoutMs,
     userDataDir,
+    knownFindings,
   } = options;
   const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
   const shares = sharesFor(cfg);
@@ -616,6 +625,10 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     return { kind: 'passed', hops: 0 };
   }
 
+  // Read before the journal opens, so a file that cannot be read stops the Route
+  // before it has anything to record, and the opening line can name its version.
+  const known = knownFindings === undefined ? undefined : readKnownFindings(knownFindings);
+
   // Opened and flushed before the Route does anything, so that a Route which
   // dies inside its Fix still leaves a file naming the seed that produced it.
   const journal = Journal.open(journalFolder(journalsRoot, journeySeed, requireRun()), {
@@ -626,6 +639,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     settleQuietMs,
     ...shares,
     allowStandardMenuRoles: (cfg.exclusions.allowStandardMenuRoles ?? []).map((role) => role.toLowerCase()),
+    ...(known ? { knownFindings: { version: known.version, entries: known.entries.length } } : {}),
   }, { follow });
 
   const tally = createExclusionTally(cfg.exclusions);
@@ -636,7 +650,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     // Started before the Fix, since the checks run after Fix steps too, and
     // inside the try, so a Route whose watching cannot start still closes its
     // journal with the reason.
-    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs, userDataDir });
+    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs, userDataDir, known });
 
     if (fix) {
       await runFix(fix, {

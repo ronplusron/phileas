@@ -4,6 +4,7 @@
 //   phileas run [config] [flags] [-- extra Playwright arguments]
 //   phileas show [run folder, seed folder, journal file or seed]
 //   phileas survey [config]
+//   phileas known add <id> --issue <issue> [file]
 //
 // `run` runs a Journey with its settings changed for one run. Real flags need
 // a command of their own, because Playwright refuses any it does not know
@@ -19,7 +20,11 @@
 // Fix's hop() takes, so a Fix is written by copying lines rather than by
 // reading the application's code.
 //
-// docs/HISTORY.md has the reasoning for both.
+// `known add` marks a finding filed with its issue. A Journey adds what it found
+// to the known findings by itself when it ends, unfiled; this records the issue
+// once somebody has filed it.
+//
+// docs/HISTORY.md has the reasoning for each.
 //
 // Plain JavaScript on purpose, with its types in comments that the compiler
 // checks. The engine is TypeScript imported without file extensions, which
@@ -34,6 +39,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderJournal } from '../src/report/render.mjs';
+import { markFiled } from '../src/known.mjs';
 
 /** Flags that take a value, and the variable each travels in. */
 const FLAGS = /** @type {Record<string, string>} */ ({
@@ -55,11 +61,13 @@ const SWITCHES = /** @type {Record<string, string>} */ ({
 // `phileas run --routes 3` needs no path there, and where its journals go.
 const DEFAULT_CONFIG = 'phileas';
 const DEFAULT_JOURNALS = path.join(DEFAULT_CONFIG, '.phileas-journals');
+const DEFAULT_KNOWN = path.join(DEFAULT_CONFIG, 'known-findings.json');
 
 const USAGE = `Usage:
   phileas run [config] [flags] [-- extra Playwright arguments]
   phileas show [what]
   phileas survey [config]
+  phileas known add <id> --issue <issue> [file]
 
 run: run a Journey, with its settings changed for this run only.
   config    A Playwright config file, or a folder holding playwright.config.ts.
@@ -83,7 +91,13 @@ survey: print what the engine sees when the application starts, one line per
   control, each in the form a Fix's hop() takes. Then, if there is a Fix, run
   it, printing each step, and print what the engine sees after it, where the
   Trip would begin. Nothing travels and no journal is written.
-  config    As for run. Defaults to ${DEFAULT_CONFIG}/.`;
+  config    As for run. Defaults to ${DEFAULT_CONFIG}/.
+
+known add: mark a known finding as filed. A Journey adds each finding it
+  meets to the known findings, unfiled, when it ends, and prints its id.
+  id        The finding's id, or enough of its start to name one.
+  --issue   Where it was filed, such as ronplusron/phileas#44.
+  file      The known findings. Defaults to ${DEFAULT_KNOWN}.`;
 
 /**
  * @param {string} message
@@ -98,7 +112,8 @@ function refuse(message) {
  * @typedef {{ command: 'help' }
  *   | { command: 'run', config: string, settings: Record<string, string>, passThrough: string[] }
  *   | { command: 'show', what: string | undefined }
- *   | { command: 'survey', config: string }} Parsed
+ *   | { command: 'survey', config: string }
+ *   | { command: 'known-add', id: string, issue: string, file: string }} Parsed
  */
 
 /**
@@ -125,9 +140,31 @@ export function parse(args) {
     if (config?.startsWith('-')) throw new Error(`survey takes no flags, and was given ${config}`);
     return { command: 'survey', config: config ?? DEFAULT_CONFIG };
   }
+  if (command === 'known') {
+    const [sub, ...args] = rest;
+    if (sub !== 'add') throw new Error(`known takes add, and was given ${sub ?? 'nothing'}`);
+    /** @type {string | undefined} */ let id;
+    /** @type {string | undefined} */ let issue;
+    /** @type {string | undefined} */ let file;
+    for (let i = 0; i < args.length; i += 1) {
+      const arg = /** @type {string} */ (args[i]);
+      if (arg === '--issue' || arg.startsWith('--issue=')) {
+        if (issue !== undefined) throw new Error('--issue was given twice');
+        issue = arg.includes('=') ? arg.slice('--issue='.length) : args[(i += 1)];
+        if (!issue || issue.startsWith('-')) throw new Error('--issue needs a value');
+      } else if (arg.startsWith('-')) {
+        throw new Error(`unknown flag ${arg}`);
+      } else if (id === undefined) id = arg;
+      else if (file === undefined) file = arg;
+      else throw new Error(`known add takes an id and a file, and was given ${arg} as well`);
+    }
+    if (!id) throw new Error('known add needs the id of a finding');
+    if (!issue) throw new Error('known add needs --issue, saying where the finding was filed');
+    return { command: 'known-add', id, issue, file: file ?? DEFAULT_KNOWN };
+  }
   if (command !== 'run') {
     throw new Error(
-      command ? `unknown command ${command}; the commands are run, show and survey` : 'no command given'
+      command ? `unknown command ${command}; the commands are run, show, survey and known` : 'no command given'
     );
   }
 
@@ -300,6 +337,24 @@ function show(what) {
   }
 }
 
+/**
+ * @param {string} id
+ * @param {string} issue
+ * @param {string} file
+ */
+function knownAdd(id, issue, file) {
+  if (!fs.existsSync(file)) {
+    refuse(`there is no ${file}; a Journey writes it when it ends, or give the file`);
+  }
+  try {
+    const filed = markFiled(file, id, issue);
+    console.log(`${filed.id} is filed as ${issue}: ${filed.signature}`);
+  } catch (error) {
+    console.error(`phileas: ${/** @type {Error} */ (error).message}`);
+    process.exit(2);
+  }
+}
+
 function main() {
   /** @type {Parsed} */
   let parsed;
@@ -312,6 +367,7 @@ function main() {
   else if (parsed.command === 'show') show(parsed.what);
   // One Route is enough to see the start, since every Route starts the same way.
   else if (parsed.command === 'survey') run(parsed.config, { PHILEAS_SURVEY: '1', PHILEAS_ROUTES: '1' }, []);
+  else if (parsed.command === 'known-add') knownAdd(parsed.id, parsed.issue, parsed.file);
   else run(parsed.config, parsed.settings, parsed.passThrough);
 }
 

@@ -47,7 +47,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and eighty-two tests. Seven launch it,
+through, and `npm test` runs one hundred and ninety-three tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -76,7 +76,8 @@ answer, one keeps a window created already shown off the screen, and two
 remove a profile that is read-only in part or still being written into, and
 one reports an application that opens no window in its own words. Two delete
 a profile again when something recreates it, and report one that keeps
-coming back.
+coming back. Eleven cover known findings: signatures, the file, what a
+Journey's end adds, the command, and a Route carrying on past one.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -101,6 +102,13 @@ The three old releases and the current one are installed as
 `Positron.app`, and `PHILEAS_APP_DIR` names which one a run uses, for example
 `PHILEAS_APP_DIR=/Applications/Positron.app phileas run trial/positron/phileas`.
 What is left of the adapter is in `docs/OUTSTANDING.md`.
+
+**A bug already found no longer ends a Route,** since 2026-09-27. A consumer
+keeps `known-findings.json` beside its spec; a Route that meets a finding in
+it records which and carries on. A Journey adds what it found to that file,
+unfiled, when it ends, and prints each with its id, and `phileas known add
+<id> --issue <issue>` files one. A narrowing is only for what is normal for
+an application. `docs/GLOSSARY.md` defines the terms.
 
 **Phase 5 was next until then.** Running the engine against real
 applications for a demo found gaps phase 5 would otherwise have built on, and
@@ -181,7 +189,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and eighty-two tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and ninety-three tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

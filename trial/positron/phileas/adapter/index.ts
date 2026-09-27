@@ -123,31 +123,11 @@ export const positron: AppUnderTest = {
       kind: 'narrowed',
       reason:
         "Positron's extension host prints Node's deprecation warnings to the console as errors " +
-        'at every launch; measured on 2026-09-26 as the only console errors while idle. And ' +
-        'Positron logs a cancelled shutdown step as an error on every window reload, measured on ' +
-        '3 reloads of 3 on 2026-09-27; filed as a possible Positron bug, ronplusron/phileas ' +
-        'issue 46, and accepted here so a Route can travel past a reload.',
-      accept: (message) =>
-        // Only Node's own deprecation warnings, raised in the extension host.
-        /\[Extension Host\].*\(node:\d+\) \[DEP\d+\] DeprecationWarning:/.test(message) ||
-        // Only this shutdown step, and only when its cause is a cancellation.
-        /\[lifecycle\]: Error during will-shutdown phase in default joiners \(error: Canceled\)\s*$/.test(message),
-    },
-    'log-error': {
-      kind: 'narrowed',
-      reason:
-        'Known Positron bug, ronplusron/phileas issue 44: positron-connections throws when it is ' +
-        'deactivated, which happens on every window reload. A known bug and not normal behavior, ' +
-        'accepted only so a Route can travel past a reload; docs/OUTSTANDING.md 1.13 is the ' +
-        'engine feature meant to replace narrowings like this one.',
-      // Each observation is one log line, prefixed with the log's path. The first
-      // line names the extension; the second does not, so it is matched by its
-      // exact text, and would also accept the same fault from another extension.
-      accept: (observation) =>
-        /\[error\] An error occurred when deactivating the extension 'positron\.positron-connections':\s*$/.test(
-          observation
-        ) ||
-        /\[error\] TypeError: Cannot read properties of undefined \(reading 'subscriptions'\)\s*$/.test(observation),
+        'at every launch; measured on 2026-09-26 as the only console errors while idle.',
+      // Only Node's own deprecation warnings, raised in the extension host.
+      // Known bugs are not narrowed here: they are known findings, in
+      // known-findings.json beside this folder's spec.
+      accept: (message) => /\[Extension Host\].*\(node:\d+\) \[DEP\d+\] DeprecationWarning:/.test(message),
     },
   },
 

@@ -75,7 +75,10 @@ phases are marked by number.
 | Specified check, or oracle | An expected result computed independently of the application and compared against what the page shows (R21). It must never share logic with what it judges. |
 | Probe hop | A Hop the engine takes itself to test a relation, such as clearing a search it just made, marked as such in the journal. *Planned, phase 6.* |
 | Positive control | Running a check against something known to be there before trusting a check that found nothing, since a broken check also finds nothing. |
-| Narrowing | An adapter switching off or loosening one universal check for its own application, with a required reason that reaches the report (R19). |
+| Narrowing | An adapter switching off or loosening one universal check for its own application, with a required reason that reaches the report (R19). For what is normal for that application; a known bug is a known finding instead. |
+| Finding | One violation a check saw, named by its signature and a short id taken from it. Each Hop's journal line lists the findings of each check. |
+| Signature | A finding with what varies from run to run taken out: temporary folders, timestamps, process ids, durations and Hop numbers, and a stack frame's position. Two runs of the same bug share one; a message worded differently is a different finding. |
+| Known finding | A finding held in the consumer's `known-findings.json`, filed with its issue or not yet filed. A Route that meets one records it and carries on. A Journey adds what it found to the file, unfiled, when it ends, and `phileas known add` files one. Every Route of a Journey reads the same file, which is written only when the Journey ends. |
 | Fix failure | A broken Fix step, reported apart from a failed Route, since ten Routes failing on one broken step is one problem (R11). |
 
 ## Setup
@@ -94,7 +97,7 @@ phases are marked by number.
 
 | Term | Meaning |
 |---|---|
-| `phileas` command | `phileas run [config] [flags]`: runs a Journey with its settings changed for that run only, without editing its file. Each flag travels to the run as one of the variables below. The config defaults to `phileas/`. `phileas show [what]` prints a finished run's journals, one line per Hop, and defaults to the latest run under `phileas/.phileas-journals/`. `phileas survey [config]` prints what the engine sees at the start and after the Fix, one control per line in the form a Fix's `hop()` takes. |
+| `phileas` command | `phileas run [config] [flags]`: runs a Journey with its settings changed for that run only, without editing its file. Each flag travels to the run as one of the variables below. The config defaults to `phileas/`. `phileas show [what]` prints a finished run's journals, one line per Hop, and defaults to the latest run under `phileas/.phileas-journals/`. `phileas survey [config]` prints what the engine sees at the start and after the Fix, one control per line in the form a Fix's `hop()` takes. `phileas known add <id> --issue <issue>` files a known finding. |
 | `PHILEAS_SEED` | Replays a Journey with a given seed. Set by `--seed`. |
 | `PHILEAS_ROUTES`, `PHILEAS_TRIP_LENGTH`, `PHILEAS_ROUTE_DEADLINE_MS`, `PHILEAS_JOURNEY_DEADLINE_MS` | Override the Journey file's terms for one run, set by `--routes`, `--trip-length`, `--route-deadline-ms` and `--journey-deadline-ms`. Applied in `defineJourney`, checked like the file's own terms, and marked in the printout. |
 | `PHILEAS_RUN` | The run's name, which `startJourney` in global setup sets fresh on every run, while printing every setting in force, and each Route reads to find its journal folder. Not set by hand: one left over in the environment is replaced. |

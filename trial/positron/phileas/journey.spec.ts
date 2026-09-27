@@ -33,6 +33,8 @@ for (const routeNumber of routeNumbers(journey)) {
       journalsRoot: path.join(here, '.phileas-journals'),
       // The adapter names its log from the Route's profile folder.
       userDataDir,
+      // Bugs already found, which a Route records and carries on past.
+      knownFindings: path.join(here, 'known-findings.json'),
     });
 
     expect(

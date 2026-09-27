@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import type { ElectronApplication, Page } from '@playwright/test';
 import type { AppUnderTest, UniversalCheck } from '../app-under-test';
 import type { JournaledCheck } from '../journal';
+import { findingId, signatureOf, type KnownFindings } from '../known.mjs';
 
 /**
  * The checks, run after every Hop, Fix steps included (R15).
@@ -73,7 +74,12 @@ export class CheckFailure extends Error {
   ) {
     super(
       `${failed.length === 1 ? 'A check' : `${failed.length} checks`} failed after ${where}:\n\n` +
-        failed.map((check) => `  ${check.check}: ${check.observation ?? ''}`).join('\n')
+        failed
+          .map((check) => {
+            const ids = (check.findings ?? []).filter((finding) => !finding.known).map((finding) => finding.id);
+            return `  ${check.check}: ${check.observation ?? ''}${ids.length ? `\n  finding ${ids.join(', ')}` : ''}`;
+          })
+          .join('\n')
     );
     this.name = 'CheckFailure';
   }
@@ -103,6 +109,11 @@ export interface WatchOptions {
   readonly responsiveTimeoutMs?: number;
   /** The Route's profile folder, which `logPaths` written as a function needs. */
   readonly userDataDir?: string;
+  /**
+   * Findings already known, which the Route records and carries on past
+   * instead of ending. Read once, when the Route starts. See `known.mjs`.
+   */
+  readonly known?: KnownFindings;
 }
 
 /**
@@ -148,6 +159,7 @@ function resolveLogPaths(cfg: AppUnderTest, userDataDir: string | undefined): st
 
 export async function startWatching(options: WatchOptions): Promise<Watch> {
   const { page, app, cfg } = options;
+  const known = new Map((options.known?.entries ?? []).map((entry) => [entry.signature, entry]));
   const responsiveTimeoutMs = options.responsiveTimeoutMs ?? DEFAULT_RESPONSIVE_TIMEOUT_MS;
 
   const pageErrors: string[] = [];
@@ -253,7 +265,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     bounded,
     async check(tree) {
       const judge = (check: UniversalCheck, run: () => Promise<Verdict> | Verdict) =>
-        judged(check, cfg, run);
+        judged(check, cfg, known, run);
 
       return Promise.all(
         CHECK_ORDER.map((check) => {
@@ -309,6 +321,7 @@ type Verdict = string[] | { notRun: string };
 async function judged(
   check: UniversalCheck,
   cfg: AppUnderTest,
+  known: ReadonlyMap<string, { readonly issue?: string }>,
   run: () => Promise<Verdict> | Verdict
 ): Promise<JournaledCheck> {
   const narrowing = cfg.narrowedChecks?.[check];
@@ -323,11 +336,41 @@ async function judged(
   const accepted = narrowing ? verdict.filter((observation) => narrowing.accept(observation)) : [];
   const violations = verdict.filter((observation) => !accepted.includes(observation));
 
-  if (violations.length) return { check, result: 'failed', observation: violations.join('\n'), ...reason };
-  if (accepted.length) {
-    return { check, result: 'passed', observation: `accepted by the narrowing: ${accepted.join('\n')}`, ...reason };
+  // Each violation by its signature. A known one is recorded and does not fail
+  // the check, so the Route carries on past a bug already found; any other
+  // violation on the same check still fails it.
+  const findings = violations.map((violation) => {
+    const signature = signatureOf(check, violation);
+    const entry = known.get(signature);
+    return {
+      violation,
+      record: {
+        id: findingId(signature),
+        signature,
+        known: entry !== undefined,
+        ...(entry?.issue ? { issue: entry.issue } : {}),
+      },
+    };
+  });
+  const unknown = findings.filter((finding) => !finding.record.known);
+  const recorded = findings.length ? { findings: findings.map((finding) => finding.record) } : {};
+
+  if (unknown.length) {
+    return {
+      check,
+      result: 'failed',
+      observation: unknown.map((finding) => finding.violation).join('\n'),
+      ...reason,
+      ...recorded,
+    };
   }
-  return { check, result: 'passed', ...reason };
+  const notes = [
+    ...(accepted.length ? [`accepted by the narrowing: ${accepted.join('\n')}`] : []),
+    ...findings.map(
+      ({ record }) => `known finding ${record.id}${record.issue ? `, issue ${record.issue}` : ', unfiled'}: ${record.signature}`
+    ),
+  ];
+  return { check, result: 'passed', ...(notes.length ? { observation: notes.join('\n') } : {}), ...reason, ...recorded };
 }
 
 /** The checks that failed, if any. */
