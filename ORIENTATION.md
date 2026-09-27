@@ -106,8 +106,10 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** One defect is open: the
-external-link stub can install successfully and do nothing. That file holds what is
+**Read `docs/DEFECTS.md` before writing any of it.** Three defects are open:
+the external-link stub can install successfully and do nothing, a Route's
+profile folder can be left behind, and an application that opens no window
+is reported only as a timeout. That file holds what is
 wrong, confirmed by reading the code, and nothing here restates it.
 
 **Two things phase 5 must not undo**, both measured earlier and carried in
