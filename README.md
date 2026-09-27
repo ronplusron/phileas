@@ -35,10 +35,9 @@ Some ship with the engine and assume nothing about the application: no
 uncaught error, no console error, still responding, still showing something,
 no unexpected dialog, and no error in a log the application names. Two more,
 still where it started and every visible control carrying a name, are not
-built yet. An application
-adds its own on top, and can supply answers worked out independently of the
-code being tested. That is the only way the engine judges whether a value is
-right rather than merely consistent, as opposed to self-consistent.
+built yet. An application adds its own on top, and can supply answers worked
+out independently of the code being tested. That is the only way the engine
+judges whether a value is right rather than merely consistent.
 
 A Route that runs out of moves before completing its Trip is reported as
 stranded, which is neither a pass nor a failure. Sometimes that is a dead end

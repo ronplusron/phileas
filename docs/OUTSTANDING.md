@@ -410,6 +410,7 @@ The adapter in `trial/positron/` works against the current release, and
   `--logsPath`, `--disable-extension`, the in-page menu and dialog settings,
   and the Copilot extension being there to disable all need checking on each
   before trial step 5 runs.
+
 ### 1.13 Deferred from the whole-codebase review of 2026-09-27
 
 Agreed as worth doing and not done with the review's fixes, because each is

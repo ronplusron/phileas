@@ -109,4 +109,3 @@ phases are marked by number.
 | `PHILEAS_ALLOW_STALE` | `1` runs against a build the staleness guard finds stale, and the printed settings say the guard is off. Anything but `1` or `0` is refused. |
 | `PHILEAS_ALLOW_TEMP_LEFTOVERS` | `1` skips the check that fails a run, or `npm test`, which left a `phileas-` folder in the system temp folder, and says what was left. For another run making such folders at the same time. |
 | `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |
-| `PHILEAS_ALLOW_STALE` | Runs even when the staleness guard finds a mismatch, and the run says the guard was overridden. |

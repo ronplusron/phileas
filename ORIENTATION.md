@@ -106,8 +106,10 @@ releases carrying known bugs, judged against a bar set in advance.
 `docs/PLAN.md` has it under "Before the rest of phase 5", and the rest of
 phase 5 waits for its answer. Its first step, the checks, is done, and so is
 its second for the current release: the adapter is in `trial/positron/`, and
-three Routes of twenty Hops each passed through it, with one Positron bug
-found on the way. `docs/PLAN.md` has everything measured and decided for it.
+three Routes of twenty Hops each passed through it. Two Positron bugs have
+been found and filed, `ronplusron/phileas` issues 44 and 46, and
+`trial/positron/phileas/known-findings.json` holds their signatures.
+`docs/PLAN.md` has everything measured and decided for it.
 The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
 `Positron.app`, and `PHILEAS_APP_DIR` names which one a run uses, for example
