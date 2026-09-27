@@ -478,6 +478,16 @@ Fix. `PLAN.md` has it in the build order.
   than phase 8's planted defects can; the same caution 1.6 gives for
   weighting the keys applies.
 
+**Baselines under the seeded draw,** reported on 2026-09-27 by the session
+building the Eighty Days demo, not measured here, all with windows hidden.
+From London, 3 Routes of 60 Hops reached no places before a layout fix, and
+6 Routes of 150 reached 4 to 7 after it. From the demo's Hong Kong Fix, 6
+Routes of 200 reached 12 to 20 places: 1 lost, 5 still going, 5 distinct
+sequences of places. A passage costs about 20 Hops, and 30% of Hops go to the
+game's reference panels. `demo/eighty-days/measure.mjs`, on that demo's
+branch and unmerged when this was written, prints these from a run's
+journals.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
