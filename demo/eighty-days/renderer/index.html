@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Eighty Days</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!--
+      Every control is an ordinary element with a role and a readable name,
+      since that is what Phileas finds. Every picture is hidden from the
+      accessibility tree, so decoration never enters the survey.
+    -->
+    <header class="masthead">
+      <div class="title">
+        <h1>Eighty Days</h1>
+        <p class="subtitle">A wager of the Reform Club, 1872</p>
+      </div>
+      <nav aria-label="Screens" class="screens">
+        <button data-screen="here" id="nav-here">Here</button>
+        <button data-screen="circuit">Circuit</button>
+        <button data-screen="ledger">Ledger</button>
+        <button data-screen="bradshaw">Bradshaw</button>
+        <button data-screen="about">About</button>
+      </nav>
+      <div class="clock" id="clock">
+        <svg class="dial" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="46" class="dial-rim" />
+          <circle cx="50" cy="50" r="40" class="dial-face" />
+          <g id="dial-ticks"></g>
+          <line id="dial-hand" x1="50" y1="50" x2="50" y2="16" class="dial-hand" />
+          <circle cx="50" cy="50" r="3" class="dial-pin" />
+        </svg>
+        <div>
+          <p id="clock-date" class="clock-date"></p>
+          <p id="clock-days" class="clock-days"></p>
+        </div>
+      </div>
+      <p id="status" data-ready="false" aria-live="polite">Loading</p>
+    </header>
+
+    <main>
+      <section id="here" aria-label="Here"></section>
+      <section id="circuit" aria-label="Circuit" hidden></section>
+      <section id="ledger" aria-label="Ledger" hidden></section>
+      <section id="bradshaw" aria-label="Bradshaw" hidden></section>
+      <section id="about" aria-label="About" hidden></section>
+    </main>
+
+    <!--
+      Modal by design, as the rail demo's ticket dialog is: opened with
+      showModal(), so the survey reads only the dialog while it is open.
+    -->
+    <dialog id="ticket-office" aria-labelledby="ticket-title">
+      <form method="dialog" id="ticket-form"></form>
+    </dialog>
+
+    <script src="game.js"></script>
+    <script src="chart.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>

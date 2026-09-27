@@ -1,0 +1,52 @@
+import {
+  createTest,
+  expect,
+  deriveRouteStreams,
+  requireSeed,
+  routeNumbers,
+  runRoute,
+} from '@drugstoresushi/phileas';
+import { journey, fix } from './journeys';
+import { eightyDays } from './adapter';
+import { journalsRoot, knownFindings } from './paths';
+
+/** One test per Route, and nothing else. */
+const test = createTest(eightyDays);
+
+for (const routeNumber of routeNumbers(journey)) {
+  test(`route ${routeNumber}`, async ({ page, app, userDataDir }, testInfo) => {
+    const journeySeed = requireSeed();
+    const streams = deriveRouteStreams(journeySeed, routeNumber);
+    testInfo.annotations.push(
+      { type: 'journey-seed', description: journeySeed },
+      { type: 'route-seed', description: streams.routeSeed }
+    );
+
+    const outcome = await runRoute({
+      page,
+      app,
+      cfg: eightyDays,
+      streams,
+      journeySeed,
+      routeNumber,
+      tripLength: journey.tripLength,
+      fix,
+      journalsRoot,
+      knownFindings,
+      userDataDir,
+    });
+
+    // Only a survey was asked for, so nothing was traveled and there is no
+    // verdict to reach. Skipped rather than passed, so a Journey run with
+    // PHILEAS_SURVEY left set cannot read green.
+    if (outcome.kind === 'surveyed') {
+      test.skip(true, 'Only a survey was asked for (PHILEAS_SURVEY=1), so nothing was traveled.');
+      return;
+    }
+
+    expect(
+      outcome.kind,
+      outcome.kind === 'stranded' ? `stranded: ${outcome.reason}` : undefined
+    ).toBe('passed');
+  });
+}

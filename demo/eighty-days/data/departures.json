@@ -1,0 +1,65 @@
+{
+  "_about": "Every way out of every place. Times are Fogg's own reckoning, as the novel narrates them, local and to the minute; the game's clock counts hours from 1872-10-02T20:45. A departure with 'departs' sails at that moment and is gone once the clock passes it; one without sails when taken and takes 'hours'. 'book' is true where the novel has it, with the chapter, and false where the game invented it, with the reason. 'approximate' marks a time the novel gives only roughly. 'ticket' opens the ticket office before leaving. 'cost' is in pounds, drawn from the carpet-bag.",
+  "departures": [
+    { "id": "mail-brindisi", "from": "london", "to": "brindisi", "mode": "train", "label": "Take the mail train to Brindisi", "departs": "1872-10-02T20:45", "arrives": "1872-10-05T16:00", "ticket": true, "book": true, "chapter": "VII" },
+    { "id": "mail-brindisi-late", "from": "london", "to": "brindisi", "mode": "train", "label": "Take tomorrow's mail train to Brindisi", "departs": "1872-10-03T20:45", "arrives": "1872-10-06T16:00", "ticket": true, "book": false, "note": "Invented: the same train a day later." },
+
+    { "id": "mongolia-suez", "from": "brindisi", "to": "suez", "mode": "ship", "label": "Sail on the Mongolia for Suez", "departs": "1872-10-05T17:00", "arrives": "1872-10-09T11:00", "ticket": true, "book": true, "chapter": "VII" },
+    { "id": "next-po-suez", "from": "brindisi", "to": "suez", "mode": "ship", "label": "Wait for the next steamer to Suez", "departs": "1872-10-12T17:00", "arrives": "1872-10-16T11:00", "ticket": true, "book": false, "note": "Invented: a weekly steamer, a week behind the Mongolia." },
+
+    { "id": "mongolia-aden", "from": "suez", "to": "aden", "mode": "ship", "label": "Rejoin the Mongolia for Aden", "departs": "1872-10-09T15:00", "arrives": "1872-10-14T18:00", "book": true, "chapter": "VI, IX", "approximate": true },
+    { "id": "next-steamer-aden", "from": "suez", "to": "aden", "mode": "ship", "label": "Wait for the next steamer to Aden", "departs": "1872-10-16T15:00", "arrives": "1872-10-21T18:00", "ticket": true, "book": false, "note": "Invented: the following week's sailing." },
+
+    { "id": "mongolia-bombay", "from": "aden", "to": "bombay", "mode": "ship", "label": "Rejoin the Mongolia for Bombay", "departs": "1872-10-14T18:00", "arrives": "1872-10-20T16:30", "book": true, "chapter": "IX, X", "approximate": true },
+    { "id": "next-steamer-bombay", "from": "aden", "to": "bombay", "mode": "ship", "label": "Wait for the next steamer to Bombay", "departs": "1872-10-21T18:00", "arrives": "1872-10-27T16:30", "ticket": true, "book": false, "note": "Invented: the following week's sailing." },
+
+    { "id": "gip-kholby", "from": "bombay", "to": "kholby", "mode": "train", "label": "Take the eight o'clock train for Calcutta", "departs": "1872-10-20T20:00", "arrives": "1872-10-22T08:00", "ticket": true, "book": true, "chapter": "X, XI" },
+    { "id": "gip-kholby-late", "from": "bombay", "to": "kholby", "mode": "train", "label": "Take tomorrow's train for Calcutta", "departs": "1872-10-21T20:00", "arrives": "1872-10-23T08:00", "ticket": true, "book": false, "note": "Invented: the same train a day later." },
+
+    { "id": "kiouni-pillaji", "from": "kholby", "to": "pillaji", "mode": "elephant", "label": "Ride Kiouni into the forest", "hours": 34, "requires": "kiouni", "book": true, "chapter": "XII", "approximate": true },
+    { "id": "walk-allahabad", "from": "kholby", "to": "allahabad", "mode": "foot", "label": "Walk the fifty miles to Allahabad", "hours": 72, "book": false, "note": "Invented: the choice the book's travellers were offered and refused." },
+    { "id": "cart-allahabad", "from": "kholby", "to": "allahabad", "mode": "cart", "label": "Wait for a bullock cart to Allahabad", "hours": 60, "book": false, "note": "Invented: named in the plan as the game's own departure from the book." },
+
+    { "id": "kiouni-allahabad", "from": "pillaji", "to": "allahabad", "mode": "elephant", "label": "Ride Kiouni on to Allahabad", "hours": 5, "requires": "kiouni", "book": true, "chapter": "XIV", "approximate": true },
+
+    { "id": "rail-calcutta", "from": "allahabad", "to": "calcutta", "mode": "train", "label": "Take the midday train to Calcutta", "departs": "1872-10-24T12:30", "arrives": "1872-10-25T07:00", "ticket": true, "book": true, "chapter": "XIV, XV", "approximate": true },
+    { "id": "rail-calcutta-night", "from": "allahabad", "to": "calcutta", "mode": "train", "label": "Take the night train to Calcutta", "departs": "1872-10-24T22:00", "arrives": "1872-10-25T16:30", "ticket": true, "book": false, "note": "Invented: a later train, which misses the Rangoon." },
+
+    { "id": "rangoon-singapore", "from": "calcutta", "to": "singapore", "mode": "ship", "label": "Sail on the Rangoon for Hong Kong", "departs": "1872-10-25T12:00", "arrives": "1872-10-31T20:00", "ticket": true, "book": true, "chapter": "XV, XVII", "approximate": true },
+    { "id": "next-steamer-hongkong", "from": "calcutta", "to": "singapore", "mode": "ship", "label": "Wait for the next steamer to Hong Kong", "departs": "1872-11-01T12:00", "arrives": "1872-11-07T20:00", "ticket": true, "book": false, "note": "Invented: the following week's sailing." },
+
+    { "id": "rangoon-hongkong", "from": "singapore", "to": "hongkong", "mode": "ship", "label": "Rejoin the Rangoon for Hong Kong", "departs": "1872-11-01T04:00", "arrives": "1872-11-06T13:00", "book": true, "chapter": "XVII, XVIII", "approximate": true },
+    { "id": "later-steamer-hongkong", "from": "singapore", "to": "hongkong", "mode": "ship", "label": "Wait for the steamer after the Rangoon", "departs": "1872-11-08T04:00", "arrives": "1872-11-13T13:00", "ticket": true, "book": false, "note": "Invented: the following week's sailing." },
+
+    { "id": "carnatic", "from": "hongkong", "to": "yokohama", "mode": "ship", "label": "Sail on the Carnatic for Yokohama", "departs": "1872-11-06T18:30", "arrives": "1872-11-13T06:00", "ticket": true, "book": true, "chapter": "XIX, XXII", "note": "The translation has the Carnatic sail 'that very evening', the 6th, in chapter XIX and 'at half-past six on the 7th' in chapter XXII. The game takes the 6th, which agrees with Fogg arriving that day and missing her.", "hiddenIf": "tavern" },
+    { "id": "tankadere", "from": "hongkong", "to": "shanghai", "mode": "ship", "label": "Charter the Tankadere to Shanghai", "hours": 96, "cost": 600, "book": true, "chapter": "XX, XXI", "note": "A hundred pounds a day and two hundred reward, as offered to John Bunsby; four days." },
+    { "id": "next-steamer-yokohama", "from": "hongkong", "to": "yokohama", "mode": "ship", "label": "Wait a week for the next steamer to Yokohama", "departs": "1872-11-13T18:30", "arrives": "1872-11-20T06:00", "ticket": true, "book": true, "chapter": "XVIII", "note": "The book says the passengers for Japan would have waited a week for the next steamer." },
+
+    { "id": "general-grant-shanghai", "from": "shanghai", "to": "yokohama", "mode": "ship", "label": "Board the American steamer for Yokohama", "departs": "1872-11-11T20:00", "arrives": "1872-11-14T07:00", "ticket": true, "book": true, "chapter": "XXI, XXIII", "approximate": true },
+
+    { "id": "general-grant", "from": "yokohama", "to": "sanfrancisco", "mode": "ship", "label": "Sail on the General Grant for San Francisco", "departs": "1872-11-14T18:30", "arrives": "1872-12-03T07:00", "ticket": true, "crossesDateLine": true, "book": true, "chapter": "XXIII, XXV", "approximate": true },
+    { "id": "mail-honolulu", "from": "yokohama", "to": "honolulu", "mode": "ship", "label": "Take the mail steamer by way of Honolulu", "departs": "1872-11-16T12:00", "arrives": "1872-11-27T12:00", "ticket": true, "crossesDateLine": true, "book": false, "note": "Invented: a slower Pacific crossing by the Sandwich Islands." },
+    { "id": "mail-honolulu-sf", "from": "honolulu", "to": "sanfrancisco", "mode": "ship", "label": "Rejoin the mail steamer for San Francisco", "departs": "1872-11-28T12:00", "arrives": "1872-12-05T07:00", "book": false, "note": "Invented: the mail steamer's second leg." },
+
+    { "id": "pacific-railroad", "from": "sanfrancisco", "to": "saltlake", "mode": "train", "label": "Take the Pacific Railroad for New York", "departs": "1872-12-03T18:00", "arrives": "1872-12-05T13:00", "ticket": true, "book": true, "chapter": "XXV, XXVII", "approximate": true },
+    { "id": "pacific-railroad-late", "from": "sanfrancisco", "to": "saltlake", "mode": "train", "label": "Take the Pacific Railroad the next evening", "departs": "1872-12-04T18:00", "arrives": "1872-12-06T13:00", "ticket": true, "book": false, "note": "Invented: the same train a day later." },
+    { "id": "steamer-panama", "from": "sanfrancisco", "to": "panama", "mode": "ship", "label": "Sail south for Panama", "departs": "1872-12-04T10:00", "arrives": "1872-12-16T10:00", "ticket": true, "book": false, "note": "Invented: the Pacific Mail's route by the isthmus." },
+
+    { "id": "rail-fortkearney", "from": "saltlake", "to": "fortkearney", "mode": "train", "label": "Rejoin the train eastward", "departs": "1872-12-05T14:00", "arrives": "1872-12-07T14:00", "book": true, "chapter": "XXVII, XXIX", "approximate": true },
+
+    { "id": "sledge-omaha", "from": "fortkearney", "to": "omaha", "mode": "sledge", "label": "Sail by sledge to Omaha", "hours": 5, "book": true, "chapter": "XXXI", "note": "Mudge's sledge rigged like a sloop, over the frozen prairie." },
+    { "id": "next-train-omaha", "from": "fortkearney", "to": "omaha", "mode": "train", "label": "Wait for the next eastbound train", "departs": "1872-12-09T08:00", "arrives": "1872-12-09T20:00", "book": false, "note": "Invented: the book's travellers would not wait for it." },
+
+    { "id": "rail-newyork", "from": "omaha", "to": "newyork", "mode": "train", "label": "Take the train for Chicago and New York", "departs": "1872-12-08T15:00", "arrives": "1872-12-11T23:15", "ticket": true, "book": true, "chapter": "XXXI, XXXII", "approximate": true },
+    { "id": "rail-newyork-late", "from": "omaha", "to": "newyork", "mode": "train", "label": "Take the next train for Chicago and New York", "departs": "1872-12-09T22:00", "arrives": "1872-12-13T06:00", "ticket": true, "book": false, "note": "Invented: the next through train." },
+    { "id": "steamer-newyork", "from": "panama", "to": "newyork", "mode": "ship", "label": "Cross the isthmus and sail for New York", "departs": "1872-12-17T08:00", "arrives": "1872-12-25T08:00", "ticket": true, "book": false, "note": "Invented: the Atlantic side of the isthmus route." },
+
+    { "id": "china", "from": "newyork", "to": "liverpool", "mode": "ship", "label": "Sail on the China for Liverpool", "departs": "1872-12-11T22:30", "arrives": "1872-12-20T20:00", "ticket": true, "book": true, "chapter": "XXXII", "note": "The China sailed forty-five minutes before the train reached New York. Her arrival is the game's; the book never has her arrive." },
+    { "id": "henrietta", "from": "newyork", "to": "queenstown", "mode": "ship", "label": "Take passage on the Henrietta", "departs": "1872-12-12T09:00", "arrives": "1872-12-21T01:00", "cost": 1200, "ticket": true, "book": true, "chapter": "XXXII, XXXIII", "approximate": true, "note": "Two thousand dollars a head for three, at the game's rate of five dollars to the pound." },
+    { "id": "next-cunard", "from": "newyork", "to": "liverpool", "mode": "ship", "label": "Wait for the next Cunard steamer", "departs": "1872-12-14T12:00", "arrives": "1872-12-23T12:00", "ticket": true, "book": false, "note": "Invented: the next sailing, which is too late." },
+
+    { "id": "mail-liverpool", "from": "queenstown", "to": "liverpool", "mode": "train", "label": "Take the mail train and the boat to Liverpool", "hours": 10.67, "book": true, "chapter": "XXXIII", "note": "By Dublin; reached Liverpool at twenty minutes before twelve on the 21st." },
+
+    { "id": "express-london", "from": "liverpool", "to": "london", "mode": "train", "label": "Take a special train to London", "hours": 5.83, "cost": 100, "book": true, "chapter": "XXXIV", "note": "Six hours to London; the special reached it at ten minutes before nine." }
+  ]
+}

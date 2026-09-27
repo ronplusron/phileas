@@ -1,0 +1,603 @@
+/*
+  A Victorian travel office, not a web form: warm paper, ink, brass and
+  oxblood, and a color for each way of travelling. Laid out for one window,
+  1280 by 800. Light only, since a projector washes out a dark page.
+
+  Only drawing moves. Nothing here animates text, since the engine's settle
+  wait reads the accessibility tree and moving text would keep it waiting.
+*/
+:root {
+  --paper: #f3ead7;
+  --paper-deep: #e8dcc0;
+  --ink: #2a2118;
+  --ink-soft: #5c4d3c;
+  --brass: #b08a3e;
+  --brass-deep: #8a6a28;
+  --oxblood: #7a2430;
+  --sea: #2f5d7c;
+  --rail: #3b3b3b;
+  --elephant: #c8871d;
+  --sledge: #6fa3c0;
+  --land: #7a6a52;
+  --rule: #c9b58c;
+  font-family: 'Iowan Old Style', 'Palatino', 'Book Antiqua', Georgia, serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.5), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(120, 90, 40, 0.025) 0 2px, transparent 2px 5px),
+    var(--paper);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: normal;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.4em;
+}
+
+h2 {
+  font-size: 1.9rem;
+  color: var(--oxblood);
+}
+
+h3 {
+  font-size: 1.25rem;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.2em;
+}
+
+button {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--paper);
+  background: linear-gradient(var(--oxblood), #5e1a24);
+  border: 1px solid #4a141c;
+  border-radius: 3px;
+  padding: 0.35em 0.9em;
+  margin: 0.2em 0.35em 0.2em 0;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+button:hover {
+  background: linear-gradient(#8e2d3a, var(--oxblood));
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role='treeitem']:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+input,
+select {
+  font: inherit;
+  font-size: 0.95rem;
+  background: #fffaf0;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.2em 0.4em;
+  color: var(--ink);
+}
+
+label {
+  display: inline-block;
+  margin: 0.3em 1em 0.3em 0;
+}
+
+/* --- the masthead -------------------------------------------------------- */
+
+.masthead {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(#2e2419, #1f1810);
+  color: var(--paper);
+  border-bottom: 3px double var(--brass);
+}
+
+.masthead h1 {
+  font-size: 1.9rem;
+  color: #f0d99a;
+  margin: 0;
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #c9b58c;
+}
+
+.screens button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #e8dcc0;
+  box-shadow: none;
+}
+
+.screens button.selected,
+.screens button:hover {
+  border-color: var(--brass);
+  color: #f0d99a;
+  background: rgba(176, 138, 62, 0.12);
+}
+
+.clock {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.clock p {
+  margin: 0;
+}
+
+.clock-date {
+  font-size: 0.95rem;
+  color: #f0d99a;
+}
+
+.clock-days {
+  font-size: 0.8rem;
+  color: #c9b58c;
+}
+
+.dial {
+  width: 54px;
+  height: 54px;
+}
+
+.dial-rim {
+  fill: var(--brass-deep);
+  stroke: #f0d99a;
+  stroke-width: 1.5;
+}
+
+.dial-face {
+  fill: #f6ecd2;
+}
+
+.dial-tick {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.dial-hand {
+  stroke: var(--oxblood);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform-origin: 50px 50px;
+  transition: transform 300ms ease-out;
+}
+
+.dial-pin {
+  fill: var(--brass-deep);
+}
+
+#status {
+  position: absolute;
+  left: -9999px;
+}
+
+/* --- screens -------------------------------------------------------------- */
+
+main {
+  padding: 1.2rem 1.8rem 2rem;
+  max-width: 1240px;
+}
+
+.place-head {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.2rem;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.about {
+  font-style: italic;
+  color: var(--ink-soft);
+  margin: 0.2em 0;
+}
+
+.party {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.notice {
+  min-height: 1.4em;
+  margin: 0.4em 0 0.8em;
+  padding: 0.4em 0.8em;
+  border-left: 3px solid var(--brass);
+  background: rgba(176, 138, 62, 0.08);
+  font-style: italic;
+}
+
+.notice:empty {
+  visibility: hidden;
+}
+
+/* An engraving's frame. The engravings themselves are added in a later step. */
+.engraving {
+  height: 140px;
+  border: 1px solid var(--rule);
+  outline: 4px double var(--paper-deep);
+  outline-offset: -8px;
+  background:
+    repeating-linear-gradient(135deg, rgba(42, 33, 24, 0.06) 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse at 50% 60%, #efe3c5, #d9c8a2);
+  background-size: cover;
+  background-position: center;
+  filter: sepia(0.35);
+}
+
+.venues,
+.subtabs {
+  display: flex;
+  gap: 0.2rem;
+  border-bottom: 2px solid var(--brass);
+  margin-bottom: 0.8rem;
+}
+
+[role='tab'] {
+  background: var(--paper-deep);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+[role='tab'].selected {
+  background: var(--brass);
+  color: #1f1810;
+  border-color: var(--brass-deep);
+}
+
+.venue {
+  padding: 0.2rem 0.2rem 1rem;
+}
+
+.feature {
+  border: 1px solid var(--rule);
+  background: rgba(255, 250, 240, 0.6);
+  padding: 0.7rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.switch input {
+  accent-color: var(--oxblood);
+}
+
+input[type='range'] {
+  accent-color: var(--brass-deep);
+  vertical-align: middle;
+  width: 180px;
+}
+
+/* --- departures and ticket stubs ----------------------------------------- */
+
+.departures,
+.stubs,
+.goods {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.departure,
+.stub {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 0.6rem;
+  align-items: start;
+  padding: 0.5rem 0.8rem;
+  margin-bottom: 0.5rem;
+  background: #fffaf0;
+  border: 1px dashed var(--rule);
+  border-left: 6px solid var(--land);
+  position: relative;
+}
+
+.departure p,
+.stub p {
+  margin: 0.15em 0;
+}
+
+.departure-detail {
+  font-size: 0.9rem;
+}
+
+.provenance {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.glyph {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: radial-gradient(circle, currentColor 0 35%, transparent 36%);
+  opacity: 0.8;
+  margin-top: 0.2rem;
+}
+
+.mode-ship,
+.mode-boat {
+  border-left-color: var(--sea);
+  color: inherit;
+}
+.mode-ship .glyph,
+.mode-boat .glyph {
+  color: var(--sea);
+}
+.mode-train {
+  border-left-color: var(--rail);
+}
+.mode-train .glyph {
+  color: var(--rail);
+}
+.mode-elephant {
+  border-left-color: var(--elephant);
+}
+.mode-elephant .glyph {
+  color: var(--elephant);
+}
+.mode-sledge {
+  border-left-color: var(--sledge);
+}
+.mode-sledge .glyph {
+  color: var(--sledge);
+}
+.mode-foot .glyph,
+.mode-cart .glyph {
+  color: var(--land);
+}
+
+.stub::after {
+  content: '';
+  position: absolute;
+  right: 60px;
+  top: 6px;
+  bottom: 6px;
+  border-right: 2px dotted var(--rule);
+}
+
+details summary {
+  cursor: pointer;
+  color: var(--oxblood);
+  font-size: 0.9rem;
+}
+
+.why {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* --- the chart ----------------------------------------------------------- */
+
+.chart-frame {
+  border: 1px solid var(--brass-deep);
+  outline: 5px double var(--rule);
+  outline-offset: 3px;
+  margin: 0.4rem 0 1rem;
+  background: #efe3c5;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chart-sea {
+  fill: #e9dcb9;
+}
+
+.chart-grid {
+  stroke: rgba(92, 77, 60, 0.18);
+  stroke-width: 1;
+}
+
+.chart-equator {
+  stroke: rgba(122, 36, 48, 0.35);
+  stroke-dasharray: 4 4;
+}
+
+.chart-meridian {
+  stroke: rgba(122, 36, 48, 0.5);
+  stroke-dasharray: 2 6;
+}
+
+.chart-note {
+  font-size: 11px;
+  fill: var(--oxblood);
+  font-style: italic;
+}
+
+.chart-book {
+  fill: none;
+  stroke: rgba(92, 77, 60, 0.45);
+  stroke-width: 1;
+}
+
+.chart-passage {
+  stroke-width: 3;
+  stroke-linecap: round;
+  fill: none;
+}
+
+/* The newest line draws itself. Drawing only; the text beside it is already there. */
+.chart-latest {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 350ms ease-out forwards;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.chart-sea.chart-sea {
+  fill: #e9dcb9;
+}
+.chart-passage.chart-sea {
+  stroke: var(--sea);
+}
+.chart-rail {
+  stroke: var(--rail);
+}
+.chart-elephant {
+  stroke: var(--elephant);
+}
+.chart-sledge {
+  stroke: var(--sledge);
+}
+.chart-land {
+  stroke: var(--land);
+  stroke-dasharray: 5 4;
+}
+
+.chart-stop {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+
+.chart-here {
+  fill: none;
+  stroke: var(--oxblood);
+  stroke-width: 2.5;
+}
+
+.chart-label {
+  font-size: 12px;
+  fill: var(--ink);
+  font-style: italic;
+}
+
+/* --- the Ledger ---------------------------------------------------------- */
+
+.wager-card {
+  max-width: 760px;
+  padding: 0.8rem 1.2rem;
+  margin-bottom: 1rem;
+  background: #fffaf0;
+  border: 1px solid var(--brass-deep);
+  outline: 3px double var(--rule);
+  outline-offset: 4px;
+}
+
+table.ledger {
+  border-collapse: collapse;
+  min-width: 760px;
+  background: repeating-linear-gradient(#fffaf0 0 28px, #f4ead4 28px 29px);
+}
+
+table.ledger th,
+table.ledger td {
+  text-align: left;
+  padding: 0.25em 0.8em;
+  border-right: 1px solid rgba(122, 36, 48, 0.25);
+}
+
+table.ledger td:last-child,
+table.ledger th:last-child {
+  text-align: right;
+}
+
+.total {
+  font-size: 1.1rem;
+  color: var(--oxblood);
+}
+
+/* --- Bradshaw ------------------------------------------------------------ */
+
+.tree,
+.tree ul {
+  list-style: none;
+  padding-left: 1.2rem;
+}
+
+[role='treeitem'] {
+  cursor: pointer;
+  padding: 0.15em 0.3em;
+}
+
+[role='treeitem'][aria-selected='true'] {
+  background: rgba(176, 138, 62, 0.25);
+}
+
+/* --- the club and the endings -------------------------------------------- */
+
+.terms {
+  max-width: 720px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.ending {
+  text-align: center;
+  padding: 1rem;
+}
+
+.ending .engraving {
+  max-width: 420px;
+  margin: 0 auto 1rem;
+  height: 200px;
+}
+
+.ending.won h2 {
+  color: var(--brass-deep);
+}
+
+/* --- the ticket office --------------------------------------------------- */
+
+dialog {
+  border: 1px solid var(--brass-deep);
+  outline: 4px double var(--rule);
+  outline-offset: 4px;
+  background: #fffaf0;
+  padding: 1.2rem 1.6rem;
+  min-width: 460px;
+}
+
+dialog::backdrop {
+  background: rgba(31, 24, 16, 0.55);
+}
+
+fieldset {
+  border: 1px solid var(--rule);
+  margin: 0.5em 0;
+}
+
+.ticket-message {
+  color: var(--oxblood);
+  min-height: 1.2em;
+}

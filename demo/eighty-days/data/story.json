@@ -1,0 +1,56 @@
+{
+  "_about": "The wager, the goods, and the words the game says when something happens. What decides each event is in renderer/game.js, beside the event's id; the words and the chapter are here, so they can be checked against the novel without reading code.",
+
+  "wager": {
+    "stake": 20000,
+    "carried": 20000,
+    "start": "1872-10-02T20:45",
+    "deadline": "1872-12-21T20:45",
+    "deadlineIsLondon": true,
+    "chapter": "III, IV",
+    "terms": "Twenty thousand pounds, laid at the Reform Club, that the circuit of the world can be made in eighty days: back in this room by a quarter before nine in the evening of Saturday, the 21st of December, 1872.",
+    "dateLine": "Travelling eastward, Fogg sees the sun cross the meridian eighty times while London counts seventy-nine days. So once the circuit crosses the Pacific eastward, his diary runs one day ahead of London's calendar, and the wager is judged by London's.",
+    "dateLineChapter": "XXXVII"
+  },
+
+  "goods": [
+    { "id": "furcoats", "label": "Fur coats", "use": "Hand round the fur coats", "why": "The sledge crosses the prairie in hard frost." },
+    { "id": "sugar", "label": "Lumps of sugar", "use": "Give Kiouni a lump of sugar", "why": "Passepartout's way with Kiouni.", "chapter": "XIV" },
+    { "id": "provisions", "label": "Provisions", "use": "Share out the provisions", "why": "Provisions were purchased at Kholby.", "chapter": "XII" }
+  ],
+
+  "club": {
+    "newspaper": "Ralph, a director of the Bank of England, talks of the robbery three days ago: fifty-five thousand pounds, taken by a gentleman. Detectives have been sent to every principal port.",
+    "newspaperChapter": "III",
+    "whist": "Fogg plays a rubber of whist with Stuart, Fallentin, Sullivan, Flanagan and Ralph."
+  },
+
+  "events": {
+    "suez-detective": { "chapter": "VI", "diary": "A detective on the quay compares Fogg's face with the description of the bank robber." },
+    "suez-servant-visa": { "chapter": "VI", "diary": "Passepartout takes the passport to the consulate and tells a friendly stranger everything about the wager." },
+    "suez-own-visa": { "chapter": "VI", "diary": "Fogg has the passport stamped himself, and says nothing to anyone." },
+    "bombay-temple": { "chapter": "X", "diary": "Passepartout wanders into the pagoda on Malabar Hill in his shoes, and is thrown out by the priests." },
+    "calcutta-court": { "chapter": "XVI", "diary": "Fogg and Passepartout are arrested at the station for the affair of the pagoda. Bail is a thousand pounds each." },
+    "kholby-end": { "chapter": "XI", "diary": "The railway stops in a glade at Kholby. Fifty miles to Allahabad were never laid." },
+    "kiouni-bought": { "chapter": "XII", "diary": "At two thousand pounds the owner yields, and Kiouni is Fogg's." },
+    "pillaji-procession": { "chapter": "XII", "diary": "Through the trees a procession passes, bearing a young widow to be burned at dawn." },
+    "pillaji-rescue": { "chapter": "XIII", "diary": "At dawn the widow is carried off from the pyre. Her name is Aouda." },
+    "pillaji-no-guide": { "chapter": "XIII", "diary": "Without the Parsee guide nobody can find a way to the pagoda through the dark." },
+    "hongkong-tavern": { "chapter": "XIX", "diary": "Passepartout drinks with a stranger in a tavern, is drugged with opium, and never tells Fogg that the Carnatic sails tonight." },
+    "hongkong-missed": { "chapter": "XX", "diary": "The Carnatic has sailed without Fogg. Passepartout is aboard her, alone." },
+    "yokohama-circus": { "chapter": "XXIV", "diary": "In the middle of the Long Noses' human pyramid Passepartout sees his master, and the pyramid collapses." },
+    "fortkearney-attack": { "chapter": "XXIX, XXX", "diary": "The train is attacked near Fort Kearney. Passepartout is carried off, and the train goes on without its passengers." },
+    "fortkearney-rescue": { "chapter": "XXX", "diary": "Fogg leads soldiers of the fort after the war party and brings Passepartout back." },
+    "sledge-cold": { "chapter": "XXXI", "diary": "Without fur coats the cold is cruel, and the sledge stops twice to thaw its passengers." },
+    "henrietta-burned": { "chapter": "XXXIII", "diary": "The coal is gone. Fogg buys the Henrietta for sixty thousand dollars, and burns her upper works to reach Ireland." },
+    "henrietta-drifts": { "chapter": "XXXIII", "diary": "The coal is gone and the carpet-bag cannot buy the ship. The Henrietta crawls under sail." },
+    "liverpool-warrant": { "chapter": "XXXIII, XXXIV", "diary": "On the Liverpool quay the Detective lays his hand on Fogg's shoulder and serves his warrant." },
+    "liverpool-free": { "chapter": "XXXIV", "diary": "The real robber was arrested on the 17th of December, in Edinburgh. Fogg is free." },
+    "liverpool-no-warrant": { "diary": "The Detective's warrant never catches up with Fogg." },
+    "london-late": { "chapter": "XXXV", "diary": "By Fogg's diary it is five minutes too late. He believes the wager is lost." },
+    "london-dateline": { "chapter": "XXXVI, XXXVII", "diary": "It is not Saturday but Friday. Travelling east, Fogg gained a day, and London's calendar is a day behind his diary." },
+    "won": { "chapter": "XXXVI", "diary": "Fogg walks into the saloon of the Reform Club. \"Here I am, gentlemen.\"" },
+    "lost-late": { "diary": "The eighty days have run out. The wager is lost." },
+    "lost-funds": { "diary": "The carpet-bag cannot pay for any way on. Fogg is without funds." }
+  }
+}
