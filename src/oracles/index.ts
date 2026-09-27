@@ -101,6 +101,8 @@ export interface WatchOptions {
   readonly app: ElectronApplication;
   readonly cfg: AppUnderTest;
   readonly responsiveTimeoutMs?: number;
+  /** The Route's profile folder, which `logPaths` written as a function needs. */
+  readonly userDataDir?: string;
 }
 
 /**
@@ -126,6 +128,24 @@ export interface WatchOptions {
  * a call that overran its bound by more than the responsive wait is the
  * finding, even when everything answers again by the time the checks run.
  */
+/**
+ * The logs to read, from a list or from the Route's profile folder.
+ *
+ * Refuses when the adapter names its logs by folder and no folder was given,
+ * rather than reading none. The log check would then report "not run" on every
+ * Hop for a reason that is the caller's mistake and not the adapter's choice.
+ */
+function resolveLogPaths(cfg: AppUnderTest, userDataDir: string | undefined): string[] {
+  if (typeof cfg.logPaths !== 'function') return cfg.logPaths ?? [];
+  if (userDataDir === undefined) {
+    throw new Error(
+      "The adapter names its logs from the Route's profile folder, and runRoute was not given " +
+        "one. Pass userDataDir from the test's fixture to runRoute."
+    );
+  }
+  return cfg.logPaths(userDataDir);
+}
+
 export async function startWatching(options: WatchOptions): Promise<Watch> {
   const { page, app, cfg } = options;
   const responsiveTimeoutMs = options.responsiveTimeoutMs ?? DEFAULT_RESPONSIVE_TIMEOUT_MS;
@@ -163,7 +183,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   // Where each log ended when the Route started, so only what a Hop appended
   // is read. A file that does not exist yet starts at nothing.
   const logOffsets = new Map<string, number>();
-  for (const file of cfg.logPaths ?? []) logOffsets.set(file, sizeOf(file));
+  for (const file of resolveLogPaths(cfg, options.userDataDir)) logOffsets.set(file, sizeOf(file));
 
   const readMain = async (): Promise<string[] | string> => {
     if (mainWatched !== undefined) return `the main process could not be watched: ${mainWatched}`;

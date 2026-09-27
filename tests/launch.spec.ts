@@ -35,7 +35,7 @@ test('it launches the packaged bundle, not a source directory', async () => {
   // the path rather than merely that something launched: a source-directory
   // launch would also produce a running application and prove nothing.
   expect(bundle.executable).toContain('.app/Contents/MacOS/');
-  expect(fs.existsSync(bundle.asarPath)).toBe(true);
+  expect(bundle.asarPath !== undefined && fs.existsSync(bundle.asarPath)).toBe(true);
 
   await withApp(buggy, async (launched) => {
     await buggy.waitForReady(await launched.app.firstWindow());
@@ -98,6 +98,33 @@ test("a real boot failure reports the application's own message, not a timeout",
   });
 });
 
+test("launch arguments written as a function are given the launch's own profile folder", async () => {
+  // For an argument that has to name a fresh folder each Route, such as
+  // Positron's --extensions-dir. The flag reaching the application is shown by
+  // its own failure message, as in the test above, so the function's result
+  // was used and not merely called.
+  const handed: string[] = [];
+  const failing: AppUnderTest = {
+    ...buggy,
+    launchArgs: (userDataDir) => {
+      handed.push(userDataDir);
+      return ['--buggy-fail-items'];
+    },
+  };
+
+  const dir = await makeUserDataDir(failing);
+  const launched = await launchOrRemove(failing, dir);
+  try {
+    expect(handed).toEqual([dir]);
+    await expect(failing.waitForReady(await launched.app.firstWindow())).rejects.toThrow(
+      /the trunk could not be opened/
+    );
+  } finally {
+    await closeApp(failing, launched).catch(() => {});
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  }
+});
+
 test('a healthy boot reaches the ready state, not merely an attached marker', async () => {
   // The positive control for the test above. An adapter that always threw would
   // satisfy that one, and this is what says the two outcomes differ.
@@ -107,6 +134,22 @@ test('a healthy boot reaches the ready state, not merely an attached marker', as
 
     await expect(page.locator('#status')).toHaveAttribute('data-boot', 'ready');
   });
+});
+
+test("the application runs from its own profile folder, not from where the run started", async () => {
+  // A relative write then lands in what the Route throws away rather than in
+  // the consumer's repository. Compared through realpath, since the system temp
+  // folder is reached through a symbolic link on macOS.
+  const dir = await makeUserDataDir(buggy);
+  const launched = await launchOrRemove(buggy, dir);
+  try {
+    const cwd = await launched.app.evaluate(() => process.cwd());
+    expect(fs.realpathSync(cwd)).toBe(fs.realpathSync(dir));
+    expect(fs.realpathSync(cwd)).not.toBe(fs.realpathSync(process.cwd()));
+  } finally {
+    await closeApp(buggy, launched).catch(() => {});
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  }
 });
 
 test('it stays off the screen', async () => {

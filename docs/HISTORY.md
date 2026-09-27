@@ -25,6 +25,66 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-26: a Positron adapter, five engine changes, and the first Positron bug
+
+**What landed.** The Positron trial's second step: an adapter in
+`trial/positron/`, pointed at an installed release named by `PHILEAS_APP_DIR`,
+in the consumer layout `buggy` uses. Three Routes of twenty Hops each passed
+through the current release, 2026.09.1. Getting there took five engine
+changes, each found by pointing the engine at Positron, and each tested:
+
+- **A bundle with no `app.asar` launches when there is no staleness guard.**
+  Positron ships its code unpacked, and only the guard reads the archive.
+- **`launchArgs`, `env` and `logPaths` may each be a function of the Route's
+  profile folder,** for an extensions folder, a home folder and a log that
+  have to be fresh per Route. The function form of `logPaths` needs `runRoute`
+  to be given the folder, and refuses to start without it rather than
+  reporting the log check as not run.
+- **The close is bounded and ends in SIGKILL,** reported as its own finding.
+  This closed the teardown defect filed the same day, which happened for
+  real: a Route found a hang, then sat at `app.close()`, and Positron ignored
+  an ordinary stop signal. Proved by `buggy`'s new `endless-hang`, a main
+  process busy forever, with a control: the Route test fails at teardown with
+  the bound removed.
+- **Every application launches from its Route's profile folder,** after a
+  bundled extension left a log in the folder the run was started from.
+
+**Measured on Positron, and what each decided,** all recorded in `PLAN.md`
+under the trial's second step:
+
+- The ordinary launch works, and the profile's socket path came to 87
+  characters, inside the 103 limit.
+- Positron writes no log files unless launched with `--logsPath`, checked
+  against a control log that was found.
+- The bundled Copilot chat extension failed its sign-in at every launch and
+  caused most of the idle errors. It is disabled, and the trial tests
+  Positron without it.
+- A native context menu blocked the whole application, and so would a native
+  dialog. Menus, dialogs and file dialogs are drawn in the page instead, so
+  the trial tests those rather than the macOS defaults. One main-process
+  confirmation, Clear Recently Opened, is still native and is excluded.
+- Positron writes into the home folder whatever `--user-data-dir` says, and
+  earlier runs had left sixteen files in the real `~/.copilot`, moved to the
+  Trash. Each Route now has its own home folder, and the trial's Journey
+  carries a guard that fails the run on any write to the real home folder or
+  the Journey's own folder, read from the folders themselves.
+- A keychain prompt froze both processes for over fifteen seconds at every
+  launch. `--use-mock-keychain` removed it: no event-loop gap over 300 ms in
+  either process, timed from inside each.
+- Positron cancels promises as ordinary control flow and drops them in its
+  own handler; the uncaught-error check is narrowed to exactly that rule.
+
+**The first Positron bug.** The log check ended a Route at hop 8, when an OK
+confirmed the Open Folder dialog hop 1 had opened: `positron-connections`
+throws a TypeError when deactivated, because its `deactivate` reads from an
+argument the extension host never passes. Shortened to those two Hops and
+reproduced once by script, then filed as ronplusron/phileas issue 44, to move
+to Positron's tracker. The shortening, the judgment that it is real and the
+write-up were done by hand, not by the engine, and `OUTSTANDING.md` 2.9
+records what that asks for.
+
+**Tested.** 174 passed, fifteen of them new.
+
 ## 2026-09-26: the first checks, for the Positron trial
 
 **Why these and not all of phase 5.** Two studies of real bug reports, in

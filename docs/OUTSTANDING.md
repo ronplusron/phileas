@@ -16,7 +16,7 @@ accumulates is how a section grows until nobody reads it.
 **These headings are judgments.** Placing an item is a decision about what
 kind of thing it is, and worth making deliberately.
 
-`DEFECTS.md` is what is wrong: one entry, which phase 5 closes.
+`DEFECTS.md` is what is wrong.
 
 ## 1. Agreed, not built
 
@@ -28,14 +28,18 @@ Positron. Phases 0 through 4 are done and
 `HISTORY.md` records them: the toolchain, the launch layer lifted and
 hardened, a packaged application it can launch, the seeds that make a run
 reproducible, and the Routes that travel through it and write down where
-they went. What is unwritten is every check: nothing yet judges whether anything
-a Route found is wrong.
+they went. Six of the universal checks landed on 2026-09-26 for the Positron
+trial. What is unwritten is the rest: no navigation away, named controls, and
+every check an application declares for itself.
 
 ### 1.2 Planted defects, and the applications still to build
 
-`testbed/buggy` exists and is structurally ordinary on purpose. **No defects
-are planted in it yet**, and until they are, nothing here shows the engine
-finds anything. `PLAN.md` plants them across phases 5, 6 and 8.
+`testbed/buggy` exists and is structurally ordinary on purpose. **Eight
+defects are planted in it**, one per way a universal check fires, each behind
+its own launch flag. A test steers a Route straight to each, which proves the
+check and not the search, so nothing here yet shows a Journey finds anything.
+`PLAN.md` plants the rest across phases 5, 6 and 8, and phase 8 is where one
+Journey has to find them all.
 
 The siblings are also unbuilt, and each makes a different claim: a build with
 the Electron fuses disabled, a virtualized list, a canvas-backed surface, a
@@ -387,6 +391,32 @@ crowded out or a key-only behavior, such as console history on Up, is being
 reached too rarely. A changed share changes what every seed produces, so it
 lands as its own change and says so.
 
+### 1.12 What is left of the Positron adapter
+
+The adapter in `trial/positron/` works against the current release, and
+`PLAN.md` has what was measured and decided for it. Four things are open:
+
+- **Readiness does not yet throw on a bad boot (R24).** `waitForReady` waits
+  for the status bar and nothing else. What Positron shows when it boots into
+  an error state has not been found, so a bad boot would end as a timeout
+  rather than in Positron's own words.
+- **The three old releases have not been launched through it.** They predate
+  the current one by up to two years, and `--use-mock-keychain`,
+  `--logsPath`, `--disable-extension`, the in-page menu and dialog settings,
+  and the Copilot extension being there to disable all need checking on each
+  before trial step 5 runs.
+- **The first Hop or two often cannot read the screen.** Seven of the twelve
+  Routes journaled on 2026-09-26 recorded "the page stopped answering while
+  the settle wait read it" at hop 1 or 2 and then carried on, and five of the
+  six run after the keychain fix did, so the keychain freeze does not explain
+  it. Counted from the journals. Not yet measured:
+  whether it is Positron still starting after the status bar appears, and so
+  whether readiness should wait longer.
+- **Opening a folder reloads the window, and the reload logs a console
+  error** about a cancelled shutdown step, which ended a Route alongside the
+  real finding. Whether that message is expected on every reload, and so
+  belongs in the console-error narrowing, is untested.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -556,6 +586,52 @@ settings and a closing "1 passed". Neither says anything about what the
 engine sees, and "1 passed" reads as a verdict on a command that judges
 nothing. Open: whether it is worth quieting, and how, without hiding a real
 failure to launch.
+
+### 2.9 Shortening a failing Route to the steps that matter
+
+Raised 2026-09-26 by the first Positron bug the trial found. A Route failed
+at hop 8, and the engine's part ended there: it named the Route, the Hop, the
+log lines and all eight Hops. Everything after was done by hand in the
+session, not by the engine: guessing that only hops 1 and 8 mattered,
+replaying those two by script to confirm it, reading Positron's code to judge
+the finding real, and writing the steps for the issue. The trial's bar asks
+that triage take minutes, and this took far longer. The journal could only
+support the shortening indirectly, since it records controls by name: that
+the OK clicked at hop 8 belonged to the dialog hop 1 opened is an inference
+from one OK appearing after hop 1 and staying on offer.
+
+Two things were asked for, in the words they were put:
+
+- **Choosing how many Hops a failure is reported with.** "When there's a
+  problem, we should be able to control how many hops should be included,
+  e.g. the last five."
+- **A language model doing the shortening and the write-up.** "Phileas
+  identifies the route, LLM take it and figures out the minimal steps. And
+  writes the issue."
+
+**Notes, a reading and not a decision:**
+
+- **The last few Hops may not stand alone.** Hops before them set up the
+  state they act in: here the Open Folder dialog at hop 1 was what the OK at
+  hop 8 confirmed, and the last five Hops without it would not reproduce.
+  Replaying a tail needs the state its first Hop started from, or a check
+  that the shortened replay still fails.
+- **Dropping a Hop shifts every draw after it.** A seeded replay retraces the
+  whole Route; a shortened one has to act from the recorded targets instead,
+  which the journal already holds, the way 2.1 says a run that cannot replay
+  from its seed would.
+- **The model sits after the run, which is the safe place for one.** 2.1
+  lists summarizing a finding from a journal as the first of the four places
+  a model could go, since it changes nothing about detection. Shortening
+  goes one step further, because it replays the application, but the
+  verdict on each shortened replay would still come from the engine's
+  checks rather than from the model. That keeps the rule in 2.1 that a model
+  never judges inside the checks.
+- **Its write-up needs the same care a hand-written one did.** The first
+  draft of the issue for this bug said the error happened "each time these
+  steps were run" after one scripted run, and the plan said "reproduced by
+  hand" when it was not. Whatever writes the issue has to report what was
+  actually run, and how many times.
 
 ## 3. Declined
 

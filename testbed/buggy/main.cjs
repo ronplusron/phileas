@@ -69,6 +69,7 @@ const PLANTS = [
   'console-error',
   'renderer-hang',
   'main-hang',
+  'endless-hang',
   'blank',
   'dialog',
   'log-error',
@@ -98,6 +99,16 @@ ipcMain.handle('plant:main-hang', () => {
   const until = Date.now() + HANG_MS;
   while (Date.now() < until) {
     // Busy on purpose: the main process answers nothing until this ends.
+  }
+});
+
+// Never ends. Busy in the main process, so Electron's own handling of a stop
+// signal, which needs the event loop, never runs either: measured on Positron
+// on 2026-09-26, where a blocked main process ignored an ordinary stop signal.
+// This is what a teardown has to survive.
+ipcMain.handle('plant:endless-hang', () => {
+  for (;;) {
+    // Busy on purpose, forever.
   }
 });
 

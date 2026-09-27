@@ -6,7 +6,15 @@ import type { AppUnderTest } from './app-under-test';
 export interface ResolvedBundle {
   appDir: string;
   executable: string;
-  asarPath: string;
+  /**
+   * The packaged archive, which only the staleness guard reads.
+   *
+   * Absent where the bundle has none and no guard is configured. An installed
+   * application can ship its code unpacked, as Positron does in
+   * `Contents/Resources/app`, and requiring an archive nothing was going to
+   * read refused to launch it at all.
+   */
+  asarPath: string | undefined;
 }
 
 /**
@@ -67,6 +75,9 @@ export function resolveBundle(cfg: AppUnderTest): ResolvedBundle {
     );
   }
   if (!fs.existsSync(asarPath)) {
+    // Only the guard reads the archive, so only a configured guard needs one.
+    // With no sources the guard cannot run anyway (C1a), and says so.
+    if (cfg.staleness === undefined) return { appDir, executable, asarPath: undefined };
     throw new Error(
       `The bundle at ${appDir} has no app.asar.\n` +
         `The staleness guard only understands the asar layout; --no-asar builds are not supported.`
@@ -140,7 +151,7 @@ function compareOne(relative: string, onDisk: Buffer, inBundle: Buffer): true | 
  * content, and git cannot see dist/ at all since it is ignored, nor can it see
  * uncommitted edits as anything but "dirty".
  */
-export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): GuardVerdict {
+export function assertBundleFresh(cfg: AppUnderTest, asarPath: string | undefined): GuardVerdict {
   if (cfg.staleness === undefined) {
     return {
       ran: false,
@@ -173,6 +184,15 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string): GuardVer
       'staleness.packagedInputs is empty, so the guard would compare nothing and ' +
         'report that it ran. Name the files and directories that go into the bundle, ' +
         'or leave staleness out entirely to say there are no sources to compare against.'
+    );
+  }
+  // resolveBundle refuses a guarded bundle with no archive, so this is reached
+  // only by a caller that skipped it. Refused rather than read as nothing to
+  // compare, which would report a guard that compared nothing as one that ran.
+  if (asarPath === undefined) {
+    throw new Error(
+      'The staleness guard is configured but no app.asar was given to compare against. ' +
+        'Pass the path resolveBundle returned.'
     );
   }
   const ignore = cfg.staleness.ignoreInput ?? (() => false);

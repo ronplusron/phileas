@@ -269,8 +269,17 @@ export interface AppUnderTest {
    */
   selectPage?(app: ElectronApplication): Promise<Page>;
 
-  /** Extra command-line arguments added to every launch. */
-  launchArgs?: string[];
+  /**
+   * Extra command-line arguments added to every launch.
+   *
+   * A list, or a function handed the launch's own profile folder, for an
+   * argument that has to name a fresh folder each Route. The case this exists
+   * for is Positron's `--extensions-dir`: a fixed one would be shared by every
+   * Route, which is the inherited state R3 forbids, and left out it is the
+   * machine's real one. Kept deterministic, since the arguments decide what the
+   * application offers and so what a seed draws.
+   */
+  launchArgs?: string[] | ((userDataDir: string) => string[]);
 
   /**
    * Environment variables for every launch.
@@ -278,8 +287,13 @@ export interface AppUnderTest {
    * Almost everything an application needs in order to run hermetically
    * arrives this way rather than as a flag, and one confirmed consumer cannot
    * launch without one.
+   *
+   * A record, or a function handed the launch's own profile folder, for a
+   * variable that has to name a fresh folder each Route. The case this exists
+   * for is HOME on Positron: its in-page file dialogs start in the home
+   * folder, and a Route must not read or write the real one.
    */
-  env?: Record<string, string>;
+  env?: Record<string, string> | ((userDataDir: string) => Record<string, string>);
 
   /**
    * Run before each launch, to seed settings on disk.
@@ -305,8 +319,14 @@ export interface AppUnderTest {
    * the renderer console, and leave an exception in a log. An adapter naming
    * none gets no log check, and the report says so rather than leaving the
    * absence to be inferred from silence.
+   *
+   * A list, or a function handed the Route's own profile folder, for an
+   * application whose logs live inside it. Measured on Positron on 2026-09-26:
+   * it writes no log at all unless launched with `--logsPath`, and a fresh
+   * folder per Route has to sit inside that Route's profile. The function form
+   * needs `runRoute` to be given the folder, and refuses to start without it.
    */
-  logPaths?: string[];
+  logPaths?: string[] | ((userDataDir: string) => string[]);
 
   /**
    * Recognize a process belonging to this application.

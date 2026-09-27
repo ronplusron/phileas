@@ -537,6 +537,133 @@ below is unchanged, and what the trial builds is the first part of it.
    it. Quit, sign-in and outbound links excluded. The extension host log named
    for the log check. The staleness guard cannot run, since there are no
    sources.
+
+   **Decided 2026-09-26, before building it, each from a proposal made with
+   the question:**
+   - **It lives in `trial/positron/`,** in the consumer layout `buggy` uses.
+     Chosen over a repository of its own, which would also test whether a
+     package outside the consumer transpiles, and that is phase 9's question
+     rather than the trial's. `demo/` and `testbed/` already mean other
+     things.
+   - **Which release it runs comes from `PHILEAS_APP_DIR`,** pointed at the
+     `.app`, so an unset variable is refused by name and no release is run by
+     default. Chosen over defaulting to the current release, where a forgotten
+     variable would test the wrong one silently.
+   - **Two engine gaps are fixed first, on the same branch.** Found reading
+     the launch layer against the installed application: `resolveBundle`
+     refuses a bundle with no `app.asar` even when there is no staleness guard
+     to read one, and Positron ships an unpacked `Resources/app` folder; and
+     `launchArgs` is a fixed list, so it cannot point `--extensions-dir` at a
+     fresh folder per Route, which leaves every Route sharing the machine's
+     real extensions. So `app.asar` is required only where `staleness` is
+     set, and `launchArgs` may also be a function of the Route's profile
+     folder.
+
+   **Measured on 2026-09-26 against 2026.09.1, launched through the engine's
+   ordinary path with a fresh profile, and decided from it:**
+   - **The ordinary launch works,** and the survey reads the workbench and
+     the native menu. Positron's own Quit Positron carries no Electron role,
+     so the standard-entry skip does not cover it and the adapter excludes it.
+   - **The profile's socket path came to 87 characters** under the engine's
+     own temporary folder, inside the 103 limit, so no shorter folder is
+     needed on this machine.
+   - **Positron writes no log files at all unless launched with
+     `--logsPath`,** checked against a control log that was found. With it,
+     every log lands under the given folder, the extension host's at
+     `window1/exthost/exthost.log`. So a third engine gap, fixed with the
+     other two: `logPaths` may also be a function of the profile folder, and
+     `runRoute` is handed that folder. **Only the extension host log is
+     named,** decided over naming the renderer and main logs too, since the
+     renderer log repeats the console, which the console-error check already
+     reads, and one fault would be reported twice.
+   - **The bundled Copilot chat extension is disabled,** decided over
+     narrowing the checks to accept it. It fails its GitHub sign-in at every
+     launch and caused five of the seven error lines logged while idle, and
+     an "unknown error" 3 ms after. Signing in was considered and declined:
+     each Route's profile starts empty, so a sign-in would mean copying a
+     token into every one, a model's answers cannot be replayed from a seed,
+     and C3 says nothing a run produces is sent anywhere. The study already
+     put the AI features out of reach. **The trial therefore tests Positron
+     without that extension, and its findings say so.**
+   - **A fresh profile asks to import settings from Visual Studio Code,**
+     and an R session starts by itself at launch.
+   - **Positron's main process rejects cancelled promises as ordinary control
+     flow,** and its own handler drops any error named and worded `Canceled`.
+     The engine's listener sits beside that handler and reported dozens when
+     the Extensions view opened. Narrowed in the adapter to exactly that
+     rule, with the reason, rather than counted as a finding.
+   - **A native popup menu blocks the whole application.** A Route clicked
+     the Manage gear at hop 4, every click after it timed out, and at hop 11
+     still-responding failed with neither process answering. The Route then
+     hung at teardown, which is the second entry in `DEFECTS.md` observed for
+     real, and Positron ignored an ordinary stop signal and needed a
+     force-kill.
+   - **A control's name can change while a Route runs:** Accounts became
+     "Accounts - Sign in requested", and an exclusion by that name missed it.
+
+   **Decided 2026-09-26 from those measurements, each from a proposal made
+   with the question:**
+   - **Menus, dialogs and file dialogs are drawn in the page,** by writing
+     `window.menuStyle` and `window.dialogStyle` as `custom` and
+     `files.simpleDialog.enable` as true before launch. Each is then something
+     a Route can survey and leave rather than a native surface that blocks the
+     main process and reads as a hang. Positron's own automation driver forces
+     custom dialogs for the same reason. Chosen over keeping the native ones
+     and excluding every control that opens one, where a single miss ends the
+     Route the same way. **The trial therefore tests Positron's in-page menus
+     and dialogs, not its macOS defaults, and its findings say so.** The Open
+     and Open Folder controls stop being excluded.
+   - **Each Route gets its own home folder,** inside its profile, because an
+     in-page file dialog starts in the home folder and a Route could
+     otherwise read or write real files there. That is a fourth engine gap,
+     the same shape as the others: `env` may also be a function of the
+     profile folder. Chosen over keeping file dialogs excluded, which a Save
+     from an untitled editor gets past anyway.
+   - **Runs before this wrote into the real home folder.** Positron writes
+     there whatever `--user-data-dir` says: sixteen Copilot log and lock
+     files from that day's runs were found in `~/.copilot` and moved to the
+     Trash, and the `.positron`, `.positron-shared`, `.posit` and `.copilot`
+     folders date from the 2026-09-24 probe's time, which set a profile and
+     not a home. **So the trial's Journey carries a guard,** returned from its
+     global setup and run as teardown: it fails the run on any file written
+     under those folders, or any new entry at the top of the home folder or
+     Application Support, and it reads the real folder rather than trusting
+     HOME. `PHILEAS_TRIAL_ALLOW_HOME_WRITES=1` skips it and says so.
+   - **A keychain prompt froze Positron at every launch.** Its secret storage
+     reads a key from the macOS keychain in each fresh profile, and the
+     prompt blocked the main process until someone answered it: both
+     processes stopped answering about a second after ready, for over fifteen
+     seconds, on every launch measured, and two Routes failed still-responding
+     inside that window. An unattended run would wait on it, which breaks C5.
+     **The adapter launches with `--use-mock-keychain`,** which Positron's own
+     Electron carries, and two launches with it showed no event-loop gap over
+     300 ms in either process, timed from inside each. Nothing signs in, so
+     the secrets it guards do not exist.
+   - **A native dialog can still come from the main process.** File ->
+     Open Recent -> Clear Recently Opened raises its confirmation with
+     `showMessageBox`, which `window.dialogStyle` does not reach, and it
+     blocked both processes on both Routes that drew it. It is excluded.
+     Other main-process message boxes may exist, and each will show the same
+     way, as still-responding failing right after a menu hop.
+   - **An application writes by relative path into the folder it was started
+     from.** A bundled extension's Snowflake driver left a log in the
+     Journey's folder, inside this repository. So the engine now launches
+     every application from its Route's profile folder, and the trial's
+     guard also watches the folder the run was started from, apart from the
+     run's own output there.
+   - **The first Positron bug found,** by the log check on a Route that
+     opened a folder: `positron-connections` throws a TypeError when
+     deactivated. Seen on the Route, where opening a folder reloaded the
+     window, and reproduced once by a script that clicked Open Folder and
+     then OK on a fresh profile. Not yet followed by hand, and whether any
+     other reload triggers it is untested: a scripted Reload Window never
+     reloaded. Filed as ronplusron/phileas issue 44, to be moved to
+     Positron's tracker once checked against it. Not yet triaged as new or
+     known.
+   - **The teardown defect is fixed on this branch,** before the trial runs,
+     since an unattended Journey of 500 Routes cannot survive it. The close is
+     bounded and ends in a force-kill, because an ordinary stop signal was
+     measured not to be enough.
 3. **Three rules written for Positron**, from what the study found within
    reach: Positron's error notification never appears, narrowed for the ones
    that are expected; the Variables pane lists exactly the running sessions;

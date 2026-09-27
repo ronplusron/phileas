@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
@@ -100,6 +101,62 @@ test('the launch refuses an adapter that supplies its own user data directory', 
     await expect(launchApp(intruding, dir)).rejects.toThrow(/--user-data-dir/);
   } finally {
     await fs.promises.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('the launch refuses its own user data directory from launch arguments written as a function', async () => {
+  // The function form is the one an adapter reaches for when an argument names
+  // a folder, so it is the likelier place for this to slip back in.
+  const intruding: AppUnderTest = {
+    ...buggy,
+    launchArgs: (userDataDir) => [`--user-data-dir=${userDataDir}-elsewhere`],
+  };
+  const dir = await makeUserDataDir(intruding);
+
+  try {
+    await expect(launchApp(intruding, dir)).rejects.toThrow(/--user-data-dir/);
+  } finally {
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * A bundle holding an executable and nothing else, in the shape of an
+ * installed application that ships its code unpacked rather than in app.asar.
+ */
+function bundleWithNoArchive(): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'unpacked-bundle-'));
+  const appDir = path.join(root, 'Unpacked.app');
+  fs.mkdirSync(path.join(appDir, 'Contents', 'MacOS'), { recursive: true });
+  fs.mkdirSync(path.join(appDir, 'Contents', 'Resources', 'app'), { recursive: true });
+  fs.writeFileSync(path.join(appDir, 'Contents', 'MacOS', 'Unpacked'), '');
+  return appDir;
+}
+
+test('a bundle with no app.asar resolves when there is no staleness guard to read one', () => {
+  const appDir = bundleWithNoArchive();
+  try {
+    const unguarded: AppUnderTest = { ...buggy, bundleDir: appDir, staleness: undefined };
+    const bundle = resolveBundle(unguarded);
+
+    expect(bundle.executable).toBe(path.join(appDir, 'Contents', 'MacOS', 'Unpacked'));
+    expect(bundle.asarPath).toBeUndefined();
+    // And the guard says it did not run, rather than that it passed.
+    expect(assertBundleFresh(unguarded, bundle.asarPath)).toMatchObject({ ran: false, reason: 'no-sources' });
+  } finally {
+    fs.rmSync(path.dirname(appDir), { recursive: true, force: true });
+  }
+});
+
+test('a bundle with no app.asar is still refused where a staleness guard is configured', () => {
+  // The positive control for the test above: the refusal is lifted only where
+  // nothing would read the archive, not everywhere.
+  const appDir = bundleWithNoArchive();
+  try {
+    expect(() => resolveBundle({ ...buggy, bundleDir: appDir })).toThrow(/has no app\.asar/);
+    expect(() => assertBundleFresh(buggy, undefined)).toThrow(/no app\.asar was given/);
+  } finally {
+    fs.rmSync(path.dirname(appDir), { recursive: true, force: true });
   }
 });
 

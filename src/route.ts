@@ -398,6 +398,11 @@ export interface RunRouteOptions {
    * out, as `followFromEnvironment`.
    */
   readonly follow?: boolean;
+  /**
+   * The Route's profile folder, from the test's `userDataDir` fixture. Needed
+   * only where the adapter's `logPaths` is written as a function of it.
+   */
+  readonly userDataDir?: string;
 }
 
 /**
@@ -542,6 +547,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     follow = followFromEnvironment(),
     surveyOnly = surveyFromEnvironment(),
     responsiveTimeoutMs,
+    userDataDir,
   } = options;
   const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
   const shares = sharesFor(cfg);
@@ -621,7 +627,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     // Started before the Fix, since the checks run after Fix steps too, and
     // inside the try, so a Route whose watching cannot start still closes its
     // journal with the reason.
-    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs });
+    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs, userDataDir });
 
     if (fix) {
       await runFix(fix, {

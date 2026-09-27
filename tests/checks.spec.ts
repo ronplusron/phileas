@@ -162,6 +162,65 @@ firesOn('log-error', 'Write in the logbook', 'log-error', /ERROR the logbook pag
   logPaths: [LOG],
 });
 
+// The same planted log, written inside the Route's own profile folder, the way
+// Positron writes its logs. Both halves are functions of that folder: env tells
+// buggy where to write, and logPaths tells the check where to read. The check
+// firing is the evidence that both reached their side, since neither file path
+// exists until the folder does. The profile is removed with the Route.
+const handedFolders: string[] = [];
+const logbookIn = (userDataDir: string) => path.join(userDataDir, 'logbook.log');
+const byFolder = planted('log-error', {
+  env: (userDataDir) => ({ BUGGY_LOG: logbookIn(userDataDir) }),
+  logPaths: (userDataDir) => {
+    handedFolders.push(userDataDir);
+    return [logbookIn(userDataDir)];
+  },
+});
+const byFolderTest = createTest(byFolder);
+byFolderTest.afterEach(removeScratch);
+
+byFolderTest('logs named from the profile folder are read, given that folder', async ({ page, app, userDataDir }) => {
+  handedFolders.length = 0;
+  const root = scratch();
+  const error = await runRoute({
+    page,
+    app,
+    cfg: byFolder,
+    streams: deriveRouteStreams('plant-log-by-folder', 1),
+    journeySeed: 'plant-log-by-folder',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: root,
+    chooser: always('Write in the logbook'),
+    userDataDir,
+    ...SHORT,
+  }).then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+
+  expect(handedFolders).toEqual([userDataDir]);
+  expect(error).toBeInstanceOf(CheckFailure);
+  expect((error as CheckFailure).failed.map((c) => c.check)).toContain('log-error');
+});
+
+byFolderTest('logs named from the profile folder refuse to start without it', async ({ page, app }) => {
+  // Refused rather than read as no log, which would report the check as not
+  // run on every Hop for a reason that is the caller's and not the adapter's.
+  await expect(
+    runRoute({
+      page,
+      app,
+      cfg: byFolder,
+      streams: deriveRouteStreams('plant-log-no-folder', 1),
+      journeySeed: 'plant-log-no-folder',
+      routeNumber: 1,
+      tripLength: 1,
+      journalsRoot: scratch(),
+    })
+  ).rejects.toThrow(/runRoute was not given/);
+});
+
 const healthy = createTest(buggy);
 healthy.afterEach(removeScratch);
 healthy.afterEach(() => fs.rmSync(LOG, { force: true }));

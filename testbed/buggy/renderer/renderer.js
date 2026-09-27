@@ -85,6 +85,7 @@ const PLANTED = {
     }
   }],
   'main-hang': ['Wait at the port', () => window.buggy.plant('main-hang')],
+  'endless-hang': ['Wait for the last ferry', () => window.buggy.plant('endless-hang')],
   blank: ['Fold the map', () => document.body.replaceChildren()],
   dialog: ['Ring the bell', () => alert('the bell rang')],
   'log-error': ['Write in the logbook', () => window.buggy.plant('log-error')],

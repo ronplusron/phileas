@@ -47,7 +47,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and fifty-nine tests. Seven launch it,
+through, and `npm test` runs one hundred and seventy-four tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -66,7 +66,11 @@ and a survey. The last three cover the
 fixture layer and the types, the type ones being compile-time assertions that
 `npm run typecheck` enforces. Thirteen make each check fire on a defect planted
 in `buggy` behind its own launch flag, and show nothing firing on `buggy`
-launched without one.
+launched without one. Fifteen came with the Positron adapter: launch
+arguments, the environment and logs named from a Route's profile folder, a
+bundle with no archive, the application running from its profile folder, a
+close that ends in a forced kill, proved against a planted hang that never
+ends, and the trial's home folder guard.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -82,10 +86,15 @@ verification points rather than bookkeeping.
 2026-09-26: part of phase 5's checks, a Positron adapter, and runs against old
 releases carrying known bugs, judged against a bar set in advance.
 `docs/PLAN.md` has it under "Before the rest of phase 5", and the rest of
-phase 5 waits for its answer. Its first step, the checks, is done; the
-Positron adapter is next. The three old releases and the current one are
-installed as `Positron-2024.11.app`, `Positron-2025.01.app`,
-`Positron-2025.02.app` and `Positron.app`.
+phase 5 waits for its answer. Its first step, the checks, is done, and so is
+its second for the current release: the adapter is in `trial/positron/`, and
+three Routes of twenty Hops each passed through it, with one Positron bug
+found on the way. `docs/PLAN.md` has everything measured and decided for it.
+The three old releases and the current one are installed as
+`Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
+`Positron.app`, and `PHILEAS_APP_DIR` names which one a run uses, for example
+`PHILEAS_APP_DIR=/Applications/Positron.app phileas run trial/positron/phileas`.
+What is left of the adapter is in `docs/OUTSTANDING.md`.
 
 **Phase 5 was next until then.** Running the engine against real
 applications for a demo found gaps phase 5 would otherwise have built on, and
@@ -95,12 +104,9 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** One defect is open, and
-phase 5 closes it: the external-link stub can install successfully and do
-nothing, and it stays open until a second source
-of evidence exists that does not depend on the stub having worked. That file
-holds what is wrong, confirmed by reading the code, and nothing here restates
-it.
+**Read `docs/DEFECTS.md` before writing any of it.** One defect is open: the
+external-link stub can install successfully and do nothing. That file holds
+what is wrong, confirmed by reading the code, and nothing here restates it.
 
 **Two things phase 5 must not undo**, both measured earlier and carried in
 `docs/PLAN.md`. A hop must not wait for navigation to finish, or a single
@@ -124,8 +130,7 @@ postinstall in this environment, so the types arrive and the binary does not.
 `testbed/buggy/` separately. It looks like a broken checkout and is not.
 
 `docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
-opinion. `docs/DEFECTS.md` holds what is wrong, and phase 5 closes its one
-entry.
+opinion. `docs/DEFECTS.md` holds what is wrong.
 
 **Two research readings are recorded in `docs/HISTORY.md` and worth knowing
 before designing anything.** Discovery by accessibility role was measured
@@ -168,7 +173,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and fifty-nine tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and seventy-four tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

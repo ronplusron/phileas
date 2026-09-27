@@ -16,6 +16,9 @@ node_modules/
 /demo/*/dist/
 /demo/*/test-results/
 /demo/*/playwright-report/
+# The same, for each trial.
+/trial/*/test-results/
+/trial/*/playwright-report/
 *.log
 .DS_Store
 .phileas-seed

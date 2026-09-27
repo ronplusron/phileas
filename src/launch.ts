@@ -327,7 +327,9 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
   // which one Chromium honors is not something this should rest on. The
   // guarantee above is that a Journey never writes over the application's real
   // state, and an argument list is not the place to negotiate it.
-  const ownUserDataDir = (cfg.launchArgs ?? []).find((arg) => arg.startsWith('--user-data-dir'));
+  const launchArgs =
+    typeof cfg.launchArgs === 'function' ? cfg.launchArgs(userDataDir) : (cfg.launchArgs ?? []);
+  const ownUserDataDir = launchArgs.find((arg) => arg.startsWith('--user-data-dir'));
   if (ownUserDataDir) {
     throw new Error(
       `launchArgs sets ${ownUserDataDir}, which the engine supplies itself so that a run ` +
@@ -337,8 +339,16 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
 
   const app = await electron.launch({
     executablePath: bundle.executable,
-    args: [`--user-data-dir=${userDataDir}`, ...(cfg.launchArgs ?? [])],
-    env: { ...process.env, ...(cfg.env ?? {}) } as Record<string, string>,
+    // The profile rather than wherever the run was started, which is the
+    // consumer's repository. An application writing a file by a relative path
+    // then writes into what the Route throws away: measured on Positron on
+    // 2026-09-26, where a bundled extension left a log in the Journey's folder.
+    cwd: userDataDir,
+    args: [`--user-data-dir=${userDataDir}`, ...launchArgs],
+    env: {
+      ...process.env,
+      ...(typeof cfg.env === 'function' ? cfg.env(userDataDir) : (cfg.env ?? {})),
+    } as Record<string, string>,
     timeout: 20_000,
   });
 
@@ -408,15 +418,93 @@ export async function reloadRenderer(cfg: AppUnderTest, launched: LaunchedApp): 
   return page;
 }
 
+/** How long an orderly close may take before the process is killed. */
+export const DEFAULT_CLOSE_TIMEOUT_MS = 10_000;
+
+/** How long to wait for a killed process to be gone. */
+const KILL_WAIT_MS = 5_000;
+
 /**
- * Close the application.
+ * How the application was closed, for the report.
+ *
+ * A forced kill is a finding of its own: an application that will not close is
+ * a defect class this engine exists to find. Returned rather than thrown so it
+ * never replaces the Route's own verdict, which is usually the hang that
+ * caused it.
+ */
+export type CloseVerdict = { forced: false } | { forced: true; detail: string };
+
+/**
+ * Close the application, and kill it if it will not close.
  *
  * An application-specific shutdown runs first where one is supplied, because
  * closing the connection does not always terminate the process. At one launch
  * per Route, a shutdown that leaks costs one stray process per Route rather
  * than one per run.
+ *
+ * **Bounded, because a hang is what this engine finds.** Neither `shutdown`
+ * nor `app.close()` has a limit of its own, and against a process that never
+ * answers again `app.close()` never returns: the Route had found the hang, and
+ * the Journey sat at teardown instead of reporting it. Measured on Positron on
+ * 2026-09-26, which also ignored an ordinary stop signal while its main process
+ * was blocked, since Electron's handling of one needs the event loop. So the
+ * kill is SIGKILL, which the process cannot refuse.
  */
-export async function closeApp(cfg: AppUnderTest, launched: LaunchedApp): Promise<void> {
-  if (cfg.shutdown) await cfg.shutdown(launched.app);
-  await launched.app.close();
+export async function closeApp(
+  cfg: AppUnderTest,
+  launched: LaunchedApp,
+  timeoutMs: number = DEFAULT_CLOSE_TIMEOUT_MS
+): Promise<CloseVerdict> {
+  const orderly = (async () => {
+    if (cfg.shutdown) await cfg.shutdown(launched.app);
+    await launched.app.close();
+  })();
+
+  let timer: NodeJS.Timeout | undefined;
+  const timedOut = new Promise<'timed-out'>((resolve) => {
+    timer = setTimeout(() => resolve('timed-out'), timeoutMs);
+  });
+
+  try {
+    // An orderly close that throws still propagates, as it always has: the
+    // fixture attaches that as its own finding.
+    if ((await Promise.race([orderly.then(() => 'closed' as const), timedOut])) === 'closed') {
+      return { forced: false };
+    }
+  } finally {
+    clearTimeout(timer);
+  }
+
+  // Abandoned, and it may settle once the process is gone; nothing waits on it.
+  orderly.catch(() => undefined);
+
+  if (launched.path !== 'electron') {
+    return {
+      forced: true,
+      detail:
+        `The application did not close within ${timeoutMs} ms, and this launch path reaches ` +
+        `no process to kill, so it may still be running.`,
+    };
+  }
+
+  const child = launched.app.process();
+  const exited =
+    child.exitCode !== null || child.signalCode !== null
+      ? Promise.resolve(true)
+      : new Promise<boolean>((resolve) => {
+          const give = setTimeout(() => resolve(false), KILL_WAIT_MS);
+          child.once('exit', () => {
+            clearTimeout(give);
+            resolve(true);
+          });
+        });
+  child.kill('SIGKILL');
+
+  return {
+    forced: true,
+    detail:
+      `The application did not close within ${timeoutMs} ms, so its process ` +
+      `(pid ${child.pid}) was killed with SIGKILL` +
+      ((await exited) ? '.' : `, and had still not exited ${KILL_WAIT_MS} ms later.`),
+  };
 }

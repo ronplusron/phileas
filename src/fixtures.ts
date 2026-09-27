@@ -97,7 +97,13 @@ export function createTest(cfg: AppUnderTest) {
         // must not replace the test's own failure, so it is reported rather
         // than thrown.
         try {
-          await closeApp(cfg, launched);
+          const closed = await closeApp(cfg, launched);
+          if (closed.forced) {
+            await testInfo.attach('teardown-forced-kill.txt', {
+              body: closed.detail,
+              contentType: 'text/plain',
+            });
+          }
         } catch (error) {
           await testInfo.attach('teardown-failure.txt', {
             body: error instanceof Error ? (error.stack ?? error.message) : String(error),
