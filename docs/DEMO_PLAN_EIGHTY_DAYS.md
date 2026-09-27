@@ -112,7 +112,14 @@ wait reads as a page still moving.
 plays the same moves twice, in two launches, and compares every screen's
 text; a second plays a Trip at two hop delays and compares the same. Both
 are written before the first event is, per the standing rule that a rule
-worth writing down gets the check that fails when it is broken.
+worth writing down gets the check that fails when it is broken. They live in
+`demo/eighty-days/tests/determinism.spec.ts`, beside two tests of the
+comparison itself, which run against the rail demo: one finds no difference
+between two launches, and one finds a difference planted before a chosen
+Hop. **Once the game exists, a `coin-flip` plant joins them**: one event
+decided by `Math.random`, switched on by its flag, which the two game tests
+must fail on. It is the control that shows the tests catch randomness in the
+game itself, and not only a note planted from outside.
 
 ### The people, and the words the game uses
 
@@ -710,6 +717,8 @@ Each answered 2026-09-27, in the words given:
 Nothing is open. New questions go here as building raises them.
 
 ## Build order
+
+Steps 1 and 2 are built, 2026-09-27; `HISTORY.md` has what was measured.
 
 1. Lift the rail demo's presenting runner into `demo/presenting.mjs`, with
    the parameters listed under "What is shared", and rename its script to

@@ -665,6 +665,37 @@ Two things were asked for, in the words they were put:
   hand" when it was not. Whatever writes the issue has to report what was
   actually run, and how many times.
 
+### 2.10 Checking that an application replays, as part of the engine
+
+Raised 2026-09-27, and asked to be noted in the words "Note it."; nothing is
+decided. Building the Eighty Days demo produced a test that plays one seed
+twice, in two launches and at two hop delays, and compares the whole
+accessibility tree before every Trip Hop. It lives in the demo's own suite,
+`demo/eighty-days/tests/determinism.spec.ts`, built from the engine's public
+API, with a shared part in `determinism.ts` beside it.
+
+Nothing in it is about that game. Every application a Journey runs against
+depends on the same property: a failing seed is worth recording only if it
+retraces, and an application that draws from its own randomness or moves on
+a timer makes a recorded seed retrace somewhere else. The engine already
+treats a Route that fails and then passes as a finding, which is why its own
+suite runs with no retries; this would be the same stance, checked directly
+rather than noticed by chance.
+
+**Notes, a reading and not a decision:**
+
+- **It costs a Route's time twice**, so it is not something to run on every
+  Journey. A command of its own, or an option on `phileas run`, would fit
+  better than a check after every Hop.
+- **Some applications are not deterministic, and legitimately.** A clock on
+  screen, a greeting by time of day, or a real network would all differ
+  between plays. The comparison would need a way to leave a named part of
+  the screen out, and that list has the same pitfall as a narrowing: it can
+  quietly grow to cover the thing it should catch.
+- **It already has a positive control to carry over.** The demo's tests
+  plant a note before one Hop of one play and require the comparison to
+  find it there, and that belongs with it wherever it goes.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias

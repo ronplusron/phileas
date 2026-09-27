@@ -3,14 +3,14 @@
 A script for showing Phileas to people who have not seen it, technical or not.
 It runs roughly ten minutes, plus questions.
 
-**Two ways to give it.** `npm run demo:present` runs the sections below in
-order, with the application's window on screen, and waits for Enter between
-them. `npm run demo:present -- --auto` plays straight through, eight seconds
-apart, or `--auto=15` for fifteen. `-- --from 8` starts at section 8. Or run
-each section's command by hand from this file, which is slower and leaves room
-to wander. The guided command prints every command exactly as it would be
-typed, and waits for Enter before running it, so there is time to read it out;
-the two ways match line for line.
+**Two ways to give it.** `npm run demo:train:present` runs the sections below
+in order, with the application's window on screen, and waits for Enter
+between them. `npm run demo:train:present -- --auto` plays straight through,
+eight seconds apart, or `--auto=15` for fifteen. `-- --from 8` starts at
+section 8. Or run each section's command by hand from this file, which is
+slower and leaves room to wander. The guided command prints every command
+exactly as it would be typed, and waits for Enter before running it, so there
+is time to read it out; the two ways match line for line.
 
 Everything runs live against the real application. Nothing is recorded in
 advance, so a run can be repeated if a question calls for it.

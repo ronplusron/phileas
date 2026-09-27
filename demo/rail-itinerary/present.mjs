@@ -5,234 +5,39 @@
 // for Enter, so a presenter can talk and take questions; with --auto it waits a
 // few seconds instead and plays straight through.
 //
-//   npm run demo:present                   wait for Enter between sections
-//   npm run demo:present -- --auto         play through, 8 seconds apart
-//   npm run demo:present -- --auto=15      play through, 15 seconds apart
-//   npm run demo:present -- --from 8       start at section 8
+//   npm run demo:train:present                   wait for Enter between sections
+//   npm run demo:train:present -- --auto         play through, 8 seconds apart
+//   npm run demo:train:present -- --auto=15      play through, 15 seconds apart
+//   npm run demo:train:present -- --from 8       start at section 8
 //
 // PRESENTING.md beside this file is the same demo as a script to read from,
-// with what to point at in each section.
+// with what to point at in each section. The runner itself, shared with the
+// other demos, is demo/presenting.mjs; this file holds only the sections.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
+import {
+  afterSettings,
+  announce,
+  bold,
+  demoFolders,
+  dim,
+  fixAndAfter,
+  fromRepo,
+  phileasShown,
+  present,
+  print,
+  say,
+  showCode,
+  startListing,
+  typed,
+  withColumnHeadings,
+} from '../presenting.mjs';
 import { hopsOf, retraceVerdict } from './journals.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const repo = path.resolve(here, '..', '..');
-const configDir = path.join(here, 'phileas');
-const journalsRoot = path.join(configDir, '.phileas-journals');
-const phileas = path.join(repo, 'bin', 'phileas.mjs');
-
-// --- options ---------------------------------------------------------------
-
-const args = process.argv.slice(2);
-const autoArg = args.find((a) => a === '--auto' || a.startsWith('--auto='));
-const autoSeconds = autoArg ? Number(autoArg.split('=')[1] ?? 8) : undefined;
-const fromIndex = args.indexOf('--from');
-const from = fromIndex >= 0 ? Number(args[fromIndex + 1]) : 1;
-if ((autoSeconds !== undefined && !(autoSeconds >= 0)) || !(from >= 1)) {
-  console.error('Usage: present.mjs [--auto[=seconds]] [--from <section>]');
-  process.exit(2);
-}
-
-// --- presentation helpers ----------------------------------------------------
-
-const tty = process.stdout.isTTY;
-const bold = (s) => (tty ? `\x1b[1m${s}\x1b[0m` : s);
-const dim = (s) => (tty ? `\x1b[2m${s}\x1b[0m` : s);
-
-function heading(number, title) {
-  console.log(`\n${bold(`${number}. ${title}`)}\n`);
-}
-
-function say(text) {
-  console.log(text);
-}
-
-function showCommand(line) {
-  console.log(dim(`$ ${line}`));
-}
-
-function showCode(code) {
-  for (const line of code.split('\n')) console.log(`    ${line}`);
-  console.log('');
-}
-
-// One reader for the whole demo. A reader per pause would each take whatever
-// Enters were already waiting and throw the rest away with it when closed.
-let reader;
-let inputEnded = false;
-
-/** Wait for Enter, or for the --auto interval. Once input has ended, go on without waiting. */
-async function pause(prompt) {
-  if (autoSeconds !== undefined) {
-    await new Promise((resolve) => setTimeout(resolve, autoSeconds * 1000));
-    return;
-  }
-  if (inputEnded) return;
-  if (!reader) {
-    reader = readline.createInterface({ input: process.stdin, output: process.stdout });
-    reader.on('close', () => (inputEnded = true));
-  }
-  await new Promise((resolve) => {
-    reader.once('close', resolve);
-    reader.question(dim(`  ${prompt} `)).then(resolve, resolve);
-  });
-}
-
-/**
- * Show a command, then wait before running it. The wait is what makes the
- * command worth showing: printed as it starts, it scrolls away under the run's
- * own output before anyone has read it.
- */
-async function announce(line) {
-  showCommand(line);
-  await pause('Press Enter to run it');
-}
-
-/** A passage of a source file, with its comments left out, for showing on screen. */
-function excerpt(file, pattern) {
-  const text = fs.readFileSync(path.join(configDir, file), 'utf8');
-  const match = text.match(pattern);
-  if (!match) throw new Error(`The demo could not find its excerpt in ${file}; it has changed shape.`);
-  const lines = match[0]
-    .split('\n')
-    .filter((line) => !/^\s*\/\//.test(line) && line.trim() !== '');
-  const indent = Math.min(...lines.map((line) => line.match(/^ */)[0].length));
-  return lines.map((line) => line.slice(indent)).join('\n');
-}
-
-/** A command as it would be typed, with quote marks where the shell needs them. */
-function typed(commandArgs) {
-  return commandArgs.map((a) => (/[\s$"]/.test(a) ? `'${a}'` : a)).join(' ');
-}
-
-// --- running the engine ------------------------------------------------------
-
-/** Lines of the engine's own that are not worth a watcher's attention. */
-function isNoise(line) {
-  return (
-    /^Running \d+ tests? using/.test(line) ||
-    /^\[\d+\/\d+\] /.test(line) ||
-    /journey\.spec\.ts:\d+:\d+ › route \d+$/.test(line) ||
-    /^\s*\d+ passed \(/.test(line)
-  );
-}
-
-/** The window mode for every run: forward, for an audience, unless PHILEAS_SHOW says otherwise. */
-const SHOW = process.env.PHILEAS_SHOW || 'front';
-
-/**
- * Show a `phileas` command exactly as it would be typed, settings and all, and
- * then run it. Every run in the demo goes through here, so no command runs
- * without being shown first.
- *
- * `run` gets the window mode as its --show flag; `survey` takes no flags, so it
- * gets it as PHILEAS_SHOW in front, the way a person would type it.
- */
-async function phileasShown(command, commandArgs, env = {}) {
-  const shownEnv = { ...env };
-  const argv = [command, ...commandArgs];
-  if (command === 'run') {
-    const extra = argv.indexOf('--');
-    argv.splice(extra >= 0 ? extra : argv.length, 0, '--show', SHOW);
-  }
-  if (command === 'survey') shownEnv.PHILEAS_SHOW = SHOW;
-  const prefix = Object.entries(shownEnv).map(([k, v]) => `${k}=${v} `).join('');
-  await announce(`${prefix}phileas ${typed(argv)}`);
-  return runPhileas(argv, shownEnv);
-}
-
-/**
- * Run the `phileas` command and hand back its output with Playwright's own
- * lines taken out and blank lines collapsed. A run that fails prints
- * everything, unfiltered, and stops the demo: a filtered failure would be a
- * demo hiding the thing it is meant to show.
- */
-function runPhileas(commandArgs, env) {
-  return new Promise((resolve) => {
-    // Nothing of Phileas's or the demo's own is inherited from the shell the
-    // demo was started in, so a setting left over there cannot change a run
-    // without appearing in the command shown for it.
-    const runEnv = Object.fromEntries(
-      Object.entries(process.env).filter(([k]) => !k.startsWith('PHILEAS_') && k !== 'RAIL_DEMO_JOURNEY')
-    );
-    Object.assign(runEnv, env);
-    const child = spawn(process.execPath, [phileas, ...commandArgs], {
-      cwd: repo,
-      env: runEnv,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let output = '';
-    child.stdout.on('data', (chunk) => (output += chunk));
-    child.stderr.on('data', (chunk) => (output += chunk));
-    child.on('close', (code) => {
-      if (code !== 0) {
-        console.log(output);
-        console.log(bold(`\nThat run failed (exit ${code}), so the demo stops here.`));
-        process.exit(code || 1);
-      }
-      // Playwright's line reporter leaves a blank line after each of the
-      // engine's lines, so blank lines are dropped and put back only where
-      // they separate something: after the settings, and before each Route
-      // and each listing.
-      const lines = [];
-      for (const line of output.split('\n')) {
-        if (isNoise(line) || line.trim() === '') continue;
-        const startsBlock = /^route \d+ {2}seed |^What the engine sees/.test(line);
-        if (startsBlock && lines.length && lines.at(-1) !== '') lines.push('');
-        lines.push(line);
-        if (/^Follow: |^Journals in /.test(line)) lines.push('');
-      }
-      resolve(lines);
-    });
-  });
-}
-
-/** The engine's output, followed by a blank line to set it apart from what comes next. */
-function print(lines) {
-  for (const line of lines) console.log(line);
-  if (lines.at(-1) !== '') console.log('');
-}
-
-/**
- * Per-Hop lines with a heading row above them, lined up with the renderer's
- * columns: the Route and Hop share its first 18 characters, then 11 for the
- * action and 44 for what was acted on.
- */
-function withColumnHeadings(lines) {
-  const headings = `${'Route'.padEnd(9)}${'Hop'.padEnd(9)}${'Action'.padEnd(11)}${'Acted on'.padEnd(44)}What changed`;
-  const first = lines.findIndex((line) => /^route \d+ {2}hop /.test(line));
-  if (first < 0) return lines;
-  return [...lines.slice(0, first), bold(headings), ...lines.slice(first)];
-}
-
-/** Everything after the settings block. */
-function afterSettings(lines) {
-  return lines.slice(lines.findIndex((line) => line.trim() === '') + 1);
-}
-
-/** The run folder a run's printout names. */
-function runFolderOf(lines) {
-  const seed = lines.find((l) => l.startsWith('Journey seed:'))?.split(/\s+/)[2];
-  const run = lines.find((l) => l.startsWith('Run:'))?.split(/\s+/)[1];
-  return path.join(journalsRoot, seed, run);
-}
-
-/** The survey's listing at the start, before any Fix runs. */
-function startListing(lines) {
-  const body = afterSettings(lines);
-  const end = body.findIndex((l) => /^route \d+ {2}fix /.test(l));
-  return end >= 0 ? body.slice(0, end) : body;
-}
-
-/** The survey's Fix steps and the listing after them. */
-function fixAndAfter(lines) {
-  const body = afterSettings(lines);
-  return body.slice(body.findIndex((l) => /^route \d+ {2}fix /.test(l)));
-}
+const { excerpt, runFolderOf } = demoFolders(path.join(here, 'phileas'));
 
 // --- the sections ------------------------------------------------------------
 
@@ -391,10 +196,10 @@ const sections = [
       const folder = await ensureJourneyRun();
       say('Every Route writes a journal as it goes, one line per Hop, saved to disk after each Hop');
       say('so a crash cannot lose it. One file per Route:\n');
-      await announce(`ls ${path.relative(repo, folder)}`);
+      await announce(`ls ${fromRepo(folder)}`);
       for (const f of fs.readdirSync(folder).sort()) say(`  ${f}`);
       say('\nRead back for a person:\n');
-      print(await phileasShown('show', [path.relative(repo, folder)]));
+      print(await phileasShown('show', [fromRepo(folder)]));
       say('And one Hop as the engine wrote it, which is what makes an exact replay possible:\n');
       const file = fs.readdirSync(folder).sort()[0];
       const hop = fs
@@ -419,7 +224,7 @@ async function ensureJourneyRun() {
 
 async function explainHop(folder, hop) {
   const script = path.join(here, 'explain-hop.mjs');
-  await announce(`node ${typed([path.relative(repo, script), path.relative(repo, folder), String(hop)])}`);
+  await announce(`node ${typed([fromRepo(script), fromRepo(folder), String(hop)])}`);
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [script, folder, String(hop)], { stdio: 'inherit' });
     child.on('close', (code) => {
@@ -431,21 +236,4 @@ async function explainHop(folder, hop) {
 
 // --- run ---------------------------------------------------------------------
 
-console.log(bold('Phileas on Rail Itinerary'));
-if (autoSeconds !== undefined) console.log(dim(`Playing through, ${autoSeconds} seconds between sections.`));
-if (from > sections.length) {
-  console.error(`There are ${sections.length} sections, so --from ${from} would show nothing.`);
-  process.exit(2);
-}
-for (const [i, section] of sections.entries()) {
-  const number = i + 1;
-  if (number < from) continue;
-  heading(number, section.title);
-  await section.run();
-  if (number < sections.length) {
-    console.log('');
-    await pause('Press Enter for the next section');
-  }
-}
-console.log(bold('\nThat is the demo.'));
-reader?.close();
+await present('Phileas on Rail Itinerary', sections);

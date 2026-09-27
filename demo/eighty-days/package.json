@@ -1,0 +1,15 @@
+{
+  "name": "eighty-days",
+  "productName": "Eighty Days",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A game round the world after Around the World in Eighty Days, built to show Phileas at work. docs/DEMO_PLAN_EIGHTY_DAYS.md is its plan.",
+  "type": "module",
+  "main": "main.cjs",
+  "author": "Drugstore Sushi",
+  "devDependencies": {
+    "@drugstoresushi/phileas": "file:../..",
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.4.3"
+  }
+}

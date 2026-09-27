@@ -25,6 +25,37 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: a second demo planned, a shared presenting runner, and determinism tests first
+
+**Why.** A demo more comprehensive than the rail demo was asked for, with
+"ships, trains, elephants, and a wind-powered sledge". It became a plan,
+`DEMO_PLAN_EIGHTY_DAYS.md`, for a deterministic game after the novel, with
+every decision quoted there in the words it was taken. The plan was reviewed
+twice before anything was built, once by a second model and once afresh, and
+twenty-nine problems were fixed in it; its two review sections list the ones
+that would have broken the demo.
+
+**What landed, build steps 1 and 2.** The rail demo's guided runner moved
+into `demo/presenting.mjs`, so the second demo's guided demo does not copy
+it, and `demo/rail-itinerary/present.mjs` now holds only its sections. The
+variables no run inherits became a list of prefixes, `PHILEAS_`,
+`RAIL_DEMO_` and `EIGHTY_DAYS_`, so a bug switch left in a presenter's shell
+cannot change a section silently. `npm run demo:present` became
+`npm run demo:train:present`, decided in the words "rename", so each script
+names its demo. `demo/eighty-days/` began with its package and
+`tests/determinism.spec.ts`: two tests that play one seed twice, in two
+launches and at two hop delays, and compare every screen's accessibility
+tree before each Trip Hop.
+
+**Measured.** The rail guided demo, played through hidden before and after
+the lift, printed the same 550 lines, differing only in one Hop's duration,
+431 against 433 ms, with its replay checks passing both times. The two
+tests of the game fail today, naming the missing adapter, as step 2 of the
+plan has them. Two tests of the comparison pass against the rail demo: two
+launches differ nowhere, and a note planted before hop 4 of one play is
+found before hop 4. The second is what makes the others worth believing,
+since a comparison that could not fail would pass every game.
+
 ## 2026-09-27: fixes from a whole-codebase review
 
 **Why.** Seven read-only review agents read every code and test file, and

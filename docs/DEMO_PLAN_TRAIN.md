@@ -181,7 +181,7 @@ reproduces it, and a replay that walks straight back to it.
 ## Build order for stage one
 
 Built 2026-09-24, and the presenting script on 2026-09-25. `npm run demo:train`
-runs the watched run; `npm run demo:present` runs the guided demo, which
+runs the watched run; `npm run demo:train:present` runs the guided demo, which
 `demo/rail-itinerary/PRESENTING.md` scripts.
 
 1. The application and its data, packaged, with a staleness-guarded adapter.
