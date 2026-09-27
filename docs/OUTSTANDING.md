@@ -394,7 +394,7 @@ lands as its own change and says so.
 ### 1.12 What is left of the Positron adapter
 
 The adapter in `trial/positron/` works against the current release, and
-`PLAN.md` has what was measured and decided for it. Four things are open:
+`PLAN.md` has what was measured and decided for it. Three things are open:
 
 - **Readiness does not yet throw on a bad boot (R24).** `waitForReady` waits
   for the status bar and nothing else. What Positron shows when it boots into
@@ -405,13 +405,6 @@ The adapter in `trial/positron/` works against the current release, and
   `--logsPath`, `--disable-extension`, the in-page menu and dialog settings,
   and the Copilot extension being there to disable all need checking on each
   before trial step 5 runs.
-- **The first Hop or two often cannot read the screen.** Seven of the twelve
-  Routes journaled on 2026-09-26 recorded "the page stopped answering while
-  the settle wait read it" at hop 1 or 2 and then carried on, and five of the
-  six run after the keychain fix did, so the keychain freeze does not explain
-  it. Counted from the journals. Not yet measured:
-  whether it is Positron still starting after the status bar appears, and so
-  whether readiness should wait longer.
 - **Opening a folder reloads the window, and the reload logs a console
   error** about a cancelled shutdown step, which ended a Route alongside the
   real finding. Whether that message is expected on every reload, and so

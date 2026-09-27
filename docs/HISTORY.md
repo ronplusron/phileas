@@ -25,6 +25,36 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-26: the settle wait no longer calls a busy page unresponsive
+
+**The defect.** The settle wait gave each read whatever was left of its
+budget, so a page still changing near the end got a last read of a few
+milliseconds, which timed out and was reported as the page having stopped
+answering, with the reading thrown away. Seven of twelve Positron Routes had
+such a Hop at hop 1 or 2, each settling at exactly the budget, while neither
+process paused for more than 400 ms, timed from inside each: Positron was
+busy activating extensions, not stuck. This was one of the adapter's open
+questions, whether readiness should wait longer, and the answer was that
+readiness was fine and the engine was wrong.
+
+**The fix.** Every read is given at least 500 ms, well above the slowest
+healthy read measured, 276 ms, even when less of the budget is left, so a
+read that times out means the page gave no answer for that long. The wait can
+run past its budget by up to that much. A first version stopped reading once
+less than 500 ms remained instead, and cut every budget short by that much:
+an existing test caught it, returning after 113 ms of a 600 ms budget.
+
+**How it was proved, and one attempt that did not.** A control in `buggy`
+that kept its page changing for three seconds was tried first, and its test
+passed with the fix removed: `buggy`'s page is small enough to read in the
+few milliseconds left, so it never hit the defect. It was removed. The test
+kept uses a stand-in page whose reads take 150 ms and always differ, which
+hits the short last read on every run: it fails without the fix and passes
+with it, and a page that never answers is still reported as not answering
+either way. On Positron, the same three probe Routes that had each lost a Hop
+now record every Hop: the busiest run out their two seconds, at 2,003 and
+2,013 ms, and are journaled as unsettled with what they changed.
+
 ## 2026-09-26: a Positron adapter, five engine changes, and the first Positron bug
 
 **What landed.** The Positron trial's second step: an adapter in

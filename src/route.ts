@@ -429,6 +429,15 @@ const DEFAULT_HOP_TIMEOUT_MS = 3_000;
 const DEFAULT_SETTLE_TIMEOUT_MS = 2_000;
 
 /**
+ * The shortest time a settle read is given, even when less of the budget is
+ * left, so the wait can run past its budget by up to this much. Well above the
+ * slowest healthy read measured, 276 ms on Positron at rest on 2026-09-26, so a
+ * read that runs out of it is a page that gave no answer, not one that ran out
+ * of budget.
+ */
+const MIN_SETTLE_READ_MS = 500;
+
+/**
  * How long the page must stay unchanged to count as settled. See `settle`.
  *
  * Measured on 2026-09-24, not chosen. The longest pause measured inside one
@@ -1149,11 +1158,20 @@ export async function settle(
 
   try {
     while (Date.now() - startedAt < timeoutMs) {
-      // Bounded by whatever is left of the budget. An unbounded snapshot here
-      // waits on any pending navigation, and a navigation the application
-      // prevented never resolves, so the settle wait would outlast its own
-      // timeout by Playwright's default instead of returning unsettled.
-      const remaining = Math.max(1, timeoutMs - (Date.now() - startedAt));
+      // Bounded by whatever is left of the budget, and never by less than a
+      // read needs. An unbounded snapshot here waits on any pending navigation,
+      // and a navigation the application prevented never resolves, so the
+      // settle wait would outlast its own timeout by Playwright's default
+      // instead of returning unsettled.
+      //
+      // The floor is what keeps a busy page from reading as a stuck one. A
+      // page still changing near the end of the budget used to get a last read
+      // of a few milliseconds, which timed out and was reported as the page
+      // having stopped answering, with the reading thrown away: measured on
+      // Positron on 2026-09-26, while both of its processes answered
+      // throughout. So the wait can run past its budget by up to the floor,
+      // and a read that times out means the page gave no answer for that long.
+      const remaining = Math.max(MIN_SETTLE_READ_MS, timeoutMs - (Date.now() - startedAt));
       tree = await page.locator('body').ariaSnapshotJSON({ timeout: remaining });
       const current = JSON.stringify(tree);
       const readAt = Date.now();
@@ -1170,8 +1188,8 @@ export async function settle(
         .catch(() => undefined);
     }
   } catch {
-    // The snapshot itself timed out, which means the page stopped answering
-    // rather than that it kept moving. Both are "not settled" from here; the
+    // The snapshot itself timed out, given at least MIN_SETTLE_READ_MS, which
+    // means the page stopped answering rather than that it kept moving. Both are "not settled" from here; the
     // hop loop is what tells them apart, because it is what has to decide
     // whether the Route can continue. No tree is handed back, so the Hop's
     // effect is recorded as unreadable rather than as nothing having changed.

@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Three defects are recorded.** The launch layer landed in phase 1, so this file
+**Two defects are recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows are three defects, then the two things most likely to be filed here
+What follows are two defects, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -85,32 +85,6 @@ sound for an application nobody has read, which is the whole hazard.
 **This entry leaves when phase 5's second evidence source exists**, and on
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
-
-## The settle wait reports a busy page as one that stopped answering
-
-**Filed 2026-09-26, measured on Positron.** The settle wait reads the page
-until it has stayed unchanged for a quiet window, within a budget of two
-seconds by default, and each read is bounded by whatever is left of the
-budget. A page still changing near the end of the budget gets a last read
-with a few milliseconds, which times out, and any read that times out is
-taken to mean the page stopped answering: no reading is handed back, and the
-Hop's effect is journaled as "the page stopped answering while the settle
-wait read it".
-
-**Why it is a defect and not a limit.** It says something false about the
-application, and it discards what the Hop did. Seven of the twelve Positron
-Routes journaled that day had such a Hop at hop 1 or 2, each with a settle of
-1,999 to 2,009 ms, exactly the budget. In three Routes run with each process
-timing its own event loop, neither paused for more than 400 ms while it
-happened: both were answering, and the page was busy, with extensions still
-activating.
-
-**What closes it.** Never start a read with less than a floor left, well
-above the slowest healthy read measured, and return unsettled with the last
-reading when the budget runs low. A read that times out then means the page
-gave no answer for at least that long. Proved by a planted control in `buggy`
-that keeps the page changing past the budget: unreadable before the fix,
-changed and unsettled after.
 
 ## A window created already shown stays on the screen in hidden mode
 
