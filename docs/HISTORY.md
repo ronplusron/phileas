@@ -257,6 +257,40 @@ and more ways on is the branching that was asked for. Whether the demo keeps
 the harder game available, for measuring a better chooser against it, is
 open in the plan.
 
+## 2026-09-27: Positron's session checks, and a Fix that starts an R session
+
+**Why.** Trial step 3, with its checks written from Positron agreeing with
+itself rather than from the bugs step 5 looks for. The current release's
+screen was studied with no session, with R, with R and Python, and after
+deleting a session, to find facts it states in more than one place.
+
+**Measured.** Whether a session runs is stated three times: the top bar's
+button reads Select Session or Start New Console Session, the console shows
+a Restart button or says no session is running, and the Variables pane shows
+its toolbar or not. With several sessions, the console shows a tab per
+session and its Restart button names the selected one's language. The
+Variables pane names no session on the current release. A fresh profile
+started no session in 20 seconds, where a note from the day before says one
+started by itself. The interpreter list names this machine's interpreters
+with their paths, and its order changed between two launches. With a session
+running, every Hop's effect reads as changed, including one abandoned Hop,
+which fits the resource monitor's reading ticking, as `OUTSTANDING.md`
+predicted; settling was unaffected, at 0.4 to 1.4 seconds a Hop.
+
+**What landed.** Two checks in Positron's adapter, `session-state-agrees` and
+`active-session-agrees`; and `POSITRON_JOURNEY`, choosing `no-fix` or
+`r-session`, whose Fix was written from `phileas survey` one step at a time
+and starts R, naming it by pattern, then waits for it to start. The first
+version of `active-session-agrees` read the tab's text, which is the name cut
+short followed by its CPU and memory readings, and fired on a healthy screen;
+it reads the tab's label now.
+
+**Tested,** against the current release, not in `npm test`: each check
+stayed quiet with no session, R, and R and Python, and fired when the page
+was made to contradict itself on purpose. A Route of five Hops with the
+`r-session` Fix passed. Deleting one of two sessions, and every old release,
+are not measured.
+
 ## 2026-09-27: checks an adapter declares, and the trial's checks no longer written from its bugs
 
 **Why.** The trial's third step was to write three checks for Positron, and

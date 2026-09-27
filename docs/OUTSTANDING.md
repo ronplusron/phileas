@@ -488,7 +488,10 @@ Routes of 200 reached 12 to 20 places: 1 lost, 5 still going, 5 distinct
 sequences of places. A passage costs about 20 Hops, and 30% of Hops go to the
 game's reference panels. `demo/eighty-days/measure.mjs`, on that demo's
 branch and unmerged when this was written, prints these from a run's
-journals.
+journals. **They go stale when that branch merges:** it adds "1" and "2" to
+the values a Route types, so every seed that types anything travels
+differently from then on. Measure the baselines again, on the same values
+as the weighted runs, before comparing.
 
 ## 2. Undecided
 

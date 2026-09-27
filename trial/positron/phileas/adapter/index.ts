@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { requireAppDir, type AppUnderTest } from '@drugstoresushi/phileas';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 /**
  * The adapter for Positron, pointed at an installed release.
@@ -152,6 +152,63 @@ export const positron: AppUnderTest = {
       async run({ page }) {
         const said = await page.locator(ERROR_NOTIFICATION).visible().allTextContents();
         return said.map((text) => `error notification: ${text.trim()}`);
+      },
+    },
+    {
+      // Three places each say whether any interpreter session is running,
+      // read from the screen on 2026-09-27: the top bar's button, the
+      // console, and the Variables pane's toolbar. They must agree. A place
+      // not on screen says nothing, rather than disagreeing.
+      name: 'session-state-agrees',
+      why:
+        'Whether a session is running is one fact, and the top bar, the console and the Variables ' +
+        'pane each state it; if they differ, one of them is wrong.',
+      async run({ page }) {
+        const shows = (locator: Locator) => locator.first().isVisible();
+        const said = async (running: Locator, none: Locator) =>
+          (await shows(running)) ? 'running' : (await shows(none)) ? 'none' : undefined;
+        const places = {
+          'the top bar': await said(
+            page.getByRole('button', { name: 'Select Session', exact: true }),
+            page.getByRole('button', { name: 'Start New Console Session', exact: true })
+          ),
+          'the console': await said(
+            page.getByRole('button', { name: /^Restart \S+$/ }),
+            page.getByText(/There is no session running/)
+          ),
+          'the Variables pane': await said(
+            page.getByRole('button', { name: 'Change how variables are grouped', exact: true }),
+            // Its section is open and its toolbar is not: nothing to show.
+            page.getByRole('button', { name: 'Variables Section', exact: true, expanded: true })
+          ),
+        };
+        const stated = Object.entries(places).filter((entry): entry is [string, string] => entry[1] !== undefined);
+        if (new Set(stated.map(([, state]) => state)).size <= 1) return [];
+        return [`sessions: ${stated.map(([place, state]) => `${place} says ${state}`).join(', ')}`];
+      },
+    },
+    {
+      // Which session is active, stated twice once there are several: the
+      // console's selected session tab, and its Restart button, which names
+      // the active session's language.
+      name: 'active-session-agrees',
+      why:
+        "The console's selected session and its Restart button both name the active session, " +
+        'so they must name the same language.',
+      async run({ page }) {
+        const tab = page.locator('[role="tablist"]:not([aria-label]) [role="tab"][aria-selected="true"]').visible();
+        const restart = page.getByRole('button', { name: /^Restart \S+$/ }).visible();
+        if ((await tab.count()) !== 1 || (await restart.count()) !== 1) return [];
+        // Its label, not its text: the text is the name cut short, followed by
+        // the tab's own CPU and memory readings, measured 2026-09-27.
+        const selected = ((await tab.getAttribute('aria-label')) ?? '').trim();
+        if (!selected) return { notRun: 'the selected session tab carries no label to compare' };
+        const restarting = ((await restart.getAttribute('aria-label')) ?? (await restart.textContent()) ?? '')
+          .trim()
+          .replace(/^Restart /, '');
+        return selected.startsWith(`${restarting} `) || selected === restarting
+          ? []
+          : [`the selected session is "${selected}" and the Restart button restarts ${restarting}`];
       },
     },
   ],

@@ -1,14 +1,33 @@
-import { defineJourney, type Fix } from '@drugstoresushi/phileas';
+import { defineJourney, type Fix, type Journey } from '@drugstoresushi/phileas';
+import { rSession } from './r-session';
 
 /**
- * The trial's Journey through Positron, with no Fix yet.
+ * The trial's Journeys through Positron, chosen by `POSITRON_JOURNEY`.
  *
- * No seed and no deadlines, for the reasons buggy's Journey gives. The Fixes
- * the trial needs arrive in its fourth step.
+ * Unset, or `no-fix`, runs with no Fix, starting wherever Positron starts;
+ * `r-session` runs with a Fix that starts an R session first. Anything else is
+ * refused by name rather than read as the default. This is the trial's own
+ * switch, not the engine's.
+ *
+ * No seed and no deadlines, for the reasons buggy's Journey gives.
  */
-export const journey = defineJourney({
+const terms = defineJourney({
   routes: 1,
   tripLength: 20,
 });
 
-export const fix: Fix | undefined = undefined;
+const journeys: Record<string, { journey: Journey; fix?: Fix }> = {
+  'no-fix': { journey: terms },
+  'r-session': { journey: terms, fix: rSession },
+};
+
+const chosen = process.env.POSITRON_JOURNEY || 'no-fix';
+const entry = journeys[chosen];
+if (!entry) {
+  throw new Error(
+    `POSITRON_JOURNEY is "${chosen}", which names no Journey. ` +
+      `It takes ${Object.keys(journeys).join(' or ')}.`
+  );
+}
+
+export const { journey, fix } = entry;

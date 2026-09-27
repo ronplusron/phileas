@@ -122,10 +122,14 @@ The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
 `Positron.app`, and `PHILEAS_APP_DIR` names which one a run uses, for example
 `PHILEAS_APP_DIR=/Applications/Positron.app phileas run trial/positron/phileas`.
+`POSITRON_JOURNEY` chooses the Journey: `no-fix`, the default, or
+`r-session`, whose Fix starts an R session first, which the session checks
+need. Trial step 3 is partly done; `docs/PLAN.md` has what is written and
+what is not yet measured.
 **On the old releases, context menus are native whatever the adapter
 sets,** since none of them has `window.menuStyle`. With windows hidden,
 opening one froze nothing in twelve launches; with windows shown, that is
-unmeasured. The trial's steps 3 to 6 are next, then weighting the draw
+unmeasured. The rest of step 3, then steps 4 to 6, are next, then weighting the draw
 toward new targets, which `docs/PLAN.md` places after the trial.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer

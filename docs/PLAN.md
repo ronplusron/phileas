@@ -586,7 +586,10 @@ below is unchanged, and what the trial builds is the first part of it.
      put the AI features out of reach. **The trial therefore tests Positron
      without that extension, and its findings say so.**
    - **A fresh profile asks to import settings from Visual Studio Code,**
-     and an R session starts by itself at launch.
+     and an R session starts by itself at launch. **Not so on 2026-09-27:**
+     with the adapter as it now stands, no session had started 20 seconds
+     after launch, on every launch of the current release that day; what
+     changed between the two is not known.
    - **Positron's main process rejects cancelled promises as ordinary control
      flow,** and its own handler drops any error named and worded `Canceled`.
      The engine's listener sits beside that handler and reported dozens when
@@ -724,6 +727,28 @@ proposed, and taken with "Do this":
 That means the engine taking checks from an adapter, which is phase 6's
 structural tier (R18) pulled forward. Metamorphic checks and independently
 computed answers stay in phase 6.
+
+**Written on 2026-09-27, from studying the current release's screen:**
+- `session-state-agrees`: the top bar's session button, the console and the
+  Variables pane each say whether any session is running, and must agree.
+- `active-session-agrees`: once several sessions run, the console's selected
+  session tab and its Restart button both name the active session.
+- `no-error-notification`, above.
+
+Each stayed quiet with no session, with R, and with R and Python running,
+and each fired when the page was made to contradict itself on purpose. Not
+yet measured: deleting one of two sessions, whose control was not found,
+and every old release, whose screens may differ; 6029 is about the Variables
+pane of 2025.01 listing sessions, which the current release's pane does not.
+
+**A session needs a Fix.** With none running, the session checks compare
+nothing, and starting one takes three particular Hops in order. So the
+trial's Journeys are chosen with `POSITRON_JOURNEY`: `no-fix`, as before, or
+`r-session`, whose Fix starts an R session and waits for it. Both were
+proposed together, answered "Perfect", and the Fix asked for with "Yes,
+write it". The Fix names R by pattern rather than by a copied line,
+since the interpreter list carries this machine's paths and its order
+changed between two launches.
 
 **Order agreed 2026-09-27 for what remains of the trial,** proposed with the
 question and answered "OK let's do this in order": known findings, below;
