@@ -75,6 +75,14 @@ for (const routeNumber of routeNumbers(exploration)) {
       journalsRoot,
     });
 
+    // Only a survey was asked for, so nothing was traveled and there is no
+    // verdict to reach. Skipped rather than passed, so a Journey run with
+    // PHILEAS_SURVEY left set cannot read green.
+    if (outcome.kind === 'surveyed') {
+      test.skip(true, 'Only a survey was asked for (PHILEAS_SURVEY=1), so nothing was traveled.');
+      return;
+    }
+
     testInfo.annotations.push({
       type: 'outcome',
       description: `${outcome.kind} after ${outcome.hops} hop(s)`,

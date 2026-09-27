@@ -185,17 +185,21 @@ test('the native menu has the shape the adapter and phase 4 expect', async () =>
   const dir = await makeUserDataDir(buggy);
   const launched = await launchOrRemove(buggy, dir);
   try {
-    await buggy.waitForReady(await launched.app.firstWindow());
+    const page = await launched.app.firstWindow();
+    await buggy.waitForReady(page);
 
-    // menu.ts's first coverage. Until now nothing called it, while the README
-    // claimed the engine can reach the native menu and main.cjs built one
-    // specifically so it could be reached.
+    // The README says the engine can reach the native menu, and main.cjs built
+    // one specifically so it could be reached.
     expect(await menuLabels(launched.app, [])).toEqual(['Buggy', 'Edit', 'View']);
     expect(await menuLabels(launched.app, ['Buggy'])).toContain('Quit Buggy');
     expect(await menuLabels(launched.app, ['View'])).toEqual([
       'Show Inventory',
       'Show Summary',
     ]);
+    // A path that is not there is refused, by both, rather than answered with
+    // nothing: an empty answer would pass any assertion that something is absent.
+    await expect(menuLabels(launched.app, ['Nope'])).rejects.toThrow(/No menu at Nope/);
+    await expect(clickMenuItem(launched.app, ['View', 'Nope'], page)).rejects.toThrow(/No menu item at View > Nope/);
   } finally {
     await closeApp(buggy, launched).catch(() => {});
     await fs.promises.rm(dir, { recursive: true, force: true });

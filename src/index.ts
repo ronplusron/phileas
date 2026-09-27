@@ -32,7 +32,7 @@ export {
   type LaunchedApp,
   type LaunchPath,
 } from './launch';
-export { createTest, expect, type PhileasFixtures } from './fixtures';
+export { createTest, expect, rendererVerdict, type PhileasFixtures } from './fixtures';
 export {
   clickMenuItem,
   menuLabels,
@@ -87,6 +87,7 @@ export {
   createExclusionTally,
   neverMatched,
   NondeterministicExclusion,
+  ApplicationStoppedAnswering,
   HOPPABLE_ROLES,
   type SurveyedCandidate,
   type PageCandidate,
@@ -154,6 +155,9 @@ export {
   CheckFailure,
   CHECK_ORDER,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,
+  STALLED,
+  judgedByTheWatch,
+  rendererObservation,
   type Watch,
   type WatchOptions,
 } from './oracles/index';

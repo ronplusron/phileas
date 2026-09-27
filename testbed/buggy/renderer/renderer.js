@@ -89,6 +89,8 @@ const PLANTED = {
   blank: ['Fold the map', () => document.body.replaceChildren()],
   dialog: ['Ring the bell', () => alert('the bell rang')],
   'log-error': ['Write in the logbook', () => window.buggy.plant('log-error')],
+  'renderer-crash': ['Drop the lantern', () => window.buggy.plant('renderer-crash')],
+  'main-exit': ['Miss the boat', () => window.buggy.plant('main-exit')],
 };
 
 async function addPlanted() {

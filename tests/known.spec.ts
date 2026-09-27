@@ -247,3 +247,103 @@ route('the same Route with no known findings ends there, naming the finding', as
   expect(outcome).toBeInstanceOf(CheckFailure);
   expect((outcome as CheckFailure).message).toContain(`finding ${findingId(LOGBOOK)}`);
 });
+
+// A known renderer error: judged on the Hop, where the Route carries on past
+// it, and then left alone by the page fixture at the test's end. It used to be
+// judged a second time there, ignoring known findings, so the Route passed and
+// the test failed anyway.
+const thrower: AppUnderTest = { ...buggy, launchArgs: ['--buggy-plant=renderer-throw'] };
+const WEIGH = 'Weigh the trunk';
+const weighs: Chooser = {
+  choose: (candidates) => {
+    const target = candidates.find((candidate) => candidate.name === WEIGH);
+    if (!target) throw new Error(`${WEIGH} is not on offer`);
+    return { target };
+  },
+};
+const throwing = createTest(thrower);
+throwing.afterEach(removeScratch);
+
+throwing('a known renderer error lets the Route carry on and the test pass', async ({ page, app }) => {
+  process.env[RUN_VARIABLE] = 'test-run';
+  const common = {
+    page,
+    app,
+    cfg: thrower,
+    routeNumber: 1,
+    chooser: weighs,
+    hopTimeoutMs: 1_000,
+    settleTimeoutMs: 1_000,
+    responsiveTimeoutMs: 1_000,
+  };
+
+  // First with nothing known, to learn the finding's signature from the
+  // failure itself rather than restating how signatures are made.
+  const first = await runRoute({
+    ...common,
+    streams: deriveRouteStreams('renderer-unknown', 1),
+    journeySeed: 'renderer-unknown',
+    tripLength: 1,
+    journalsRoot: scratch('phileas-known-test-'),
+  }).catch((error: unknown) => error);
+  expect(first).toBeInstanceOf(CheckFailure);
+  const signature = (first as CheckFailure).failed[0]?.findings?.[0]?.signature ?? '';
+  expect(signature).toMatch(/^uncaught-error: renderer: /);
+
+  const outcome = await runRoute({
+    ...common,
+    streams: deriveRouteStreams('renderer-known', 1),
+    journeySeed: 'renderer-known',
+    tripLength: 3,
+    journalsRoot: scratch('phileas-known-test-'),
+    knownFindings: knownFile([finding(signature)]),
+  });
+  expect(outcome).toMatchObject({ kind: 'passed', hops: 3 });
+  // The test passing at its end is the other half: the fixture did not judge
+  // the four watched errors again.
+});
+
+// A known hang still ends the Route (R16): a hung application cannot be
+// traveled, so being known changes how it is counted and nothing else.
+const hanger: AppUnderTest = { ...buggy, launchArgs: ['--buggy-plant=renderer-hang'] };
+const hanging = createTest(hanger);
+hanging.afterEach(removeScratch);
+
+hanging('a known hang still ends the Route, recorded as known', async ({ page, app }) => {
+  process.env[RUN_VARIABLE] = 'test-run';
+  const TIDE = 'Wait for the tide';
+  // Both of what the hang shows, so that nothing unknown is left to end the
+  // Route: the stalled click, and the round trip after it.
+  const signature = signatureOf('still-responding', 'the renderer did not answer within 1000 ms');
+  const stalled = signatureOf(
+    'still-responding',
+    `hop 1's click on button "${TIDE}" was bounded to 1000 ms and had not returned after 2001 ms: the application stopped answering`
+  );
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: hanger,
+    streams: deriveRouteStreams('known-hang', 1),
+    journeySeed: 'known-hang',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: scratch('phileas-known-test-'),
+    chooser: {
+      choose: (candidates) => {
+        const target = candidates.find((candidate) => candidate.name === TIDE);
+        if (!target) throw new Error(`${TIDE} is not on offer`);
+        return { target };
+      },
+    },
+    knownFindings: knownFile([finding(signature), finding(stalled)]),
+    hopTimeoutMs: 1_000,
+    settleTimeoutMs: 1_000,
+    responsiveTimeoutMs: 1_000,
+  }).catch((error: unknown) => error);
+
+  expect(outcome).toBeInstanceOf(CheckFailure);
+  const check = (outcome as CheckFailure).failed.find((failed) => failed.check === 'still-responding');
+  // Every violation was known, so this failure is the rule and nothing else.
+  expect(check?.findings?.length).toBeGreaterThan(0);
+  expect(check?.findings?.every((found) => found.known)).toBe(true);
+});

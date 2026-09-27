@@ -79,21 +79,31 @@ export async function clickMenuItem(
       throw new Error(`No menu item at ${labels.join(' > ')}`);
     }
   } finally {
-    await win.dispose();
+    // A handle that cannot be released, because the application has gone,
+    // must not replace the error that says what happened to the click.
+    await win.dispose().catch(() => undefined);
   }
 }
 
-/** The labels directly under a submenu, for asserting a menu's shape. */
-export function menuLabels(app: ElectronApplication, labels: string[]): Promise<string[]> {
-  return app.evaluate(({ Menu }, labels) => {
+/**
+ * The labels directly under a submenu, for asserting a menu's shape.
+ *
+ * Refuses a path that does not exist rather than answering with no labels,
+ * which is the same false success an empty path once gave `clickMenuItem`: an
+ * assertion that Quit is absent would pass on a mistyped path.
+ */
+export async function menuLabels(app: ElectronApplication, labels: string[]): Promise<string[]> {
+  const found = await app.evaluate(({ Menu }, labels) => {
     let items = Menu.getApplicationMenu()?.items ?? [];
     for (const label of labels) {
       const item = items.find((candidate) => candidate.label === label);
-      if (!item) return [];
+      if (!item) return null;
       items = item.submenu?.items ?? [];
     }
     return items.map((item) => item.label);
   }, labels);
+  if (found === null) throw new Error(`No menu at ${labels.join(' > ')}`);
+  return found;
 }
 
 /**

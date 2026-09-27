@@ -1,19 +1,14 @@
-import { createTest, expect } from '../src/index';
+import { createTest, expect, rendererVerdict } from '../src/index';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 
 /**
- * The fixture layer, exercised at all.
+ * The fixture layer: the launch, the ready page, the stub, and the verdict it
+ * reaches on its own at a test's end.
  *
- * `createTest` had no callers anywhere: this engine's own suite hand-rolls its
- * own launch helper, and the testbed's journey spec imports Playwright's `test`
- * directly. So the whole of it -- the trace, the failure attachments, the
- * staleness-guard note, the uncaught-renderer-error gate -- ran nowhere, which
- * is how three defects in it survived until a review read it.
- *
- * This covers the path a Route will take. What it does not cover is the R19
- * narrowing branch, which needs an application that throws on purpose and an
- * adapter that declares the narrowing. `docs/OUTSTANDING.md` carries that as
- * work for phase 5, where `fixtures.ts` is reshaped anyway.
+ * That verdict is on uncaught renderer errors that no Route's checks saw, such
+ * as one thrown during boot or in a test with no Route at all. An error a
+ * Route saw was judged on its Hop and is left alone here; `checks.spec.ts`
+ * shows that for a planted one, and `known.spec.ts` for a known finding.
  */
 const test = createTest(buggy);
 
@@ -36,4 +31,49 @@ test('the stub is installed before the application can reach a browser', async (
   // Reaching this at all means the recorder was installed: it throws when it is
   // not, rather than answering with an empty list.
   expect(await externalUrls()).toEqual([]);
+});
+
+const thrower = { ...buggy, launchArgs: ['--buggy-plant=renderer-throw'] };
+const throwerTest = createTest(thrower);
+
+/** Throw in the renderer with no Route watching, and wait until the fixture has it. */
+async function throwUnwatched(page: import('@playwright/test').Page, launched: { pageErrors: Error[] }) {
+  await page.getByRole('button', { name: 'Weigh the trunk' }).click();
+  await expect.poll(() => launched.pageErrors.length).toBe(1);
+}
+
+// Asked of the verdict directly: a test marked to fail cannot watch the
+// fixture fail it, because the fixture reports only a test that otherwise
+// passed.
+throwerTest('a renderer error no Route saw is one the fixture fails the test on', async ({ page, launched }) => {
+  await throwUnwatched(page, launched);
+  expect(rendererVerdict(thrower, page, launched.pageErrors).unacceptable).toHaveLength(1);
+  // Cleared only because this test has already read the verdict it is about;
+  // otherwise the fixture would, rightly, fail it.
+  launched.pageErrors.length = 0;
+});
+
+const narrowedThrower = {
+  ...thrower,
+  narrowedChecks: {
+    'uncaught-error': {
+      kind: 'narrowed' as const,
+      reason: 'the trunk is known to be too heavy',
+      // Written against the form the checks hand it, "renderer: ...", so one
+      // predicate serves the Route's check and the fixture alike.
+      accept: (observation: string) => /^renderer: Error: the trunk is too heavy/.test(observation),
+    },
+  },
+};
+const narrowedTest = createTest(narrowedThrower);
+
+narrowedTest('a narrowing written against the checks\' form accepts the error in the fixture too', async ({
+  page,
+  launched,
+}) => {
+  await throwUnwatched(page, launched);
+  const verdict = rendererVerdict(narrowedThrower, page, launched.pageErrors);
+  expect(verdict.unjudged).toHaveLength(1);
+  expect(verdict.unacceptable).toHaveLength(0);
+  // And the test passes at its end, which is the fixture reaching the same verdict.
 });

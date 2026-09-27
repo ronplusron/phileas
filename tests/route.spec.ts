@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { expect } from '@playwright/test';
+import { expect, type ElectronApplication, type Page } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import {
   createExclusionTally,
@@ -29,6 +29,7 @@ import {
   FixFailure,
   type AppUnderTest,
   type Candidate,
+  type Chooser,
   type JournaledCandidate,
   type TripHopEntry,
 } from '../src/index';
@@ -581,8 +582,7 @@ test('a Route with nowhere to go is stranded, not failed, and names the hop', as
   // two. It is not a failure, because nothing has been shown to be wrong;
   // calling it one would assert a defect the engine has not found. It is not a
   // pass either, because the Route did not do what was asked of it.
-  expect(outcome.kind).toBe('stranded');
-  expect(outcome.hops).toBe(0);
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
 
   // R5 asks it to name the hop it ran out at, which is what separates "this
   // application has a dead end at hop 3" from "this Route found nothing to do".
@@ -863,7 +863,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
   // Route cannot continue, and the requirement is that it says so once rather
   // than spending the rest of its Trip on hops that each time out.
   await expect(outcome).rejects.toThrow(PageUnreachable);
-  await expect(outcome).rejects.toThrow(/stopped answering after hop 1\b/);
+  await expect(outcome).rejects.toThrow(/could not be surveyed after hop 1\b[\s\S]*exclusion list/);
   await expect(outcome).rejects.toThrow(/exclusion list/);
 
   const entries = readJournal(
@@ -1170,4 +1170,63 @@ test('a modal dialog with no way out strands the Route', async ({ page, app }) =
     journalsRoot: scratch(),
   });
   expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
+});
+
+test('a survey that fails for any reason but time names that reason, and blames no link', () => {
+  // Only a timeout earns the explanation about prevented navigations. A
+  // predicate throwing, or an application gone, used to read as an outbound
+  // link the exclusion list had missed, with the real error thrown away.
+  const broken = new PageUnreachable(2, 'button "Go"', new TypeError('exclude is not a function'));
+  expect(broken.message).toContain('exclude is not a function');
+  expect(broken.message).not.toContain('exclusion list');
+  expect(broken.cause).toBeInstanceOf(TypeError);
+
+  const timeout = new Error('locator.ariaSnapshotJSON: Timeout 700ms exceeded.');
+  timeout.name = 'TimeoutError';
+  expect(new PageUnreachable(2, 'button "Go"', timeout).message).toContain('exclusion list');
+});
+
+/** Always the first page button, so every Hop is a click the overlay below can swallow. */
+const firstButton: Chooser = {
+  choose: (candidates) => {
+    const target = candidates.find((candidate) => candidate.source === 'page' && candidate.role === 'button');
+    if (!target) throw new Error('no page button on offer');
+    return { target };
+  },
+};
+
+/** Run three Hops of clicks, with or without an overlay over the whole page. */
+async function clicksUnder(page: Page, app: ElectronApplication, overlaid: boolean) {
+  if (overlaid) {
+    // Transparent and on top of everything: the tree still offers every
+    // button, and every click lands on this instead and times out.
+    await page.evaluate(() => {
+      const cover = document.createElement('div');
+      cover.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:transparent';
+      document.body.append(cover);
+    });
+  }
+  return runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('overlay', 1),
+    journeySeed: 'overlay',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: scratch(),
+    chooser: firstButton,
+    hopTimeoutMs: 500,
+    settleTimeoutMs: 1_000,
+  });
+}
+
+test('a Route whose every Hop was abandoned strands, rather than passing', async ({ page, app }) => {
+  const outcome = await clicksUnder(page, app, true);
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 3 });
+  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/Every one of the 3 Hops was abandoned/);
+});
+
+test('the same clicks with nothing over them pass, which is the control', async ({ page, app }) => {
+  expect(await clicksUnder(page, app, false)).toMatchObject({ kind: 'passed', hops: 3 });
 });

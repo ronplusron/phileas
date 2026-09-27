@@ -7,8 +7,10 @@ import { requireRun } from './journey';
 import { clickMenuItem } from './menu';
 import { renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
-import { CheckFailure, failedChecks, startWatching, STALLED, type Watch } from './oracles/index';
+import { CheckFailure, DEFAULT_RESPONSIVE_TIMEOUT_MS, failedChecks, startWatching, STALLED, type Watch } from './oracles/index';
 import {
+  answered,
+  ApplicationStoppedAnswering,
   createExclusionTally,
   neverMatched,
   survey,
@@ -327,18 +329,42 @@ export class FixFailure extends Error {
 export class PageUnreachable extends Error {
   constructor(
     readonly afterHop: number,
-    readonly target: string
+    readonly target: string,
+    cause: unknown
   ) {
+    const why = cause instanceof Error ? (cause.message.split('\n')[0] ?? '') : String(cause);
+    // Only a survey that timed out earns the navigation explanation. Anything
+    // else -- an adapter's predicate throwing, the application gone -- is
+    // named as itself, rather than blamed on a link the exclusion list missed.
+    const timedOut = cause instanceof Error && (cause.name === 'TimeoutError' || /Timeout \d+ms exceeded/.test(cause.message));
     super(
-      `The page stopped answering after hop ${afterHop}, which acted on ${target}. ` +
-        `Every locator call waits for a pending navigation to finish, and a navigation ` +
-        `an application prevents in will-navigate never finishes, so the page stays alive ` +
-        `while nothing can be surveyed. The Route ends here rather than spending the rest ` +
-        `of its Trip on hops that would each time out. If this was an outbound link, the ` +
-        `adapter's exclusion list is what should have kept the Route off it.`
+      `The page could not be surveyed after hop ${afterHop}, which acted on ${target}: ${why}` +
+        (timedOut
+          ? `\n\nEvery locator call waits for a pending navigation to finish, and a navigation ` +
+            `an application prevents in will-navigate never finishes, so the page stays alive ` +
+            `while nothing can be surveyed. The Route ends here rather than spending the rest ` +
+            `of its Trip on hops that would each time out. If this was an outbound link, the ` +
+            `adapter's exclusion list is what should have kept the Route off it.`
+          : ''),
+      { cause }
     );
     this.name = 'PageUnreachable';
   }
+}
+
+/**
+ * Whether an action's error is one a Hop is abandoned over rather than one that
+ * ends the Route: out of time, the target gone since the survey, or the
+ * application gone, which the checks report on the same Hop.
+ */
+function isAbandonment(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.name === 'TimeoutError' ||
+    /Timeout \d+ms exceeded|No menu item at|not attached|detached|Target (?:page, context or browser )?(?:has been )?closed|crashed/i.test(
+      error.message
+    )
+  );
 }
 
 /**
@@ -353,7 +379,14 @@ export class PageUnreachable extends Error {
  */
 export type RouteOutcome =
   | { readonly kind: 'passed'; readonly hops: number }
-  | { readonly kind: 'stranded'; readonly hops: number; readonly reason: string };
+  | { readonly kind: 'stranded'; readonly hops: number; readonly reason: string }
+  /**
+   * Only a survey was asked for, with `PHILEAS_SURVEY=1`, and nothing was
+   * traveled. Not a pass: a Journey run with the variable left over would
+   * otherwise read green having gone nowhere. A consumer's spec marks its
+   * test skipped on it.
+   */
+  | { readonly kind: 'surveyed' };
 
 export interface RunRouteOptions {
   readonly page: Page;
@@ -622,7 +655,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       console.log('');
       await print('What the engine sees after the Fix, where the Trip begins:');
     }
-    return { kind: 'passed', hops: 0 };
+    return { kind: 'surveyed' };
   }
 
   // Read before the journal opens, so a file that cannot be read stops the Route
@@ -669,6 +702,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     }
 
     let lastTarget: string | undefined;
+    let abandonedHops = 0;
 
     while (hops < tripLength) {
       let found: SurveyResult;
@@ -690,7 +724,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         if (lastTarget === undefined || error instanceof NondeterministicExclusion) throw error;
         // `hops` is the count of Trip hops completed, which is also the number
         // of the last one, since Trip hops count from 1.
-        throw new PageUnreachable(hops, lastTarget);
+        throw new PageUnreachable(hops, lastTarget, error);
       }
 
       // Recorded once per Route rather than per Hop. A Route that never hopped
@@ -723,6 +757,12 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
       const startedAt = new Date();
       const { target, draw, shareDraw } = await chooser.choose(found.candidates, streams.trip);
+      // The chooser is a seam other implementations will fill. One that hands
+      // back something the survey did not offer would have the journal record
+      // a Hop against a pool that does not hold its target (R10).
+      if (!found.candidates.includes(target)) {
+        throw new Error(`The chooser returned ${target.role} "${target.name}", which is not among the candidates it was given.`);
+      }
       lastTarget = `${target.role} "${target.name}"`;
       const action = await actionFor(target, hopTimeoutMs);
 
@@ -753,8 +793,15 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         );
         if (acted === STALLED) abandoned = 'the application stopped answering';
       } catch (error) {
+        // Only what an action can meet in a working engine: running out of
+        // time, the target gone from a menu or page since the survey, or the
+        // application gone, which the checks just below then report. Anything
+        // else is the engine or the adapter breaking, and ends the Route as
+        // itself rather than being journaled as a Hop that did nothing.
+        if (!isAbandonment(error)) throw error;
         abandoned = error instanceof Error ? error.message.split('\n')[0] : String(error);
       }
+      if (abandoned !== undefined) abandonedHops += 1;
 
       const settling = await settledOrStalled(watch, page, settleTimeoutMs, settleQuietMs);
 
@@ -804,6 +851,17 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       await pauseToWatch(hopDelayMs);
     }
 
+    // A Trip whose every Hop was abandoned went nowhere: every action timed
+    // out or met nothing, as when an overlay swallows every click. That is
+    // running out of moves by another road, so it strands (R5) rather than
+    // claiming a Trip that never happened.
+    if (hops > 0 && abandonedHops === hops) {
+      const reason =
+        `Every one of the ${hops} Hops was abandoned: each action timed out or met nothing, ` +
+        `so the Route moved nowhere. The journal has what each one met.`;
+      journal.close({ outcome: 'stranded', hops, reason, exclusionsNeverMatched: neverMatched(tally) });
+      return { kind: 'stranded', hops, reason };
+    }
     journal.close({ outcome: 'passed', hops, exclusionsNeverMatched: neverMatched(tally) });
     return { kind: 'passed', hops };
   } catch (error) {
@@ -811,12 +869,19 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     // caught and is therefore known. A journal with no outcome line means the
     // Route did not finish and nothing saw it stop, which is a different thing
     // and must stay distinguishable.
-    journal.close({
-      outcome: 'failed',
-      hops,
-      reason: error instanceof Error ? error.message : String(error),
-      exclusionsNeverMatched: neverMatched(tally),
-    });
+    //
+    // Guarded: a journal that cannot be written, a full disk say, must not
+    // replace the error that ended the Route with its own.
+    try {
+      journal.close({
+        outcome: 'failed',
+        hops,
+        reason: error instanceof Error ? error.message : String(error),
+        exclusionsNeverMatched: neverMatched(tally),
+      });
+    } catch (closing) {
+      if (error instanceof Error && error.cause === undefined) (error as { cause?: unknown }).cause = closing;
+    }
     throw error;
   }
 }
@@ -925,7 +990,14 @@ async function runFix(
         // failure is thrown. R11 wants a broken Fix told apart from a failed
         // Route, and that means saying which step broke rather than leaving it
         // as a sentence inside the outcome's reason.
-        const { effect, checks } = await effectAfter();
+        // Guarded: a check that throws here must not take the step's own
+        // error, and the line that names it, with it.
+        const after = await effectAfter().catch(() => undefined);
+        const effect: HopEffect = after?.effect ?? {
+          readable: false,
+          reason: 'The checks after this step failed, so what it did could not be read.',
+        };
+        const checks = after?.checks ?? [];
         journal.write({
           kind: 'fix-hop',
           hop,
@@ -980,7 +1052,16 @@ async function runFix(
       if (action === 'type' && value === undefined) {
         throw new Error(`${target} takes typing, so give the value to type: hop(target, value).`);
       }
-      await act(app, page, match, action, value ?? '', hopTimeoutMs);
+      // Bounded like a Trip hop's action. A menu click takes no timeout of its
+      // own, and a Fix step onto a menu entry whose handler blocks the main
+      // process, as one of Positron's did, would otherwise hang the Journey.
+      const what = `Fix step ${steps + 1}'s ${action} on ${target}`;
+      const acting = act(app, page, match, action, value ?? '', hopTimeoutMs);
+      if (watch) {
+        if ((await watch.bounded(what, acting, hopTimeoutMs)) === STALLED) {
+          throw new ApplicationStoppedAnswering(what, hopTimeoutMs);
+        }
+      } else await answered(what, acting, hopTimeoutMs + DEFAULT_RESPONSIVE_TIMEOUT_MS);
     });
 
   await fix({ page, app, rng, step, hop });
@@ -1065,9 +1146,11 @@ async function nativeDropdownPart(
 /**
  * Do the one thing this Hop does.
  *
- * Every path through here is bounded by the caller's timeout, and the caller is
- * what decides that a timeout ends the Hop rather than the Route. This function
- * only acts and reports what happened.
+ * Page and key actions are bounded by `timeoutMs`. **A menu click is not:** it
+ * goes through the main process, which takes no timeout, so every caller wraps
+ * this in a bound of its own, as the Trip and a Fix's `hop()` both do. The
+ * caller is also what decides that a timeout ends the Hop rather than the
+ * Route. This function only acts and reports what happened.
  */
 async function act(
   app: ElectronApplication,

@@ -152,7 +152,9 @@ test('startJourney prints every setting, and marks each one set for this run', (
     'Window mode',
     'Hop delay',
     'Follow',
+    'Survey only',
   ]);
+  expect(line('Survey only')).toBe('Survey only: off');
 });
 
 test('the command runs a Journey with its settings changed, and the file unchanged', () => {

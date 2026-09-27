@@ -347,6 +347,38 @@ export interface SurveyOptions {
 }
 
 /**
+ * The application did not answer one of the survey's own reads in time.
+ *
+ * Its own class so a Route can say so plainly, rather than blaming a
+ * navigation or the exclusion list for what is a hung application.
+ */
+export class ApplicationStoppedAnswering extends Error {
+  constructor(readonly what: string, readonly timeoutMs: number) {
+    super(`${what} did not answer within ${timeoutMs} ms: the application stopped answering`);
+    this.name = 'ApplicationStoppedAnswering';
+  }
+}
+
+/**
+ * A read that gives up after `timeoutMs`, for the calls that take no timeout
+ * of their own. The main process serves the debugging connection every call
+ * goes through, so a main process blocked by a native dialog, measured on
+ * Positron, holds such a call forever. Unbounded when no timeout is given.
+ */
+export async function answered<T>(what: string, call: Promise<T>, timeoutMs: number | undefined): Promise<T> {
+  if (timeoutMs === undefined) return call;
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new ApplicationStoppedAnswering(what, timeoutMs)), timeoutMs);
+  });
+  try {
+    return await Promise.race([call, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * What a Route may act on right now.
  *
  * The exclusion list is applied BEFORE the result is returned, so the draw a
@@ -358,7 +390,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   const { page, app, exclusions, hopIndex, tally, timeoutMs } = options;
 
   const { candidates: pageCandidates, unnamed, tree } = await surveyPage(page, timeoutMs);
-  const { menuCandidates, menuSource } = await surveyMenu(app);
+  const { menuCandidates, menuSource } = await surveyMenu(app, timeoutMs);
 
   const found: SurveyedCandidate[] = [
     ...pageCandidates,
@@ -434,7 +466,11 @@ async function focusedExcluded(
         undefined,
         timeoutMs === undefined ? {} : { timeout: timeoutMs }
       )
-      .catch(() => false);
+      // **Fails closed.** A focus that could not be read might be on the
+      // excluded control, and reading "not focused" would leave Enter in the
+      // draw on a focused outbound link: the way past the rail this closes.
+      .catch((error: unknown) => `unknown (${error instanceof Error ? error.message.split('\n')[0] : String(error)})`);
+    if (typeof focused === 'string') return `${control.name}, ${focused}`;
     if (focused) return control.name;
   }
   return '';
@@ -547,7 +583,8 @@ async function surveyPage(
   // Native modal dialogs only. A dialog built from ordinary elements with
   // aria-modal is not recognized here, and is unmeasured.
   const modal = page.locator('dialog:modal');
-  const modalOpen = (await modal.count()) > 0;
+  // Bounded by hand: a count takes no timeout of its own.
+  const modalOpen = (await answered('the page, asked for an open dialog,', modal.count(), timeoutMs)) > 0;
   const root = modalOpen ? modal.last() : page.locator('body');
   const snapshot = (await root.ariaSnapshotJSON(bounded)) as AriaNode | AriaNode[];
 
@@ -608,13 +645,14 @@ async function surveyPage(
 
 /** Candidates from the native menu, or the reason there are none. */
 async function surveyMenu(
-  app: ElectronApplication
+  app: ElectronApplication,
+  timeoutMs: number | undefined
 ): Promise<{ menuCandidates: MenuCandidate[]; menuSource: MenuSourceVerdict }> {
   // Offered whether or not a window holds focus. Menus used to be withheld
   // without focus, which made what a Route could draw depend on whatever else
   // on the machine took focus, and broke a replay on 2026-09-24. clickMenuItem
   // hands the handler the Route's window itself, so focus decides nothing.
-  const entries = await menuEntries(app);
+  const entries = await answered('the main process, asked for its menu,', menuEntries(app), timeoutMs);
   const menuCandidates: MenuCandidate[] = entries
     .filter((entry) => entry.enabled)
     .map((entry) => ({

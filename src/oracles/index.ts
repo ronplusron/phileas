@@ -11,9 +11,10 @@ import { findingId, signatureOf, type KnownFindings } from '../known.mjs';
  * `docs/PLAN.md` has the trial and why it comes first. Six checks run here:
  * uncaught errors in either process, console errors, still responding, the
  * window still showing something, no unexpected dialog, and an error appended
- * to a log the adapter names. Two are not built yet, the foreign-process half
- * of no navigation away and named controls, and every Hop's journal line says
- * so rather than leaving them out.
+ * to a log the adapter names. Two are not built yet, no navigation away (none
+ * of it: the stub's recorder is read only by a fixture, and the
+ * foreign-process half does not exist) and named controls, and every Hop's
+ * journal line says so rather than leaving them out.
  *
  * **Every check here was made to fire on a planted defect before it shipped.**
  * `tests/checks.spec.ts` has one per check, against `buggy` launched with that
@@ -21,9 +22,12 @@ import { findingId, signatureOf, type KnownFindings } from '../known.mjs';
  * application is worse than none, because a Route that ends at the first
  * violation would never end.
  *
- * What is watched starts when the Route does. An error during boot, before
- * the Route's first Hop, is not a Hop's doing; the fixture still fails the test
- * on an uncaught renderer error from boot, as it did before.
+ * What is watched starts when the Route does. An uncaught renderer error no
+ * Route saw, such as one during boot, is not a Hop's doing, and the page
+ * fixture judges it instead. **Each error has exactly one judge:** the watch
+ * notes every renderer error it saw, and the fixture leaves those alone, so a
+ * known finding the Route carried on past does not fail the test at its end.
+ * See `judgedByTheWatch`.
  */
 
 /** The order every Hop's line lists the checks in, so two lines compare by eye. */
@@ -49,6 +53,34 @@ export const CHECK_ORDER: readonly UniversalCheck[] = [
  * whole deadline.
  */
 export const DEFAULT_RESPONSIVE_TIMEOUT_MS = 5_000;
+
+/** The renderer errors a Route's watch saw, by page, so the fixture judges only the rest. */
+const watched = new WeakMap<Page, Set<Error>>();
+
+/**
+ * Whether a Route's checks already judged this renderer error. The page
+ * fixture fails a test on an uncaught renderer error at its end, and one the
+ * watch saw was already judged on the Hop it happened, known finding and
+ * narrowing included, so judging it again would second-guess that verdict.
+ */
+export function judgedByTheWatch(page: Page, error: Error): boolean {
+  return watched.get(page)?.has(error) ?? false;
+}
+
+/**
+ * An uncaught renderer error as the checks and a narrowing see it, so an
+ * adapter's `accept` is handed one form wherever the error is judged.
+ */
+export function rendererObservation(error: Error): string {
+  return `renderer: ${firstLines(error.stack ?? error.message)}`;
+}
+
+/**
+ * A rejection saying the target is gone, rather than slow. A round trip to a
+ * crashed or closed process rejects at once, and read as an answer that would
+ * make a dead application pass still-responding.
+ */
+const GONE = /Target (?:page, context or browser )?(?:has been )?closed|crashed|has been closed|Process exited/i;
 
 /** Where the main-process listener keeps what it caught. */
 const MAIN_ERRORS = '__phileasMainErrors';
@@ -117,6 +149,24 @@ export interface WatchOptions {
 }
 
 /**
+ * The logs to read, from a list or from the Route's profile folder.
+ *
+ * Refuses when the adapter names its logs by folder and no folder was given,
+ * rather than reading none. The log check would then report "not run" on every
+ * Hop for a reason that is the caller's mistake and not the adapter's choice.
+ */
+function resolveLogPaths(cfg: AppUnderTest, userDataDir: string | undefined): string[] {
+  if (typeof cfg.logPaths !== 'function') return cfg.logPaths ?? [];
+  if (userDataDir === undefined) {
+    throw new Error(
+      "The adapter names its logs from the Route's profile folder, and runRoute was not given " +
+        "one. Pass userDataDir from the test's fixture to runRoute."
+    );
+  }
+  return cfg.logPaths(userDataDir);
+}
+
+/**
  * Start gathering what the checks need, and hand back the function that
  * judges it.
  *
@@ -139,24 +189,6 @@ export interface WatchOptions {
  * a call that overran its bound by more than the responsive wait is the
  * finding, even when everything answers again by the time the checks run.
  */
-/**
- * The logs to read, from a list or from the Route's profile folder.
- *
- * Refuses when the adapter names its logs by folder and no folder was given,
- * rather than reading none. The log check would then report "not run" on every
- * Hop for a reason that is the caller's mistake and not the adapter's choice.
- */
-function resolveLogPaths(cfg: AppUnderTest, userDataDir: string | undefined): string[] {
-  if (typeof cfg.logPaths !== 'function') return cfg.logPaths ?? [];
-  if (userDataDir === undefined) {
-    throw new Error(
-      "The adapter names its logs from the Route's profile folder, and runRoute was not given " +
-        "one. Pass userDataDir from the test's fixture to runRoute."
-    );
-  }
-  return cfg.logPaths(userDataDir);
-}
-
 export async function startWatching(options: WatchOptions): Promise<Watch> {
   const { page, app, cfg } = options;
   const known = new Map((options.known?.entries ?? []).map((entry) => [entry.signature, entry]));
@@ -166,8 +198,26 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   const stalls: string[] = [];
   const consoleErrors: string[] = [];
   const dialogs: string[] = [];
+  // Kept rather than drained: an application that has gone stays gone, and
+  // the Route ends on the first Hop that reads it.
+  const gone: string[] = [];
 
-  page.on('pageerror', (error) => pageErrors.push(firstLines(error.stack ?? error.message)));
+  const seen = watched.get(page) ?? new Set<Error>();
+  watched.set(page, seen);
+  page.on('pageerror', (error) => {
+    seen.add(error);
+    pageErrors.push(rendererObservation(error));
+  });
+  // **An application that stops is a failure, never an answer.** A crashed or
+  // closed target rejects at once rather than hanging, so without these a
+  // dead application passed still-responding, its other checks read "not
+  // run", and a crash on the last Hop reported the Route as passed.
+  page.on('crash', () => gone.push('the renderer crashed'));
+  page.on('close', () => gone.push('the window closed'));
+  app.on('close', () => gone.push('the application closed'));
+  app.process().on('exit', (code, signal) =>
+    gone.push(`the main process exited${signal ? ` on ${signal}` : ` with code ${code}`}`)
+  );
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
@@ -252,13 +302,21 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
 
   const roundTrips = async (): Promise<string[]> => {
     const [renderer, main] = await Promise.all([
-      within(page.evaluate(() => true), responsiveTimeoutMs),
-      within(app.evaluate(() => true), responsiveTimeoutMs),
+      within(page.evaluate(() => true), responsiveTimeoutMs, 'rejections-too'),
+      within(app.evaluate(() => true), responsiveTimeoutMs, 'rejections-too'),
     ]);
-    const slow: string[] = stalls.splice(0);
-    if (renderer === TIMED_OUT) slow.push(`the renderer did not answer within ${responsiveTimeoutMs} ms`);
-    if (main === TIMED_OUT) slow.push(`the main process did not answer within ${responsiveTimeoutMs} ms`);
-    return slow;
+    const slow: string[] = [...gone, ...stalls.splice(0)];
+    const judge = (answer: typeof renderer, who: string) => {
+      if (answer === TIMED_OUT) slow.push(`the ${who} did not answer within ${responsiveTimeoutMs} ms`);
+      // Any other rejection has answered, just badly: a reload destroying the
+      // context mid-call is one, and the process is there to reject.
+      else if (!answer.ok && GONE.test(firstLine(answer.error))) {
+        slow.push(`the ${who} could not be reached: ${firstLine(answer.error)}`);
+      }
+    };
+    judge(renderer, 'renderer');
+    judge(main, 'main process');
+    return [...new Set(slow)];
   };
 
   return {
@@ -352,7 +410,12 @@ async function judged(
       },
     };
   });
-  const unknown = findings.filter((finding) => !finding.record.known);
+  // **Except an application that has stopped answering.** A hung application
+  // cannot be traveled, and a Route carried past a known hang walks into
+  // calls that wait on it, so that check ends the Route known or not (R16).
+  // The finding is still recorded as known, so the Journey's summary counts
+  // it as seen rather than new.
+  const unknown = check === 'still-responding' ? findings : findings.filter((finding) => !finding.record.known);
   const recorded = findings.length ? { findings: findings.map((finding) => finding.record) } : {};
 
   if (unknown.length) {
@@ -441,6 +504,11 @@ function sizeOf(file: string): number {
   } catch {
     return 0;
   }
+}
+
+/** The first line of whatever was thrown. */
+function firstLine(error: unknown): string {
+  return error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error);
 }
 
 /** An error's message and the first frames, which is what a reader needs from a journal line. */

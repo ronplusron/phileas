@@ -3,6 +3,11 @@ import { test as base, expect, type ElectronApplication, type Page } from '@play
 import type { AppUnderTest } from './app-under-test';
 import { launchApp, closeApp, makeUserDataDir, removeProfile, type LaunchedApp } from './launch';
 import { openedExternally } from './external';
+import { judgedByTheWatch, rendererObservation } from './oracles/index';
+import { answered } from './survey';
+
+/** How long each diagnostic at a test's end may wait on the application. */
+const DIAGNOSTIC_TIMEOUT_MS = 5_000;
 
 export type PhileasFixtures = {
   /** A disposable userData directory, thrown away when the test ends. */
@@ -141,19 +146,21 @@ export function createTest(cfg: AppUnderTest) {
       // It used to be decided afterwards, so the one failure the check exists
       // for -- the application throwing where nothing happens to look -- was
       // the one that reached the report with the trace already discarded.
+      //
+      // Only the errors no Route's watch saw. One the watch saw was judged on
+      // the Hop it happened, with known findings and the narrowing applied,
+      // and judging it again here failed a test whose Route had correctly
+      // carried on past a known finding. What is left is what happened before
+      // a Route watched, such as during boot, or with no Route at all.
       const narrowed = cfg.narrowedChecks?.['uncaught-error'];
-      const unacceptable = !narrowed
-        ? launched.pageErrors
-        : narrowed.kind === 'off'
-          ? []
-          : launched.pageErrors.filter((error) => !narrowed.accept(error.stack ?? error.message));
+      const { unjudged, unacceptable } = rendererVerdict(cfg, page, launched.pageErrors);
 
       // R19: every narrowing reaches the report, whatever the outcome. The
       // interface states that as a contract and nothing read `reason`, so a
       // check switched off was indistinguishable from one that passed -- which
       // is the thing the contract was written to prevent.
       if (narrowed) {
-        const suppressed = launched.pageErrors.filter((error) => !unacceptable.includes(error));
+        const suppressed = unjudged.filter((error) => !unacceptable.includes(error));
         await testInfo.attach('narrowed-checks.txt', {
           body:
             `uncaught-error was narrowed for this run.\n\nReason: ${narrowed.reason}\n\n` +
@@ -178,7 +185,10 @@ export function createTest(cfg: AppUnderTest) {
         // screenshot that fails because the renderer is hung says something
         // about the application, and a report that simply lacks the file does
         // not distinguish that from a page that had already closed.
-        const shot = await page.screenshot().catch((error: Error) => error);
+        //
+        // Bounded, like everything else that talks to the application: a hung
+        // one would otherwise hold the test's end for as long as it hangs.
+        const shot = await page.screenshot({ timeout: DIAGNOSTIC_TIMEOUT_MS }).catch((error: Error) => error);
         if (Buffer.isBuffer(shot)) {
           await testInfo.attach('window.png', { body: shot, contentType: 'image/png' });
         } else {
@@ -188,7 +198,9 @@ export function createTest(cfg: AppUnderTest) {
           });
         }
 
-        const html = await page.content().catch((error: Error) => error);
+        const html = await answered('the page, asked for its DOM,', page.content(), DIAGNOSTIC_TIMEOUT_MS).catch(
+          (error: Error) => error
+        );
         if (typeof html === 'string') {
           await testInfo.attach('dom.html', { body: html, contentType: 'text/html' });
         } else {
@@ -199,9 +211,21 @@ export function createTest(cfg: AppUnderTest) {
         }
       }
 
+      // Guarded, like the screenshot and the DOM above: an application that
+      // has gone takes its trace with it, and the reason the trace is missing
+      // must not replace the failure that explains why it went.
       const tracePath = testInfo.outputPath('trace.zip');
-      await launched.app.context().tracing.stop(failed ? { path: tracePath } : {});
-      if (failed && fs.existsSync(tracePath)) {
+      const traced = await answered(
+        'the application, asked to stop its trace,',
+        launched.app.context().tracing.stop(failed ? { path: tracePath } : {}),
+        DIAGNOSTIC_TIMEOUT_MS
+      ).then(
+          () => undefined,
+          (error: Error) => error
+        );
+      if (traced) {
+        await testInfo.attach('trace-failed.txt', { body: traced.stack ?? traced.message, contentType: 'text/plain' });
+      } else if (failed && fs.existsSync(tracePath)) {
         await testInfo.attach('trace', { path: tracePath, contentType: 'application/zip' });
       }
 
@@ -225,3 +249,21 @@ export function createTest(cfg: AppUnderTest) {
 }
 
 export { expect };
+
+/**
+ * The page fixture's own verdict on uncaught renderer errors: those no Route's
+ * watch saw, and of those the ones the adapter's narrowing does not accept.
+ * Its own function so the verdict can be tested without failing a test to see it.
+ */
+export function rendererVerdict(
+  cfg: AppUnderTest,
+  page: Page,
+  errors: readonly Error[]
+): { unjudged: Error[]; unacceptable: Error[] } {
+  const narrowed = cfg.narrowedChecks?.['uncaught-error'];
+  const unjudged = errors.filter((error) => !judgedByTheWatch(page, error));
+  if (!narrowed) return { unjudged, unacceptable: unjudged };
+  if (narrowed.kind === 'off') return { unjudged, unacceptable: [] };
+  // Handed the same form the check hands it, so one predicate serves both.
+  return { unjudged, unacceptable: unjudged.filter((error) => !narrowed.accept(rendererObservation(error))) };
+}

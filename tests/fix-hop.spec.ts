@@ -122,7 +122,7 @@ test('a survey-only Route runs the Fix, travels nowhere, and writes no journal',
       surveyOnly: true,
       fix: ({ hop }) => hop('button "Summary"'),
     });
-    expect(outcome).toEqual({ kind: 'passed', hops: 0 });
+    expect(outcome).toEqual({ kind: 'surveyed' });
     // The Fix ran, so a survey can show where the Trip would begin.
     await expect(page.getByRole('heading', { name: 'Total weight' })).toBeVisible();
     // Nothing at all under the root: a journal here would read as a Route that

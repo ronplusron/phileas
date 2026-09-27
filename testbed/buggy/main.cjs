@@ -78,6 +78,8 @@ const PLANTS = [
   'blank',
   'dialog',
   'log-error',
+  'renderer-crash',
+  'main-exit',
 ];
 const plants = process.argv
   .filter((arg) => arg.startsWith('--buggy-plant='))
@@ -115,6 +117,17 @@ ipcMain.handle('plant:endless-hang', () => {
   for (;;) {
     // Busy on purpose, forever.
   }
+});
+
+// The renderer dies, the way a renderer out of memory or hitting a native
+// fault does. Nothing throws and nothing hangs: the page is simply gone.
+ipcMain.handle('plant:renderer-crash', (event) => {
+  setTimeout(() => event.sender.forcefullyCrashRenderer(), 0);
+});
+
+// The application quits on its own, mid-Trip, with no dialog and no error.
+ipcMain.handle('plant:main-exit', () => {
+  setTimeout(() => app.exit(3), 0);
 });
 
 ipcMain.handle('plant:log-error', () => {

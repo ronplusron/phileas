@@ -5,7 +5,7 @@ import path from 'node:path';
 import { journalFolder } from './journal';
 import { recordJourneyFindings, renderJourneyFindings, type JourneyFindings } from './known.mjs';
 import { windowMode } from './launch';
-import { followFromEnvironment, hopDelayFromEnvironment } from './route';
+import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route';
 
 /**
  * Settle the seed, name the run, check the run's settings and print them. The
@@ -38,6 +38,7 @@ export function startJourney(journey: Journey): {
   const mode = windowMode();
   const hopDelayMs = hopDelayFromEnvironment();
   const follow = followFromEnvironment();
+  const surveyOnly = surveyFromEnvironment();
 
   const forThisRun = new Set<string>(overriddenTerms(journey));
   const mark = (term: string) => (forThisRun.has(term) ? 'set for this run' : '');
@@ -57,6 +58,9 @@ export function startJourney(journey: Journey): {
     ['Window mode', mode, ''],
     ['Hop delay', hopDelayMs ? `${hopDelayMs} ms` : 'none', ''],
     ['Follow', follow ? 'on' : 'off', ''],
+    // Printed, so a PHILEAS_SURVEY left set in the shell is seen at the top of
+    // a run that would otherwise travel nowhere.
+    ['Survey only', surveyOnly ? 'on: nothing is traveled, and every Route is skipped' : 'off', ''],
   ];
   const width = Math.max(...rows.map(([name, value]) => `${name}: ${value}`.length));
   const settings = rows.map(([name, value, note]) =>
@@ -166,6 +170,9 @@ export function finishJourney(options: { journalsRoot?: string; knownFindings?: 
   let findings: JourneyFindings | undefined;
   const recordFindings = () => {
     if (options.knownFindings === undefined) return;
+    // A survey travels nowhere and writes no journal, so reading one would
+    // report every known finding as not seen, "possibly fixed".
+    if (surveyFromEnvironment()) return;
     if (options.journalsRoot === undefined) {
       throw new Error('finishJourney needs journalsRoot to read what the Journey found for its known findings.');
     }

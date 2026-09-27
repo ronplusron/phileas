@@ -87,7 +87,7 @@ function firesOn(plant: string, control: string, check: string, observed: RegExp
   const test = createTest(cfg);
   test.afterEach(removeScratch);
 
-  test(`${check} fires on the planted ${plant}`, async ({ page, app, launched }) => {
+  test(`${check} fires on the planted ${plant}`, async ({ page, app }) => {
     const root = scratch();
     const outcome = runRoute({
       page,
@@ -128,20 +128,10 @@ function firesOn(plant: string, control: string, check: string, observed: RegExp
       // the same Hop is the evidence that it did.
       expect(result(hops[0]?.checks ?? [], 'still-responding')?.result).toBe('passed');
     }
-
-    forgetReported(launched);
+    // No clearing of the fixture's renderer errors afterwards, which these
+    // tests once needed: the Route judged the planted error, so the fixture
+    // leaves it alone, and the renderer-throw test passing is the evidence.
   });
-}
-
-/**
- * The fixture fails a test on any uncaught renderer error at its end, which
- * still covers an error during boot, before any Route watches. Here the Route
- * has already reported the planted one as its finding, and the test has
- * checked that it did, so the fixture would report the same error a second
- * time and fail the test that watched the check work.
- */
-function forgetReported(launched: { pageErrors: Error[] }): void {
-  launched.pageErrors.length = 0;
 }
 
 firesOn('renderer-throw', 'Weigh the trunk', 'uncaught-error', /renderer: .*too heavy to weigh/);
@@ -151,6 +141,11 @@ firesOn('renderer-hang', 'Wait for the tide', 'still-responding', /renderer did 
 firesOn('main-hang', 'Wait at the port', 'still-responding', /main process did not answer/);
 firesOn('blank', 'Fold the map', 'window-showing-content', /shows nothing/);
 firesOn('dialog', 'Ring the bell', 'no-unexpected-dialog', /alert: the bell rang/);
+// A process that is gone rejects every call at once rather than hanging, and
+// was once read as an answer, so a dead application passed.
+firesOn('renderer-crash', 'Drop the lantern', 'still-responding', /the renderer crashed/);
+// Which of its signs arrives first varies, and any of them is the finding.
+firesOn('main-exit', 'Miss the boat', 'still-responding', /the window closed|the main process exited|the application closed/);
 
 // The log is found through the environment the adapter hands the application,
 // and named in logPaths, the way a real adapter names where its application
@@ -328,7 +323,7 @@ const throwing = planted('renderer-throw');
 const fixTest = createTest(throwing);
 fixTest.afterEach(removeScratch);
 
-fixTest('a check failing after a Fix step is a Fix failure, not a failed Route (R11)', async ({ page, app, launched }) => {
+fixTest('a check failing after a Fix step is a Fix failure, not a failed Route (R11)', async ({ page, app }) => {
   const root = scratch();
   const error = await runRoute({
     page,
@@ -355,8 +350,6 @@ fixTest('a check failing after a Fix step is a Fix failure, not a failed Route (
   expect(result(step?.checks ?? [], 'uncaught-error')?.result).toBe('failed');
   // The Trip never started.
   expect(entries.some((entry) => entry.kind === 'trip-hop')).toBe(false);
-
-  forgetReported(launched);
 });
 
 healthy('blank means nothing readable at all, not merely little', () => {

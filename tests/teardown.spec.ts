@@ -2,13 +2,16 @@ import fs from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import {
+  ApplicationStoppedAnswering,
   CheckFailure,
   RUN_VARIABLE,
+  createExclusionTally,
   closeApp,
   createTest,
   deriveRouteStreams,
   makeUserDataDir,
   runRoute,
+  survey,
   type AppUnderTest,
   type Chooser,
 } from '../src/index';
@@ -115,4 +118,33 @@ routeTest('a Route that finds an endless hang reports it, and the test still fin
 
   expect(error).toBeInstanceOf(CheckFailure);
   expect((error as CheckFailure).failed.map((check) => check.check)).toContain('still-responding');
+});
+
+// The survey's own reads are bounded too. A main process that never answers
+// again held the menu read forever, and a Route carried past a known hang, or
+// a Fix, walked straight into it with nothing to end the Journey.
+routeTest('a survey gives up on a main process that never answers, and says so', async ({ page, app }) => {
+  routeTest.setTimeout(60_000);
+  // Not awaited: the click itself waits on the main process.
+  page.getByRole('button', { name: CONTROL }).click().catch(() => undefined);
+  await new Promise((resolve) => setTimeout(resolve, 1_000));
+
+  const started = Date.now();
+  const error = await survey({
+    page,
+    app,
+    exclusions: endless.exclusions,
+    hopIndex: 0,
+    tally: createExclusionTally(endless.exclusions),
+    timeoutMs: 1_000,
+  }).then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+
+  expect(error).toBeInstanceOf(ApplicationStoppedAnswering);
+  // Whichever read reaches the main process first: the page's own reads wait
+  // on it too, since it serves the debugging connection.
+  expect((error as Error).message).toMatch(/did not answer within 1000 ms: the application stopped answering/);
+  expect(Date.now() - started).toBeLessThan(10_000);
 });
