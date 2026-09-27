@@ -86,28 +86,29 @@ sound for an application nobody has read, which is the whole hazard.
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
 
-## An application that opens no window is reported only as a timeout
+## What an application prints before the launch returns is lost
 
-**Filed 2026-09-26, measured on `buggy` and Positron.** An application can
-start, say why it cannot go on, and never open a window. The engine then
-waits thirty seconds for the first window and reports only "Timeout 30000ms
-exceeded while waiting for event \"window\"", although it had already
-collected the application's standard error, which held the reason. Measured
-with a `buggy` launch flag that prints a reason and opens no window.
+**Filed 2026-09-26, measured on `buggy`.** The engine collects the
+application's standard error by listening on its process once Playwright's
+launch has returned, and Playwright returns only once Electron is ready.
+Anything printed before that is gone: a line `buggy` wrote at the top of its
+main script, and one it wrote the moment Electron was ready, were both
+missing from what the engine collected, while one written a second later was
+there. Playwright itself sees the early lines, and puts them in its own error
+when a launch fails outright, but offers no way to receive them when the
+launch succeeds.
 
-Two nearby cases are not this defect, measured the same day. An application
-that exits at launch is reported by Playwright with its standard error in the
-message. And Positron, launched on a profile folder it cannot write to, timed
-out inside Playwright's own launch, whose message carried everything Positron
-printed: Positron printed no reason, which no engine change can supply.
+**Why it is a defect and not a limit.** Two things read that output. The
+error for an application that opens no window, which gives the application's
+reason only if it came late enough, and the standard error attached to a
+failed Route, which misses everything from boot. A failure during boot is
+exactly where an application's own words matter most, and both report as if
+it had said nothing.
 
-**Why it is a defect and not a limit.** R24 asks that a setup that is wrong
-reports what is missing rather than timing out, and here the reason was in
-hand and dropped.
-
-**What closes it.** Put the standard error collected so far into the error
-when no window appears. Proved by a test that the launch error carries the
-reason `buggy` printed.
+**What would close it, not decided.** Launching through a small wrapper
+that copies the application's standard error to a file in the profile, so
+nothing is lost. It puts a shell between the engine and the process the
+bounded close kills, which needs measuring before it is taken.
 
 ## Two things that will look like candidates, and are not
 

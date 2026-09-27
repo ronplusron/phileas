@@ -98,6 +98,28 @@ test("a real boot failure reports the application's own message, not a timeout",
   });
 });
 
+test('an application that opens no window is reported in its own words, and closed', async () => {
+  // It says why on standard error once Electron is ready, and opens nothing.
+  // Waiting for the window used to time out saying only that no window came.
+  test.setTimeout(90_000);
+  const noWindow: AppUnderTest = { ...buggy, launchArgs: ['--buggy-no-window'] };
+  const dir = await makeUserDataDir(noWindow);
+  try {
+    await expect(launchApp(noWindow, dir)).rejects.toThrow(
+      /Timeout.*\n\nThe application's standard error since the launch returned:\n\n {2}Buggy cannot start: the luggage room is locked/
+    );
+
+    // And nothing was left running on that profile to be cleaned up by hand.
+    const { execFileSync } = await import('node:child_process');
+    const running = execFileSync('ps', ['-axo', 'command'], { encoding: 'utf8' })
+      .split('\n')
+      .filter((line) => line.includes(`--user-data-dir=${dir}`));
+    expect(running).toEqual([]);
+  } finally {
+    await fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  }
+});
+
 test("launch arguments written as a function are given the launch's own profile folder", async () => {
   // For an argument that has to name a fresh folder each Route, such as
   // Positron's --extensions-dir. The flag reaching the application is shown by

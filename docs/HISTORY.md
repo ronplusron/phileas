@@ -25,6 +25,28 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-26: an application that opens no window is reported in its own words
+
+**The defect.** An application that started, said why it could not go on,
+and opened no window was reported only as "Timeout 30000ms exceeded while
+waiting for event \"window\"", although the engine had collected its reason.
+An application that exits at launch was already reported with its standard
+error, by Playwright, and Positron on a profile it could not write to printed
+no reason at all, both measured the same day.
+
+**The fix.** When no window comes, the error carries the application's
+standard error, less the lines Electron prints for the launch's own flags,
+and the application is closed first, bounded, since nothing else would close
+a launch that never finished.
+
+**What the test found on the way.** `buggy` printed its reason first at the
+top of its main script, then at Electron's ready event, and the engine heard
+neither: Playwright's launch returns only once Electron is ready, and the
+engine starts listening then. It prints a second later now, which is heard,
+and the loss of everything earlier is filed in `DEFECTS.md`, with a wrapper
+as the likely fix and not yet decided. The test fails with the error left as
+it was, and 180 pass.
+
 ## 2026-09-26: a Route's profile folder is removed even while it changes
 
 **The defect.** The fixture deleted a Route's profile once. Positron's child

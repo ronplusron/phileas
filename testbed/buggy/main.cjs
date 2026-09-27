@@ -193,7 +193,18 @@ function buildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+// An application that finds, a second into its startup work, that it cannot
+// go on, says why on standard error the way an application reports one, and
+// never opens a window. After a second rather than at once: Playwright's
+// launch returns only once Electron is ready, and the engine hears nothing
+// printed before that.
+const noWindow = process.argv.includes('--buggy-no-window');
+
 app.whenReady().then(() => {
+  if (noWindow) {
+    setTimeout(() => process.stderr.write('Buggy cannot start: the luggage room is locked\n'), 1000);
+    return;
+  }
   buildMenu();
   // Later under --buggy-shown-at-creation, as Positron creates its window only
   // after its own startup work: after the engine has already hidden whatever

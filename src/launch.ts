@@ -419,7 +419,7 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
   // Which page is the application, rather than which window appeared first: an
   // application with a splash has more than one, and firstWindow() would hand
   // back the splash.
-  const page = cfg.selectPage ? await cfg.selectPage(app) : await app.firstWindow();
+  const page = await openedWindow(cfg, launched);
   page.on('pageerror', (error) => launched.pageErrors.push(error));
   page.on('console', (message) => {
     if (message.type() === 'error') launched.consoleErrors.push(message.text());
@@ -461,6 +461,48 @@ export async function reloadRenderer(cfg: AppUnderTest, launched: LaunchedApp): 
   if (launched.path === 'electron') launched.stderr.length = 0;
 
   return page;
+}
+
+/**
+ * Lines Electron itself prints on standard error because of the flags the
+ * launch passes, which say nothing about why an application failed.
+ */
+const LAUNCH_NOISE = [/^Debugger listening on /, /^For help, see: /, /^Debugger attached\.$/, /^DevTools listening on /];
+
+/**
+ * The application's page, or an error in the application's own words.
+ *
+ * An application can start, find it cannot go on, say why on standard error,
+ * and never open a window. Waiting for the window then timed out saying only
+ * that no window came, although the reason had been collected: measured on
+ * `buggy` on 2026-09-26. So the reason goes into the error, and the
+ * application is closed first, since nothing else would close a launch that
+ * never finished.
+ *
+ * What the application printed before Playwright's launch returned is not
+ * here: the engine starts listening only then. docs/DEFECTS.md carries that.
+ */
+async function openedWindow(cfg: AppUnderTest, launched: LaunchedApp & { path: 'electron' }): Promise<Page> {
+  try {
+    return cfg.selectPage ? await cfg.selectPage(launched.app) : await launched.app.firstWindow();
+  } catch (error) {
+    const said = launched.stderr
+      .join('')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line !== '' && !LAUNCH_NOISE.some((noise) => noise.test(line)));
+    const closed = await closeApp(cfg, launched, 5_000).catch((closeError: Error) => ({
+      forced: true as const,
+      detail: `Closing it failed: ${closeError.message.split('\n')[0]}`,
+    }));
+    throw new Error(
+      `${error instanceof Error ? error.message.split('\n')[0] : String(error)}\n\n` +
+        (said.length
+          ? `The application's standard error since the launch returned:\n\n${said.map((line) => `  ${line}`).join('\n')}`
+          : 'The application printed nothing on standard error after the launch returned.') +
+        (closed.forced ? `\n\n${closed.detail}` : '')
+    );
+  }
 }
 
 /** How long an orderly close may take before the process is killed. */
