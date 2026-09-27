@@ -1255,3 +1255,57 @@ test('a chooser that returns something the survey did not offer is refused', asy
     })
   ).rejects.toThrow(/not among the candidates it was given/);
 });
+
+/** Run a short Route and hand back how it ended. */
+async function strandRoute(page: Page, app: ElectronApplication, cfg: AppUnderTest, chooser?: Chooser) {
+  return runRoute({
+    page,
+    app,
+    cfg,
+    streams: deriveRouteStreams('strand-reasons', 1),
+    journeySeed: 'strand-reasons',
+    routeNumber: 1,
+    tripLength: 5,
+    journalsRoot: scratch(),
+    hopTimeoutMs: 500,
+    ...(chooser ? { chooser } : {}),
+  });
+}
+
+test('a Route stranded partway names the Hop it ran out at, not only Hop 0', async ({ page, app }) => {
+  // The first Hop takes every control away before acting, so the Route runs
+  // out at the survey that follows it. R5 is about naming that Hop.
+  let first = true;
+  const clearing: Chooser = {
+    choose: async (candidates) => {
+      const target = candidates.find((candidate) => candidate.source === 'page');
+      if (!target) throw new Error('nothing on the page');
+      if (first) {
+        first = false;
+        await page.evaluate(() => {
+          for (const element of document.querySelectorAll('button, input, select, a')) element.remove();
+        });
+      }
+      return { target };
+    },
+  };
+  const outcome = await strandRoute(page, app, buggy, clearing);
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 1 });
+  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/nothing on the page with a hoppable role/);
+});
+
+test('stranded because every control was excluded says so', async ({ page, app }) => {
+  const excludesThePage: AppUnderTest = { ...buggy, exclusions: { ...buggy.exclusions, exclude: (candidate) => candidate.source === 'page' } };
+  const outcome = await strandRoute(page, app, excludesThePage);
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
+  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/were found and every one was excluded/);
+});
+
+test('stranded because every control was unnamed says so, and what they were', async ({ page, app }) => {
+  await page.evaluate(() => {
+    document.body.innerHTML = '<button></button><button></button>';
+  });
+  const outcome = await strandRoute(page, app, buggy);
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
+  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/2 element\(s\) carried a hoppable role and no accessible name.*button, button/);
+});

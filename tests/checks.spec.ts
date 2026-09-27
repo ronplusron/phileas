@@ -10,10 +10,12 @@ import {
   RUN_VARIABLE,
   createTest,
   deriveRouteStreams,
+  findingId,
   journalFolder,
   readJournal,
   runRoute,
   showsNothing,
+  signatureOf,
   type AppUnderTest,
   type Chooser,
   type FixHopEntry,
@@ -289,6 +291,96 @@ narrowedTest('a narrowing accepts what it names, and the journal says so (R19)',
   expect(consoleCheck?.result).toBe('passed');
   expect(consoleCheck?.narrowed).toBe('the ticket check logs on purpose');
   expect(consoleCheck?.observation).toMatch(/accepted by the narrowing: .*could not be checked/);
+});
+
+// The negative case: a narrowing that names something else accepts nothing,
+// and the check still fails. Without it, a narrowing that accepted everything
+// passed the test above.
+const narrowedElsewhere = planted('console-error', {
+  narrowedChecks: {
+    'console-error': {
+      kind: 'narrowed',
+      reason: 'the timetable logs on purpose',
+      accept: (observation) => observation.includes('timetable'),
+    },
+  },
+});
+const elsewhereTest = createTest(narrowedElsewhere);
+elsewhereTest.afterEach(removeScratch);
+
+elsewhereTest('a narrowing that names something else accepts nothing, and the check still fails', async ({ page, app }) => {
+  const root = scratch();
+  const error = await runRoute({
+    page,
+    app,
+    cfg: narrowedElsewhere,
+    streams: deriveRouteStreams('narrowed-elsewhere', 1),
+    journeySeed: 'narrowed-elsewhere',
+    routeNumber: 1,
+    tripLength: 2,
+    journalsRoot: root,
+    chooser: always('Check the tickets'),
+  }).then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+  expect(error).toBeInstanceOf(CheckFailure);
+  const hop = journalIn(root).find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  const consoleCheck = result(hop?.checks ?? [], 'console-error');
+  expect(consoleCheck?.result).toBe('failed');
+  expect(consoleCheck?.narrowed).toBe('the timetable logs on purpose');
+  expect(consoleCheck?.observation).not.toMatch(/accepted by the narrowing/);
+});
+
+// Two violations on one check, one of them known: the known one is recorded
+// and the other still fails the check. "Passed if any finding is known" would
+// let every new bug through on a check that already had one.
+const consoleTest = createTest(buggy);
+consoleTest.afterEach(removeScratch);
+
+consoleTest('a known finding does not cover an unknown one on the same check', async ({ page, app }) => {
+  const root = scratch();
+  const knownOne = signatureOf('console-error', 'the kettle is known to whistle');
+  const known = path.join(root, 'known-findings.json');
+  fs.writeFileSync(
+    known,
+    JSON.stringify([
+      { id: findingId(knownOne), check: 'console-error', signature: knownOne, added: '2026-09-27', source: 'journey' },
+    ])
+  );
+  const twoErrors: Chooser = {
+    choose: async (candidates) => {
+      await page.evaluate(() => {
+        console.error('the kettle is known to whistle');
+        console.error('the stove is on fire');
+      });
+      const target = candidates.find((candidate) => candidate.name === 'Summary' && candidate.source === 'page');
+      if (!target) throw new Error('Summary is not on offer');
+      return { target };
+    },
+  };
+  const error = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('known-and-not', 1),
+    journeySeed: 'known-and-not',
+    routeNumber: 1,
+    tripLength: 2,
+    journalsRoot: root,
+    chooser: twoErrors,
+    knownFindings: known,
+  }).then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+  expect(error).toBeInstanceOf(CheckFailure);
+  const consoleCheck = (error as CheckFailure).failed.find((check) => check.check === 'console-error');
+  expect(consoleCheck?.observation).toBe('the stove is on fire');
+  expect(consoleCheck?.findings?.map((found) => [found.signature, found.known])).toEqual([
+    [knownOne, true],
+    [signatureOf('console-error', 'the stove is on fire'), false],
+  ]);
 });
 
 const switchedOff = planted('console-error', {
