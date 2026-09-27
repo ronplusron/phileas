@@ -127,7 +127,8 @@ The three old releases and the current one are installed as
 `POSITRON_JOURNEY` chooses the Journey: `no-fix`, the default, `session`,
 whose Fix starts an R session, `notebook` and `quarto`, which open a new
 notebook or Quarto document, and `data-explorer`, which starts R and shows
-`mtcars`. **The old releases need R 4.4.3,** installed beside 4.6 with rig,
+`mtcars`. The trial's Routes run five at a time, set in its
+`playwright.config.ts`. **The old releases need R 4.4.3,** installed beside 4.6 with rig,
 since R 4.6.0 crashes as it starts on 2025.01 and 2025.02; the session Fix
 refuses by name without it. The adapter has one check of its own,
 `no-error-notification`, run on the current release only: studying each
