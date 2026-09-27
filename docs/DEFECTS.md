@@ -28,8 +28,10 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Two defects are recorded.** The launch layer landed in phase 1, so this file
-is no longer empty for the reason it used to be empty.
+**Eight defects are recorded.** The launch layer landed in phase 1, so this
+file is no longer empty for the reason it used to be empty. Six of them were
+found by the whole-codebase review of 2026-09-27 and deferred rather than
+fixed with it, each for the reason its entry gives.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
 a worry.** It is not a defect, because the file is not in this repository; it
@@ -38,8 +40,8 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows are two defects, then the two things most likely to be filed here
-wrongly, and one hazard to enter the moment it becomes real.
+What follows are the defects, then the two things most likely to be filed
+here wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
 
@@ -109,6 +111,58 @@ it had said nothing.
 that copies the application's standard error to a file in the profile, so
 nothing is lost. It puts a shell between the engine and the process the
 bounded close kills, which needs measuring before it is taken.
+
+## Two menu entries with the same label click the first one
+
+`menuEntries` lists every visible entry, so two entries whose label paths are
+identical both reach the pool. `clickMenuItem` finds by label and clicks the
+first match, which may even be a hidden one. The journal then records the
+entry the draw chose while the application ran the other. No application in
+use has such a pair; one that does gets a journal that misreports a Hop.
+Deferred because the fix, carrying the entry's position through to the click,
+touches the journal's menu target.
+
+## A Journey's end loses known findings when two Journeys end at once
+
+`recordJourneyFindings` reads `known-findings.json`, adds to it and writes it
+back with no lock. Two Journeys against one consumer finishing together, such
+as two Positron releases run side by side, can each write over the other's
+additions. Deferred until runs actually overlap; a lock file beside it would
+close it.
+
+## The watch outlives its Route
+
+`startWatching` adds page listeners and main-process handlers and nothing
+removes them. Two `runRoute` calls on one page, which only the engine's own
+tests do, stack them, and the dialog listener keeps dismissing dialogs after
+the Route has ended. Harmless while every Route has its own launch; a
+`stop()` called from `runRoute`'s `finally` closes it.
+
+## A close that had to be forced leaves a passing Route green
+
+The fixture attaches a forced kill or a failed shutdown rather than throwing,
+so that it never replaces the test's own failure. When the test passed there
+is nothing to replace, and an application that hangs on exit reads green with
+an attachment no console reporter prints. Deferred rather than fixed because
+Positron needed the forced close often enough to have its own defect, and
+failing on it could turn every Positron Route red: how often a clean
+Positron Route needs it is to be counted first.
+
+## The Positron home guard can report clean without having read anything
+
+`entries()` in `trial/positron/phileas/home-guard.ts` returns an empty set on
+any error, and "nothing written" is printed all the same. When `ps` fails,
+`outsidePositrons()` returns 0 and the refusal then says no other Positron was
+running. A guard that could not look reads like one that looked. Printing how
+much was read, and "unknown" for a failed `ps`, closes it.
+
+## Signatures are stable only under macOS's usual temp folder
+
+`VARYING` in `src/known.mjs` recognizes a Route's profile only under
+`/var/folders`. Under a custom `TMPDIR`, or on another platform, every
+signature naming a profile differs per Route, so a known finding is never
+matched and ends every Route it appears on. It fails loud rather than quiet,
+which is why it waits for the first run outside the usual folder.
 
 ## Two things that will look like candidates, and are not
 

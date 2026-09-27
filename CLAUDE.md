@@ -127,6 +127,13 @@ than sampling or staggering them. Stop the Route on the first violation
 instead of continuing: hops 13 through 40 of a known-broken state produce
 cascading noise that buries the one hop that mattered.
 
+A violation already filed as a known finding does not count, so one bug on a
+common path stops ending most Routes. **Except the application no longer
+responding:** a hung application cannot be traveled, and carrying on past a
+known hang walks into calls that wait on it, so that one ends the Route
+whether it is known or not. An application that crashes or quits is a
+violation too, never an answer.
+
 The tiers are in the README and in `docs/PRODUCT_REQUIREMENTS.md`. The
 universal tier ships with the engine and assumes nothing about any app. One
 of its checks does double duty: an element with no accessible name is both an
@@ -143,7 +150,14 @@ end, an inescapable dialog and a trap all strand, and so does a perfectly
 reasonable corner of the application with nothing further to do in it. Calling
 it a failure asserts a defect the engine has not found, which is the mistake
 the README made before this was settled. **It is not a pass either**, because
-the Route did not do what was asked of it.
+the Route did not do what was asked of it. For the same reason, a Route whose
+every Hop was abandoned strands too.
+
+**Playwright does not show it yet.** The journal keeps stranded apart, but a
+test has only pass, fail and skip, and every consumer spec currently expects
+passed, so a stranded Route's test fails with the reason. `docs/PLAN.md`
+schedules the encoding for phase 5; until then, read the journal before
+counting a red test as a failure.
 
 ## Completing the Trip is itself an assertion
 

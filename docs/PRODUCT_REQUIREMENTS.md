@@ -225,6 +225,10 @@ and the runner runs all of them after every hop.
   end, an inescapable dialog and a trap are all found this way, and so is a
   perfectly reasonable corner of the application with nothing further to do in
   it. Calling it a failure would assert a defect the engine has not found.
+  **A route whose every hop was attempted and none took effect is stranded
+  too**, with the count in its reason: every click landing on something that
+  swallows it has moved nowhere, which is running out of moves by another road,
+  and reporting it as passed would claim a trip that never happened.
 - **R6 (Should)** A journey reports its stranded routes separately from its
   failures, with enough of the journal to tell the two causes apart.
 
@@ -285,12 +289,19 @@ and the runner runs all of them after every hop.
 - **R15 (Must)** Checks run after every hop.
 - **R16 (Must)** A route stops at the first failed check rather than
   continuing. Continuing produces cascading noise that buries the hop that
-  mattered.
+  mattered. **A violation already recorded as a known finding does not fail
+  the check**, so a filed bug on a common path stops ending most routes; the
+  hop records it as known and the route carries on. The report says what was
+  seen, what is not yet filed, and what was not seen. **The one exception is
+  the application no longer responding:** a hung application cannot be
+  traveled, so that ends the route whether it is known or not.
 - **R17 (Must)** The engine ships with checks that assume nothing about the
   application: no uncaught error, no error written to the console, the
   application still responding, the window still showing content, no
-  navigation away from the application, no unexpected dialog, and every
-  visible control carrying a readable name.
+  navigation away from the application, no unexpected dialog, every visible
+  control carrying a readable name, and no error written to a log the
+  application's setup names. The application stopping, whether it crashes,
+  quits or closes its window, is itself a failed check, never an answer.
 - **R18 (Must)** An application can declare checks that two things visible at
   the same moment agree with each other: one view active at a time, a selected
   row matching the detail shown beside it, a displayed count matching what it

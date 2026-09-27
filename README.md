@@ -41,7 +41,8 @@ right rather than merely consistent, as opposed to self-consistent.
 A Route that runs out of moves before completing its Trip is reported as
 stranded, which is neither a pass nor a failure. Sometimes that is a dead end
 or a trap, and sometimes it is a corner of the application with nothing more
-to do in it.
+to do in it. The journal keeps it apart; until phase 5 gives Playwright a way
+to show it, a stranded Route's test fails, with the reason.
 
 `docs/PRODUCT_REQUIREMENTS.md` has all five ways a defect gets found, and what
 each one can and cannot catch.

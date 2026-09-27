@@ -22,7 +22,8 @@ phases are marked by number.
 | Journey deadline | How long, in clock time, the whole Journey may run, as `journeyDeadlineMs`. Optional, with no limit when unset, which is the common case. When it passes, finished Routes are reported, the running one is cut off, and the rest never start. |
 | Route deadline | How long, in clock time, one Route may run, as `routeDeadlineMs`. Optional, with no limit when unset. A Route that reaches it is cut off. |
 | Planner | The for-loop in a Journey's spec file that registers one Playwright test per Route. It decides how many Routes there are, and must never decide what they explore. |
-| Passed / failed / stranded | A Route's three outcomes. Stranded means it ran out of moves before completing its Trip; that is neither a pass nor a failure. |
+| Passed / failed / stranded | A Route's three outcomes. Stranded means it ran out of moves before completing its Trip, or that every Hop it attempted was abandoned; that is neither a pass nor a failure. In the journal it is its own outcome; until phase 5 gives Playwright a way to show it, a stranded Route's test fails, with the reason. |
+| Surveyed | What a Route reports when `PHILEAS_SURVEY=1` asked only for a survey. Not a pass, so a Journey run with the variable left over cannot read green. |
 
 ## Choosing a move
 

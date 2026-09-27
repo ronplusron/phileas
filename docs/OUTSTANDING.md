@@ -401,6 +401,44 @@ The adapter in `trial/positron/` works against the current release, and
   `--logsPath`, `--disable-extension`, the in-page menu and dialog settings,
   and the Copilot extension being there to disable all need checking on each
   before trial step 5 runs.
+### 1.13 Deferred from the whole-codebase review of 2026-09-27
+
+Agreed as worth doing and not done with the review's fixes, because each is
+a refactor or a feature rather than a fault. The faults it deferred are in
+`DEFECTS.md`.
+
+- **Public API tidying, before any publish.** `src/index.ts` exports about
+  110 names, many only so the tests can reach them: `sideCandidates`,
+  `keepsRouteGoing`, `seededChooser`, `reloadRenderer`, the exclusion tally.
+  Two of them let a caller fail open: `survey` takes both `exclusions` and a
+  tally and applies the tally's rules, and `runRoute` journals the adapter's
+  shares whatever chooser it is handed. Meanwhile `CloseVerdict` and
+  `STALLED` are missing. An internal entry point for the tests, and one rail
+  object that carries rules and counts together, settle all of it.
+- **Strict journal types for writing.** The written types have every field
+  optional, so a menu target without a path or a stranded outcome without a
+  reason typechecks. Strict unions for writing and a tolerant type for reading
+  old journals.
+- **Toolchain versions on the opening line.** A journal records no engine,
+  Playwright or Electron version, so a seed that stops reproducing cannot be
+  told apart from a toolchain change (R13, R14).
+- **An adapter constructor.** `AppUnderTest` is checked piecemeal where each
+  field is used, and `settleQuietMs` and `profileWatchMs` not at all. A
+  `defineAdapter()` beside `defineJourney()` would check it once.
+- **Say where the engine runs.** macOS on arm64 only, which neither
+  `package.json` nor the README says. Also: `electron` could be an optional
+  peer for installed-binary consumers, and `@types/node` is a major ahead of
+  `engines.node`.
+- **Tests still missing** after the review's own were added: the renderer's
+  `failedText` and `knownText` lines, a nonexistent menu label refusing,
+  disabled and unnamed controls in the survey, `markFiled`'s ambiguous-prefix
+  refusal, the Positron narrowings against sample observations, and every
+  `phileas` flag reaching its variable.
+- **Simplification.** The review listed about thirty, none changing behavior:
+  one launch-and-clean-up helper for the tests, one environment helper, the
+  demo's copied journal reader, and duplicated expressions in `route.ts`,
+  `fixtures.ts` and `bin/phileas.mjs`.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
