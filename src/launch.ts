@@ -222,14 +222,18 @@ export function showWindows(): boolean {
  * than rejecting the flag, because it looks like it worked. Measured, not
  * assumed.
  *
- * So this does it in two parts, because either alone leaves a gap:
+ * So this does it in three parts, because each alone leaves a gap:
  *
  *   1. Replace show() on the prototype, so nothing can reveal a window later.
  *      Apps that create a window hidden and reveal it on 'ready-to-show',
  *      which is the common pattern and the right one, never draw at all.
- *   2. Hide whatever is already visible, for an app that shows its window
- *      immediately on creation. That one still flashes briefly; it just does not
- *      stay up.
+ *   2. Hide whatever is already visible.
+ *   3. Hide every window created from now on, as it is created. An app that
+ *      creates its window with `show: true` never calls show(), and usually
+ *      creates it after this runs, so the first two parts never reach it:
+ *      measured on Positron on 2026-09-26, whose window stayed on the screen
+ *      for whole runs that reported hidden mode. Such a window still flashes
+ *      briefly; it just does not stay up.
  *
  * Set PHILEAS_SHOW=1 to watch a run instead, which is genuinely useful when
  * working out why something fails.
@@ -240,9 +244,17 @@ export function showWindows(): boolean {
  * goes through the compositor over CDP and works fine on a hidden window.
  */
 export async function hideWindows(app: ElectronApplication): Promise<void> {
-  await app.evaluate(({ BrowserWindow }) => {
+  await app.evaluate(({ app: electronApp, BrowserWindow }) => {
     BrowserWindow.prototype.show = function () {};
     for (const window of BrowserWindow.getAllWindows()) window.hide();
+    // On its 'show' event rather than on creation: a window created with
+    // show: true is shown after 'browser-window-created' fires, so hiding it
+    // there was undone at once. This also catches showInactive() and any
+    // other way in that does not go through the replaced show().
+    electronApp.on('browser-window-created', (_event, window) => {
+      window.on('show', () => window.hide());
+      window.hide();
+    });
   });
 }
 

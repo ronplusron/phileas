@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Two defects are recorded.** The launch layer landed in phase 1, so this file
+**One defect is recorded.** The launch layer landed in phase 1, so this file
 is no longer empty for the reason it used to be empty.
 
 **A hazard in code that has not been lifted here yet is neither a defect nor
@@ -38,7 +38,7 @@ those as hazards and schedules the work against the phases that close them.
 The entry belongs here on the day the file lands with the hazard still open,
 which is how the first entry below arrived.
 
-What follows are two defects, then the two things most likely to be filed here
+What follows is one defect, then the two things most likely to be filed here
 wrongly, and one hazard to enter the moment it becomes real.
 
 ## The external-link stub can install successfully and do nothing
@@ -85,26 +85,6 @@ sound for an application nobody has read, which is the whole hazard.
 **This entry leaves when phase 5's second evidence source exists**, and on
 nothing else. Not when the exclusion list is derived, and not when the next
 application also turns out to be unaffected.
-
-## A window created already shown stays on the screen in hidden mode
-
-**Filed 2026-09-26, seen on Positron.** Hidden mode replaces Electron's
-`show()` before any window exists and hides whatever windows exist at that
-moment. Positron creates its main window with `show: true` in the
-constructor, which never calls `show()`, and after the moment the open
-windows were hidden. So its window stayed on the screen for every Route of
-the day's runs, and was watched there, while every run reported hidden mode.
-
-**Why it is a defect and not a limit.** C5 says nothing takes over the
-screen, and a run that says it is hidden and is not is the case nobody
-checks. `buggy` creates its window hidden and shows it when ready, so the
-test that it stays off the screen passes on the one application it runs
-against.
-
-**What closes it.** Hide each window as it is created as well, in hidden
-mode, so a window created already shown flashes and does not stay. Proved by
-a `buggy` launch flag that creates its window already shown, and a test that
-it is not visible once ready.
 
 ## Two things that will look like candidates, and are not
 

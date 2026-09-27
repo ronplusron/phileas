@@ -19,11 +19,16 @@ const path = require('node:path');
 // two must come from the same file and share no logic beyond reading it.
 const items = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'items.json'), 'utf8'));
 
+const shownAtCreation = process.argv.includes('--buggy-shown-at-creation');
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 900,
     height: 640,
-    show: false,
+    // Shown at creation under --buggy-shown-at-creation, the way Positron
+    // creates its main window, which never calls show() and so is not reached
+    // by replacing it. Hidden until ready otherwise, the usual pattern.
+    show: shownAtCreation,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -31,7 +36,7 @@ function createWindow() {
     },
   });
 
-  win.once('ready-to-show', () => win.show());
+  if (!shownAtCreation) win.once('ready-to-show', () => win.show());
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
   // Both ways out of the window, closed the same way. Leaving only the first
@@ -190,7 +195,11 @@ function buildMenu() {
 
 app.whenReady().then(() => {
   buildMenu();
-  createWindow();
+  // Later under --buggy-shown-at-creation, as Positron creates its window only
+  // after its own startup work: after the engine has already hidden whatever
+  // windows existed at launch, which is how its window escaped.
+  if (shownAtCreation) setTimeout(createWindow, 1000);
+  else createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

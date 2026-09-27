@@ -47,7 +47,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and seventy-six tests. Seven launch it,
+through, and `npm test` runs one hundred and seventy-seven tests. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -72,7 +72,7 @@ bundle with no archive, the application running from its profile folder, a
 close that ends in a forced kill, proved against a planted hang that never
 ends, and the trial's home folder guard. Two hold the settle wait to its
 budget against a page that keeps changing, and to reporting one that gives no
-answer.
+answer, and one keeps a window created already shown off the screen.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -106,9 +106,8 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Two defects are open:
-the external-link stub can install successfully and do nothing, and a window
-created already shown stays on the screen in hidden mode. That file holds what is
+**Read `docs/DEFECTS.md` before writing any of it.** One defect is open: the
+external-link stub can install successfully and do nothing. That file holds what is
 wrong, confirmed by reading the code, and nothing here restates it.
 
 **Two things phase 5 must not undo**, both measured earlier and carried in
@@ -176,7 +175,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and seventy-six tests against `testbed/buggy/`.
+`npm test` runs the engine's own one hundred and seventy-seven tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

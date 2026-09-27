@@ -25,6 +25,27 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-26: hidden mode hides a window created already shown
+
+**The defect.** Hidden mode replaced Electron's `show()` and hid the windows
+open when the application launched. Positron creates its main window later,
+with `show: true`, which never calls `show()`, so its window stayed on the
+screen for whole runs that reported hidden mode, and was watched there. C5
+says nothing takes over the screen.
+
+**The fix.** Every window created from then on is hidden whenever it is
+shown, on its own `show` event. Hiding it once on `browser-window-created`
+was tried first and did not hold: a window created with `show: true` is shown
+after that event fires.
+
+**How it was proved.** A `buggy` launch flag creates its window with
+`show: true`, a second after Electron is ready, as Positron does after its
+own startup. Created at once, the old hiding already caught it and the test
+passed without the fix, so it proved nothing; the delay is what reproduces
+Positron. The test fails without the fix and passes with it, and on Positron
+itself the window read visible at launch, at three seconds and at ten
+without it, and hidden at all three with it. 177 tests pass.
+
 ## 2026-09-26: the settle wait no longer calls a busy page unresponsive
 
 **The defect.** The settle wait gave each read whatever was left of its

@@ -167,6 +167,24 @@ test('it stays off the screen', async () => {
   });
 });
 
+test('a window created already shown is off the screen too', async () => {
+  // The way Positron creates its main window, with show: true, which never
+  // calls the show() the test above relies on replacing, and which comes after
+  // the windows open at launch were hidden. Its window stayed up for whole runs
+  // that reported hidden mode.
+  const shownAtCreation: AppUnderTest = { ...buggy, launchArgs: ['--buggy-shown-at-creation'] };
+  await withApp(shownAtCreation, async (launched) => {
+    await shownAtCreation.waitForReady(await launched.app.firstWindow());
+
+    const visible = await launched.app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows().map((w) => w.isVisible())
+    );
+
+    expect(visible, 'no window exists, so this asserts nothing').toHaveLength(1);
+    expect(visible).toEqual([false]);
+  });
+});
+
 test('the outbound-link stub took effect, and nothing opened', async () => {
   // The positive control docs/PLAN.md schedules here. Until this exists, an
   // empty recorder is indistinguishable from a stub that never took, which is
