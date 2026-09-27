@@ -48,7 +48,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and thirty-two tests, after a
+through, and `npm test` runs two hundred and thirty-five tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -88,7 +88,9 @@ bounded survey and Fix calls, the surveyed and all-abandoned outcomes, the
 staleness guard's branches and its strict switch, whole-line log reads, the
 known-findings refusals, and the guarantees in `tests/guarantees.spec.ts`: a
 pinned draw order, the Fix's own stream, a fresh process per Route, a flush
-per Hop, and replay across launches.
+per Hop, and replay across launches. Three retry the first call into an
+application's main process, whose answer Positron 2024.11 drops on most
+launches.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -104,9 +106,10 @@ verification points rather than bookkeeping.
 2026-09-26: part of phase 5's checks, a Positron adapter, and runs against old
 releases carrying known bugs, judged against a bar set in advance.
 `docs/PLAN.md` has it under "Before the rest of phase 5", and the rest of
-phase 5 waits for its answer. Its first step, the checks, is done, and so is
-its second for the current release: the adapter is in `trial/positron/`, and
-three Routes of twenty Hops each passed through it. Two Positron bugs have
+phase 5 waits for its answer. Its first two steps, the checks and the
+adapter, are done: the adapter is in `trial/positron/`, three Routes of
+twenty Hops each passed through it on the current release, and one Route on
+each old release. Two Positron bugs have
 been found and filed, `ronplusron/phileas` issues 44 and 46, and
 `trial/positron/phileas/known-findings.json` holds their signatures.
 `docs/PLAN.md` has everything measured and decided for it.
@@ -114,7 +117,10 @@ The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
 `Positron.app`, and `PHILEAS_APP_DIR` names which one a run uses, for example
 `PHILEAS_APP_DIR=/Applications/Positron.app phileas run trial/positron/phileas`.
-What is left of the adapter is in `docs/OUTSTANDING.md`.
+**On the old releases, context menus are native whatever the adapter
+sets,** since none of them has `window.menuStyle`. With windows hidden,
+opening one froze nothing in twelve launches; with windows shown, that is
+unmeasured. The trial's steps 3 to 6 are next.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer
 keeps `known-findings.json` beside its spec; a Route that meets a finding in
@@ -222,7 +228,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and thirty-two tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and thirty-five tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

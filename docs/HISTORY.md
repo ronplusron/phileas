@@ -257,6 +257,51 @@ and more ways on is the branching that was asked for. Whether the demo keeps
 the harder game available, for measuring a better chooser against it, is
 open in the plan.
 
+## 2026-09-27: the three old Positron releases through the adapter, and a launch that retries its first call
+
+**Why.** The trial's positive controls run known bugs on Positron 2024.11,
+2025.01 and 2025.02, and the adapter had only been measured on the current
+release. Each launch flag, the log it names, the in-page menu and dialog
+settings, and the Copilot extension it disables needed checking on each.
+
+**Measured.**
+- Every flag the adapter passes is in all three, read from each release's
+  code; a first search missed them in 2024.11, whose code writes them without
+  quote marks, and a search for `--user-data-dir` as a control showed why.
+  `--use-mock-keychain` is in each release's Electron.
+- The extension host log is where the adapter names it: the log check ran on
+  every Hop of every release, where a missing log reports not run, and it
+  caught the first finding below.
+- None of the three bundles the Copilot chat extension, and disabling one that
+  is absent did no harm. In-page file dialogs worked on all three.
+- **`window.menuStyle` does not exist in any of them,** so their context menus
+  are native on macOS whatever the adapter sets, read in each release's
+  workbench code. Clicking Manage, which froze the current release while its
+  menus were native, froze nothing in twelve launches across the three with
+  windows hidden. With windows shown it is unmeasured.
+- One Route of twenty Hops passed on each release, 2025.01 on its second
+  Journey, with the home guard clean every time.
+- **Found, not triaged:** 2024.11 and 2025.01 log a failure to start
+  `python-env-tools/bin/pet`, which neither release ships and 2025.02 does;
+  and on 2024.11, starting the R 4.6.0 interpreter was followed by its
+  language server failing to connect, which may be a release from 2024
+  meeting a newer R. Both were added to known findings, unfiled.
+
+**What landed.** `reachMainProcess` in `src/launch.ts`: before anything that
+changes the application, the launch makes a call into its main process that
+changes nothing, and retries it only when Playwright reports "Resulting
+promise was garbage collected", up to five times. Positron 2024.11, on
+Electron 30.4, dropped the answer to the first call on 6 launches in 8, and
+the second succeeded on all 6, about 28 ms later; 2025.01 and 2025.02 dropped
+none in 10. The first call had been the one hiding windows, so the launch
+failed. A call with no effect makes the retry safe whether a dropped attempt
+ran or not.
+
+**Tested.** Three new tests, 235 in all, against a stand-in main process: a
+dropped answer is retried, any other failure is thrown at once, and one that
+keeps dropping is given up on by name. The first and third failed with the
+retry removed. A Journey of eight Routes on 2024.11 then launched every one.
+
 ## 2026-09-27: a second demo planned, a shared presenting runner, and determinism tests first
 
 **Why.** A demo more comprehensive than the rail demo was asked for, with

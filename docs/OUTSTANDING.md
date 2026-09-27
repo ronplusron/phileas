@@ -400,17 +400,6 @@ crowded out or a key-only behavior, such as console history on Up, is being
 reached too rarely. A changed share changes what every seed produces, so it
 lands as its own change and says so.
 
-### 1.12 What is left of the Positron adapter
-
-The adapter in `trial/positron/` works against the current release, and
-`PLAN.md` has what was measured and decided for it. One thing is open:
-
-- **The three old releases have not been launched through it.** They predate
-  the current one by up to two years, and `--use-mock-keychain`,
-  `--logsPath`, `--disable-extension`, the in-page menu and dialog settings,
-  and the Copilot extension being there to disable all need checking on each
-  before trial step 5 runs.
-
 ### 1.13 Deferred from the whole-codebase review of 2026-09-27
 
 Agreed as worth doing and not done with the review's fixes, because each is
@@ -695,6 +684,38 @@ rather than noticed by chance.
 - **It already has a positive control to carry over.** The demo's tests
   plant a note before one Hop of one play and require the comparison to
   find it there, and that belongs with it wherever it goes.
+
+### 2.11 A Fix step written from the survey's data rather than its text
+
+Raised 2026-09-27; nothing is decided. A Fix's `hop()` takes a line as
+`phileas survey` printed it and matches it against how each control on the
+page would print. The text is a rendering of a target the journal already
+records exactly, as `{ source, role, name, nth }`. Asked, in the words it was
+put: "I wonder if it should somehow come from the JSON, which is the source
+of truth." And then: "survey results are numbered, so controls/targets have
+an ID. They're shown as human-legible display, but when adding a Fix, the fix
+is created by providing those number."
+
+What raised it was measured the same day on Positron 2024.11: its buttons
+for starting and listing interpreters are named by one icon-font character
+each, U+F259 or U+F25A, with the readable words on an element inside. The
+journal holds the names exactly, and Playwright's own snapshot of the page
+agrees. A survey line for one of them can only be copied by copying a
+character from Unicode's private-use range, and the two Start the
+interpreter buttons print identical lines.
+
+**Notes, a reading and not a decision:**
+
+- **The number would be a handle, not what the Fix keeps.** It is a
+  position in one listing, and the listing changes whenever the application
+  does. So a number given when writing a step would be turned into the target
+  it names, and the target written into the Fix.
+- **The target carries `nth`,** so a step can name the second of two controls
+  sharing a name, which is 2.7.
+- **It is close to an option `PLAN.md` already lists** for recording a Fix:
+  an interactive survey that numbers the controls and takes a number.
+- **The text line need not go.** It is what a person reads, and what a Fix
+  written by hand uses; a target could be accepted beside it.
 
 ## 3. Declined
 

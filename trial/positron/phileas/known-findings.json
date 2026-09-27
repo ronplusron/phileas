@@ -1,5 +1,19 @@
 [
   {
+    "id": "686711d1",
+    "check": "console-error",
+    "signature": "console-error: [vscode.positron-r]Client is not running and can't be stopped. It's current state is: starting",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "16ecbeaf",
+    "check": "console-error",
+    "signature": "console-error: [vscode.positron-r]Pending response rejected since connection got disposed",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
     "id": "1759e6e8",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 [lifecycle]: Error during will-shutdown phase in default joiners (error: Canceled)",
@@ -8,12 +22,82 @@
     "source": "command"
   },
   {
+    "id": "45698e51",
+    "check": "console-error",
+    "signature": "console-error: Error: Client is not running and can't be stopped. It's current state is: starting at R.shutdown (extension.js)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "2e183de7",
+    "check": "console-error",
+    "signature": "console-error: Error: Pending response rejected since connection got disposed at Object.dispose (extension.js)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "725da6de",
+    "check": "console-error",
+    "signature": "console-error: Pending response rejected since connection got disposed",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "0cbcc9de",
+    "check": "console-error",
+    "signature": "console-error: Positron R Language Server (4.6.0) client: couldn't create connection to server.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "26e65bb2",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] {\"code\":-32603,\"message\":\"The channel positron-ui-r-1-bf599a14 (positron.ui)  was closed before the RPC completed.\",\"name\":\"Error\",\"data\":{}}",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
     "id": "baa530b2",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] An error occurred when deactivating the extension 'positron.positron-connections':",
     "issue": "ronplusron/phileas#44",
     "added": "2026-09-27",
     "source": "command"
+  },
+  {
+    "id": "f7aa5c97",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Ark LSP client stopped before initialization",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "c38ad77b",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: Client is not running and can't be stopped. It's current state is: starting",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "ecc397a2",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: Pending response rejected since connection got disposed",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "773eeea0",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: spawn /Applications/Positron-2024.11.app/Contents/Resources/app/extensions/positron-python/python-env-tools/bin/pet ENOENT",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "d9b83954",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: spawn /Applications/Positron-2025.01.app/Contents/Resources/app/extensions/positron-python/python-env-tools/bin/pet ENOENT",
+    "added": "2026-09-27",
+    "source": "journey"
   },
   {
     "id": "1f937235",

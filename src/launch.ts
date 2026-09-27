@@ -318,6 +318,48 @@ export async function hideWindows(app: ElectronApplication): Promise<void> {
   });
 }
 
+/** What Playwright says when the main process drops the answer to a call. */
+const DROPPED_ANSWER = 'Resulting promise was garbage collected';
+
+/** How many times the first call into the main process is tried. */
+export const MAIN_PROCESS_ATTEMPTS = 5;
+
+/**
+ * Reach the main process once, with a call that changes nothing, before
+ * anything that does.
+ *
+ * Positron 2024.11, on Electron 30.4, drops the answer to the first call made
+ * into its main process on most launches, and Playwright reports "Resulting
+ * promise was garbage collected". Measured on 2026-09-27: the first call
+ * failed on 6 launches in 8 and the second succeeded on all 6, about 28 ms
+ * later; 2025.01 and 2025.02 failed on none of 10. The first call used to be
+ * the one that hides windows, so the launch failed and the Route with it.
+ *
+ * A call that changes nothing makes the retry safe: whether a dropped attempt
+ * ran its body or not makes no difference. Only that message is retried; any
+ * other failure is the launch's to report, and is thrown at once.
+ */
+export async function reachMainProcess(
+  app: Pick<ElectronApplication, 'evaluate'>,
+  attempts: number = MAIN_PROCESS_ATTEMPTS
+): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await app.evaluate(() => undefined);
+      return;
+    } catch (error) {
+      if (!String(error).includes(DROPPED_ANSWER)) throw error;
+      if (attempt >= attempts) {
+        throw new Error(
+          `The main process dropped the answer to ${attempts} calls in a row ("${DROPPED_ANSWER}"), ` +
+            `so the engine could not reach it.`,
+          { cause: error }
+        );
+      }
+    }
+  }
+}
+
 /**
  * Do whatever the mode asks before any window has been drawn.
  *
@@ -434,6 +476,10 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
   // launch that did not return, so nothing else would.
   try {
     const mode = windowMode();
+
+    // Before any call that changes something, since some releases drop the
+    // answer to the first call made.
+    await reachMainProcess(app);
 
     // Before firstWindow(), which is the earliest the main process can be reached
     // and, for an app that defers display, before anything has been drawn.

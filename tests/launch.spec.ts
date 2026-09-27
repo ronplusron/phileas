@@ -1,8 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { test, expect } from '@playwright/test';
+import { test, expect, type ElectronApplication } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
-import { launchApp, closeApp, makeUserDataDir, resolveBundle, assertBundleFresh } from '../src/index';
+import {
+  launchApp,
+  closeApp,
+  makeUserDataDir,
+  resolveBundle,
+  assertBundleFresh,
+  reachMainProcess,
+  MAIN_PROCESS_ATTEMPTS,
+} from '../src/index';
 import { openedExternally } from '../src/index';
 import type { AppUnderTest } from '../src/index';
 import { launchOrRemove } from './scratch';
@@ -231,4 +239,41 @@ test('the outbound-link stub took effect, and nothing opened', async () => {
       .poll(() => openedExternally(launched.app))
       .toEqual(['https://example.com/buggy']);
   });
+});
+
+/**
+ * The first call into the main process, against a stand-in that fails the
+ * way Positron 2024.11 did, since no application here drops an answer.
+ */
+const DROPPED = 'electronApplication.evaluate: Resulting promise was garbage collected.';
+
+function mainProcessFailing(failures: string[]) {
+  let calls = 0;
+  const app = {
+    evaluate: async () => {
+      const failure = failures[calls++];
+      if (failure !== undefined) throw new Error(failure);
+    },
+  } as unknown as Pick<ElectronApplication, 'evaluate'>;
+  return { app, calls: () => calls };
+}
+
+test('a dropped answer to the first call is tried again', async () => {
+  const main = mainProcessFailing([DROPPED, DROPPED]);
+  await reachMainProcess(main.app);
+  expect(main.calls()).toBe(3);
+});
+
+test('any other failure of the first call is thrown at once', async () => {
+  const main = mainProcessFailing(['Target page, context or browser has been closed', DROPPED]);
+  await expect(reachMainProcess(main.app)).rejects.toThrow('has been closed');
+  expect(main.calls()).toBe(1);
+});
+
+test('a main process that keeps dropping answers is given up on, and the error says so', async () => {
+  const main = mainProcessFailing(Array(MAIN_PROCESS_ATTEMPTS + 1).fill(DROPPED));
+  await expect(reachMainProcess(main.app)).rejects.toThrow(
+    `dropped the answer to ${MAIN_PROCESS_ATTEMPTS} calls in a row`
+  );
+  expect(main.calls()).toBe(MAIN_PROCESS_ATTEMPTS);
 });

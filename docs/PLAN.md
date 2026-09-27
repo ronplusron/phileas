@@ -697,15 +697,14 @@ while the known bugs were still 7776, 7098 and 5460, and confirmed on
 **Order agreed 2026-09-27 for what remains of the trial,** proposed with the
 question and answered "OK let's do this in order": known findings, below;
 a guard for profiles a Journey leaves in the temp folder; the three old
-releases through the adapter (`OUTSTANDING.md` 1.12); then steps 3, 4, 5 and
-6 as numbered above. The first two were done on 2026-09-27; `HISTORY.md`
-records each.
+releases through the adapter; then steps 3, 4, 5 and 6 as numbered above.
+The first three were done on 2026-09-27; `HISTORY.md` records each.
 
 ### Before the rest of the trial: known findings
 
 Asked for on 2026-09-27 as high priority, in the words it was put:
 "constantly updating the adapter manually whenever a bug is discovered is
-untenable." `OUTSTANDING.md` 1.13 has what raised it: a failed check ends the
+untenable." What raised it: a failed check ends the
 Route, so a bug on a common path ends most Routes, and the only way past one
 today is a hand-written narrowing per bug.
 

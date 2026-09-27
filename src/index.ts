@@ -23,6 +23,8 @@ export {
   removeProfile,
   DEFAULT_PROFILE_WATCH_MS,
   hideWindows,
+  reachMainProcess,
+  MAIN_PROCESS_ATTEMPTS,
   showWindows,
   windowMode,
   prepareWindows,
