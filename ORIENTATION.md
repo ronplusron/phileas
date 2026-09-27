@@ -123,14 +123,18 @@ The three old releases and the current one are installed as
 `Positron.app`, and `PHILEAS_APP_DIR` names which one a run uses, for example
 `PHILEAS_APP_DIR=/Applications/Positron.app phileas run trial/positron/phileas`.
 `POSITRON_JOURNEY` chooses the Journey: `no-fix`, the default, or
-`r-session`, whose Fix starts an R session first, which the session checks
-need. Trial step 3 is partly done; `docs/PLAN.md` has what is written and
-what is not yet measured.
+`session`, whose Fix starts an R session first, which the session checks
+need. **The old releases need R 4.4.3,** installed beside 4.6 with rig, since
+R 4.6.0 crashes as it starts on 2025.01 and 2025.02; the Fix refuses by name
+without it. The adapter's own checks run on the current release only, and
+say so on the others: studying each release for them was stopped on
+2026-09-27, and `docs/PLAN.md` has why. So trial step 3 is done as far as
+it goes.
 **On the old releases, context menus are native whatever the adapter
 sets,** since none of them has `window.menuStyle`. With windows hidden,
 opening one froze nothing in twelve launches; with windows shown, that is
-unmeasured. The rest of step 3, then steps 4 to 6, are next, then weighting the draw
-toward new targets, which `docs/PLAN.md` places after the trial.
+unmeasured. Steps 4 to 6 are next, then weighting the draw toward new
+targets, which `docs/PLAN.md` places after the trial.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer
 keeps `known-findings.json` beside its spec; a Route that meets a finding in
@@ -149,7 +153,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Ten defects are open,
+**Read `docs/DEFECTS.md` before writing any of it.** Eleven defects are open,
 six of them deferred from the review of 2026-09-27 and two found tuning the
 Eighty Days demo. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.

@@ -737,9 +737,10 @@ computed answers stay in phase 6.
 
 Each stayed quiet with no session, with R, and with R and Python running,
 and each fired when the page was made to contradict itself on purpose. Not
-yet measured: deleting one of two sessions, whose control was not found,
-and every old release, whose screens may differ; 6029 is about the Variables
-pane of 2025.01 listing sessions, which the current release's pane does not.
+yet measured: deleting one of two sessions, whose control was not found.
+`session-state-agrees` holds off while a session is starting, after it
+fired on the current release when the top bar caught up later than the
+console. The old releases draw all of this differently; below.
 
 **A session needs a Fix.** With none running, the session checks compare
 nothing, and starting one takes three particular Hops in order. So the
@@ -748,7 +749,33 @@ trial's Journeys are chosen with `POSITRON_JOURNEY`: `no-fix`, as before, or
 proposed together, answered "Perfect", and the Fix asked for with "Yes,
 write it". The Fix names R by pattern rather than by a copied line,
 since the interpreter list carries this machine's paths and its order
-changed between two launches.
+changed between two launches. **Renamed `session` the same day,** once the
+old releases needed a different way in, below.
+
+**The old releases, measured 2026-09-27.** They start sessions from a
+Start Interpreter button and list one interpreter per language in a dialog,
+so the adapter reads Positron's version from the installed application and
+picks its family, chosen from three offered over one set of markings for all
+and an adapter per release. R 4.6.0 crashes as it starts on 2025.01 and
+2025.02. Their Python needs ipykernel, which installed and ran on 2025.01
+but failed to install on 2025.02, whose only Python is Homebrew's. So R
+4.4.3 was installed beside 4.6 with rig, asked for as "OK let's do 4.4.3",
+and the early releases are handed it in `positron.r.customBinaries`; it
+started on all three in under two seconds.
+
+**Studying each release for checks was then stopped,** raised as a concern
+that the work was "turning away from work done by Phileas and more about an
+LLM testing an app", and agreed with "exactly this". The finding, and it is
+a result of the trial: checks of Positron's own took hours of study per
+family of releases, their markings did not carry from one release to the
+next, and a hit in step 5 made with them would measure that study as much
+as the engine. That also runs against the requirements' goal that wiring an
+application up be "a small, stable piece of work rather than a running
+cost". So steps 5 and 6 run with what an adapter's author could reasonably
+write: the universal checks, the session Fix, and the three checks above,
+which run on the current release only and on the others record that they
+did not run. No check for a data explorer's ended session is written, and
+6480 is looked for by the universal checks alone.
 
 **Order agreed 2026-09-27 for what remains of the trial,** proposed with the
 question and answered "OK let's do this in order": known findings, below;

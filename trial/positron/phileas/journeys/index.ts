@@ -1,11 +1,11 @@
 import { defineJourney, type Fix, type Journey } from '@drugstoresushi/phileas';
-import { rSession } from './r-session';
+import { session } from './session';
 
 /**
  * The trial's Journeys through Positron, chosen by `POSITRON_JOURNEY`.
  *
  * Unset, or `no-fix`, runs with no Fix, starting wherever Positron starts;
- * `r-session` runs with a Fix that starts an R session first. Anything else is
+ * `session` runs with a Fix that starts an interpreter session first. Anything else is
  * refused by name rather than read as the default. This is the trial's own
  * switch, not the engine's.
  *
@@ -18,7 +18,7 @@ const terms = defineJourney({
 
 const journeys: Record<string, { journey: Journey; fix?: Fix }> = {
   'no-fix': { journey: terms },
-  'r-session': { journey: terms, fix: rSession },
+  session: { journey: terms, fix: session },
 };
 
 const chosen = process.env.POSITRON_JOURNEY || 'no-fix';

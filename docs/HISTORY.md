@@ -257,6 +257,43 @@ and more ways on is the branching that was asked for. Whether the demo keeps
 the harder game available, for measuring a better chooser against it, is
 open in the plan.
 
+## 2026-09-27: a session on every release, and studying releases for checks stopped
+
+**Why.** The session Fix and checks were written against the current
+release, and the trial's positive controls run on three old ones.
+
+**Measured.**
+- The old releases start a session from a Start Interpreter button, and
+  their dialog lists one interpreter per language; a row's first button
+  expands it to the others. Their console shows a disabled Restart console
+  button with no session, and their Variables pane names the session.
+- R 4.6.0 starts on 2024.11 and crashes as it starts on 2025.01 and 2025.02
+  (SIGSEGV). R 4.4.3, installed beside it with rig, is found only when named
+  in `positron.r.customBinaries`, and then starts on all three in under two
+  seconds.
+- Python on the old releases asks to install ipykernel. On 2025.01 the
+  install went into the Route's own home folder, 54 MB, and Python started
+  13 seconds after it; the machine's own Python folders were unchanged. On
+  2025.02, whose only Python is Homebrew's 3.14.2, the install failed.
+- On the current release, `session-state-agrees` fired while a session was
+  starting, the top bar catching up after the console and the Variables
+  pane. A false alarm, and it was taken back out of the known findings.
+- A link to the VS Code docs on the Welcome view was clicked by a Route.
+
+**What landed.** The adapter reads `positronVersion` from the installed
+application and maps the four measured releases to two families; a release
+with neither has no session steps and says so. The Fix, renamed `session`,
+starts R on the current release and R 4.4.3 on the early ones, refusing by
+name when 4.4.3 is not installed. `session-state-agrees` holds off while a
+session starts. The docs link is excluded. The adapter's three checks run
+on the current release only, and record on any other that they did not run:
+studying each release for them was stopped, and `PLAN.md` has why.
+
+**Tested.** A Route of the `session` Journey passed on each of the four
+releases, and four more on the current release filed nothing new. A planted
+contradiction still fired `session-state-agrees` once R was up. On 2025.01
+each adapter check recorded not run, with the reason, on every Hop.
+
 ## 2026-09-27: Positron's session checks, and a Fix that starts an R session
 
 **Why.** Trial step 3, with its checks written from Positron agreeing with

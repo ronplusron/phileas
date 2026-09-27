@@ -26,9 +26,64 @@ const BOOT_ERROR_WATCH_MS = 1_000;
  */
 const ERROR_NOTIFICATION = '.notification-list-item:has(.codicon-error) .notification-list-item-message';
 
+const bundleDir = requireAppDir();
+
+/**
+ * The release being run, from the installed application's own product.json,
+ * read once and before anything launches.
+ */
+export const positronVersion: string = (() => {
+  const product = path.join(bundleDir, 'Contents', 'Resources', 'app', 'product.json');
+  const version = (JSON.parse(fs.readFileSync(product, 'utf8')) as { positronVersion?: unknown }).positronVersion;
+  if (typeof version !== 'string') throw new Error(`${product} names no positronVersion.`);
+  return version;
+})();
+
+/**
+ * Which releases draw their sessions the same way, by release measured.
+ *
+ * The releases of 2024.11 to 2025.02 start sessions from a Start Interpreter
+ * button and list interpreters as buttons in a dialog; the current release
+ * starts them from Start New Console Session and lists them as options,
+ * measured 2026-09-27. A release not listed here has no family: its session
+ * steps and checks refuse or say they did not run, rather than guessing.
+ */
+const FAMILIES: Record<string, 'early' | 'current'> = {
+  '2024.11.0': 'early',
+  '2025.01.0': 'early',
+  '2025.02.0': 'early',
+  '2026.09.1': 'current',
+};
+export const positronFamily: 'early' | 'current' | undefined = FAMILIES[positronVersion];
+
+/**
+ * The R the early releases run. R 4.6.0 crashes as it starts on 2025.01 and
+ * 2025.02, measured 2026-09-27, and R 4.4.3, from the same month as 2025.02,
+ * starts on all three. It is installed beside 4.6 with rig; these releases
+ * find only the machine's current R by themselves, so they are handed this
+ * one in `positron.r.customBinaries`.
+ */
+export const EARLY_R_BINARY = '/Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/bin/R';
+
+/**
+ * The adapter's own checks read markings studied on the current release
+ * only. Studying each release for them was stopped on 2026-09-27, since it
+ * made the checks the work of whoever studied the releases rather than of
+ * the engine; docs/PLAN.md has the decision. On any other release they say
+ * so and do not run, rather than reading markings that are not there and
+ * passing while checking nothing.
+ */
+const notStudiedHere =
+  positronFamily === 'current'
+    ? undefined
+    : {
+        notRun:
+          `its markings were studied on the current release only, not on Positron ${positronVersion}`,
+      };
+
 export const positron: AppUnderTest = {
   productName: 'Positron',
-  bundleDir: requireAppDir(),
+  bundleDir,
 
   launchArgs: (userDataDir) => [
     // Inside the Route's own profile, so no Route sees another's extensions or
@@ -84,6 +139,8 @@ export const positron: AppUnderTest = {
           'window.menuStyle': 'custom',
           'window.dialogStyle': 'custom',
           'files.simpleDialog.enable': true,
+          // Only for the early releases, which cannot run the machine's R.
+          ...(positronFamily === 'early' ? { 'positron.r.customBinaries': [EARLY_R_BINARY] } : {}),
         },
         null,
         2
@@ -92,6 +149,9 @@ export const positron: AppUnderTest = {
   },
 
   exclusions: {
+    // A link to the VS Code documentation on the Welcome view, which opens a
+    // page outside the application; a Route clicked it on 2026-09-27.
+    names: ['read the VS Code docs'],
     // Ways out of the application, and into what a Route cannot follow.
     menuPaths: [
       // Positron wrote its own Quit, with no Electron role, so the engine's
@@ -150,6 +210,7 @@ export const positron: AppUnderTest = {
         'Positron shows a notification marked as an error only when something it tried failed, ' +
         'so one appearing after a Hop is a failure the Hop reached.',
       async run({ page }) {
+        if (notStudiedHere) return notStudiedHere;
         const said = await page.locator(ERROR_NOTIFICATION).visible().allTextContents();
         return said.map((text) => `error notification: ${text.trim()}`);
       },
@@ -164,7 +225,15 @@ export const positron: AppUnderTest = {
         'Whether a session is running is one fact, and the top bar, the console and the Variables ' +
         'pane each state it; if they differ, one of them is wrong.',
       async run({ page }) {
+        if (notStudiedHere) return notStudiedHere;
         const shows = (locator: Locator) => locator.first().isVisible();
+        // While a session starts, the places update one after another: the
+        // top bar still said none after the console and the Variables pane
+        // said running, measured 2026-09-27. The console's Restart button is
+        // disabled until the session is up, so nothing is compared until then.
+        if (await shows(page.getByRole('button', { name: /^Restart \S+$/, disabled: true }))) {
+          return { notRun: 'a session is starting, so the places have not all caught up yet' };
+        }
         const said = async (running: Locator, none: Locator) =>
           (await shows(running)) ? 'running' : (await shows(none)) ? 'none' : undefined;
         const places = {
@@ -183,7 +252,13 @@ export const positron: AppUnderTest = {
           ),
         };
         const stated = Object.entries(places).filter((entry): entry is [string, string] => entry[1] !== undefined);
-        if (new Set(stated.map(([, state]) => state)).size <= 1) return [];
+        // Fewer than two places found is nothing compared, which must not
+        // read as agreement: a release that draws these differently would
+        // pass every Hop while checking nothing.
+        if (stated.length < 2) {
+          return { notRun: `only ${stated.map(([place]) => place).join(' and ') || 'no place'} stated it, so nothing was compared` };
+        }
+        if (new Set(stated.map(([, state]) => state)).size === 1) return [];
         return [`sessions: ${stated.map(([place, state]) => `${place} says ${state}`).join(', ')}`];
       },
     },
@@ -196,9 +271,14 @@ export const positron: AppUnderTest = {
         "The console's selected session and its Restart button both name the active session, " +
         'so they must name the same language.',
       async run({ page }) {
+        if (notStudiedHere) return notStudiedHere;
         const tab = page.locator('[role="tablist"]:not([aria-label]) [role="tab"][aria-selected="true"]').visible();
         const restart = page.getByRole('button', { name: /^Restart \S+$/ }).visible();
-        if ((await tab.count()) !== 1 || (await restart.count()) !== 1) return [];
+        // One session shows no tabs, and a release may draw neither: nothing
+        // compared, said as such rather than read as agreement.
+        if ((await tab.count()) !== 1 || (await restart.count()) !== 1) {
+          return { notRun: 'the console shows no single selected session tab and Restart button to compare' };
+        }
         // Its label, not its text: the text is the name cut short, followed by
         // the tab's own CPU and memory readings, measured 2026-09-27.
         const selected = ((await tab.getAttribute('aria-label')) ?? '').trim();
