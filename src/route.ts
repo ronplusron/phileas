@@ -1193,7 +1193,15 @@ async function act(
     // Emptied first, so the field ends up holding the drawn value as `fill` used
     // to leave it; the emptying is not keystrokes. Then one key per character,
     // which is what reaches a handler that reacts as you type.
-    await target.locator.fill('', { timeout: timeoutMs });
+    //
+    // **Only a field `fill` can empty is emptied.** An element marked as a
+    // text box need not be an input: on Positron one was not, `fill` threw,
+    // and the Route ended as though the engine had broken. Such an element
+    // still takes keys, as it would from a person, so it is typed into as it
+    // stands.
+    await target.locator.fill('', { timeout: timeoutMs }).catch((error: unknown) => {
+      if (!(error instanceof Error && /is not an <input>, <textarea>/.test(error.message))) throw error;
+    });
     if (value) await target.locator.pressSequentially(value, { timeout: timeoutMs });
     return;
   }

@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and forty tests, after a
+through, and `npm test` runs two hundred and forty-two tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -95,7 +95,9 @@ per Hop, and replay across launches. Three retry the first call into an
 application's main process, whose answer Positron 2024.11 drops on most
 launches. Five came with checks an adapter declares: `buggy`'s own firing on
 a planted miscount, a declaration refused by name, a check that hangs or
-throws, and one matched against a known finding.
+throws, and one matched against a known finding. Two came from the first
+step-6 run on Positron: a shortcut printed as an arrow, and a text box that
+is not an input.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -122,18 +124,20 @@ The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
 `Positron.app`, and `PHILEAS_APP_DIR` names which one a run uses, for example
 `PHILEAS_APP_DIR=/Applications/Positron.app phileas run trial/positron/phileas`.
-`POSITRON_JOURNEY` chooses the Journey: `no-fix`, the default, or
-`session`, whose Fix starts an R session first, which the session checks
-need. **The old releases need R 4.4.3,** installed beside 4.6 with rig, since
-R 4.6.0 crashes as it starts on 2025.01 and 2025.02; the Fix refuses by name
-without it. The adapter's own checks run on the current release only, and
-say so on the others: studying each release for them was stopped on
-2026-09-27, and `docs/PLAN.md` has why. So trial step 3 is done as far as
-it goes.
+`POSITRON_JOURNEY` chooses the Journey: `no-fix`, the default, `session`,
+whose Fix starts an R session, `notebook` and `quarto`, which open a new
+notebook or Quarto document, and `data-explorer`, which starts R and shows
+`mtcars`. **The old releases need R 4.4.3,** installed beside 4.6 with rig,
+since R 4.6.0 crashes as it starts on 2025.01 and 2025.02; the session Fix
+refuses by name without it. The adapter has one check of its own,
+`no-error-notification`, run on the current release only: studying each
+release for checks was stopped on 2026-09-27, and `docs/PLAN.md` has why
+and what the first step-6 run found. Steps 3 and 4 are done as far as they
+go.
 **On the old releases, context menus are native whatever the adapter
 sets,** since none of them has `window.menuStyle`. With windows hidden,
 opening one froze nothing in twelve launches; with windows shown, that is
-unmeasured. Steps 4 to 6 are next, then weighting the draw toward new
+unmeasured. Steps 5 and 6 are next, then weighting the draw toward new
 targets, which `docs/PLAN.md` places after the trial.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer
@@ -242,7 +246,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and forty tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and forty-two tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

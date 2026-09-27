@@ -257,6 +257,42 @@ and more ways on is the branching that was asked for. Whether the demo keeps
 the harder game available, for measuring a better chooser against it, is
 open in the plan.
 
+## 2026-09-27: the first step-6 run on Positron, and two engine bugs it found
+
+**Why.** The trial's question is whether the engine finds bugs in Positron
+often enough to be worth it, and most of the day had gone into making
+Positron runnable. A run of 50 Routes was chosen over the full 500 as the
+cheapest real reading.
+
+**Measured.** 10 Routes of 20 Hops for each of five Journeys on the
+current release; 32 of 50 passed.
+- One new Positron bug candidate: opening a new notebook logs "Element
+  already has context attribute: positron-cell-editor-monaco-widget", the
+  message of posit-dev/positron issue 10022, closed as fixed in 2025.11.0.
+  It fired during the notebook Fix on all ten Routes. Filed as
+  ronplusron/phileas issue 53, and filed in the known findings.
+- Issues 44 and 46 were seen and carried past, as known findings are.
+- Two Routes ended on engine errors, below.
+- Seven failures were false alarms from the adapter's `session-state-agrees`,
+  which took an Extensions view's Restart button for the console's.
+
+**What landed.**
+- A shortcut printed with an arrow, such as "(⌥↓)", is pressed as the arrow
+  key; any other character Playwright cannot name is not offered. "↓" had
+  been handed on and ended a Route with "Unknown key".
+- `type` still types into an element marked as a text box that is not an
+  input, where emptying it first threw and ended the Route.
+- The notebook, Quarto and data explorer Fixes, to the plan's wording and no
+  further. The data explorer's types `View(mtcars)` into the R console.
+- Both session checks dropped, asked for as "fix it or dump it"; their two
+  false entries left the known findings.
+
+**Tested.** Two new tests, 242 in all. The arrow's cannot pass without its
+fix, which produced "Alt+↓". The text box's failed with the fix removed,
+with the error Positron's Route met, and a first version of it did not
+reproduce that error at all until the planted box was given a size, since
+Playwright waits for a box to show before refusing it.
+
 ## 2026-09-27: a session on every release, and studying releases for checks stopped
 
 **Why.** The session Fix and checks were written against the current

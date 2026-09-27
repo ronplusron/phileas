@@ -22,6 +22,14 @@
     "source": "command"
   },
   {
+    "id": "23740607",
+    "check": "console-error",
+    "signature": "console-error: Element already has context attribute: positron-cell-editor-monaco-widget",
+    "added": "2026-09-27",
+    "source": "journey",
+    "issue": "ronplusron/phileas#53"
+  },
+  {
     "id": "45698e51",
     "check": "console-error",
     "signature": "console-error: Error: Client is not running and can't be stopped. It's current state is: starting at R.shutdown (extension.js)",

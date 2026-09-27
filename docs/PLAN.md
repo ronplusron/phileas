@@ -777,6 +777,22 @@ which run on the current release only and on the others record that they
 did not run. No check for a data explorer's ended session is written, and
 6480 is looked for by the universal checks alone.
 
+**The first step-6 run, 2026-09-27,** chosen over the full 500 Routes as a
+cheaper first reading: 10 Routes of 20 Hops for each of five Journeys on the
+current release, `no-fix`, `session`, `notebook`, `quarto` and
+`data-explorer`, the last three Fixes written to this plan's step 4 wording
+and nothing beyond it. 32 of 50 passed. One new Positron bug candidate,
+filed as ronplusron/phileas issue 53: opening a new notebook logs a console
+error that posit-dev/positron issue 10022 had closed as fixed; it fired
+during the notebook Fix on all ten Routes, so no notebook Route traveled.
+Issues 44 and 46 were seen and carried past. Two bugs in the engine itself,
+fixed: a shortcut printed as an arrow was handed to Playwright as a key it
+does not know, and typing into a text box that is not an input threw. The
+other seven failures were false alarms from `session-state-agrees`, which
+read an Extensions view's Restart button as the console's; both session
+checks were then dropped, asked for as "fix it or dump it", leaving
+`no-error-notification` as the adapter's one check.
+
 **Order agreed 2026-09-27 for what remains of the trial,** proposed with the
 question and answered "OK let's do this in order": known findings, below;
 a guard for profiles a Journey leaves in the temp folder; the three old

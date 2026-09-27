@@ -4,9 +4,8 @@ import { EARLY_R_BINARY, positronFamily, positronVersion } from '../adapter';
 
 /**
  * A Fix that starts an interpreter session, so every Route's Trip begins with
- * one running. The trial's session checks compare what the console and the
- * Variables pane say about running sessions, and with none running both say
- * nothing; a fresh profile starts none by itself, measured on 2026-09-27.
+ * one running; a fresh profile starts none by itself, measured on 2026-09-27.
+ * The data explorer's Fix starts from it too.
  *
  * Written one step at a time from `phileas survey`. Each family of releases
  * starts a session its own way, and a release with no family is refused by

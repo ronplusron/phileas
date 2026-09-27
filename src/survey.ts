@@ -164,18 +164,36 @@ const MODIFIER_GLYPHS: Readonly<Record<string, string>> = {
 };
 
 /**
+ * Key glyphs printed in place of a character, and what Playwright calls them.
+ * Only the arrows, which Positron prints, as "↓" on 2026-09-27.
+ */
+const KEY_GLYPHS: Readonly<Record<string, string>> = {
+  '↑': 'ArrowUp',
+  '↓': 'ArrowDown',
+  '←': 'ArrowLeft',
+  '→': 'ArrowRight',
+};
+
+/**
  * The shortcut a control's name prints, if it prints one.
  *
  * Matches the macOS convention both IDEs use: modifier glyphs and one key in
  * parentheses, such as "(⌘S)" or "(⌥⌘S)". A name printing its shortcut any
  * other way is not read, and that shortcut waits for the optional map.
+ *
+ * **A key Playwright cannot press is not offered.** The key is a printable
+ * ASCII character or a glyph in `KEY_GLYPHS`; anything else is left out rather
+ * than handed on. Handed on, "↓" ended a Route on Positron with Playwright's
+ * "Unknown key", which reads as the engine breaking rather than as a finding.
  */
 export function printedShortcut(name: string): { label: string; key: string } | undefined {
-  const match = /\(([⌃⌥⇧⌘]+)([^\s)])\)/.exec(name);
+  const match = /\(([⌃⌥⇧⌘]+)([^\s)])\)/u.exec(name);
   if (!match) return undefined;
   const [, glyphs = '', char = ''] = match;
+  const key = KEY_GLYPHS[char] ?? (/^[\x21-\x7e]$/.test(char) ? char.toLowerCase() : undefined);
+  if (key === undefined) return undefined;
   const modifiers = [...glyphs].map((glyph) => MODIFIER_GLYPHS[glyph]).filter(Boolean);
-  return { label: `${glyphs}${char}`, key: [...modifiers, char.toLowerCase()].join('+') };
+  return { label: `${glyphs}${char}`, key: [...modifiers, key].join('+') };
 }
 
 /** The keys a survey offers, shortcuts first in document order, then the common keys. */

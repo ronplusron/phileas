@@ -1,11 +1,17 @@
 import { defineJourney, type Fix, type Journey } from '@drugstoresushi/phileas';
+import { dataExplorer } from './data-explorer';
+import { notebook } from './notebook';
+import { quarto } from './quarto';
 import { session } from './session';
 
 /**
  * The trial's Journeys through Positron, chosen by `POSITRON_JOURNEY`.
  *
  * Unset, or `no-fix`, runs with no Fix, starting wherever Positron starts;
- * `session` runs with a Fix that starts an interpreter session first. Anything else is
+ * `session` runs with a Fix that starts an interpreter session first, and
+ * `notebook` and `quarto` with one that opens a new notebook or Quarto
+ * document, and `data-explorer` with one that shows a dataset in the data
+ * explorer. Anything else is
  * refused by name rather than read as the default. This is the trial's own
  * switch, not the engine's.
  *
@@ -19,6 +25,9 @@ const terms = defineJourney({
 const journeys: Record<string, { journey: Journey; fix?: Fix }> = {
   'no-fix': { journey: terms },
   session: { journey: terms, fix: session },
+  notebook: { journey: terms, fix: notebook },
+  quarto: { journey: terms, fix: quarto },
+  'data-explorer': { journey: terms, fix: dataExplorer },
 };
 
 const chosen = process.env.POSITRON_JOURNEY || 'no-fix';

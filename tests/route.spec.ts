@@ -1010,6 +1010,15 @@ test('a shortcut printed in a name is read as the key it names', () => {
   expect(printedShortcut('Clear search')).toBeUndefined();
 });
 
+test('an arrow printed as a glyph is pressed as its key, and a key Playwright cannot name is not offered', () => {
+  // Measured on Positron: "↓" was handed to Playwright as a key name and
+  // ended the Route with "Unknown key".
+  expect(printedShortcut('Move down (⌥↓)')).toEqual({ label: '⌥↓', key: 'Alt+ArrowDown' });
+  expect(printedShortcut('Move up (⌥↑)')?.key).toBe('Alt+ArrowUp');
+  expect(printedShortcut('Delete line (⌘⌫)')).toBeUndefined();
+  expect(printedShortcut('Accent (⌥é)')).toBeUndefined();
+});
+
 test('a shortcut is excluded whenever its control is', async ({ page, app }) => {
   await page.evaluate(() => {
     const quit = document.createElement('button');
@@ -1088,6 +1097,52 @@ test('typing arrives as one keystroke per character', async ({ page, app }) => {
   // Without this, a Route that never typed anything would pass trivially.
   expect(characters).toBeGreaterThan(0);
   expect(await page.evaluate(() => (window as unknown as { typed: number }).typed)).toBe(characters);
+});
+
+test('a text box that is not an input is typed into, not refused', async ({ page, app }) => {
+  // Measured on Positron: an element marked as a text box that is not an
+  // input, where emptying it first threw and ended the Route as an engine
+  // error. It still takes keys, so the Hop types into it.
+  await page.evaluate(() => {
+    const w = window as unknown as { keys: number };
+    w.keys = 0;
+    const box = document.createElement('div');
+    box.setAttribute('role', 'textbox');
+    box.setAttribute('aria-label', 'Notes');
+    box.tabIndex = 0;
+    // A size of its own: a box holding only a space has no height, and
+    // Playwright waits for it to show before it would refuse it.
+    box.style.cssText = 'display:block;width:200px;height:24px';
+    box.addEventListener('keydown', () => (w.keys += 1));
+    document.body.append(box);
+  });
+  const dir = scratch();
+  const streams = deriveRouteStreams('not-an-input', 1);
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams,
+    journeySeed: 'not-an-input',
+    routeNumber: 1,
+    tripLength: 1,
+    journalsRoot: dir,
+    chooser: {
+      choose: (candidates) => {
+        const target = candidates.find((candidate) => candidate.name === 'Notes');
+        if (!target) throw new Error('the planted text box is not on offer');
+        return { target };
+      },
+    },
+    values: { generate: () => 'abc' },
+  });
+  expect(outcome).toEqual({ kind: 'passed', hops: 1 });
+  const hop = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`)).find(
+    (entry): entry is TripHopEntry => entry.kind === 'trip-hop'
+  );
+  expect(hop?.action).toBe('type');
+  expect(hop?.abandoned).toBeUndefined();
+  expect(await page.evaluate(() => (window as unknown as { keys: number }).keys)).toBe(3);
 });
 
 test('the engine lays journals out under the root as seed, then run', async ({ page, app }) => {
