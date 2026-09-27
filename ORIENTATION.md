@@ -143,12 +143,14 @@ short first look, planned in `docs/DEMO_PLAN_TRAIN.md`: `npm run demo:train`
 watches it and `npm run demo:train:present` presents it, through the runner
 both guided demos share, `demo/presenting.mjs`. Eighty Days is the longer
 one, a deterministic game after the novel, planned in
-`docs/DEMO_PLAN_EIGHTY_DAYS.md`, whose build order says which steps are done
-and which are next: the watched run and presenting script, the planted bugs
-with a flag restoring the game's original layout, and the stage-two
-sections. Its default Journey starts every Trip at Hong Kong, and
-`demo/eighty-days/measure.mjs` reads a run's journals for the balance
-numbers. **The demo must not flatter the engine**: two tunings once changed
+`docs/DEMO_PLAN_EIGHTY_DAYS.md`: `npm run demo:eighty-days` watches it and
+`npm run demo:eighty-days:present` presents stage one. Its build order says
+what is next: the planted bugs with a flag restoring the game's original
+layout, and the stage-two sections. Its default Journey starts every Trip at
+Hong Kong, `demo/eighty-days/seeds.mjs` holds the seed whose three Routes
+win, lose and wander, and `demo/eighty-days/measure.mjs` reads a run's
+journals for the balance numbers. Any change to the game or the draw moves
+what that seed does, so the seed is searched for again after one. **The demo must not flatter the engine**: two tunings once changed
 the game to hide weaknesses in Phileas, and the plan's settled decisions say
 how that is being undone.
 

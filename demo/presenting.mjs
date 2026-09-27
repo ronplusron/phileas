@@ -114,7 +114,11 @@ function isNoise(line) {
     /^Running \d+ tests? using/.test(line) ||
     /^\[\d+\/\d+\] /.test(line) ||
     /journey\.spec\.ts:\d+:\d+ › route \d+$/.test(line) ||
-    /^\s*\d+ passed \(/.test(line)
+    /^\s*\d+ passed \(/.test(line) ||
+    /^\s*\d+ skipped$/.test(line) ||
+    // What Playwright adds after a long file, such as a Journey of long Routes.
+    /^\s*Slow test file: /.test(line) ||
+    /^\s*Consider running tests from slow files in parallel/.test(line)
   );
 }
 

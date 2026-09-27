@@ -132,3 +132,23 @@ test('missing the Carnatic by the tavern is the book’s way, and staying out of
   const without = rules.act(state, { type: 'take', departure: 'carnatic' }, world);
   expect(without.ticket).not.toBeNull();
 });
+
+test('a place with nothing left to leave by ends the wager, and one with a train still to come does not', () => {
+  const toSanFrancisco = BOOK.slice(0, BOOK.findIndex((a) => a.departure === 'pacific-railroad'));
+  const { rules, world, state } = play(toSanFrancisco);
+  const special = { type: 'take', departure: 'special-east' };
+
+  // The control: straight on by the special train, Omaha still has trains east.
+  const inTime = rules.act(state, special, world);
+  expect(inTime.place).toBe('omaha');
+  expect(inTime.phase).toBe('travelling');
+
+  // Seven nights at San Francisco first, and the special reaches Omaha after its last train.
+  let late = state;
+  for (let night = 0; night < 7; night++) late = rules.act(late, { type: 'stay', value: 'night' }, world);
+  late = rules.act(late, special, world);
+  expect(late.place).toBe('omaha');
+  expect(late.phase).toBe('ended');
+  expect(late.ending?.won).toBe(false);
+  expect(late.ending?.reason).toBe('Nothing more leaves Omaha in time.');
+});

@@ -20,7 +20,9 @@
     "test": "tsc --noEmit && playwright test",
     "journey": "node bin/phileas.mjs run testbed/buggy/phileas",
     "demo:train": "node demo/rail-itinerary/watch.mjs",
-    "demo:train:present": "node demo/rail-itinerary/present.mjs"
+    "demo:train:present": "node demo/rail-itinerary/present.mjs",
+    "demo:eighty-days": "node demo/eighty-days/watch.mjs",
+    "demo:eighty-days:present": "node demo/eighty-days/present.mjs"
   },
   "engines": {
     "node": ">=24"

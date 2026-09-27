@@ -45,7 +45,13 @@ demo/eighty-days/
   phileas/                           adapter, journeys, spec, global setup, config
   watch.mjs                          the watched run
   present.mjs, PRESENTING.md         the guided demo, and its script
+  seeds.mjs                          the default seed, which both use
+  measure.mjs                        how each Route's game went, from its journals
 ```
+
+The watcher itself is shared with the rail demo, as `demo/watching.mjs`,
+for the same reason the presenting runner is, and so is the reading of
+journals both demos' replay checks rest on, `demo/journals.mjs`.
 
 Bundle id `com.drugstoresushi.eightydays`, with the same copyright notice in
 its package metadata. Root scripts `demo:eighty-days` for the watched run and
@@ -271,9 +277,9 @@ and there it earns its place:
   the `kiouni-throw` plant fires on the raise that reaches it.
 
 **Why buttons and not a number field.** A Trip types only from a fixed
-list of values: empty, "a", "travel", "Carpet", "0", two spaces, and two
-hundred x's (`VALUE_CORPUS`, `src/route.ts`). So a Trip can never type
-£2,500 into a field, and a control whose effect depends on a particular
+list of values: empty, "a", "travel", "Carpet", "0", "1", "2", two spaces,
+and two hundred x's (`VALUE_CORPUS`, `src/route.ts`). So a Trip can never
+type £2,500 into a field, and a control whose effect depends on a particular
 number has to be reachable by clicking. This applies everywhere in the
 game, not only to Kiouni: the Hotel's stay is a dropdown ("an hour", "a
 night", "until the next sailing"), not a number of hours. The one number
@@ -332,6 +338,14 @@ its Fix's progress with it. A screen with no way on would strand every Route
 that reached it, and would say something about the game rather than find a bug
 in it. The one screen with no way out is the `bradshaw-trap` plant, on
 purpose, and it strands rather than fails: see stage two.
+
+**A place whose last departure has gone ends the game, lost.** Most
+departures sail at a set hour, so a Fogg who reaches Omaha after its last
+train east has nothing to leave by. The game first held him there, with the
+tabs still on offer, so nothing stranded and nothing ended: measured on
+2026-09-27, three of four Routes still going after their Trip were sitting at
+Omaha. It now ends as an empty carpet-bag does, "Nothing more leaves Omaha in
+time", and offers "Set out again".
 
 ### Screens
 
@@ -751,10 +765,11 @@ Nothing is open. New questions go here as building raises them.
 
 ## Build order
 
-Steps 1, 2, 4 and 5 are built, 2026-09-27, and step 3 is built but for the
-engravings, which wait on a download for each; `HISTORY.md` has what was
-measured. The balance was measured before the engravings, since the look
-matters less if Routes never leave London.
+Steps 1 to 6 are built, 2026-09-27, and `HISTORY.md` has what was measured
+for each. The balance was measured before the engravings, since the look
+matters less if Routes never leave London, and measured again with step 6,
+which found the game holding Routes at a place with no departures left.
+Steps 7 and 8 are next.
 
 1. Lift the rail demo's presenting runner into `demo/presenting.mjs`, with
    the parameters listed under "What is shared", and rename its script to

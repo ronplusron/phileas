@@ -361,11 +361,11 @@
       "to": "sanfrancisco",
       "mode": "ship",
       "label": "Charter a steamer for San Francisco",
-      "hours": 400,
+      "hours": 360,
       "cost": 4000,
       "crossesDateLine": true,
       "book": false,
-      "note": "Invented: fast and dear, for a Route that missed the General Grant."
+      "note": "Invented: fast and dear, for a Route that missed the General Grant. Fifteen days, so that even after the week's wait at Hong Kong it reaches San Francisco in time for the special train east to make Omaha's last train; at four hundred hours it rescued nobody."
     },
     {
       "id": "next-pacific-mail",
@@ -445,10 +445,10 @@
       "to": "omaha",
       "mode": "train",
       "label": "Charter a special train east",
-      "hours": 110,
+      "hours": 80,
       "cost": 3000,
       "book": false,
-      "note": "Invented: straight through to Omaha, missing Salt Lake City and the attack at Fort Kearney."
+      "note": "Invented: straight through to Omaha, missing Salt Lake City and the attack at Fort Kearney. Eighty hours, about twenty-two miles an hour; at a hundred and ten, taken by anyone who reached San Francisco late, it arrived after Omaha's last train east."
     },
     {
       "id": "rail-fortkearney",
@@ -589,11 +589,11 @@
       "to": "liverpool",
       "mode": "ship",
       "label": "Wait for the next Cunard steamer",
-      "departs": "1872-12-14T12:00",
-      "arrives": "1872-12-23T12:00",
+      "departs": "1872-12-13T20:00",
+      "arrives": "1872-12-22T10:00",
       "ticket": true,
       "book": false,
-      "note": "Invented: the next sailing, which is too late."
+      "note": "Invented: the next sailing, two days after the China. It reaches London in time only if the Detective's warrant holds Fogg no more than a few hours, so the telegrams sent since Suez decide it."
     },
     {
       "id": "inman-queenstown",

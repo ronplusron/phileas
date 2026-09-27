@@ -51,6 +51,7 @@
     "london-dateline": { "chapter": "XXXVI, XXXVII", "diary": "It is not Saturday but Friday. Travelling east, Fogg gained a day, and London's calendar is a day behind his diary." },
     "won": { "chapter": "XXXVI", "diary": "Fogg walks into the saloon of the Reform Club. \"Here I am, gentlemen.\"" },
     "lost-late": { "diary": "The eighty days have run out. The wager is lost." },
-    "lost-funds": { "diary": "The carpet-bag cannot pay for any way on. Fogg is without funds." }
+    "lost-funds": { "diary": "The carpet-bag cannot pay for any way on. Fogg is without funds." },
+    "lost-no-way": { "diary": "The last train and the last steamer have gone. No way on reaches London in time, and the wager is lost." }
   }
 }

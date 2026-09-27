@@ -34,7 +34,7 @@ import {
   typed,
   withColumnHeadings,
 } from '../presenting.mjs';
-import { hopsOf, retraceVerdict } from './journals.mjs';
+import { hopsOf, retraceVerdict } from '../journals.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const { excerpt, runFolderOf } = demoFolders(path.join(here, 'phileas'));

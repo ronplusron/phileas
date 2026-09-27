@@ -108,4 +108,4 @@ Journey is shown finding each one.
 | `tests/` | This engine's own tests. |
 | `testbed/` | Applications built to be tested, each broken in one chosen way, with the adapter each needs. |
 | `trial/` | The adapter and Journeys for a measured trial against a real application, Positron first. `docs/PLAN.md` has the trial. |
-| `demo/` | Applications built to show Phileas at work, apart from `testbed/`. `docs/DEMO_PLAN_TRAIN.md` plans the first; `npm run demo:train` runs it, and `npm run demo:train:present` presents it. `docs/DEMO_PLAN_EIGHTY_DAYS.md` plans the second, and `demo/presenting.mjs` is the runner the guided demos share. |
+| `demo/` | Applications built to show Phileas at work, apart from `testbed/`. `docs/DEMO_PLAN_TRAIN.md` plans the first; `npm run demo:train` runs it, and `npm run demo:train:present` presents it. `docs/DEMO_PLAN_EIGHTY_DAYS.md` plans the second; `npm run demo:eighty-days` runs it, and `npm run demo:eighty-days:present` presents it. `demo/presenting.mjs` is the runner the guided demos share, and `demo/watching.mjs` the watcher. |

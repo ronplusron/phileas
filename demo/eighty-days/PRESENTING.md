@@ -1,0 +1,182 @@
+# Presenting Phileas on Eighty Days
+
+A script for showing Phileas to people who have not seen it, technical or not.
+This is stage one of `docs/DEMO_PLAN_EIGHTY_DAYS.md`: exploring, with every
+check passing and nothing planted. It runs about twenty minutes, plus
+questions, most of it in sections 4 and 6, where the game plays itself while
+you talk. The rail demo, `demo/rail-itinerary/PRESENTING.md`, is the shorter
+first look and takes the pieces apart more slowly; this one assumes less
+patience and shows more.
+
+**Two ways to give it.** `npm run demo:eighty-days:present` runs the sections
+below in order, with the game's window on screen, and waits for Enter between
+them. `npm run demo:eighty-days:present -- --auto` plays straight through,
+eight seconds apart, or `--auto=15` for fifteen. `-- --from 4` starts at
+section 4. Or run each section's command by hand from this file, which is
+slower and leaves room to wander. The guided command prints every command
+exactly as it would be typed, and waits for Enter before running it, so there
+is time to read it out; the two ways match line for line.
+
+Everything runs live against the real game. Nothing is recorded in advance,
+so a run can be repeated if a question calls for it.
+
+## Before you start
+
+From the repository root, once:
+
+```
+npm install
+cd demo/eighty-days && npm install && npm run package
+```
+
+If a run then says it cannot find Electron, `node node_modules/electron/install.js`
+fetches it, in the root and in `demo/eighty-days/` separately.
+
+Commands below run from the repository root. Where they say `phileas`, type
+`node bin/phileas.mjs`; in a repository that consumes the engine, `phileas` is
+the command itself. `phileas survey` takes no flags, so its window mode and
+its pause go in front of it as `PHILEAS_SHOW=front` and `PHILEAS_HOP_DELAY_MS`.
+
+Two switches are this demo's own, not the engine's. `EIGHTY_DAYS_JOURNEY`
+chooses among three Journeys: `no-fix`, which starts in the Reform Club;
+`accept`, whose Fix takes the wager; and `hong-kong`, the default, whose Fix
+plays the book to the Hong Kong quay. `EIGHTY_DAYS_KNOWN` names the known
+findings file: the guided command empties its own when it starts, so the
+Journey's summary begins from nothing; by hand, delete
+`demo/eighty-days/phileas/.phileas-journals/present/known-findings.json`
+first to do the same.
+
+Put the terminal and the game's window side by side. The window opens and
+closes with every Route, because every Route starts the game fresh. It is laid
+out for 1280 by 800.
+
+## 1. What you are about to see
+
+No command. Say what Phileas is, and name the five pieces, since everything
+after this uses them:
+
+- **Journey**: one run of Phileas. How many Routes, how long each one is, and a seed.
+- **Route**: one independent exploration, with its own pass or fail.
+- **Fix**: the fixed opening every Route follows first, so it starts somewhere known.
+- **Trip**: the unpredictable rest of a Route, after its Fix.
+- **Hop**: one move. A click, some typing, a key, a menu choice.
+
+Then the game. Fogg races east from London to win the Reform Club's wager of
+£20,000 on eighty days, choosing steamers, trains, an elephant and a sledge.
+**Nothing in it is random**: the same moves always play the same game. That is
+what lets a seed replay a Route, and a test in the demo's own suite checks it.
+
+## 2. What Phileas finds at the Reform Club
+
+```
+EIGHTY_DAYS_JOURNEY=no-fix PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/eighty-days/phileas
+```
+
+Point at the listing. Nobody told Phileas what is in the game: it reads the
+screen the way a screen reader does, and keeps what is visible, enabled and
+named. Each line is one thing it could act on. The club offers only buttons
+and menu entries; once Fogg is travelling, each place adds tabs for its
+venues, dropdowns, text fields, a slider and a switch. The menu bar is read
+too, and the keys are offered on every screen.
+
+Point at an "excluded" line. Phileas skips the standard menu entries every
+Electron application gets, such as Quit, and anything the adapter lists.
+
+## 3. The book's own opening, as a Fix
+
+```
+EIGHTY_DAYS_JOURNEY=hong-kong PHILEAS_HOP_DELAY_MS=700 PHILEAS_SHOW=front phileas survey demo/eighty-days/phileas
+```
+
+Show `demo/eighty-days/phileas/journeys/hongkong.ts`. Twenty-seven steps, each
+a line copied from a survey like section 2's, playing Fogg's choices from the
+book: the Mongolia, the passport, Kiouni bought for £2,000 after four raises,
+Aouda rescued, the Rangoon. Nobody read the game's code to write it.
+
+This is why a Fix exists. The engine's predecessor, Loki, started every run
+wherever the application started and wandered from there, and found little.
+A Fix is a known start; the Trip after it is where the unpredictable part
+begins. Point at the listing after the Fix: the Hong Kong quay, where every
+Trip in the next section starts.
+
+## 4. Three fates from one Journey
+
+```
+EIGHTY_DAYS_JOURNEY=hong-kong EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed passepartout --routes 3 --trip-length 150 --hop-delay-ms 300 --show front
+node demo/eighty-days/measure.mjs demo/eighty-days/phileas/.phileas-journals/passepartout/<run>
+```
+
+The `<run>` folder is named on the run's second line. The guided command fills
+it in and prints the fates itself.
+
+About seven minutes, so this is the time to talk. Point at the settings
+block first: the seed, three Routes, a hundred and fifty Hops. Then at the
+window. Each Route starts the game fresh, follows the Fix to Hong Kong, and
+from there goes its own way: the tavern, the Carnatic or the Tankadere, the
+Pacific, the plains, the Atlantic. When a Route opens the Circuit panel, the
+chart shows the line it has drawn round the world.
+
+With this seed the three games go three ways, and the guided command prints
+them when the run ends:
+
+- **Route 1 wins.** It sails on the Carnatic, crosses the Pacific, takes the
+  special train east, and reaches the Reform Club by way of Queenstown and
+  Liverpool, at Trip hop 72.
+- **Route 2 loses.** By way of Shanghai and San Francisco it sails south for
+  Panama, the game's own route and not the book's, and the wager is lost
+  there, at Trip hop 60.
+- **Route 3 is still going** when its Trip ends, at Omaha, having followed
+  the book overland by Salt Lake City and Fort Kearney.
+
+Each Route that ends offers "Set out again", and the rest of its Trip starts
+the game over from London, which is why the places listed carry on past it.
+
+One known start, three continuations, and each replayable from the seed.
+
+## 5. Checked after every Hop
+
+No new run: the guided command reads the journals section 4 wrote. By hand,
+`phileas show` on the run folder prints every Hop, and `jq '.checks'` on a
+journal line shows one Hop's checks.
+
+After every Hop, the Fix's included, six checks run: no uncaught error, no
+console error, still responding, still showing something, no unexpected
+dialog, and no error in the game's own log. Two more say "not run", with the
+reason, on every Hop: they are not built yet, and a check that did not run is
+never counted as one that passed.
+
+Then point at the Journey's summary, the last lines section 4 printed: nothing
+found, and nothing held. That is the baseline. Stage two plants bugs in the
+game and shows the same Journey finding them.
+
+## 6. The same seed, the same game
+
+```
+EIGHTY_DAYS_JOURNEY=hong-kong EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed passepartout --routes 3 --trip-length 150 --hop-delay-ms 300 --show front -- --grep 'route 1$'
+```
+
+Route 1 of section 4's Journey again, on its own, about two and a half minutes.
+The guided command compares the two journals and says whether every Hop
+matched, and prints how the game went both times. By hand, run `measure.mjs`
+on the new run folder and read it against section 4's.
+
+Route 1 again: the same Carnatic, the same special train, the same win at
+the same Hop.
+
+A Route that had found a bug would walk straight back to it, which is what
+makes a finding worth filing. A replay needs the seed, a Route count that
+includes the Route, and a Trip at least as long as the part to retrace.
+
+## Questions that tend to come up
+
+- **Does it find bugs?** Six checks run after every step, and against Positron
+  they found real bugs. This stage has nothing planted, so it shows exploring
+  and replaying; the next stage plants bugs in the game.
+- **Why does a Route keep going after the game ends?** A Route's Trip is a
+  number of Hops, not a goal. Winning or losing the wager is a fate for the
+  audience; the engine's work is to explore and to check.
+- **Was the game made easy for Phileas?** Once, and it was undone or recorded.
+  Two changes suited the engine rather than the game; `docs/DEFECTS.md` has
+  both weaknesses, and the plan says how the harder game comes back.
+- **What if it clicks something dangerous?** The adapter's exclusion list keeps
+  it away from Quit and the link to the book online.

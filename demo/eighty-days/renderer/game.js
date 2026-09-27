@@ -189,13 +189,26 @@
     }
   }
 
-  /** Lost if nothing here can be taken, for want of money. */
-  function checkFunds(state, world) {
+  /**
+   * Lost if nothing here can be taken: every sailing gone, or none paid for.
+   * A place with nothing left to leave by would otherwise hold Fogg until the
+   * clock ran out, which only a long run of stays at the Hotel ever reaches,
+   * and the game promises a way on from every screen.
+   */
+  function checkWayOn(state, world) {
     if (state.phase !== 'travelling') return;
     const here = departuresHere(state, world);
-    if (here.length && here.every((x) => !x.affordable)) {
+    if (!here.length) {
+      end(state, world, false, 'lost-no-way', `Nothing more leaves ${place(world, state.place).name} in time.`);
+    } else if (here.every((x) => !x.affordable)) {
       end(state, world, false, 'lost-funds', `Fogg is without funds at ${place(world, state.place).name}.`);
     }
+  }
+
+  /** After anything that moves the clock at a place: the deadline first, then whether any way on is left. */
+  function checkStanding(state, world) {
+    checkDeadline(state, world);
+    checkWayOn(state, world);
   }
 
   /** What happens on reaching a place. Each event's words and chapter are in data/story.json. */
@@ -252,8 +265,7 @@
       reachLondon(state, world);
       return;
     }
-    checkDeadline(state, world);
-    checkFunds(state, world);
+    checkStanding(state, world);
   }
 
   function reachLondon(state, world) {
@@ -430,7 +442,7 @@
         }
         spend(state, `A stay at ${here().name}`, hours, { kind: 'wait' });
         state.notice = `Fogg waits ${durationText(hours)} at ${here().name}.`;
-        checkDeadline(state, world);
+        checkStanding(state, world);
         break;
       }
 
@@ -481,7 +493,7 @@
           spend(state, "The Honourable William Batulcar's circus", 3, { kind: 'wait' });
           state.notice = 'The Long Noses perform. Nobody Fogg knows is among them.';
         }
-        checkDeadline(state, world);
+        checkStanding(state, world);
         break;
       case 'soldiers':
         if (state.flags.passepartoutCaptured) {
@@ -489,7 +501,7 @@
           state.passepartout = true;
           spend(state, 'After the war party with the soldiers', 12, { kind: 'delay' });
           say(state, world, 'fortkearney-rescue');
-          checkDeadline(state, world);
+          checkStanding(state, world);
         }
         break;
 
@@ -533,7 +545,7 @@
         state.aouda = true;
         spend(state, 'The rescue at the pagoda of Pillaji', 10, { kind: 'delay' });
         say(state, world, 'pillaji-rescue');
-        checkDeadline(state, world);
+        checkStanding(state, world);
         break;
 
       case 'wind':

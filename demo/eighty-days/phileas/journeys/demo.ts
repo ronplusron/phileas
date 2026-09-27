@@ -1,18 +1,20 @@
 import { defineJourney, type Fix } from '@drugstoresushi/phileas';
 
 /**
- * The demo's Journey: three Routes of two hundred Hops.
+ * The demo's Journey: three Routes of a hundred and fifty Hops.
  *
- * Two hundred was set by the balance measurement docs/DEMO_PLAN_EIGHTY_DAYS.md
- * asks for, from the hong-kong Fix: six Routes ended one won, three lost and
- * two still going, and three Routes watched fit in about eight and a half
+ * A hundred and fifty was set by the balance measurement
+ * docs/DEMO_PLAN_EIGHTY_DAYS.md asks for, from the hong-kong Fix: twenty-four
+ * Routes ended six won, eleven lost and seven still going, half the seeds
+ * tried showed all three in one Journey, and three Routes watched took 6.8
  * minutes. docs/HISTORY.md has the measurements that led here.
  *
- * No seed here. The demo's seeds are set where it is run from.
+ * No seed here. The demo's seeds are set where it is run from, and
+ * demo/eighty-days/seeds.mjs holds the default.
  */
 export const demo = defineJourney({
   routes: 3,
-  tripLength: 200,
+  tripLength: 150,
 });
 
 /**

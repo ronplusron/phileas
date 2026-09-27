@@ -25,6 +25,52 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: Eighty Days watched and presented, and a game that held Routes at Omaha
+
+**What landed.** Build step 6 of `DEMO_PLAN_EIGHTY_DAYS.md`: `npm run
+demo:eighty-days` watches the default Journey, prints each Route's fate from
+its journals and replays one Route; `npm run demo:eighty-days:present` is
+stage one of the guided demo, in six sections, with
+`demo/eighty-days/PRESENTING.md` as its script. The rail demo's watcher
+became `demo/watching.mjs` and its replay reading `demo/journals.mjs`, both
+shared, so the two demos keep one copy of each; the rail demo's own
+`watch.mjs` now only names its folder and seed. The guided demo keeps its
+known findings in a file of its own, emptied when it starts, so the summary
+it points at begins from nothing.
+
+**Measured, and what it found.** Choosing a default seed meant finding one
+whose three Routes won, lost and were still going. Six seeds of three Routes
+at 200 Hops, the Trip length set before, won nothing: two lost and four were
+still going, and three of those four were at Omaha, where every train east
+had left. **That was a fault in the game, not balance.** A place whose
+timetabled departures have all gone offered nothing to leave by, and the game
+held Fogg there with the tabs still on offer, so nothing ended and nothing
+stranded. The plan promises a way on from every screen. Such a place now
+ends the game, lost, as an empty carpet-bag already did, and a rules test
+shows it does and that the same place with a train still to come does not;
+the test failed with the rule taken out.
+
+**Retuned, and asked for.** With that fixed, a rough model of random play
+through `renderer/game.js`, a scratch script as before, put wins at about one
+Route in ten, and most losses on a few departures that could never win.
+Asked whether to search more seeds, settle for losses and wanderers, or
+retune, the answer was "Retune". Three departures the game invented were
+retimed, each note in `data/departures.json` saying why: the Pacific charter
+from 400 hours to 360, so it rescues a Route that waited the week at Hong
+Kong, as its note always meant; the special train east from 110 hours to 80;
+and the next Cunard steamer a day earlier, winnable only if the Detective's
+warrant is short, so the telegrams sent since Suez decide it. The book's own
+departures, including the week's wait at Hong Kong, were left alone. The
+Trip length went from 200 to 150, which the model said balanced the three
+fates best and which shortens the watched run. **Measured on the real game:**
+eight seeds of three Routes ended six won, eleven lost and seven still going,
+four of the eight showed all three fates in one Journey, and every Journey's
+three Routes took three different sequences of places, with a median of 13
+page candidates a Hop. The default seed is `passepartout`, whose Route 1 wins
+at Trip hop 72, and whose three Routes, watched at 300 ms a Hop and shown
+behind other windows, played the same games as hidden and took 6.8 minutes;
+Route 1 then retraced all 150 Hops exactly.
+
 ## 2026-09-27: "1" and "2" join the typed values, and every seed types differently from today
 
 **What changed.** `VALUE_CORPUS` in `src/route.ts` gained "1" and "2", so a
