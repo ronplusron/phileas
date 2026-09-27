@@ -183,8 +183,9 @@ export interface TripHopEntry {
   /**
    * The raw 32-bit draw that selected the target, where a seeded draw did.
    *
-   * The target should always be the pool entry at floor(draw / 2^32 x pool
-   * size), which a reader can check from the file alone. On a replay, a draw
+   * The target should always be the entry at floor(draw / 2^32 x side size)
+   * of the side `shareDraw` chose, in pool order, after any fallback, which a
+   * reader can check from the file alone. On a replay, a draw
    * that differs names the hop where the sequence broke, even when the broken
    * draw lands on the same target by chance. Absent for a chooser that does not
    * draw.

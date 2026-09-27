@@ -24,6 +24,9 @@ export type LaunchPath = 'electron' | 'debugging-port';
 /**
  * Checks that cannot run under a given launch path, which is constraint C1b.
  *
+ * Nothing consults it yet: the debugging-port path it describes is not built,
+ * and when it is, the watch has to be handed the path and read this.
+ *
  * Under the debugging-port path the external-link stub records nothing and the
  * main-process half of "still responding" cannot run. Two further things are
  * lost that are not checks and so cannot appear here -- the menu offers no
@@ -56,8 +59,8 @@ export const UNAVAILABLE_UNDER = {
  * where it was stated.
  *
  * Absent rather than empty, so a check that needs it fails to compile instead
- * of reading clean. Done while the second path does not exist and there are no
- * consumers, which is the cheapest it will ever be.
+ * of reading clean. Done while the second path does not exist, which is the
+ * cheapest it will ever be.
  */
 export type LaunchedApp = {
   app: ElectronApplication;
@@ -80,8 +83,9 @@ export type LaunchedApp = {
 
 export async function makeUserDataDir(cfg: AppUnderTest): Promise<string> {
   // productName is optional now, so the slug falls back rather than throwing on
-  // an application that declares no name anywhere. The directory is temporary
-  // and its name is a convenience for whoever reads `ls /tmp`, nothing more.
+  // an application that declares no name anywhere. The folder is temporary and
+  // its name is a convenience for whoever lists the system temp folder.
+  // `phileas-` is what the leftover check watches for, so it must stay.
   const slug = (cfg.productName ?? 'app').toLowerCase().replace(/[^a-z0-9]+/g, '-');
   return fs.promises.mkdtemp(path.join(os.tmpdir(), `phileas-${slug}-`));
 }
@@ -115,8 +119,9 @@ async function makeWritable(dir: string): Promise<void> {
  * recreated it, a few times over. A delete that succeeded was still not the
  * end on Positron the same day: a helper started as the application closed
  * and wrote its log into the Route's home folder afterwards, bringing the
- * profile back. A writer later than the watch still leaks one, which
- * docs/DEFECTS.md carries.
+ * profile back. A writer later than the watch can still leak one, and the
+ * end of a Journey fails the run on it, naming the folder: see
+ * `watchTempFolder` in start.ts.
  *
  * Throws if the folder cannot be removed or keeps coming back, rather than
  * leaving it silently: the fixture's teardown then fails, naming it.
@@ -144,7 +149,8 @@ const PROFILE_RETURNS_ALLOWED = 3;
 export const APP_DIR_VARIABLE = 'PHILEAS_APP_DIR';
 
 /**
- * The application's checkout, for an adapter that lives outside it.
+ * The application's checkout, or an installed bundle, for an adapter that
+ * lives outside it. The Positron trial points it at an installed `.app`.
  *
  * One name for every adapter, rather than one each. The deployment shape the
  * project settled on is adapters in a repository of their own, pointed at a
@@ -171,7 +177,7 @@ export function requireAppDir(): string {
     throw new Error(
       `${APP_DIR_VARIABLE} is not set. This adapter lives outside the application it tests, ` +
         `and reads where that application's checkout is from ${APP_DIR_VARIABLE}. Set it to ` +
-        `the folder holding the checkout you built.`
+        `the folder holding the checkout you built, or the installed application.`
     );
   }
 
@@ -186,7 +192,7 @@ export function requireAppDir(): string {
     throw new Error(
       `${APP_DIR_VARIABLE} is ${JSON.stringify(raw)}, which is not a folder` +
         (dir === raw ? '' : ` (resolved to ${dir})`) +
-        `. Set it to the folder holding the application's checkout.`
+        `. Set it to the folder holding the application's checkout, or the installed application.`
     );
   }
   return dir;
@@ -486,8 +492,8 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
  * would be reported against the Route that found it rather than the Route that
  * caused it. launchApp is the per-Route reset.
  *
- * Kept for the one case that can show a reload reaches its initial state, and
- * for an inner loop where relaunching is too slow to bear. The lifted comments
+ * Exported for a consumer's own use, such as an inner loop where relaunching is
+ * too slow to bear; nothing in the engine calls it. The lifted comments
  * measured the saving at roughly half a second per test.
  */
 export async function reloadRenderer(cfg: AppUnderTest, launched: LaunchedApp): Promise<Page> {

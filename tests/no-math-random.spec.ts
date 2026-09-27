@@ -29,7 +29,15 @@ const repoRoot = path.join(here, '..');
  * draws unseeded makes every recorded seed fail to reproduce, and the engine
  * takes the blame for it.
  */
-const ROOTS = ['src', path.join('testbed', 'buggy')];
+// Every consumer layout, not only buggy's: the demo's and the trial's hold
+// Fixes and an exclusion predicate too, and bin/ runs a Journey's command.
+const ROOTS = [
+  'src',
+  'bin',
+  path.join('testbed', 'buggy'),
+  path.join('demo', 'rail-itinerary'),
+  path.join('trial', 'positron', 'phileas'),
+];
 
 const SKIP = new Set(['node_modules', 'dist', 'test-results']);
 

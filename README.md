@@ -33,7 +33,9 @@ nothing of each other, so any Route can be replayed on its own.
 Checks run after every Hop, and a Route stops at the first one that fails.
 Some ship with the engine and assume nothing about the application: no
 uncaught error, no console error, still responding, still showing something,
-still where it started, every visible control carrying a name. An application
+no unexpected dialog, and no error in a log the application names. Two more,
+still where it started and every visible control carrying a name, are not
+built yet. An application
 adds its own on top, and can supply answers worked out independently of the
 code being tested. That is the only way the engine judges whether a value is
 right rather than merely consistent, as opposed to self-consistent.
@@ -57,7 +59,7 @@ Journey and derives each Route's seeds from them. And it now travels: a Route
 finds what the screen offers by accessibility role, draws its next move from
 its seed, acts, waits for the page to stop moving, and writes a journal entry
 per Hop. `testbed/buggy/` is a packaged application built to be traveled
-through, and one hundred and ninety-eight tests run against it.
+through, and two hundred and thirty-two tests run against it.
 
 Six checks run after every Hop: uncaught errors, console errors, still
 responding, the window still showing something, no unexpected dialog, and an

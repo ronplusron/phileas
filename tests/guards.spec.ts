@@ -214,8 +214,8 @@ test('clicking a menu item refuses an empty path', async () => {
     const page = await launched.app.firstWindow();
     await buggy.waitForReady(page);
 
-    // It used to walk nothing, click nothing, and return success. Phase 4
-    // builds these paths from Candidate.menuPath, which is optional.
+    // It used to walk nothing, click nothing, and return success. The type
+    // requires a menu path but not a non-empty one.
     await expect(clickMenuItem(launched.app, [], page)).rejects.toThrow(/at least one label/);
 
     // The positive control: a real path still works, so the refusal above is

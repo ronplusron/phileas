@@ -39,8 +39,8 @@ test.afterEach(removeScratch);
 // Two runs of issue 44, from the trial's journals of 2026-09-26 and
 // 2026-09-27: different profile folders and timestamps, the same bug.
 const ISSUE_44 = [
-  "/var/folders/z3/2pspvgp54fb7n5339skyhfsc0000gn/T/phileas-positron-Y2Bp11/logs/window1/exthost/exthost.log: 2026-09-26 20:03:03.448 [error] An error occurred when deactivating the extension 'positron.positron-connections':",
-  "/var/folders/z3/2pspvgp54fb7n5339skyhfsc0000gn/T/phileas-positron-hKzIxA/logs/window1/exthost/exthost.log: 2026-09-27 02:37:59.900 [error] An error occurred when deactivating the extension 'positron.positron-connections':",
+  "/var/folders/qd/7kw1mv0tn3r58bx62hcyl4f90000gq/T/phileas-positron-Y2Bp11/logs/window1/exthost/exthost.log: 2026-09-26 20:03:03.448 [error] An error occurred when deactivating the extension 'positron.positron-connections':",
+  "/var/folders/qd/7kw1mv0tn3r58bx62hcyl4f90000gq/T/phileas-positron-hKzIxA/logs/window1/exthost/exthost.log: 2026-09-27 02:37:59.900 [error] An error occurred when deactivating the extension 'positron.positron-connections':",
 ];
 
 test('two runs of the same bug have the same signature, and what varies is taken out', () => {

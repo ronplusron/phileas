@@ -43,9 +43,9 @@ import { scratch as makeScratch, removeScratch } from './scratch';
  * actually keeps out of the draw. A survey tested against a fabricated tree
  * would agree with whatever the fabrication assumed.
  *
- * None of this is evidence that the engine finds bugs. Nothing is planted in
- * `buggy` yet, so a green run here is consistent with an engine that checks
- * nothing at all. That stays true until phase 8.
+ * None of this is evidence that the engine finds bugs. These tests exercise
+ * survey and the Route, not the checks; `checks.spec.ts` is where each check
+ * is made to fire on a defect planted in `buggy`.
  */
 
 const test = createTest(buggy);
@@ -931,8 +931,7 @@ test('settle reports what it cost, and says when a page never stopped moving', a
 
   // A page that keeps changing is a finding for the checks to make, not a
   // reason to abandon the Hop, so the wait is bounded and returns unsettled
-  // rather than throwing. Measured against the testbed on 2026-09-22: a settled
-  // page costs a median of 17ms per hop.
+  // rather than throwing.
   await page.evaluate(() => {
     const churn = document.createElement('div');
     document.body.append(churn);
@@ -947,9 +946,9 @@ test('settle reports what it cost, and says when a page never stopped moving', a
   expect(noisy.settled).toBe(false);
 
   // Near its budget, not exactly at it. The last snapshot inside the wait is
-  // bounded by whatever is left, so settle can return a few milliseconds under:
-  // measured at 598 against a 600 budget, which failed an earlier assertion
-  // that demanded the budget exactly. What matters is that it returned on its
+  // bounded by whatever is left, so settle can return a few milliseconds under,
+  // measured at 598 against a 600 budget, and since every read has a floor of
+  // its own it can also run some way over. What matters is that it returned on its
   // own terms rather than hanging on Playwright's default, which is thirty
   // seconds and is what an unbounded snapshot would have cost.
   expect(noisy.ms).toBeGreaterThan(400);

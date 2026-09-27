@@ -1,5 +1,3 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   createTest,
   expect,
@@ -10,16 +8,21 @@ import {
 } from '@drugstoresushi/phileas';
 import { journey, fix } from './journeys';
 import { positron } from './adapter';
+import { journalsRoot, knownFindings } from './paths';
 
 /** One test per Route, and nothing else. */
 const test = createTest(positron);
-const here = path.dirname(fileURLToPath(import.meta.url));
 
 for (const routeNumber of routeNumbers(journey)) {
   test(`route ${routeNumber}`, async ({ page, app, userDataDir }, testInfo) => {
     const journeySeed = requireSeed();
     const streams = deriveRouteStreams(journeySeed, routeNumber);
-    testInfo.annotations.push({ type: 'route-seed', description: streams.routeSeed });
+    // The Journey seed first, since that is what `phileas run --seed` takes to
+    // replay this Route (R7); the Route's own seed is derived from it.
+    testInfo.annotations.push(
+      { type: 'journey-seed', description: journeySeed },
+      { type: 'route-seed', description: streams.routeSeed }
+    );
 
     const outcome = await runRoute({
       page,
@@ -30,11 +33,11 @@ for (const routeNumber of routeNumbers(journey)) {
       routeNumber,
       tripLength: journey.tripLength,
       fix,
-      journalsRoot: path.join(here, '.phileas-journals'),
+      journalsRoot,
       // The adapter names its log from the Route's profile folder.
       userDataDir,
       // Bugs already found, which a Route records and carries on past.
-      knownFindings: path.join(here, 'known-findings.json'),
+      knownFindings,
     });
 
     // Only a survey was asked for, so nothing was traveled and there is no

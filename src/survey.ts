@@ -83,7 +83,11 @@ export interface PageCandidate {
   readonly name: string;
   /** Which of the controls sharing this role and name, in document order, counting from 1. */
   readonly nth: number;
-  /** Whether the control is disabled. Kept, because it is still a finding. */
+  /**
+   * Whether the control is disabled. Read so it can be dropped from the draw:
+   * hopping to a disabled control does nothing but would be journaled as a
+   * Hop. Not reported anywhere yet.
+   */
   readonly disabled: boolean;
   readonly locator: Locator;
 }
@@ -634,8 +638,8 @@ async function surveyPage(
   for (const node of Array.isArray(snapshot) ? snapshot : [snapshot]) walk(node);
 
   // Disabled controls are found and then dropped from the draw. Hopping to one
-  // does nothing, which would be journaled as a Hop that happened; the check
-  // that cares about them is the accessibility one, not the Route.
+  // does nothing, which would be journaled as a Hop that happened. Nothing
+  // reports them yet.
   return {
     candidates: candidates.filter((candidate) => !candidate.disabled),
     unnamed,

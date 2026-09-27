@@ -63,6 +63,15 @@ sits outside the consumer's own tree. Phase 9 is where that is found out, and
 the answer decides whether the engine must be built before it can be
 consumed.
 
+**The consumers here do not declare `@playwright/test`, on purpose.** The
+review of 2026-09-27 asked for it, since each imports Playwright directly and
+finds it only through this repository's own `node_modules`. Declared, each
+would install a second copy beside the one the engine resolves through its
+symlink, and two copies hand a consumer fixtures from the wrong instance. A
+consumer in its own checkout, installing the engine from a registry, should
+declare it, and the peer range dedupes it to one copy. Phase 9 is where that
+layout exists to check.
+
 ### 1.4 Three things the review scheduled rather than fixed
 
 Each was found by the review on 2026-09-22, each is agreed, and each was

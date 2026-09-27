@@ -40,8 +40,7 @@ export type Candidate = {
        * Required for a menu entry rather than optional across both. The rail
        * that keeps a Route off Quit is `Exclusions.menuPaths`, and it can only
        * match against this: a menu candidate produced without one escaped that
-       * rail silently, which is the worst direction for a guard to fail. Fixed
-       * while `survey` does not exist yet and it costs nothing.
+       * rail silently, which is the worst direction for a guard to fail.
        */
       readonly menuPath: readonly string[];
     }
@@ -339,11 +338,12 @@ export interface AppUnderTest {
   /**
    * Recognize a process belonging to this application.
    *
-   * Two readers. Cleanup, which is what it was found for. And the check that
-   * nothing else launched: a foreign process appearing after a hop is evidence
-   * that a Route left the application, and that evidence does not depend
-   * on the external-link stub having taken effect. docs/PLAN.md says why a
-   * second source is not redundant with the stub's own recorder.
+   * **Nothing reads it yet.** It is reserved for the foreign-process half of
+   * the no-navigation-away check, which is not built: a foreign process
+   * appearing after a hop is evidence that a Route left the application, and
+   * that evidence does not depend on the external-link stub having taken
+   * effect. docs/PLAN.md says why a second source is not redundant with the
+   * stub's own recorder. Declaring it today changes nothing.
    */
   isOwnProcess?(command: string): boolean;
 

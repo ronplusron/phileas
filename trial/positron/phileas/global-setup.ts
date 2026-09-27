@@ -1,11 +1,9 @@
 import os from 'node:os';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { finishJourney, runEveryCheck, startJourney } from '@drugstoresushi/phileas';
 import { journey } from './journeys';
 import { guardHome } from './home-guard';
+import { journalsRoot, knownFindings } from './paths';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Settle the seed, name the run and print its settings, once, before any Route
@@ -28,8 +26,8 @@ export default function globalSetup(): () => void {
     runEveryCheck([
       () => {
         finishJourney({
-          journalsRoot: path.join(here, '.phileas-journals'),
-          knownFindings: path.join(here, 'known-findings.json'),
+          journalsRoot,
+          knownFindings,
         });
       },
       checkHome,

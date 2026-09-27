@@ -53,8 +53,8 @@ export interface Chooser {
  * The draw is optional because only a seeded chooser has one. It is recorded in
  * the journal so a replay can name the hop where the seeded sequence broke,
  * including when a broken draw happens to land on the same target, and so the
- * file can be checked on its own: the target is always the pool entry the draw
- * points at. A chooser that is not a seeded draw has nothing to put here, and
+ * file can be checked on its own: the target is always the entry the draw points
+ * at within the side the share draw chose. A chooser that is not a seeded draw has nothing to put here, and
  * leaves it out rather than inventing one.
  */
 export interface Choice {
@@ -549,8 +549,9 @@ export function followFromEnvironment(): boolean {
 /**
  * How long to pause after each Hop, so that a person can watch one happen.
  *
- * **This is a viewing aid and nothing else.** A Route travels twenty Hops in
- * about a second, which is unwatchable even with the windows frontmost, and
+ * **This is a viewing aid and nothing else.** Hops pass faster than they can
+ * be watched, often under half a second each, most of it the settle wait, even
+ * with the windows frontmost, and
  * showing windows is pointless if what they show is a blur. It changes no draw
  * and no verdict: the same seed retraces the same Route with any delay, because
  * the delay consumes nothing from either stream.
@@ -778,8 +779,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // main process cancels, so from the renderer's side it never resolves.
       // Letting that end the Route would throw away every Hop the Trip still
       // had, which is the cost the bound exists to prevent in the first place.
-      // Whether an action that never returns is itself a finding is phase 5's
-      // question, and it needs the Route alive to ask it.
+      // An action the application held past the bound is a finding, which the
+      // still-responding check reports on this Hop; the Route has to be alive
+      // for that check to run.
       //
       // Timed from this side too, through the watch: an application that has
       // stopped answering holds back even the action's own timeout, and how

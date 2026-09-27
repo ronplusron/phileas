@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
+import { hopsOf, retraceVerdict } from './journals.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, '..', '..');
@@ -220,18 +221,6 @@ function runFolderOf(lines) {
   return path.join(journalsRoot, seed, run);
 }
 
-/** What a replay must reproduce: each Trip hop's target, action, value and draws. `route` counts from 1. */
-function hopsOf(folder, route) {
-  const file = fs.readdirSync(folder).find((f) => f.startsWith(`route-${String(route).padStart(3, '0')}-`));
-  return fs
-    .readFileSync(path.join(folder, file), 'utf8')
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => JSON.parse(line))
-    .filter((entry) => entry.kind === 'trip-hop')
-    .map((e) => JSON.stringify([e.target, e.action, e.value, e.shareDraw, e.draw]));
-}
-
 /** The survey's listing at the start, before any Fix runs. */
 function startListing(lines) {
   const body = afterSettings(lines);
@@ -390,12 +379,7 @@ const sections = [
       const again = runFolderOf(await phileasShown('run', [...JOURNEY_ARGS, '--', '--grep', 'route 1$'], JOURNEY_ENV));
       const a = hopsOf(first, 1);
       const b = hopsOf(again, 1);
-      const same = a.length === b.length && a.every((hop, i) => hop === b[i]);
-      say(
-        same
-          ? bold(`Route 1 retraced all ${a.length} hops exactly.`)
-          : bold(`Route 1 did not retrace: the runs first differ at hop ${a.findIndex((hop, i) => hop !== b[i]) + 1}.`)
-      );
+      say(bold(retraceVerdict(a, b)));
       say('\nAnd a different seed makes different moves, against the five-Hop Route above:\n');
       print(afterSettings(await phileasShown('run', ['demo/rail-itinerary/phileas', '--seed', 'another-seed',
         '--routes', '1', '--trip-length', '5', '--hop-delay-ms', '500', '--follow'], { RAIL_DEMO_JOURNEY: 'no-fix' })));

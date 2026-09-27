@@ -89,7 +89,7 @@ for (const plant of plants) {
 }
 
 // How long a planted hang lasts. Long enough to outlast a test's shortened
-// waits, and finite, so a test that trips it can still close the application.
+// waits, and finite, so a test that sets it off can still close the application.
 const HANG_MS = 6000;
 
 ipcMain.handle('plants:list', () => plants);
@@ -166,7 +166,10 @@ ipcMain.handle('items:all', async () => {
  * and the application did not move.
  *
  * Falling back to the first window is what a real application should do here
- * too, and it is why this is a fix rather than a test accommodation.
+ * too, and it is why this is a fix rather than a test accommodation. The
+ * engine now hands a menu click the Route's own window, so under automation
+ * the fallback is no longer reached; it serves a person, and any handler
+ * reached some other way.
  */
 function showViewIn(win, view) {
   const target = win ?? BrowserWindow.getAllWindows()[0];
@@ -174,9 +177,8 @@ function showViewIn(win, view) {
 }
 
 function buildMenu() {
-  // Quit lives here on purpose: the exclusion list exists for exactly this,
-  // and an exclusion naming a menu item is meaningless unless the traversal
-  // can reach the menu.
+  // Quit lives here on purpose, so the engine's skip of standard menu entries
+  // has something to skip, and so a Route can reach the menu at all.
   const template = [
     {
       label: 'Buggy',

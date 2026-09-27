@@ -3,7 +3,7 @@ import { defineJourney } from '../src/index';
 import type { Candidate, Journey, Narrowing } from '../src/index';
 
 /**
- * The invalid states four types used to permit.
+ * The invalid states three types used to permit.
  *
  * **These are compile-time assertions, and `npm run typecheck` is what runs
  * them.** Each `@ts-expect-error` fails the build if the error it expects stops

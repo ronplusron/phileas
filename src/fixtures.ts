@@ -41,9 +41,10 @@ export type PhileasFixtures = {
  *
  * House rule that follows: no spec may use the `context` or `browser` fixtures.
  *
- * This is not yet the Route fixture. Fix as `beforeEach`, the hop steps, the
- * Route's own timeout and the stranded outcome arrive with the phase that
- * makes a Route a test; what is here is the launch and teardown they build on.
+ * Each Route is already a test built on this, with its own timeout from the
+ * Journey's terms. Not done yet: the Fix as a `beforeEach`, each Hop as a
+ * `test.step`, and a way to show a stranded Route as neither passed nor
+ * failed, which phase 5 schedules.
  */
 export function createTest(cfg: AppUnderTest) {
   return base.extend<PhileasFixtures>({

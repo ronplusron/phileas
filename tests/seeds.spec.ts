@@ -21,7 +21,8 @@ import {
  *
  * These prove the reproducibility mechanism and nothing about traveling. No
  * Electron is launched and nothing is surveyed; every function under test here
- * is pure, apart from the two that read and write one environment variable.
+ * is pure, apart from those that read or set the seed, run and override
+ * variables.
  *
  * What they are worth: a seeded engine whose seeds do not reproduce reports
  * findings nobody can retrace, and it looks identical to one that works. There

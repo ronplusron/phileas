@@ -37,7 +37,8 @@ Hop did to the screen. `src/oracles/` joined them for the Positron trial:
 six checks run after every Hop and every Fix step, uncaught errors in either
 process, console errors, still responding, the window still showing
 something, no unexpected dialog, and an error in a log the adapter names. The
-first failure ends the Route.
+first failure ends the Route. An application that crashes, quits or closes
+its window fails still-responding rather than going unnoticed.
 
 **Two checks are absent, and every Hop says so.** No navigation away and named
 controls are not built yet, and each Hop's journal line records them as not
@@ -47,7 +48,8 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs one hundred and ninety-eight tests. Seven launch it,
+through, and `npm test` runs two hundred and thirty-two tests, after a
+typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
 assuming it. Twenty-five prove the reproducibility mechanism and a Journey's
@@ -79,7 +81,14 @@ a profile again when something recreates it, and report one that keeps
 coming back. Eleven cover known findings: signatures, the file, what a
 Journey's end adds, the command, and a Route carrying on past one. Five
 fail a Journey that leaves a profile in the temp folder, including when
-another end-of-Journey check fails first.
+another end-of-Journey check fails first. Thirty-four came with the fixes
+from the whole-codebase review of 2026-09-27: a crash and a quit firing the
+checks, one verdict per renderer error, a known hang still ending a Route,
+bounded survey and Fix calls, the surveyed and all-abandoned outcomes, the
+staleness guard's branches and its strict switch, whole-line log reads, the
+known-findings refusals, and the guarantees in `tests/guarantees.spec.ts`: a
+pinned draw order, the Fix's own stream, a fresh process per Route, a flush
+per Hop, and replay across launches.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -122,9 +131,8 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Two defects are open:
-the external-link stub can install successfully and do nothing, and what an
-application prints before the launch returns is lost. That file holds what is
+**Read `docs/DEFECTS.md` before writing any of it.** Eight defects are open,
+six of them deferred from the review of 2026-09-27. That file holds what is
 wrong, confirmed by reading the code, and nothing here restates it.
 
 **Two things phase 5 must not undo**, both measured earlier and carried in
@@ -192,7 +200,7 @@ npm test
 npm run journey
 ```
 
-`npm test` runs the engine's own one hundred and ninety-eight tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and thirty-two tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

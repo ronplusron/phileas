@@ -32,18 +32,17 @@ import type { ElectronApplication, Page } from '@playwright/test';
  * One case this cannot reach: a handler that ignores its arguments and asks
  * `BrowserWindow.getFocusedWindow()` itself gets nothing while the windows are
  * hidden, because a hidden window cannot hold focus. That is a hop doing
- * nothing, and phase 5's check that a hop changed something is what sees it.
+ * nothing, which the journal records as no change and no check fails on.
  */
 export async function clickMenuItem(
   app: ElectronApplication,
   labels: string[],
   page: Page
 ): Promise<void> {
-  // An empty path used to walk nothing, click nothing, and report success. No
-  // caller passes one today, and phase 4 builds these paths from Candidate's
-  // optional menuPath, where nothing in the type prevents it. A hop journaled
-  // as executed that did nothing corrupts the journal and the seeded replay
-  // together.
+  // An empty path used to walk nothing, click nothing, and report success.
+  // The type requires a menu candidate to have a path but not a non-empty one,
+  // and a hop journaled as executed that did nothing corrupts the journal and
+  // the seeded replay together.
   if (labels.length === 0) {
     throw new Error('clickMenuItem needs at least one label, and was given none.');
   }

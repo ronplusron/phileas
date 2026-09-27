@@ -131,7 +131,7 @@ function failedText(checks) {
 
 /**
  * The known findings a Hop carried on past, as a suffix to its line, or
- * nothing. Printed, since a Route travelling past a bug should never read as
+ * nothing. Printed, since a Route traveling past a bug should never read as
  * a Hop where nothing happened.
  * @param {readonly { findings?: readonly { id: string, known: boolean, issue?: string }[] }[] | undefined} checks
  * @returns {string}

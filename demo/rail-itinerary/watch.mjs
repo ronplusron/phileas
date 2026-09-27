@@ -14,6 +14,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hopsOf, retraceVerdict, sameHops } from './journals.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, '..', '..');
@@ -71,18 +72,6 @@ function run(extraArgs, { follow = false } = {}) {
   });
 }
 
-/** What a replay must reproduce: each Hop's target, action, value and draws. `route` counts from 1. */
-function hopsOf(folder, route) {
-  const file = fs.readdirSync(folder).find((f) => f.startsWith(`route-${String(route).padStart(3, '0')}-`));
-  return fs
-    .readFileSync(path.join(folder, file), 'utf8')
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => JSON.parse(line))
-    .filter((entry) => entry.kind === 'trip-hop')
-    .map((e) => JSON.stringify([e.target, e.action, e.value, e.shareDraw, e.draw]));
-}
-
 console.log(`Rail Itinerary demo, seed ${seed}\n`);
 const first = await run([], { follow: true });
 if (first.code !== 0 || !first.folder) {
@@ -99,10 +88,7 @@ if (!process.argv.includes('--no-replay')) {
   }
   const a = hopsOf(first.folder, 1);
   const b = hopsOf(again.folder, 1);
-  const same = a.length === b.length && a.every((hop, i) => hop === b[i]);
-  console.log(
-    same
-      ? `Route 1 retraced all ${a.length} hops exactly.`
-      : `Route 1 did not retrace: the runs first differ at hop ${a.findIndex((hop, i) => hop !== b[i]) + 1}.`
-  );
+  console.log(retraceVerdict(a, b));
+  // A replay that does not match is a finding, and says so in how it ends.
+  if (!sameHops(a, b)) process.exitCode = 1;
 }

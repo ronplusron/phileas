@@ -16,7 +16,7 @@ import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment }
  * already imports `journey.ts`.
  *
  * **The window mode, the hop delay and following are read here, not only where
- * they are used.** Both are otherwise first read after the application has launched, so
+ * they are used.** All three are otherwise first read after the application has launched, so
  * a mistyped mode got as far as starting Electron before being refused, once per
  * Route. Read here, it is refused before anything launches.
  *

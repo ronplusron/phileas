@@ -1,15 +1,15 @@
 /**
  * The terms of a Journey, and where its seed comes from.
  *
- * R1: a Journey is a seed, a number of Routes, a maximum number of Hops per
- * Route, and a deadline. Stating those four is enough to repeat the run, which
- * is the whole reason this file holds them together rather than letting them
- * accumulate as arguments.
+ * R1: a Journey is a seed, a number of Routes, a Trip length each Route is
+ * meant to reach, and optional Journey and Route deadlines. Stating those is
+ * enough to repeat the run, which is the whole reason this file holds them
+ * together rather than letting them accumulate as arguments.
  *
  * Nothing here travels. The Journey is the run; the Route is the test. This
- * file does not decide what gets explored, and it must not start: `PLAN.md`
- * records planner-assigned route bias as declined, and the place it would
- * reappear is here.
+ * file does not decide what gets explored, and it must not start:
+ * `docs/OUTSTANDING.md` records planner-assigned route bias as declined, and
+ * the place it would reappear is here.
  */
 
 /**

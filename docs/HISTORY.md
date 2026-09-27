@@ -25,6 +25,54 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: fixes from a whole-codebase review
+
+**Why.** Seven read-only review agents read every code and test file, and
+one of them every document but this one. Two findings were critical as rated
+after checking them against the code: a crashed application passed every
+check, and a Route's last Hop could report it passed; and the page fixture
+judged renderer errors a second time, ignoring known findings, so a known
+renderer error failed the test from the second Journey on. Four decisions
+were taken with the user: a known hang still ends a Route, a Route whose
+every Hop was abandoned strands, survey mode gets its own outcome, and the
+temp path committed in a test is replaced in the files only. What was
+deferred is in `DEFECTS.md` and `OUTSTANDING.md` 1.13.
+
+**What landed.**
+- A crash, a quit or a closed window fails still-responding, and a round
+  trip rejected because the target is gone is a failure, not an answer.
+- Each renderer error has one judge: the watch notes what it saw, and the
+  fixture judges only the rest, handing a narrowing the same text the check
+  does.
+- The survey's dialog count and menu read, and a Fix's `hop()`, are bounded;
+  the fixture's end-of-test diagnostics are too.
+- `surveyed` is an outcome, printed in the settings, and consumer specs mark
+  it skipped; a Trip of only abandoned Hops strands; an action's catch takes
+  only what an action can meet; `PageUnreachable` names its cause.
+- `PHILEAS_ALLOW_STALE` and the home guard's override are 1 or 0 only, and
+  the staleness guard's state is printed; packaged inputs are normalized, so
+  `./data` is checked in both directions.
+- The focus rail fails closed; the log check reads whole lines and says when
+  a named log does not exist.
+- `closeApp` kills after a shutdown that threw, and `launchApp` closes an
+  application whose setup threw.
+- Known findings are validated field by field, keep their source when filed,
+  and a Journey's end refuses a run it cannot read.
+- `CHECK_ORDER` is the list the check type is derived from; a chooser's
+  result must be in the pool; `top` pins a window created already shown.
+- `npm test` typechecks first; peer ranges are capped at what was tested.
+
+**Declined from the review, with the reason.** Declaring `@playwright/test`
+in each consumer here would install a second copy beside the engine's;
+`OUTSTANDING.md` 1.3 has it.
+
+**Tested.** Thirty-four new tests, 232 in all. Six were run with their fix
+undone and failed: the two crash plants, the known hang, the shutdown that
+threw, `top` on a window created shown, and the split log line. The `./data`
+guard test failed before its fix. The all-abandoned, Fix-stream and
+unwatched-renderer-error tests carry their control as a test of their own.
+The rest were not run against an undone fix.
+
 ## 2026-09-27: a Journey fails on a profile it left in the temp folder
 
 **Why.** The engine watches a deleted profile and deletes it again if a late

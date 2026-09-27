@@ -219,8 +219,9 @@ exact replay possible.
 
 ## Questions that tend to come up
 
-- **Does it find bugs yet?** Not yet. The checks that decide whether something
-  went wrong arrive next. This demo shows exploring and replaying, not finding.
+- **Does it find bugs yet?** Some. Six checks run after every step, and
+  against Positron they found real bugs. This demo has none planted, so it
+  shows exploring and replaying rather than finding.
 - **Why not just record a tester?** A recording follows one path. Phileas takes
   new paths every run, and still repeats any one of them exactly.
 - **What if it clicks something dangerous?** The adapter's exclusion list keeps

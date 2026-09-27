@@ -19,7 +19,12 @@ for (const routeNumber of routeNumbers(journey)) {
   test(`route ${routeNumber}`, async ({ page, app }, testInfo) => {
     const journeySeed = requireSeed();
     const streams = deriveRouteStreams(journeySeed, routeNumber);
-    testInfo.annotations.push({ type: 'route-seed', description: streams.routeSeed });
+    // The Journey seed first, since that is what `phileas run --seed` takes to
+    // replay this Route (R7); the Route's own seed is derived from it.
+    testInfo.annotations.push(
+      { type: 'journey-seed', description: journeySeed },
+      { type: 'route-seed', description: streams.routeSeed }
+    );
 
     const outcome = await runRoute({
       page,

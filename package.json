@@ -2,7 +2,7 @@
   "name": "@drugstoresushi/phileas",
   "version": "0.0.0",
   "private": true,
-  "description": "An exploratory testing engine for Electron apps: unscripted traversal with continuous invariant checking.",
+  "description": "An exploratory testing engine for Electron apps: unscripted travel with continuous invariant checking.",
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
@@ -29,8 +29,8 @@
     "@electron/asar": "^4.3.0"
   },
   "peerDependencies": {
-    "@playwright/test": ">=1.63.0",
-    "electron": ">=43"
+    "@playwright/test": "~1.63.0",
+    "electron": ">=43 <45"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

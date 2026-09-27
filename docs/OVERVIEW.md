@@ -1,14 +1,15 @@
 # Phileas -- an overview
 
-*As of 2026-09-24.*
+*As of 2026-09-27.*
 
 Phileas is a testing engine for Electron desktop apps that explores an app the
 way a curious tester would, clicking and typing its way through whatever is on
 screen, instead of following a script. Every run is seeded, so any problem it
 finds can be replayed exactly, and it records every step as it goes. Phases 0
-to 4 of 11 are done: it travels through apps, replays runs exactly, and
-records everything, with 146 automated tests behind it. It does not yet
-judge whether anything went wrong; those checks are phase 5, which is next.
+to 4 of 11 are done, and the part of phase 5 a trial on Positron needed: it
+travels through apps, replays runs exactly, records everything, and checks
+every step for errors, hangs, crashes and blank windows, with about two
+hundred automated tests behind it. Pointed at Positron, it found real bugs.
 
 ---
 
@@ -76,18 +77,25 @@ phases 0 through 4 are done:
 - Any run can be replayed exactly from its seed, and that is tested.
 - A command runs it with different settings, prints each step live if asked,
   and prints any finished run for a person to read.
-- 146 automated tests cover the engine itself, run against a small application
-  built for the purpose, and a demo application shows it at work.
+- About two hundred automated tests cover the engine itself, run against a
+  small application built for the purpose, and a demo application shows it at
+  work.
+- Six checks run after every step: no uncaught error, no console error, still
+  responding, still showing something, no unexpected dialog, and no error in
+  a log the application names. A bug already filed is recorded and traveled
+  past rather than ending every run it appears in.
 
-**What it does not do yet is judge anything.** The checks that decide whether
-something went wrong are phase 5, which is next. Until then a clean run means
-the engine traveled, not that the application is correct. It has not yet
-found a bug in anything, and is not expected to until those checks exist.
+**It judges some things, not all.** Two of the checks that apply to every
+application are not built yet, and the checks an application adds for itself
+are phase 6. A run against Positron found real bugs, which are filed; whether
+it finds them often enough to be worth its cost is what the Positron trial
+measures.
 
 ## What comes next
 
-- **Phase 5:** the checks that apply to every application, such as no crash,
-  no error, still responding, every control labeled.
+- **Phase 5:** the rest of the checks that apply to every application, such
+  as no navigation away and every control labeled, after the Positron trial
+  settles how much they are worth.
 - **Phases 6 to 8:** checks an application adds for itself, a readable report
   of each run, and proof that it works: a test application with deliberately
   planted bugs, and a run that must find every one.

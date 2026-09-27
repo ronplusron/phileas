@@ -283,7 +283,7 @@ test('the menu can drive the application, not merely be read', async () => {
     const page = await launched.app.firstWindow();
     await buggy.waitForReady(page);
 
-    // clickMenuItem's first coverage, and the positive control for the test
+    // The positive control for the test
     // above: reading a label proves the menu exists, and this proves the wiring
     // behind it works. A menu that renders and does nothing would pass one and
     // fail the other.

@@ -18,7 +18,7 @@ import { parse } from '../bin/phileas.mjs';
 /**
  * The phileas command, and the two engine functions it relies on.
  *
- * The command itself only reads flags and starts Playwright; every value is
+ * `phileas run` itself only reads flags and starts Playwright; every value is
  * checked by defineJourney or startJourney, before anything launches. So most
  * of this tests those two, with the variables set as the command sets them, and
  * one test runs the command for real.
