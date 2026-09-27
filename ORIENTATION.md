@@ -104,9 +104,11 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** One defect is open: the
-external-link stub can install successfully and do nothing. That file holds
-what is wrong, confirmed by reading the code, and nothing here restates it.
+**Read `docs/DEFECTS.md` before writing any of it.** Three defects are open:
+the external-link stub can install successfully and do nothing, the settle
+wait reports a busy page as one that stopped answering, and a window created
+already shown stays on the screen in hidden mode. That file holds what is
+wrong, confirmed by reading the code, and nothing here restates it.
 
 **Two things phase 5 must not undo**, both measured earlier and carried in
 `docs/PLAN.md`. A hop must not wait for navigation to finish, or a single
