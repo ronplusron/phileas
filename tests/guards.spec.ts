@@ -5,6 +5,7 @@ import { test, expect } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import {
   assertBundleFresh,
+  ALLOW_STALE_VARIABLE,
   clickMenuItem,
   closeApp,
   launchApp,
@@ -91,6 +92,29 @@ test('the guard notices a file the bundle still carries and the tree has lost', 
   // And it passes again, which is what says the failure came from the missing
   // file rather than from the guard having broken.
   expect(assertBundleFresh(buggy, bundle.asarPath).ran).toBe(true);
+});
+
+test('the reverse direction also runs for inputs written as ./folder or with a trailing slash', async () => {
+  // './data' once made the root '/./data', which no bundle path starts with,
+  // so the reverse direction checked nothing for it and said nothing. The
+  // parked copy is ignored so only the reverse direction can see the loss.
+  const bundle = resolveBundle(buggy);
+  const sourceRoot = String(buggy.staleness?.sourceRoot);
+  const target = path.join(sourceRoot, 'data', 'items.json');
+  const parked = path.join(sourceRoot, 'data', 'items.json.parked');
+  for (const spelling of ['./data', 'data/', '/data']) {
+    const cfg = withStaleness({
+      packagedInputs: ['main.cjs', 'preload.cjs', 'renderer', spelling, 'package.json'],
+      ignoreInput: (relative) => relative.endsWith('.parked'),
+    });
+    await fs.promises.rename(target, parked);
+    try {
+      expect(() => assertBundleFresh(cfg, bundle.asarPath), spelling).toThrow(/items\.json: in the bundle but gone/);
+    } finally {
+      await fs.promises.rename(parked, target);
+    }
+    expect(assertBundleFresh(cfg, bundle.asarPath).ran, spelling).toBe(true);
+  }
 });
 
 test('the launch refuses an adapter that supplies its own user data directory', async () => {
@@ -200,5 +224,55 @@ test('clicking a menu item refuses an empty path', async () => {
   } finally {
     await closeApp(buggy, launched).catch(() => {});
     await fs.promises.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('the guard notices a file on disk that the bundle does not carry', async () => {
+  const bundle = resolveBundle(buggy);
+  const extra = path.join(String(buggy.staleness?.sourceRoot), 'renderer', 'added-since.txt');
+  await fs.promises.writeFile(extra, 'new since the bundle was built\n');
+  try {
+    expect(() => assertBundleFresh(buggy, bundle.asarPath)).toThrow(/added-since\.txt: on disk but not in the bundle/);
+  } finally {
+    await fs.promises.rm(extra, { force: true });
+  }
+  expect(assertBundleFresh(buggy, bundle.asarPath).ran).toBe(true);
+});
+
+test('package.json is stale on a key the bundle kept, and not on one it dropped', async () => {
+  const bundle = resolveBundle(buggy);
+  const file = path.join(String(buggy.staleness?.sourceRoot), 'package.json');
+  const original = await fs.promises.readFile(file, 'utf8');
+  const edited = (change: (json: Record<string, unknown>) => void) => {
+    const json = JSON.parse(original) as Record<string, unknown>;
+    change(json);
+    return `${JSON.stringify(json, null, 2)}\n`;
+  };
+  try {
+    // Kept by the packager, so the running application sees it.
+    await fs.promises.writeFile(file, edited((json) => (json.version = '9.9.9')));
+    expect(() => assertBundleFresh(buggy, bundle.asarPath)).toThrow(/package\.json: version changed/);
+    // Dropped by the packager, so it cannot go stale in the running application.
+    await fs.promises.writeFile(file, edited((json) => (json.scripts = { package: 'something else' })));
+    expect(assertBundleFresh(buggy, bundle.asarPath).ran).toBe(true);
+  } finally {
+    await fs.promises.writeFile(file, original);
+  }
+});
+
+test('the skip switch is 1 or 0, and anything else is refused rather than read as on', () => {
+  const bundle = resolveBundle(buggy);
+  const saved = process.env[ALLOW_STALE_VARIABLE];
+  try {
+    process.env[ALLOW_STALE_VARIABLE] = '1';
+    expect(assertBundleFresh(buggy, bundle.asarPath)).toMatchObject({ ran: false, reason: 'skipped-by-switch' });
+    // Read as "don't", which it once skipped the guard for.
+    process.env[ALLOW_STALE_VARIABLE] = '0';
+    expect(assertBundleFresh(buggy, bundle.asarPath).ran).toBe(true);
+    process.env[ALLOW_STALE_VARIABLE] = 'yes';
+    expect(() => assertBundleFresh(buggy, bundle.asarPath)).toThrow(/PHILEAS_ALLOW_STALE="yes" is not on or off/);
+  } finally {
+    if (saved === undefined) delete process.env[ALLOW_STALE_VARIABLE];
+    else process.env[ALLOW_STALE_VARIABLE] = saved;
   }
 });

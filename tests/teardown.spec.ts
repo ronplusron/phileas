@@ -81,6 +81,28 @@ test('an application that closes in time is not killed', async () => {
   }
 });
 
+test('a shutdown that throws still ends with the process gone, and the error kept', async () => {
+  // A shutdown that threw never reached app.close(), and the error went
+  // straight out with the application still running.
+  const throwing: AppUnderTest = {
+    ...buggy,
+    shutdown: async () => {
+      throw new Error('the shutdown hook broke');
+    },
+  };
+  const dir = await makeUserDataDir(throwing);
+  const launched = await launchOrRemove(throwing, dir);
+  const pid = launched.app.process().pid;
+  try {
+    await throwing.waitForReady(await launched.app.firstWindow());
+    await expect(closeApp(throwing, launched, 2_000)).rejects.toThrow(/the shutdown hook broke/);
+    expect(isRunning(pid)).toBe(false);
+  } finally {
+    if (isRunning(pid)) process.kill(pid as number, 'SIGKILL');
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  }
+});
+
 const always: Chooser = {
   choose: (candidates) => {
     const target = candidates.find((candidate) => candidate.name === CONTROL);

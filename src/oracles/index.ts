@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import type { ElectronApplication, Page } from '@playwright/test';
-import type { AppUnderTest, UniversalCheck } from '../app-under-test';
+import { UNIVERSAL_CHECKS, type AppUnderTest, type UniversalCheck } from '../app-under-test';
 import type { JournaledCheck } from '../journal';
 import { findingId, signatureOf, type KnownFindings } from '../known.mjs';
 
@@ -30,17 +30,12 @@ import { findingId, signatureOf, type KnownFindings } from '../known.mjs';
  * See `judgedByTheWatch`.
  */
 
-/** The order every Hop's line lists the checks in, so two lines compare by eye. */
-export const CHECK_ORDER: readonly UniversalCheck[] = [
-  'uncaught-error',
-  'console-error',
-  'still-responding',
-  'window-showing-content',
-  'no-unexpected-dialog',
-  'log-error',
-  'no-navigation-away',
-  'named-controls',
-];
+/**
+ * The order every Hop's line lists the checks in, so two lines compare by eye.
+ * The list itself, since the check type is derived from it, so no check can
+ * be left out.
+ */
+export const CHECK_ORDER: readonly UniversalCheck[] = UNIVERSAL_CHECKS;
 
 /**
  * How long each process has to answer a round trip before the application is
@@ -245,7 +240,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   // Where each log ended when the Route started, so only what a Hop appended
   // is read. A file that does not exist yet starts at nothing.
   const logOffsets = new Map<string, number>();
-  for (const file of resolveLogPaths(cfg, options.userDataDir)) logOffsets.set(file, sizeOf(file));
+  for (const file of resolveLogPaths(cfg, options.userDataDir)) logOffsets.set(file, sizeOf(file) ?? 0);
 
   const readMain = async (): Promise<string[] | string> => {
     if (mainWatched !== undefined) return `the main process could not be watched: ${mainWatched}`;
@@ -259,10 +254,18 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     return answer.map(firstLines);
   };
 
-  const readLogs = (): string[] => {
+  const readLogs = (): Verdict => {
     const found: string[] = [];
+    const missing: string[] = [];
     for (const [file, offset] of logOffsets) {
       const size = sizeOf(file);
+      // **A named log that does not exist is not a clean log.** Read as
+      // nothing, a mistyped path or a log that moved passed on every Hop while
+      // checking nothing; Positron's is named by a path measured once.
+      if (size === undefined) {
+        missing.push(file);
+        continue;
+      }
       // A log that shrank was rotated or truncated; read it from the start.
       const from = size < offset ? 0 : offset;
       if (size > from) {
@@ -270,14 +273,22 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
         try {
           const buffer = Buffer.alloc(size - from);
           fs.readSync(handle, buffer, 0, buffer.length, from);
-          for (const line of buffer.toString('utf8').split('\n')) {
+          // **Whole lines only.** A logger that flushes by buffer size can end
+          // a write mid-line, and reading to the end split "ERROR" across two
+          // Hops, so neither half matched. What follows the last newline is
+          // left for the next read.
+          const end = buffer.lastIndexOf(0x0a) + 1;
+          for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
             if (/\berror\b/i.test(line)) found.push(`${file}: ${line.trim()}`);
           }
+          logOffsets.set(file, from + end);
         } finally {
           fs.closeSync(handle);
         }
-      }
-      logOffsets.set(file, size);
+      } else logOffsets.set(file, size);
+    }
+    if (found.length === 0 && missing.length) {
+      return { notRun: `${missing.join(', ')} does not exist, so it could not be read` };
     }
     return found;
   };
@@ -498,11 +509,13 @@ async function within<T>(
   }
 }
 
-function sizeOf(file: string): number {
+/** A file's size, or undefined when it does not exist. Any other failure to read it is thrown. */
+function sizeOf(file: string): number | undefined {
   try {
     return fs.statSync(file).size;
-  } catch {
-    return 0;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+    throw error;
   }
 }
 

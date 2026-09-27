@@ -347,3 +347,41 @@ hanging('a known hang still ends the Route, recorded as known', async ({ page, a
   expect(check?.findings?.length).toBeGreaterThan(0);
   expect(check?.findings?.every((found) => found.known)).toBe(true);
 });
+
+test('a hand-edited finding whose id no longer matches its signature is refused by name', () => {
+  const signature = 'console-error: the tickets could not be checked';
+  expect(readKnownFindings(knownFile([finding(signature)])).entries).toHaveLength(1);
+  // Edited in the file after it was written, so the id a Route prints and the
+  // id `phileas known add` matches would differ.
+  const edited = { ...finding(signature), signature: 'console-error: the tickets could not be read' };
+  expect(() => readKnownFindings(knownFile([edited]))).toThrow(/Known finding 1 .* was the signature edited\?/);
+  expect(() => readKnownFindings(knownFile([{ ...finding(signature), source: 'someone' } as unknown as KnownFinding]))).toThrow(
+    /neither journey nor command/
+  );
+});
+
+test('filing a finding keeps where it came from', () => {
+  const file = knownFile([finding('console-error: the tickets could not be checked')]);
+  const id = findingId('console-error: the tickets could not be checked');
+  expect(markFiled(file, id, 'ronplusron/phileas#7')).toMatchObject({ source: 'journey', issue: 'ronplusron/phileas#7' });
+});
+
+test("a Journey's end refuses a run it cannot read, rather than calling every finding unseen", () => {
+  const root = scratch('phileas-known-test-');
+  const file = knownFile([finding('console-error: the tickets could not be checked')]);
+  expect(() => recordJourneyFindings(path.join(root, 'absent'), file)).toThrow(/journals are not at/);
+
+  const empty = path.join(root, 'empty');
+  fs.mkdirSync(empty);
+  expect(() => recordJourneyFindings(empty, file)).toThrow(/holds no journals/);
+
+  // A broken last line is a Route that died mid-write, and is read up to it;
+  // a broken line with more after it is damage, and refused.
+  const run = path.join(root, 'run');
+  fs.mkdirSync(run);
+  const good = JSON.stringify({ kind: 'trip-hop', checks: [] });
+  fs.writeFileSync(path.join(run, 'route-001-a.jsonl'), `${good}\n{"kind": "trip-h`);
+  expect(recordJourneyFindings(run, file).notSeen).toHaveLength(1);
+  fs.writeFileSync(path.join(run, 'route-002-b.jsonl'), `{"kind": "trip-h\n${good}\n`);
+  expect(() => recordJourneyFindings(run, file)).toThrow(/Line 1 of .*route-002-b\.jsonl is not valid JSON, and lines follow it/);
+});

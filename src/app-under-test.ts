@@ -160,23 +160,31 @@ export interface StalenessGuard {
 }
 
 /**
- * A check that ships with the engine and assumes nothing about any
- * application. R17 in docs/PRODUCT_REQUIREMENTS.md names the first seven.
+ * The checks that ship with the engine and assume nothing about any
+ * application, in the order every Hop's line lists them. R17 in
+ * docs/PRODUCT_REQUIREMENTS.md names them.
  *
- * `log-error` is the eighth, placed in this tier on 2026-09-26: it assumes
- * nothing about an application beyond where its logs are, and it does not run
- * unless the adapter names one in `logPaths`, which the journal says on every
- * Hop.
+ * `log-error` was placed in this tier on 2026-09-26: it assumes nothing about
+ * an application beyond where its logs are, and it does not run unless the
+ * adapter names one in `logPaths`, which the journal says on every Hop.
+ *
+ * **The type is derived from this list, not written beside it.** A check added
+ * to a separate type and left out of the list compiled, never ran, and never
+ * appeared on a Hop's line, which reads as passed.
  */
-export type UniversalCheck =
-  | 'uncaught-error'
-  | 'console-error'
-  | 'still-responding'
-  | 'window-showing-content'
-  | 'no-navigation-away'
-  | 'no-unexpected-dialog'
-  | 'named-controls'
-  | 'log-error';
+export const UNIVERSAL_CHECKS = [
+  'uncaught-error',
+  'console-error',
+  'still-responding',
+  'window-showing-content',
+  'no-unexpected-dialog',
+  'log-error',
+  'no-navigation-away',
+  'named-controls',
+] as const;
+
+/** A check that ships with the engine; see `UNIVERSAL_CHECKS`. */
+export type UniversalCheck = (typeof UNIVERSAL_CHECKS)[number];
 
 /**
  * Switching off or narrowing a built-in check, with the reason recorded.

@@ -361,3 +361,71 @@ healthy('blank means nothing readable at all, not merely little', () => {
   expect(showsNothing({ role: 'main', children: ['Ready'] })).toBe(false);
   expect(showsNothing({ role: 'main', children: [{ role: 'button', name: 'Go' }] })).toBe(false);
 });
+
+// The log reader, driven by what a chooser writes just before each Hop, so
+// the test decides exactly what each Hop's read finds.
+const WRITTEN = path.join(os.tmpdir(), `buggy-checks-written-${process.pid}.log`);
+const writtenLog: AppUnderTest = { ...buggy, logPaths: [WRITTEN] };
+const writtenTest = createTest(writtenLog);
+writtenTest.afterEach(async () => {
+  removeScratch();
+  await fs.promises.rm(WRITTEN, { force: true });
+});
+
+/** Writes the next piece before each Hop, and clicks Summary and Inventory in turn. */
+function writing(pieces: string[]): Chooser {
+  let hop = 0;
+  return {
+    choose: (candidates) => {
+      const piece = pieces[hop];
+      if (piece !== undefined) fs.appendFileSync(WRITTEN, piece);
+      const name = hop % 2 === 0 ? 'Summary' : 'Inventory';
+      hop += 1;
+      const target = candidates.find((candidate) => candidate.name === name && candidate.source === 'page');
+      if (!target) throw new Error(`${name} is not on offer`);
+      return { target };
+    },
+  };
+}
+
+async function logRoute(page: import('@playwright/test').Page, app: import('@playwright/test').ElectronApplication, pieces: string[]) {
+  const root = scratch();
+  const error = await runRoute({
+    page,
+    app,
+    cfg: writtenLog,
+    streams: deriveRouteStreams('written-log', 1),
+    journeySeed: 'written-log',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: root,
+    chooser: writing(pieces),
+    ...SHORT,
+  }).then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+  const hops = journalIn(root).filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  return { error, hops: hops.map((hop) => result(hop.checks, 'log-error')) };
+}
+
+writtenTest('an error line written in two pieces is read once it is whole', async ({ page, app }) => {
+  // A line with no error passes; half an error line is left for the next read;
+  // the rest of it completes the line, which fails on the Hop that finished it.
+  // Read to the end each time, "ERR" and "OR" matched nothing on either Hop.
+  fs.writeFileSync(WRITTEN, '');
+  const { error, hops } = await logRoute(page, app, ['all is well\n2026 ERR', 'OR the page is torn\n']);
+  expect(hops.map((check) => check?.result)).toEqual(['passed', 'failed']);
+  expect(hops[1]?.observation).toMatch(/2026 ERROR the page is torn/);
+  expect(error).toBeInstanceOf(CheckFailure);
+});
+
+writtenTest('a named log that does not exist is not run, and says so, rather than passing', async ({ page, app }) => {
+  const { error, hops } = await logRoute(page, app, []);
+  expect(error).toBeUndefined();
+  expect(hops).toHaveLength(3);
+  for (const check of hops) {
+    expect(check?.result).toBe('not-run');
+    expect(check?.observation).toMatch(/does not exist, so it could not be read/);
+  }
+});

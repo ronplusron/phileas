@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
-import { closeApp, makeUserDataDir, WINDOW_MODE_VARIABLE } from '../src/index';
+import { closeApp, makeUserDataDir, WINDOW_MODE_VARIABLE, type AppUnderTest } from '../src/index';
 import { launchOrRemove } from './scratch';
 
 /**
@@ -23,13 +23,13 @@ import { launchOrRemove } from './scratch';
  * written from inside, would be asserting something it cannot see.
  */
 
-async function windowState(mode: string | undefined) {
+async function windowState(mode: string | undefined, cfg: AppUnderTest = buggy) {
   const before = process.env[WINDOW_MODE_VARIABLE];
   if (mode === undefined) delete process.env[WINDOW_MODE_VARIABLE];
   else process.env[WINDOW_MODE_VARIABLE] = mode;
 
-  const userDataDir = await makeUserDataDir(buggy);
-  const launched = await launchOrRemove(buggy, userDataDir);
+  const userDataDir = await makeUserDataDir(cfg);
+  const launched = await launchOrRemove(cfg, userDataDir);
   try {
     // Synchronized on the application being ready before anything is read.
     // `buggy` creates its window hidden and calls show() on 'ready-to-show',
@@ -37,7 +37,7 @@ async function windowState(mode: string | undefined) {
     // straight after launch races the application: two of these tests failed
     // that way and the third passed on the luck of an extra round trip, which
     // is worse than all three failing.
-    await buggy.waitForReady(await launched.app.firstWindow());
+    await cfg.waitForReady(await launched.app.firstWindow());
 
     return await launched.app.evaluate(({ BrowserWindow }) => {
       const window = BrowserWindow.getAllWindows()[0];
@@ -49,7 +49,7 @@ async function windowState(mode: string | undefined) {
     });
   } finally {
     try {
-      await closeApp(buggy, launched);
+      await closeApp(cfg, launched);
     } finally {
       await fs.promises.rm(userDataDir, { recursive: true, force: true });
       if (before === undefined) delete process.env[WINDOW_MODE_VARIABLE];
@@ -90,5 +90,13 @@ test('top shows the window and keeps it above everything', async () => {
   // Observable from inside, unlike the activation, so this one is genuinely
   // checked. It is also the mode that a viewer cannot get away from, which was
   // measured by trapping one.
+  expect(state.alwaysOnTop).toBe(true);
+});
+
+test('top keeps a window created already shown above everything too', async () => {
+  // Such a window never calls show(), which is all top used to replace: the
+  // same gap hidden mode closed for Positron, left open here.
+  const state = await windowState('top', { ...buggy, launchArgs: ['--buggy-shown-at-creation'] });
+  expect(state.visible).toBe(true);
   expect(state.alwaysOnTop).toBe(true);
 });

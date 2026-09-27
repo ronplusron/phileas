@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { extractFile, listPackage } from '@electron/asar';
+import { extractFile, listPackage, statFile } from '@electron/asar';
 import type { AppUnderTest } from './app-under-test';
 
 export interface ResolvedBundle {
@@ -99,6 +99,21 @@ function* walkFiles(root: string, relative: string): Generator<string> {
   }
 }
 
+/** The variable that runs against a stale build, which the run then says. */
+export const ALLOW_STALE_VARIABLE = 'PHILEAS_ALLOW_STALE';
+
+/**
+ * Whether the staleness guard is switched off for this run, refusing anything
+ * but 1 or 0. It used to count any value as on, so PHILEAS_ALLOW_STALE=0 --
+ * which reads as "don't" -- skipped the single most important guard there is.
+ */
+export function allowStaleFromEnvironment(): boolean {
+  const raw = (process.env[ALLOW_STALE_VARIABLE] ?? '').trim();
+  if (raw === '' || raw === '0') return false;
+  if (raw === '1') return true;
+  throw new RangeError(`${ALLOW_STALE_VARIABLE}=${JSON.stringify(raw)} is not on or off. Use 1 or 0.`);
+}
+
 /**
  * Compare one packaged file against its copy on disk.
  *
@@ -161,7 +176,7 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string | undefine
         'This is the shape where the engine is pointed at an installed binary (C1a).',
     };
   }
-  if (process.env.PHILEAS_ALLOW_STALE) {
+  if (allowStaleFromEnvironment()) {
     return {
       ran: false,
       reason: 'skipped-by-switch',
@@ -171,7 +186,14 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string | undefine
     };
   }
 
-  const { sourceRoot, packagedInputs } = cfg.staleness;
+  const { sourceRoot } = cfg.staleness;
+  // Normalized once, for both directions, so './data', 'data/' and '/data'
+  // all name the bundle's 'data'. Written raw, './data' made the reverse
+  // direction's root '/./data', which no bundle path starts with, so it
+  // checked nothing for that input and said nothing.
+  const packagedInputs = cfg.staleness.packagedInputs.map((input) =>
+    path.posix.normalize(input).replace(/^(?:\.\/|\/)+/, '').replace(/\/+$/, '')
+  );
 
   // A guard that compared nothing returned the same affirmative verdict as one
   // that compared four hundred files. Two ways to reach it, both measured
@@ -227,19 +249,17 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string | undefine
   // The other direction: something the bundle still carries that is gone from
   // disk, such as a deleted text record. Without this the guard would pass on a
   // bundle that serves content the corpus no longer has.
-  const inputRoots = packagedInputs.map((p) => '/' + p.replace(/\/+$/, ''));
+  const inputRoots = packagedInputs.map((p) => '/' + p);
   for (const bundlePath of listPackage(asarPath, { isPack: false })) {
     const underAnInput = inputRoots.some((r) => bundlePath === r || bundlePath.startsWith(r + '/'));
     if (!underAnInput) continue;
     if (seenInBundlePaths.has(bundlePath)) continue;
     const relative = bundlePath.slice(1);
     if (ignore(relative)) continue;
-    // listPackage returns directories too; only files can be extracted.
-    try {
-      extractFile(asarPath, relative);
-    } catch {
-      continue;
-    }
+    // listPackage returns directories too, told apart by the archive's own
+    // header rather than by an extraction failing, which would pass over a
+    // file that failed to extract for any other reason as though it were one.
+    if ('files' in statFile(asarPath, relative)) continue;
     problems.push(`${relative}: in the bundle but gone from the working tree`);
   }
 
@@ -262,6 +282,6 @@ export function assertBundleFresh(cfg: AppUnderTest, asarPath: string | undefine
       shown +
       more +
       `\n\nRepackage the application, then run again.\n` +
-      `To run against it anyway, set PHILEAS_ALLOW_STALE=1; the run will say so loudly.`
+      `To run against it anyway, set PHILEAS_ALLOW_STALE=1; the run's settings say so.`
   );
 }

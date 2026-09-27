@@ -1230,3 +1230,28 @@ test('a Route whose every Hop was abandoned strands, rather than passing', async
 test('the same clicks with nothing over them pass, which is the control', async ({ page, app }) => {
   expect(await clicksUnder(page, app, false)).toMatchObject({ kind: 'passed', hops: 3 });
 });
+
+test('a chooser that returns something the survey did not offer is refused', async ({ page, app }) => {
+  // The seam is for choosers still to be written; a Hop journaled against a
+  // pool that does not hold its target would break R10 without a word.
+  const outside: Chooser = {
+    choose: (candidates) => {
+      const first = candidates[0];
+      if (!first) throw new Error('nothing on offer');
+      return { target: { ...first } };
+    },
+  };
+  await expect(
+    runRoute({
+      page,
+      app,
+      cfg: buggy,
+      streams: deriveRouteStreams('outside', 1),
+      journeySeed: 'outside',
+      routeNumber: 1,
+      tripLength: 1,
+      journalsRoot: scratch(),
+      chooser: outside,
+    })
+  ).rejects.toThrow(/not among the candidates it was given/);
+});

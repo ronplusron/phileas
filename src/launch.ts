@@ -318,8 +318,9 @@ export async function hideWindows(app: ElectronApplication): Promise<void> {
  * Called before `firstWindow()`, which is the earliest the main process can be
  * reached and, for an application that defers display, before anything is on
  * the screen. `top` is handled here rather than after the fact because a window
- * created later has to get the same treatment, and replacing `show` is the only
- * hook that reaches one.
+ * created later has to get the same treatment. Replacing `show` reaches one
+ * revealed later; one created with `show: true` never calls it, so
+ * `browser-window-created` reaches that one, as it does for hidden mode.
  */
 export async function prepareWindows(app: ElectronApplication, mode: WindowMode): Promise<void> {
   if (mode === 'hidden') {
@@ -328,13 +329,17 @@ export async function prepareWindows(app: ElectronApplication, mode: WindowMode)
   }
 
   if (mode === 'top') {
-    await app.evaluate(({ BrowserWindow }) => {
+    await app.evaluate(({ app: electronApp, BrowserWindow }) => {
       const show = BrowserWindow.prototype.show;
       BrowserWindow.prototype.show = function (this: Electron.BrowserWindow) {
         show.call(this);
         this.setAlwaysOnTop(true);
       };
       for (const window of BrowserWindow.getAllWindows()) window.setAlwaysOnTop(true);
+      electronApp.on('browser-window-created', (_event, window) => {
+        window.setAlwaysOnTop(true);
+        window.on('show', () => window.setAlwaysOnTop(true));
+      });
     });
   }
 }
@@ -418,39 +423,57 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
     timeout: 20_000,
   });
 
-  const mode = windowMode();
+  // Everything after the launch is inside this, so a step that throws closes
+  // the application rather than leaking it: the fixture never receives a
+  // launch that did not return, so nothing else would.
+  try {
+    const mode = windowMode();
 
-  // Before firstWindow(), which is the earliest the main process can be reached
-  // and, for an app that defers display, before anything has been drawn.
-  await prepareWindows(app, mode);
+    // Before firstWindow(), which is the earliest the main process can be reached
+    // and, for an app that defers display, before anything has been drawn.
+    await prepareWindows(app, mode);
 
-  const launched: LaunchedApp = {
-    app,
-    path: 'electron',
-    guard,
-    stderr: [],
-    pageErrors: [],
-    consoleErrors: [],
-  };
+    const launched: LaunchedApp = {
+      app,
+      path: 'electron',
+      guard,
+      stderr: [],
+      pageErrors: [],
+      consoleErrors: [],
+    };
 
-  app.process().stderr?.on('data', (chunk) => launched.stderr.push(String(chunk)));
+    app.process().stderr?.on('data', (chunk) => launched.stderr.push(String(chunk)));
 
-  await stubOpenExternal(app);
+    await stubOpenExternal(app);
 
-  // Which page is the application, rather than which window appeared first: an
-  // application with a splash has more than one, and firstWindow() would hand
-  // back the splash.
-  const page = await openedWindow(cfg, launched);
-  page.on('pageerror', (error) => launched.pageErrors.push(error));
-  page.on('console', (message) => {
-    if (message.type() === 'error') launched.consoleErrors.push(message.text());
-  });
+    // Which page is the application, rather than which window appeared first: an
+    // application with a splash has more than one, and firstWindow() would hand
+    // back the splash.
+    const page = await openedWindow(cfg, launched);
+    page.on('pageerror', (error) => launched.pageErrors.push(error));
+    page.on('console', (message) => {
+      if (message.type() === 'error') launched.consoleErrors.push(message.text());
+    });
 
-  // After a window exists, which is what activation needs and hiding could not
-  // wait for.
-  await activateWindows(app, mode);
+    // After a window exists, which is what activation needs and hiding could not
+    // wait for.
+    await activateWindows(app, mode);
 
-  return launched;
+    return launched;
+  } catch (error) {
+    // Bounded, since an application that failed to set up may not answer, and
+    // guarded, so that cleaning up can never replace the error that says why
+    // the launch failed. The process is taken first: once the application
+    // has closed, Playwright no longer hands it over.
+    try {
+      const child = app.process();
+      await Promise.race([app.close().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 5_000))]);
+      if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    } catch {
+      // Already closed, which is what this was for.
+    }
+    throw error;
+  }
 }
 
 /**
@@ -573,18 +596,36 @@ export async function closeApp(
     timer = setTimeout(() => resolve('timed-out'), timeoutMs);
   });
 
+  // An orderly close that throws still propagates, as it always has: the
+  // fixture attaches that as its own finding. **But only after the kill.** A
+  // shutdown that threw never reached app.close(), and propagating straight
+  // away left the process running with nothing left to stop it.
+  let orderlyError: unknown;
   try {
-    // An orderly close that throws still propagates, as it always has: the
-    // fixture attaches that as its own finding.
-    if ((await Promise.race([orderly.then(() => 'closed' as const), timedOut])) === 'closed') {
-      return { forced: false };
-    }
+    const settled = await Promise.race([
+      orderly.then(
+        () => 'closed' as const,
+        (error: unknown) => {
+          orderlyError = error;
+          return 'threw' as const;
+        }
+      ),
+      timedOut,
+    ]);
+    if (settled === 'closed') return { forced: false };
   } finally {
     clearTimeout(timer);
   }
 
   // Abandoned, and it may settle once the process is gone; nothing waits on it.
   orderly.catch(() => undefined);
+  const verdict = await forceClose(launched, timeoutMs);
+  if (orderlyError !== undefined) throw orderlyError;
+  return verdict;
+}
+
+/** Kill what an orderly close did not end, where this launch path reaches a process. */
+async function forceClose(launched: LaunchedApp, timeoutMs: number): Promise<CloseVerdict> {
 
   if (launched.path !== 'electron') {
     return {

@@ -146,7 +146,13 @@ export function outsidePositrons(): number {
  * override is set, in which case it says the guard did not run.
  */
 export function guardHome(home: string, journeyFolder?: JourneyFolder): () => void {
-  if (process.env[ALLOW_HOME_WRITES_VARIABLE]) {
+  // 1 or 0 and nothing else, as every switch in the engine is: counted as on
+  // for any value, =0 switched the guard off.
+  const raw = (process.env[ALLOW_HOME_WRITES_VARIABLE] ?? '').trim();
+  if (raw !== '' && raw !== '0' && raw !== '1') {
+    throw new RangeError(`${ALLOW_HOME_WRITES_VARIABLE}=${JSON.stringify(raw)} is not on or off. Use 1 or 0.`);
+  }
+  if (raw === '1') {
     console.log(`Home folder guard: skipped, because ${ALLOW_HOME_WRITES_VARIABLE} is set.`);
     return () => undefined;
   }

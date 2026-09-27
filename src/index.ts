@@ -6,9 +6,12 @@ export type {
   Narrowing,
   UniversalCheck,
 } from './app-under-test';
+export { UNIVERSAL_CHECKS } from './app-under-test';
 export {
   resolveBundle,
   assertBundleFresh,
+  allowStaleFromEnvironment,
+  ALLOW_STALE_VARIABLE,
   type ResolvedBundle,
   type GuardVerdict,
 } from './bundle';

@@ -108,6 +108,26 @@ export function readKnownFindings(file) {
   if (!Array.isArray(parsed) || !parsed.every((entry) => typeof entry?.signature === 'string')) {
     throw new Error(`The known findings in ${file} are not a list of findings with signatures.`);
   }
+  // Every field, since the file is for people and gets edited by hand. The id
+  // and check are derived from the signature, so one edited alone would make
+  // the id a Route prints differ from the id `phileas known add` matches.
+  parsed.forEach((entry, index) => {
+    const problem =
+      typeof entry.id !== 'string'
+        ? 'has no id'
+        : entry.id !== findingId(entry.signature)
+          ? `has the id ${entry.id}, but its signature's id is ${findingId(entry.signature)}; was the signature edited?`
+          : typeof entry.check !== 'string' || !entry.signature.startsWith(`${entry.check}: `)
+            ? 'has a check that does not match its signature'
+            : typeof entry.added !== 'string'
+              ? 'has no date it was added'
+              : entry.source !== 'journey' && entry.source !== 'command'
+                ? 'has a source that is neither journey nor command'
+                : entry.issue !== undefined && typeof entry.issue !== 'string'
+                  ? 'has an issue that is not text'
+                  : undefined;
+    if (problem) throw new Error(`Known finding ${index + 1} in ${file} ${problem}: ${entry.signature}`);
+  });
   return {
     version: createHash('sha256').update(text).digest('hex').slice(0, 12),
     entries: /** @type {KnownFinding[]} */ (parsed),
@@ -145,8 +165,10 @@ export function markFiled(file, id, issue) {
     );
   }
   const [match] = /** @type {[KnownFinding]} */ (matches);
+  // The source stays where the finding came from; filing it adds an issue and
+  // changes nothing about how it was found.
   /** @type {KnownFinding} */
-  const filed = { ...match, issue, source: 'command' };
+  const filed = { ...match, issue };
   writeKnownFindings(file, entries.map((entry) => (entry === match ? filed : entry)));
   return filed;
 }
@@ -162,16 +184,32 @@ export function markFiled(file, id, issue) {
 export function findingsInRun(runFolder) {
   /** @type {Map<string, { finding: FindingRecord, check: string, sightings: number }>} */
   const found = new Map();
-  if (!fs.existsSync(runFolder)) return found;
-  for (const name of fs.readdirSync(runFolder).filter((file) => file.endsWith('.jsonl'))) {
-    for (const line of fs.readFileSync(path.join(runFolder, name), 'utf8').split('\n')) {
-      if (!line.trim()) continue;
+  // **Refused rather than read as nothing.** Read as nothing, a wrong journals
+  // folder or a run that wrote no journal reported every known finding as "not
+  // seen this Journey, possibly fixed": an invitation to close a real issue.
+  if (!fs.existsSync(runFolder)) {
+    throw new Error(`The run's journals are not at ${runFolder}, so what the Journey found cannot be read. Is journalsRoot the one the spec writes to?`);
+  }
+  const journals = fs.readdirSync(runFolder).filter((file) => file.endsWith('.jsonl'));
+  if (journals.length === 0) {
+    throw new Error(`${runFolder} holds no journals, so what the Journey found cannot be read.`);
+  }
+  for (const name of journals) {
+    const lines = fs.readFileSync(path.join(runFolder, name), 'utf8').split('\n');
+    lines.forEach((line, index) => {
+      if (!line.trim()) return;
       /** @type {{ checks?: { check: string, findings?: FindingRecord[] }[] }} */
       let entry;
       try {
         entry = JSON.parse(line);
       } catch {
-        continue;
+        // The last line of a Route that died mid-write is expected, and
+        // readJournal takes it the same way. A broken line with more after it
+        // is damage, and dropping it would drop its findings unseen.
+        if (lines.slice(index + 1).some((rest) => rest.trim())) {
+          throw new Error(`Line ${index + 1} of ${path.join(runFolder, name)} is not valid JSON, and lines follow it.`);
+        }
+        return;
       }
       for (const check of entry.checks ?? []) {
         for (const finding of check.findings ?? []) {
@@ -180,7 +218,7 @@ export function findingsInRun(runFolder) {
           else found.set(finding.signature, { finding, check: check.check, sightings: 1 });
         }
       }
-    }
+    });
   }
   return found;
 }
