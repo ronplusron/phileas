@@ -49,8 +49,11 @@ tree before each Trip Hop.
 
 **Measured.** The rail guided demo, played through hidden before and after
 the lift, printed the same 550 lines, differing only in one Hop's duration,
-431 against 433 ms, with its replay checks passing both times. The two
-tests of the game fail today, naming the missing adapter, as step 2 of the
+431 against 433 ms, with its replay checks passing both times. After the
+branch was rebased onto the whole-codebase review below, which moved the
+rail demo's replay reading into its own `journals.mjs`, the same comparison
+against the review's own runner printed the same 574 lines, differing only
+in one journal line's start time. The two tests of the game fail today, naming the missing adapter, as step 2 of the
 plan has them. Two tests of the comparison pass against the rail demo: two
 launches differ nowhere, and a note planted before hop 4 of one play is
 found before hop 4. The second is what makes the others worth believing,

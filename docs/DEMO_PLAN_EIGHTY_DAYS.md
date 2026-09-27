@@ -67,12 +67,11 @@ demos call with their own sections, done as the first step of building this
 one. Named apart from the two demos' own `present.mjs` files so three files
 do not share a name. The rail demo's sections do not change.
 
-**The runner is not shareable as it stands**, and the lift has to make it
-so. It hardcodes the rail demo's config folder, journals folder and title
-(`demo/rail-itinerary/present.mjs:21-25` and `:450`), and it strips only
-`PHILEAS_*` and `RAIL_DEMO_JOURNEY` from the environment before each command
-(`:158-160`). Each becomes a parameter the demo passes, and the variables
-stripped become a list of prefixes: `PHILEAS_`, `RAIL_DEMO_`, and
+**The runner was not shareable as it stood**, and the lift made it so. It
+hardcoded the rail demo's config folder, journals folder and title, and
+stripped only `PHILEAS_*` and `RAIL_DEMO_JOURNEY` from the environment before
+each command. The first three became what a demo passes in, and the
+variables stripped became a list of prefixes: `PHILEAS_`, `RAIL_DEMO_`, and
 `EIGHTY_DAYS_`. The last matters most. A leftover `EIGHTY_DAYS_PLANT` in the
 presenter's shell would switch a bug on in a section meant to show the game
 working, and nothing on screen would say why.
@@ -186,7 +185,8 @@ predictable path." A game round the world has a risk built into it: the
 circuit runs one way, and a screen offering only "Take the Mongolia" and
 "Wait" makes every Route the same Route with different pauses. By default
 the page gets three quarters of the draw, drawn evenly among its controls,
-and the keys and the native menu an eighth each (`src/route.ts:85`, `:98`).
+and the keys and the native menu an eighth each (`DEFAULT_KEY_SHARE` and
+`DEFAULT_MENU_SHARE` in `src/route.ts`).
 So how wide each page is decides how different two Routes can be. So:
 
 - **Every place is several venues, as tabs**: the Quay (departures), the
@@ -214,14 +214,14 @@ So how wide each page is decides how different two Routes can be. So:
   what is behind it, and it is kept brief and still holds several
   controls: berths, cabin, a note for the purser, Book and Cancel.
 
-**A floor, measured from the journals:** every place's Quay offers at
-least a dozen page candidates across at least four roles before the menu
-and the keys, and no screen outside a dialog offers fewer than eight.
-`phileas survey` cannot measure this, since it prints only the screen a
-Route starts on and the one after its Fix (`src/route.ts:576-626`). So the
-counts come from the pools the balance batch's journals record, read with
-`phileas show`. A printed shortcut is drawn as a candidate of its own
-beside its control (`src/survey.ts:177-203`), so "Book (⌘B)" counts twice
+**A floor, measured from the journals:** every place's Quay offers at least a
+dozen page candidates across at least four roles before the menu and the keys,
+and no screen outside a dialog offers fewer than eight. `phileas survey`
+cannot measure this, since it prints only the screen a Route starts on and the
+one after its Fix (the survey-only branch of `runRoute`, `src/route.ts`). So
+the counts come from the pools the balance batch's journals record, read with
+`phileas show`. A printed shortcut is drawn as a candidate of its own beside
+its control (`printedShortcut`, `src/survey.ts`), so "Book (⌘B)" counts twice
 and is counted that way. The measured counts go into `HISTORY.md` with the
 balance numbers below, and a screen under the floor is widened rather than
 excused.
@@ -259,7 +259,7 @@ and there it earns its place:
 
 **Why buttons and not a number field.** A Trip types only from a fixed
 list of values: empty, "a", "travel", "Carpet", "0", two spaces, and two
-hundred x's (`VALUE_CORPUS`, `src/route.ts:231`). So a Trip can never type
+hundred x's (`VALUE_CORPUS`, `src/route.ts`). So a Trip can never type
 £2,500 into a field, and a control whose effect depends on a particular
 number has to be reachable by clicking. This applies everywhere in the
 game, not only to Kiouni: the Hotel's stay is a dropdown ("an hour", "a
@@ -305,17 +305,16 @@ purpose, such as the bullock cart, the data says so.
   gained by going eastward shows, and the wager is won or lost by the
   clock.
 
-**It always has a way on.** Every ending, won or lost, offers "Set out
-again", and a game lost midway offers it too. **Only an ending offers it.**
-The menu's Game > Set out again is disabled until the game has ended, and
-a disabled entry is never offered (`src/menu.ts:144`). Offered all the
-time, it would take a share of the menu's eighth of the draw on every Hop,
-and over a few hundred Hops a Route would be sent back to London several
-times, losing its Fix's progress with it. A screen with no way on
-would strand every Route that reached it, and would say something about
-the game rather than find a bug in it. The one screen with no way out is
-the `bradshaw-trap` plant, on purpose, and it strands rather than fails:
-see stage two.
+**It always has a way on.** Every ending, won or lost, offers "Set out again",
+and a game lost midway offers it too. **Only an ending offers it.** The menu's
+Game > Set out again is disabled until the game has ended, and a disabled
+entry is never offered (`menuEntries`, `src/menu.ts`). Offered all the time,
+it would take a share of the menu's eighth of the draw on every Hop, and over
+a few hundred Hops a Route would be sent back to London several times, losing
+its Fix's progress with it. A screen with no way on would strand every Route
+that reached it, and would say something about the game rather than find a bug
+in it. The one screen with no way out is the `bradshaw-trap` plant, on
+purpose, and it strands rather than fails: see stage two.
 
 ### Screens
 
@@ -342,11 +341,12 @@ The current place is the main screen. A top bar reaches the rest:
   link, for the book's text online, confirmed to resolve when it is written
   in and excluded by the adapter.
 
-**Where the controls come from.** Thirteen roles on the page, each where
-the game needs it, plus the native menu. `src/survey.ts` hops to sixteen,
-but every native menu entry is offered as `menuitem` whatever its type
-(`src/survey.ts:618-626`), so `menuitemcheckbox` and `menuitemradio` would
-need a menu built in the page, and the game has no reason for one:
+**Where the controls come from.** Thirteen roles on the page, each where the
+game needs it, plus the native menu. `src/survey.ts` hops to sixteen, but
+every native menu entry is offered as `menuitem` whatever its type (where
+`src/survey.ts` builds its menu candidates), so `menuitemcheckbox` and
+`menuitemradio` would need a menu built in the page, and the game has no
+reason for one:
 
 | Role | Where |
 | --- | --- |
@@ -358,7 +358,7 @@ need a menu built in the page, and the game has no reason for one:
 | radio | the cabin on a steamer: saloon or second |
 | checkbox | goods at the Market; "Take coal" when chartering the Henrietta |
 | spinbutton | berths in the ticket office, where typed nonsense is refused |
-| slider | Kiouni's pace; the wind under the sledge's sail; a Trip clicks a slider at its middle, and moves it further only with the arrow keys while it has focus (`src/route.ts:1127`) |
+| slider | Kiouni's pace; the wind under the sledge's sail; a Trip clicks a slider at its middle, and moves it further only with the arrow keys while it has focus (`act`, `src/route.ts`) |
 | switch | hire the Parsee guide; hoist the sail |
 | tab | every place's venues: Quay, Telegraph Office, Market, Consulate, Hotel |
 | treeitem | Bradshaw's lines |
@@ -387,11 +387,16 @@ what decides each, and the prices of the book's few purchases.
 **The ship's log** is a file the game appends a line to at each departure,
 for the log check. The game reads where it is from `EIGHTY_DAYS_LOG`, which
 the adapter sets through `env` as a function of the Route's profile folder
-and names again in `logPaths` (`src/app-under-test.ts:296`, `:329`), as
+and names again in `logPaths` (both in `src/app-under-test.ts`), as
 `buggy` does with its own log. The file is named `ship.log`, since a
-finding's signature takes the folder out only for a `.log` file
-(`src/known.mjs:50`), and no ordinary line contains the word "error", since
-the check matches it on every line appended (`src/oracles/index.ts:224`).
+finding's signature takes the folder out only for a `.log` file (the
+signature rules in `src/known.mjs`), and no ordinary line contains the word
+"error", since the check matches it on every line appended (the log check in
+`startWatching`, `src/oracles/index.ts`). **The game creates the file, empty,
+when it starts**, rather than at the first departure: a named log that does
+not exist is reported on every Hop as a check that could not run, not as a
+clean log, so a log written only later would leave the early Hops of every
+Route unchecked.
 
 ### Balance, measured rather than guessed
 
@@ -472,8 +477,8 @@ assumed:**
   limit. **Every change to text, names or values happens at once, in the
   same handler as the action**, and only hidden drawing animates. Text
   that changed at the end of an animation would be worse than slow: the
-  settle wait returns once the tree has been still for 400 ms
-  (`src/route.ts:1189-1195`), so a change landing later is read by the next
+  settle wait returns once the tree has been still for 400 ms (`settle`,
+  `src/route.ts`), so a change landing later is read by the next
   Hop's survey or not, depending on timing, and one seed could offer two
   different pools on two runs.
 - **The blank-window check reads the tree too** (`showsNothing` in
@@ -529,7 +534,7 @@ The rail demo's pattern, kept so this demo stands on its own:
   Fogg's, and an unpredictable continuation, where the three Routes go
   three ways from the same quay. Its length is whatever the book's choices
   take, counted when it is written. Every Fix step surveys, settles, runs
-  the checks and waits out the hop delay (`src/route.ts:899-916`, `:961`),
+  the checks and waits out the hop delay (`runFix`, `src/route.ts`),
   so a long Fix costs tens of seconds per Route in a watched run, before
   the Trip starts. A rough count puts London to Hong Kong near forty steps,
   since buying Kiouni alone takes about eight, so if the watched-run budget
@@ -584,9 +589,9 @@ to the check that catches it:
 | Plant | What happens | Caught by | Runs |
 | --- | --- | --- | --- |
 | `kiouni-throw` | Raising the offer for Kiouni past £2,000 throws an uncaught error in the page | uncaught error | today |
-| `export-throw` | Game > Export the ledger throws in the main process, from a timer, as `buggy`'s does (`testbed/buggy/main.cjs:95-101`), so no IPC handler catches it | uncaught error, main process | today |
+| `export-throw` | Game > Export the ledger throws in the main process, from a timer, as `buggy`'s `plant:main-throw` does (`testbed/buggy/main.cjs`), so no IPC handler catches it | uncaught error, main process | today |
 | `sail-console-error` | Hoisting the sledge's sail with the wind at its middle setting or above logs a console error. The middle is where a Trip's click sets the slider | console error | today |
-| `coal-hang` | Burning the Henrietta's woodwork busies the page for twelve seconds. A stall is found only when a call outruns the Hop timeout, 3 s, plus the responsive wait, 5 s (`src/route.ts:434`, `src/oracles/index.ts:51`, `:235-251`), so six would pass | still responding | today |
+| `coal-hang` | Burning the Henrietta's woodwork busies the page for twelve seconds. A stall is found only when a call outruns the Hop timeout, 3 s, plus the responsive wait, 5 s (`DEFAULT_HOP_TIMEOUT_MS` in `src/route.ts`, `DEFAULT_RESPONSIVE_TIMEOUT_MS` and `bounded` in `src/oracles/index.ts`), so six would pass. A known hang still ends a Route, decided in the engine's review of 2026-09-27, so this plant is never the one the known-findings loop below is shown with | still responding | today |
 | `blank-club` | Arriving at the Reform Club blanks the window, so the ending never shows | window showing content | today |
 | `set-out-confirm` | Game > Set out again asks with a native confirm | no unexpected dialog | today |
 | `carnatic-log-error` | Booking the Carnatic writes an ERROR line to the ship's log, which the adapter names | log error | today |
@@ -615,12 +620,14 @@ reported as stranded, never as failed, and a stranding has no signature
 and no id. So it appears in step 1 below as a third outcome, and not in
 steps 2 to 4, which are about findings.
 
-**The known findings file decides the order.** When a Journey ends, every
-new finding is added to the file as known but unfiled, and an unfiled
-finding already lets a Route carry on past it (`src/known.mjs:209-230`,
-`:255`; `src/oracles/index.ts:344-373`). So a replay run after the Journey
-that found a bug would travel past it rather than stop. The guided demo
-keeps its known findings file in a scratch folder and controls it:
+**The known findings file decides the order.** When a Journey ends, every new
+finding is added to the file as known but unfiled, and an unfiled finding
+already lets a Route carry on past it (`recordJourneyFindings` in
+`src/known.mjs`, and how `startWatching` in `src/oracles/index.ts` treats a
+known finding). So a replay run after the Journey that found a bug would
+travel past it rather than stop. **A known hang is the exception**: it still
+ends the Route, so the loop is shown with a plant that is not a hang. The
+guided demo keeps its known findings file in a scratch folder and controls it:
 
 1. **Found.** A Journey with one plant on, from an empty file. A Route
    reaches the bug, the check fires, the Route ends there, and the failed
@@ -638,10 +645,11 @@ keeps its known findings file in a scratch folder and controls it:
    Journey's summary listing each finding once with how often it was seen.
 
 **The wiring this needs, which the rail demo does not have.** The spec
-passes `knownFindings` to `runRoute` (`src/route.ts:413`), and the global
-setup's returned function calls `finishJourney({ journalsRoot,
-knownFindings })` (`src/start.ts:165-170`). The rail demo passes neither
-(`demo/rail-itinerary/phileas/journey.spec.ts:24-34`, `global-setup.ts:10-12`).
+passes `knownFindings` to `runRoute` (`RunRouteOptions` in `src/route.ts`),
+and the global setup's returned function calls `finishJourney({
+journalsRoot, knownFindings })` (`src/start.ts`). The rail demo's spec and
+global setup pass neither. The spec also marks a survey-only Route skipped,
+as the rail demo's now does, since `surveyed` is an outcome of its own.
 
 **The demo's known findings file is never committed.** Every Journey that
 finds something adds to it, so a committed file would change on every run
