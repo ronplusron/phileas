@@ -25,6 +25,47 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: Eighty Days playable, and balanced so that Routes win, lose and wander
+
+**What landed.** Build step 3 of `DEMO_PLAN_EIGHTY_DAYS.md`, less the
+engravings: the game's data in `demo/eighty-days/data/`, each fact from the
+novel tagged with its chapter and each invention marked as one; pure rules in
+`renderer/game.js`; the page, the chart, the ticket office, the menu and the
+ship's log; the adapter, three Journeys and the spec, wired for known
+findings. The facts were read from the Towle translation, Project Gutenberg
+eBook 103. Two memories were wrong and corrected: the itinerary table is the
+Daily Telegraph's, not the Morning Chronicle's, and Kiouni's price climbs by
+the book's own ladder, £1,000, £1,200, £1,500, £1,800 and £2,000. The
+translation contradicts itself on when the Carnatic sailed, and the data
+says which it took and why.
+
+**Tested.** `tests/rules.spec.ts` plays the book's own choices through the
+rules without a window: Fogg reaches the Reform Club at 8.50 p.m. on the 21st
+by his diary, believes he is five minutes late, and has won, since it is
+Friday the 20th by London's calendar. With the date-line correction set to
+nothing, the test failed, which is its control. The two determinism tests
+written first now pass on the game.
+
+**Balanced, by measurement.** Built first, the game let no Route leave London:
+three Routes of sixty Hops from the `accept` Fix reached no other place,
+because the Circuit, Ledger, Bradshaw and About screens replaced the place,
+and the departures sat on one venue tab among several. Opening those four as
+a panel beside the place, and keeping the ways on above the tabs, took six
+Routes of 150 Hops to between 4 and 7 places each. The `hong-kong` Fix, 27
+steps of the book's own choices, then started every Trip on the Hong Kong
+quay: six Routes of 200 Hops reached 12 to 20 places, one lost and none won.
+Counting where 1,200 Hops went found 30% in the panels, 3% taking a
+departure, and a trap: the ticket office refused a typed berth count until
+it was retyped, and no value a Trip types is one, so the clerk now corrects
+it and books. A third or fourth way on at each place from Hong Kong onward,
+as the plan prescribes for a corridor, brought endings: four lost and two
+still going. A rough model of random play through the rules, for finding
+causes and not a measurement, then put the losses at a median of five hours
+late, from invented alternatives a week behind the book: retimed to a day
+behind, a real batch ended one won, three lost and two still going, with
+six distinct sequences of places, and the Trip length was set to 200.
+`demo/eighty-days/measure.mjs` reads any run's journals for these numbers.
+
 ## 2026-09-27: a second demo planned, a shared presenting runner, and determinism tests first
 
 **Why.** A demo more comprehensive than the rail demo was asked for, with

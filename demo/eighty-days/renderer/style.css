@@ -601,3 +601,28 @@ fieldset {
   color: var(--oxblood);
   min-height: 1.2em;
 }
+
+/* --- the panel beside the place ------------------------------------------ */
+
+main.with-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 500px;
+  gap: 1.4rem;
+  max-width: none;
+}
+
+#panel {
+  border-left: 3px double var(--brass);
+  padding-left: 1.2rem;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+#panel table.ledger {
+  min-width: 0;
+  width: 100%;
+}
+
+#panel .place-head {
+  grid-template-columns: 1fr;
+}

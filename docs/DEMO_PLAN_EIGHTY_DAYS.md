@@ -189,11 +189,16 @@ and the keys and the native menu an eighth each (`DEFAULT_KEY_SHARE` and
 `DEFAULT_MENU_SHARE` in `src/route.ts`).
 So how wide each page is decides how different two Routes can be. So:
 
-- **Every place is several venues, as tabs**: the Quay (departures), the
-  Telegraph Office, the Market, the Consulate, the Hotel, and whatever the
-  place adds, such as the temple at Bombay or the tavern at Hong Kong. Each
-  venue has several controls of different roles. Tabs are how the survey
-  gets its `tab` role, on every screen rather than on the sledge alone.
+- **Every place is several venues, as tabs**: the Telegraph Office, the
+  Market, the Consulate, the Hotel, and whatever the place adds, such as the
+  temple at Bombay or the tavern at Hong Kong. Each venue has several
+  controls of different roles. Tabs are how the survey gets its `tab` role,
+  on every screen rather than on the sledge alone. **The ways on are not a
+  tab.** They stand above the tabs at every place, with what the place
+  itself offers, such as Kiouni for sale or the sledge, so that choosing a
+  venue never hides the departures. Built first with the Quay as one tab
+  among the others, and measured: a Route on any other tab could not
+  travel until it drew its way back, which it rarely did.
 - **Each venue's controls do something the game remembers.** Taking a
   fur coat at the Market matters on the plains of Nebraska; a visa stamped at
   the Consulate matters when the Detective reaches Suez; hours spent at the
@@ -201,20 +206,25 @@ So how wide each page is decides how different two Routes can be. So:
   Telegraph Office changes how close the Detective is at Liverpool. A
   control that changed nothing would widen the pool and add only "no
   change" lines, which is width a watcher can see through.
-- **What is on offer depends on what came before.** Things bought appear
-  later as controls of their own ("Put on the fur coat", "Show the visa"),
-  companions add their own ("Ask Aouda", "Send Passepartout ahead"), and a
-  departure missed is gone. So the pool at Yokohama differs between two
+- **What is on offer depends on what came before.** Things taken at a
+  market appear later as controls of their own ("Hand round the fur coats",
+  "Give Kiouni a lump of sugar"), Passepartout brings his own ("Send
+  Passepartout with the passport", "Let Passepartout drink with the
+  stranger") only while he travels with Fogg, and a departure missed is
+  gone. So the pool at Yokohama differs between two
   Routes that reached it differently, and the survey lines say so.
 - **Every screen is reachable at any time** from the top bar and the menu:
-  Circuit, Ledger, Bradshaw, and back Here. Wandering off to read the
-  Ledger mid-port is a real path a Route can take, and one a scripted test
-  never would.
+  Circuit, Ledger, Bradshaw and About. **Each opens as a panel beside the
+  place, not instead of it.** Wandering off to read the Ledger mid-port is
+  a real path a Route can take, and one a scripted test never would, and
+  it costs one Hop rather than a detour. Built first as screens that
+  replaced the place, and measured: in three Routes of sixty Hops from
+  London, not one Route left London.
 - **The ticket office is the one narrowing**, since a native modal hides
   what is behind it, and it is kept brief and still holds several
   controls: berths, cabin, a note for the purser, Book and Cancel.
 
-**A floor, measured from the journals:** every place's Quay offers at least a
+**A floor, measured from the journals:** every place offers at least a
 dozen page candidates across at least four roles before the menu and the keys,
 and no screen outside a dialog offers fewer than eight. `phileas survey`
 cannot measure this, since it prints only the screen a Route starts on and the
@@ -227,8 +237,8 @@ balance numbers below, and a screen under the floor is widened rather than
 excused.
 
 **Each place is one screen**, headed by its engraving, with what is
-happening there, its venues, and the ways to leave. Two to four departures
-on the Quay, each with its days shown before it is taken: a faster ship
+happening there, its venues, and the ways to leave. Two to four departures,
+each with its days shown before it is taken: a faster ship
 that sails tomorrow, a slower one that sails tonight, a train that reaches
 only as far as the line is built, a wait for the next sailing. Every
 departure is named for itself, such as "Sail on the Carnatic" or "Wait for
@@ -265,8 +275,11 @@ number has to be reachable by clicking. This applies everywhere in the
 game, not only to Kiouni: the Hotel's stay is a dropdown ("an hour", "a
 night", "until the next sailing"), not a number of hours. The one number
 field left is the ticket office's berths, where what a Trip types is
-exactly the test: "0", "a" or empty is refused with a message, and a
-number from 1 to 3 is taken.
+exactly the test: "0", "a" or empty is corrected by the clerk to the
+party's size, with a message saying so, and the ticket is booked. It was
+first refused until retyped, which measured as a trap: no value a Trip
+types is a berth count, so a Route that typed into the field could never
+book that ticket.
 
 The Ledger shows the carpet-bag in one line under the days, and no check
 rests on it: the structural and specified checks in stage two are about
@@ -318,13 +331,14 @@ purpose, and it strands rather than fails: see stage two.
 
 ### Screens
 
-The current place is the main screen. A top bar reaches the rest:
+The current place is always on screen: its engraving, its events, its ways
+on and its venues. A top bar opens a panel beside it:
 
-- **Here.** The place, its engraving, its events, its departures.
 - **Circuit.** The chart, and the passages so far as ticket stubs: mode,
   from, to, days, and a heading counting them ("8 passages, 79
-  days"). Each passage opens to a disclosure, "Show Passepartout's diary",
-  holding his line about it.
+  days"). Beneath them one disclosure, "Show Passepartout's diary", holding
+  his lines for the whole circuit. It was one disclosure per passage, which
+  measured as a pool that grew by one control with every passage.
 - **Ledger.** The wager's terms at the head, then one ruled row for
   everything that cost time, in days and hours: each passage, and each
   wait, delay and stay, such as a night at the Hotel, the day in court at
@@ -360,7 +374,7 @@ reason for one:
 | spinbutton | berths in the ticket office, where typed nonsense is refused |
 | slider | Kiouni's pace; the wind under the sledge's sail; a Trip clicks a slider at its middle, and moves it further only with the arrow keys while it has focus (`act`, `src/route.ts`) |
 | switch | hire the Parsee guide; hoist the sail |
-| tab | every place's venues: Quay, Telegraph Office, Market, Consulate, Hotel |
+| tab | every place's venues: Telegraph Office, Market, Consulate, Hotel, and the place's own |
 | treeitem | Bradshaw's lines |
 | menuitem | the game's own menu entries, the checkbox entry View > Show the clock included |
 
@@ -536,10 +550,8 @@ The rail demo's pattern, kept so this demo stands on its own:
   take, counted when it is written. Every Fix step surveys, settles, runs
   the checks and waits out the hop delay (`runFix`, `src/route.ts`),
   so a long Fix costs tens of seconds per Route in a watched run, before
-  the Trip starts. A rough count puts London to Hong Kong near forty steps,
-  since buying Kiouni alone takes about eight, so if the watched-run budget
-  cannot carry it, the default Fix ends at Calcutta instead and the name
-  follows.
+  the Trip starts. Written, it is twenty-seven steps, of which buying
+  Kiouni takes six.
 - **One Fix per stage-two section where a plant sits late in the game**,
   such as `omaha` for the sledge's plants, so the section's Trip starts
   near its bug rather than needing a seed that wanders there from London.
@@ -726,7 +738,10 @@ Nothing is open. New questions go here as building raises them.
 
 ## Build order
 
-Steps 1 and 2 are built, 2026-09-27; `HISTORY.md` has what was measured.
+Steps 1, 2, 4 and 5 are built, 2026-09-27, and step 3 is built but for the
+engravings, which wait on a download for each; `HISTORY.md` has what was
+measured. The balance was measured before the engravings, since the look
+matters less if Routes never leave London.
 
 1. Lift the rail demo's presenting runner into `demo/presenting.mjs`, with
    the parameters listed under "What is shared", and rename its script to

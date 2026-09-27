@@ -16,12 +16,15 @@
         <h1>Eighty Days</h1>
         <p class="subtitle">A wager of the Reform Club, 1872</p>
       </div>
-      <nav aria-label="Screens" class="screens">
-        <button data-screen="here" id="nav-here">Here</button>
-        <button data-screen="circuit">Circuit</button>
-        <button data-screen="ledger">Ledger</button>
-        <button data-screen="bradshaw">Bradshaw</button>
-        <button data-screen="about">About</button>
+      <!--
+        Each opens a panel beside the place rather than replacing it, so the
+        ways on stay on offer while the Ledger or the chart is read.
+      -->
+      <nav aria-label="Panels" class="screens">
+        <button data-panel="circuit" aria-pressed="false">Circuit</button>
+        <button data-panel="ledger" aria-pressed="false">Ledger</button>
+        <button data-panel="bradshaw" aria-pressed="false">Bradshaw</button>
+        <button data-panel="about" aria-pressed="false">About</button>
       </nav>
       <div class="clock" id="clock">
         <svg class="dial" viewBox="0 0 100 100" aria-hidden="true">
@@ -39,12 +42,14 @@
       <p id="status" data-ready="false" aria-live="polite">Loading</p>
     </header>
 
-    <main>
+    <main id="main">
       <section id="here" aria-label="Here"></section>
-      <section id="circuit" aria-label="Circuit" hidden></section>
-      <section id="ledger" aria-label="Ledger" hidden></section>
-      <section id="bradshaw" aria-label="Bradshaw" hidden></section>
-      <section id="about" aria-label="About" hidden></section>
+      <aside id="panel" aria-label="Panel" hidden>
+        <section id="circuit" aria-label="Circuit" hidden></section>
+        <section id="ledger" aria-label="Ledger" hidden></section>
+        <section id="bradshaw" aria-label="Bradshaw" hidden></section>
+        <section id="about" aria-label="About" hidden></section>
+      </aside>
     </main>
 
     <!--

@@ -105,7 +105,7 @@
       crossedDateLine: false,
       whist: 0,
       readPaper: false,
-      venue: 'quay',
+      venue: '',
       ledger: [],
       visited: ['london'],
       diary: [],
@@ -201,7 +201,7 @@
   /** What happens on reaching a place. Each event's words and chapter are in data/story.json. */
   function arrive(state, world, from, d) {
     state.place = d.to;
-    state.venue = 'quay';
+    state.venue = '';
     state.kiouniOffer = 0;
     if (!state.visited.includes(d.to)) state.visited.push(d.to);
     state.notice = '';
@@ -362,18 +362,16 @@
         if (!state.ticket) break;
         const berths = Number(state.ticket.berths.trim());
         const party = 1 + (state.passepartout ? 1 : 0) + (state.aouda ? 1 : 0);
-        if (!Number.isInteger(berths) || berths < 1 || berths > 3) {
-          state.ticket.message = 'Berths must be a number from 1 to 3.';
-          break;
-        }
-        if (berths < party) {
-          state.ticket.message = `The party is ${party}; book ${party} berths.`;
-          break;
-        }
+        // A number the clerk cannot book is corrected to the party's size, and
+        // said so, rather than refused until retyped: a Trip types only from a
+        // fixed list of values, none of them a berth count, so a refusal would
+        // leave the ticket office unbookable for the rest of the Route.
+        const valid = Number.isInteger(berths) && berths >= party && berths <= 3;
         const d = world.departures.find((x) => x.id === state.ticket.departure);
         const coal = state.ticket.coal;
         state.ticket = null;
         travel(state, world, d, { coal });
+        if (!valid) state.notice = `The clerk writes ${party} ${party === 1 ? 'berth' : 'berths'} for the party. ${state.notice}`.trim();
         break;
       }
       case 'cancel':

@@ -14,7 +14,8 @@ const $ = (id) => document.getElementById(id);
 let world;
 let data;
 let state;
-let screen = 'here';
+// Which panel is open beside the place, if any.
+let panel = '';
 let showClock = true;
 let bradshawQuery = '';
 let bradshawOpen = new Set();
@@ -51,7 +52,7 @@ function dispatch(action) {
       if (row.kind === 'passage') window.eightyDays.log(`${G.clockText(state.hours, world.start)} arrived at ${world.places[row.to].name} from ${world.places[row.from].name} by ${row.mode}`);
     }
   }
-  if (action.type === 'restart') screen = 'here';
+  if (action.type === 'restart') panel = '';
   window.eightyDays.ended(state.phase === 'ended');
   render();
 }
@@ -109,34 +110,40 @@ function renderHere() {
   if (state.phase === 'ended') return section.replaceChildren(renderEnding());
 
   const place = world.places[state.place];
-  const venues = ['quay', ...place.venues];
-  if (!venues.includes(state.venue)) state.venue = 'quay';
+  // The ways on are always on offer; the venues are tabs below them. A place
+  // shows its first venue until another is chosen.
+  const venues = place.venues;
+  const venue = venues.includes(state.venue) ? state.venue : venues[0];
 
-  const tabs = h(
-    'div',
-    { role: 'tablist', 'aria-label': `Venues at ${place.name}`, class: 'venues' },
-    venues.map((v) =>
-      h(
-        'button',
-        {
-          role: 'tab',
-          id: `tab-${v}`,
-          'aria-selected': String(state.venue === v),
-          'aria-controls': 'venue-panel',
-          class: state.venue === v ? 'selected' : '',
-          onclick: () => dispatch({ type: 'venue', venue: v }),
-        },
-        VENUE_NAMES[v]
+  const tabs =
+    venues.length > 0 &&
+    h(
+      'div',
+      { role: 'tablist', 'aria-label': `Venues at ${place.name}`, class: 'venues' },
+      venues.map((v) =>
+        h(
+          'button',
+          {
+            role: 'tab',
+            id: `tab-${v}`,
+            'aria-selected': String(venue === v),
+            'aria-controls': 'venue-panel',
+            class: venue === v ? 'selected' : '',
+            onclick: () => dispatch({ type: 'venue', venue: v }),
+          },
+          VENUE_NAMES[v]
+        )
       )
-    )
-  );
-  const panel = h('div', { role: 'tabpanel', id: 'venue-panel', 'aria-labelledby': `tab-${state.venue}`, class: 'venue' }, renderVenue(place, state.venue));
+    );
+  const venuePanel =
+    venues.length > 0 && h('div', { role: 'tabpanel', id: 'venue-panel', 'aria-labelledby': `tab-${venue}`, class: 'venue' }, renderVenue(place, venue));
 
   section.replaceChildren(
     h('div', { class: 'place-head' }, picture(`place-${place.id}`), h('div', {}, h('h2', {}, place.name), h('p', { class: 'about' }, place.about), companions())),
     notice(),
+    renderWaysOn(place),
     tabs,
-    panel
+    venuePanel
   );
 }
 
@@ -147,8 +154,6 @@ function companions() {
 
 function renderVenue(place, venue) {
   switch (venue) {
-    case 'quay':
-      return renderQuay(place);
     case 'telegraph':
       return renderTelegraph(place);
     case 'market':
@@ -238,9 +243,9 @@ function departureCard({ d, affordable }) {
   );
 }
 
-function renderQuay(place) {
+function renderWaysOn(place) {
   const here = G.departuresHere(state, world);
-  const parts = [h('h3', {}, `The quay at ${place.name}`)];
+  const parts = [h('h3', {}, `Ways on from ${place.name}`)];
   if (place.id === 'kholby') parts.push(renderKiouni());
   if (place.id === 'pillaji') parts.push(renderPillaji());
   if (place.id === 'fortkearney') parts.push(renderSledge());
@@ -467,6 +472,8 @@ function renderCircuit() {
   const bookIds = data.places.places.filter((p) => p.book && p.id !== 'london' && p.id !== 'pillaji').map((p) => p.id);
   const chart = h('div', { class: 'chart-frame', 'aria-hidden': 'true' });
   chart.innerHTML = window.EightyDaysChart.chartSvg(passages, world.places, bookIds);
+  // One disclosure for the whole diary, not one per passage: a control per
+  // passage would grow the choices on offer by one every time Fogg moved.
   $('circuit').replaceChildren(
     h('h2', {}, `${passages.length} ${passages.length === 1 ? 'passage' : 'passages'}, ${Math.round(days)} days`),
     chart,
@@ -474,22 +481,23 @@ function renderCircuit() {
       ? h(
           'ol',
           { class: 'stubs' },
-          passages.map((p) => {
-            const lines = state.diary.filter((d) => d.place === p.to).map((d) => d.text);
-            return h(
+          passages.map((p) =>
+            h(
               'li',
               { class: `stub mode-${p.mode}` },
               h('span', { class: 'glyph', 'aria-hidden': 'true' }),
-              h(
-                'div',
-                {},
-                h('p', {}, `${MODE_WORDS[p.mode]}: ${world.places[p.from].name} to ${world.places[p.to].name}, ${G.durationText(p.hours)}`),
-                h('details', {}, h('summary', {}, `Show Passepartout's diary for ${world.places[p.to].name}`), h('p', {}, lines.length ? lines.join(' ') : 'Nothing worth writing down.'))
-              )
-            );
-          })
+              h('p', {}, `${MODE_WORDS[p.mode]}: ${world.places[p.from].name} to ${world.places[p.to].name}, ${G.durationText(p.hours)}`)
+            )
+          )
         )
-      : h('p', {}, 'The circuit has not begun.')
+      : h('p', {}, 'The circuit has not begun.'),
+    state.diary.length > 0 &&
+      h(
+        'details',
+        { class: 'diary' },
+        h('summary', {}, "Show Passepartout's diary"),
+        h('ol', {}, state.diary.map((d) => h('li', {}, `${world.places[d.place]?.name ?? d.place}: ${d.text}`)))
+      )
   );
 }
 
@@ -540,8 +548,8 @@ function renderBradshaw() {
           tabindex: '0',
           onclick: (e) => {
             if (e.target !== e.currentTarget && e.target.closest('[role=treeitem]') !== e.currentTarget) return;
-            if (open) bradshawOpen.delete(country);
-            else bradshawOpen.add(country);
+            // One country open at a time.
+            bradshawOpen = open ? new Set() : new Set([country]);
             render();
           },
         },
@@ -578,7 +586,7 @@ function renderBradshaw() {
     tree,
     chosen && h('p', { class: 'bradshaw-entry' }, `${chosen.label}: ${chosen.departs ? `departs ${G.clockText(world.departures.find((d) => d.id === chosen.id).departsAt, world.start)}` : 'runs when wanted'}.`)
   );
-  if (document.activeElement?.id !== 'bradshaw-search' && screen === 'bradshaw' && focusSearch) {
+  if (document.activeElement?.id !== 'bradshaw-search' && panel === 'bradshaw' && focusSearch) {
     $('bradshaw-search').focus();
     focusSearch = false;
   }
@@ -641,20 +649,32 @@ function book() {
 
 // --- all of it --------------------------------------------------------------
 
-function show(next) {
-  screen = next;
+/** Open a panel, or close it if it is the one open. The menu only ever opens one. */
+function togglePanel(next, { open = false } = {}) {
+  panel = panel === next && !open ? '' : next;
+  // Bradshaw folds up whenever it is left, so an open tree never stays on
+  // offer behind the next visit.
+  if (panel !== 'bradshaw') {
+    bradshawOpen = new Set();
+    bradshawChosen = '';
+  }
   render();
 }
 
 function render() {
-  for (const section of document.querySelectorAll('main > section')) section.hidden = section.id !== screen;
-  for (const button of document.querySelectorAll('nav.screens button')) button.classList.toggle('selected', button.dataset.screen === screen);
+  $('panel').hidden = !panel;
+  $('main').classList.toggle('with-panel', !!panel);
+  for (const section of document.querySelectorAll('#panel > section')) section.hidden = section.id !== panel;
+  for (const button of document.querySelectorAll('nav.screens button')) {
+    button.classList.toggle('selected', button.dataset.panel === panel);
+    button.setAttribute('aria-pressed', String(button.dataset.panel === panel));
+  }
   renderClock();
-  if (screen === 'here') renderHere();
-  if (screen === 'circuit') renderCircuit();
-  if (screen === 'ledger') renderLedger();
-  if (screen === 'bradshaw') renderBradshaw();
-  if (screen === 'about') renderAbout();
+  renderHere();
+  if (panel === 'circuit') renderCircuit();
+  if (panel === 'ledger') renderLedger();
+  if (panel === 'bradshaw') renderBradshaw();
+  if (panel === 'about') renderAbout();
   renderTicket();
 }
 
@@ -665,7 +685,7 @@ async function start() {
   state = G.initialState();
 
   drawDialTicks();
-  for (const button of document.querySelectorAll('nav.screens button')) button.addEventListener('click', () => show(button.dataset.screen));
+  for (const button of document.querySelectorAll('nav.screens button')) button.addEventListener('click', () => togglePanel(button.dataset.panel));
   $('ticket-office').addEventListener('cancel', (event) => {
     event.preventDefault();
     dispatch({ type: 'cancel' });
@@ -673,9 +693,9 @@ async function start() {
 
   window.eightyDays.onMenu((command) => {
     if (command === 'restart') dispatch({ type: 'restart' });
-    else if (command === 'bradshaw') show('bradshaw');
-    else if (command === 'circuit') show('circuit');
-    else if (command === 'ledger') show('ledger');
+    else if (command === 'bradshaw') togglePanel('bradshaw', { open: true });
+    else if (command === 'circuit') togglePanel('circuit', { open: true });
+    else if (command === 'ledger') togglePanel('ledger', { open: true });
     else if (command === 'clock') {
       showClock = !showClock;
       render();
@@ -699,7 +719,7 @@ async function start() {
     if (event.key === 'f' && !state.ticket) {
       event.preventDefault();
       focusSearch = true;
-      show('bradshaw');
+      togglePanel('bradshaw', { open: true });
     }
   });
 
