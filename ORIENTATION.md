@@ -133,9 +133,24 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Eight defects are open,
-six of them deferred from the review of 2026-09-27. That file holds what is
-wrong, confirmed by reading the code, and nothing here restates it.
+**Read `docs/DEFECTS.md` before writing any of it.** Ten defects are open,
+six of them deferred from the review of 2026-09-27 and two found tuning the
+Eighty Days demo. That file holds what is wrong, confirmed by reading the
+code, and nothing here restates it.
+
+**Two demos live in `demo/`, apart from `testbed/`.** Rail Itinerary is the
+short first look, planned in `docs/DEMO_PLAN_TRAIN.md`: `npm run demo:train`
+watches it and `npm run demo:train:present` presents it, through the runner
+both guided demos share, `demo/presenting.mjs`. Eighty Days is the longer
+one, a deterministic game after the novel, planned in
+`docs/DEMO_PLAN_EIGHTY_DAYS.md`, whose build order says which steps are done
+and which are next: the watched run and presenting script, the planted bugs
+with a flag restoring the game's original layout, and the stage-two
+sections. Its default Journey starts every Trip at Hong Kong, and
+`demo/eighty-days/measure.mjs` reads a run's journals for the balance
+numbers. **The demo must not flatter the engine**: two tunings once changed
+the game to hide weaknesses in Phileas, and the plan's settled decisions say
+how that is being undone.
 
 **Two things phase 5 must not undo**, both measured earlier and carried in
 `docs/PLAN.md`. A hop must not wait for navigation to finish, or a single
