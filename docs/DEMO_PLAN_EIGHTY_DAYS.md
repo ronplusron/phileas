@@ -219,7 +219,10 @@ So how wide each page is decides how different two Routes can be. So:
   a real path a Route can take, and one a scripted test never would, and
   it costs one Hop rather than a detour. Built first as screens that
   replaced the place, and measured: in three Routes of sixty Hops from
-  London, not one Route left London.
+  London, not one Route left London. **This works around a weakness in the
+  engine rather than fixing it**, and `DEFECTS.md` records the weakness: a
+  uniform draw is swallowed by screens that replace the view, which real
+  applications are full of.
 - **The ticket office is the one narrowing**, since a native modal hides
   what is behind it, and it is kept brief and still holds several
   controls: berths, cabin, a note for the purser, Book and Cancel.
@@ -279,7 +282,8 @@ exactly the test: "0", "a" or empty is corrected by the clerk to the
 party's size, with a message saying so, and the ticket is booked. It was
 first refused until retyped, which measured as a trap: no value a Trip
 types is a berth count, so a Route that typed into the field could never
-book that ticket.
+book that ticket. **The gap is the engine's, not the game's**, since
+refusing bad input is ordinary, and `DEFECTS.md` records it.
 
 The Ledger shows the carpet-bag in one line under the days, and no check
 rests on it: the structural and specified checks in stage two are about
@@ -734,7 +738,15 @@ Each answered 2026-09-27, in the words given:
 
 ## Open
 
-Nothing is open. New questions go here as building raises them.
+- **Whether to keep the harder game.** Two of the tunings changed the game to
+  suit the engine rather than the other way round, raised on 2026-09-27 as
+  "It feels like we cheated--we adjusted the demo so that Phileas would do
+  better." Proposed, and not decided: a launch flag that restores the
+  replacing screens and the strict berth count, so that a better chooser or
+  value generator can be measured against the game as it first was, and so
+  the demo can show an audience the engine's limits as well as its reach.
+  The weighting the Positron trial's session has scheduled would be its
+  first use.
 
 ## Build order
 

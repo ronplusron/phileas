@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Eight defects are recorded.** The launch layer landed in phase 1, so this
+**Ten defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Six of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -163,6 +163,47 @@ much was read, and "unknown" for a failed `ps`, closes it.
 signature naming a profile differs per Route, so a known finding is never
 matched and ends every Route it appears on. It fails loud rather than quiet,
 which is why it waits for the first run outside the usual folder.
+
+## A uniform draw gets lost in screens that replace the view
+
+The seeded draw treats every candidate alike and remembers nothing of what it
+has done, so an application whose reference screens replace the working view
+swallows a Route. Measured on Eighty Days as first built, where Circuit,
+Ledger, Bradshaw and About each replaced the place, and the departures sat on
+one venue tab among several: three Routes of sixty Hops from the Reform Club
+reached no other place. A person reading the Ledger comes back without
+thinking; the draw comes back only when it happens to draw the way back, and
+four of five top-bar buttons led away. This is the pattern that sank Loki,
+and real applications are full of such screens: settings, help, history,
+file browsers.
+
+The demo no longer shows it, because the game was changed to suit the draw:
+those screens became a panel beside the place, and the ways on stand above
+the tabs. That made the demo work and hid the finding, which is why it is
+recorded here rather than in `HISTORY.md` as a balance fix. Weighting the
+draw toward new targets and away from the last one, scheduled by the Positron
+trial's session on its own branch, is aimed at exactly this, and Eighty Days
+is to be its first measure.
+
+## No typed value is a number a validated field will accept
+
+`VALUE_CORPUS` in `src/route.ts` holds an empty string, "a", "travel",
+"Carpet", "0", two spaces and two hundred x's. None is a number from 1 up, so
+a field that accepts only a count in a range is never filled in validly by a
+Trip, and whatever lies behind a successful entry in it is never reached. The
+arrow keys can move a focused spin box, but a key is drawn an eighth of the
+time and a focused field rarely. Measured on Eighty Days as first built,
+whose ticket office refused a berth count outside 1 to 3 until it was
+retyped: a Route that typed into the field could never book that ticket, and
+across six Routes of 200 Hops the office was cancelled or escaped from 45
+times against 17 bookings.
+
+The game was changed to suit the engine here too: the clerk now corrects a
+bad count to the party's size and books. Refusing bad input until it is
+fixed is ordinary behavior for an application, and the gap is the engine's,
+so the demo no longer shows it. A value generator is a seam of its own, which
+is where a fix belongs: values drawn from the field's own range or the
+numbers on the screen, still from the seed, would reach it.
 
 ## Two things that will look like candidates, and are not
 
