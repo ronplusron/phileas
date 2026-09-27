@@ -791,7 +791,12 @@ does not know, and typing into a text box that is not an input threw. The
 other seven failures were false alarms from `session-state-agrees`, which
 read an Extensions view's Restart button as the console's; both session
 checks were then dropped, asked for as "fix it or dump it", leaving
-`no-error-notification` as the adapter's one check.
+`no-error-notification` as the adapter's one check. The notebook Journey was
+run again once issue 53 was a known finding, so its Routes traveled: 7 of
+10 passed, and a second candidate ended the other three, a console error
+that an aborted save logs a few seconds after a new notebook opens. It came
+with nothing done to the notebook in 1 of 3 launches, and never right after
+closing it or running a cell; filed as ronplusron/phileas issue 54.
 
 **Order agreed 2026-09-27 for what remains of the trial,** proposed with the
 question and answered "OK let's do this in order": known findings, below;

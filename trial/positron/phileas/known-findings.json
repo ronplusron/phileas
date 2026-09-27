@@ -22,6 +22,14 @@
     "source": "command"
   },
   {
+    "id": "be0fbc95",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Error: Aborted onWillSaveTextDocument-event after N ms  (workbench.desktop.main.js)",
+    "added": "2026-09-27",
+    "source": "journey",
+    "issue": "ronplusron/phileas#54"
+  },
+  {
     "id": "23740607",
     "check": "console-error",
     "signature": "console-error: Element already has context attribute: positron-cell-editor-monaco-widget",

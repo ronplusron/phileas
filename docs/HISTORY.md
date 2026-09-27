@@ -287,6 +287,13 @@ current release; 32 of 50 passed.
 - Both session checks dropped, asked for as "fix it or dump it"; their two
   false entries left the known findings.
 
+**The notebook Journey again,** once issue 53 was known: 7 of 10 passed.
+The other three ended on "Aborted onWillSaveTextDocument-event after N ms",
+logged two to four seconds after a new notebook opened, each after a
+different action. Nine launches that did nothing, pressed Cmd-W, or clicked
+Run Cell after opening one found it once, with nothing done. Filed as
+ronplusron/phileas issue 54.
+
 **Tested.** Two new tests, 242 in all. The arrow's cannot pass without its
 fix, which produced "Alt+↓". The text box's failed with the fix removed,
 with the error Positron's Route met, and a first version of it did not
