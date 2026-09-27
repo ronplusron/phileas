@@ -359,6 +359,19 @@ export interface AppUnderTest {
   settleQuietMs?: number;
 
   /**
+   * How long to watch a Route's profile folder after deleting it, in
+   * milliseconds, and delete it again if something recreated it. Leave it out
+   * for the engine's default of 250 ms.
+   *
+   * For an application whose helpers write into the profile after it has
+   * closed. Measured on Positron on 2026-09-26: a Copilot helper started as
+   * the application closed, and wrote its log after the profile was deleted,
+   * recreating the folder. Waited on at every Route's teardown, so it costs
+   * that much per Route.
+   */
+  profileWatchMs?: number;
+
+  /**
    * The share of Hops drawn from the common keys, as a fraction from 0 up to
    * but not including 1. Leave it out for the engine's default, an eighth.
    *

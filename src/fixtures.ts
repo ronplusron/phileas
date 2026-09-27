@@ -45,7 +45,7 @@ export function createTest(cfg: AppUnderTest) {
     userDataDir: async ({}, use) => {
       const dir = await makeUserDataDir(cfg);
       await use(dir);
-      await removeProfile(dir);
+      await removeProfile(dir, cfg.profileWatchMs);
     },
 
     launched: async ({ userDataDir }, use, testInfo) => {

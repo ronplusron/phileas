@@ -25,6 +25,28 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: a profile recreated after its delete is deleted again
+
+**The measurement.** With profiles deleted reliably, three still turned up in
+the system temp folder after an evening's Positron probes, each holding one
+Copilot log. A Copilot helper started as Positron closed, even with the
+Copilot chat extension disabled, lived 6 ms, and wrote its log into the
+Route's home folder after the delete had finished.
+
+**What landed.** `removeProfile` watches a deleted profile and deletes it
+again if it comes back, up to three times, then fails the teardown by name.
+How long it watches is an adapter's `profileWatchMs`, 250 ms by default,
+chosen over one second for every application, which would have added about
+three minutes to the engine's own suite, and over no watch by default, which
+would protect nothing an adapter had not measured. The Positron adapter sets
+one second.
+
+**Tested.** A process that writes into the profile 300 ms after the delete
+brings it back with no watch, which is the control, and is cleaned up with a
+one-second watch; one that writes without stopping is reported. 182 pass,
+the suite about thirty seconds longer. `DEFECTS.md` keeps an entry open for a
+writer later than the watch.
+
 ## 2026-09-26: an application that opens no window is reported in its own words
 
 **The defect.** An application that started, said why it could not go on,

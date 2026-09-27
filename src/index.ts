@@ -18,6 +18,7 @@ export {
   reloadRenderer,
   makeUserDataDir,
   removeProfile,
+  DEFAULT_PROFILE_WATCH_MS,
   hideWindows,
   showWindows,
   windowMode,

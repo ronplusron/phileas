@@ -111,13 +111,34 @@ async function makeWritable(dir: string): Promise<void> {
  * covers exactly that error. A folder the run made read-only is made writable
  * first, since otherwise nothing inside it can be removed.
  *
- * Throws if the folder still cannot be removed, rather than leaving it
- * silently: the fixture's teardown then fails, naming it.
+ * Then it watches the folder for `watchMs` and deletes it again if something
+ * recreated it, a few times over. A delete that succeeded was still not the
+ * end on Positron the same day: a helper started as the application closed
+ * and wrote its log into the Route's home folder afterwards, bringing the
+ * profile back. A writer later than the watch still leaks one, which
+ * docs/DEFECTS.md carries.
+ *
+ * Throws if the folder cannot be removed or keeps coming back, rather than
+ * leaving it silently: the fixture's teardown then fails, naming it.
  */
-export async function removeProfile(dir: string): Promise<void> {
-  await makeWritable(dir);
-  await fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+export async function removeProfile(dir: string, watchMs: number = DEFAULT_PROFILE_WATCH_MS): Promise<void> {
+  for (let attempt = 0; attempt <= PROFILE_RETURNS_ALLOWED; attempt += 1) {
+    await makeWritable(dir);
+    await fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    await new Promise((resolve) => setTimeout(resolve, watchMs));
+    if (!fs.existsSync(dir)) return;
+  }
+  throw new Error(
+    `The profile folder ${dir} kept coming back after it was deleted, ` +
+      `${PROFILE_RETURNS_ALLOWED + 1} times: something is still writing into it.`
+  );
 }
+
+/** How long `removeProfile` watches a deleted profile by default. */
+export const DEFAULT_PROFILE_WATCH_MS = 250;
+
+/** How many times a deleted profile may come back before that is an error. */
+const PROFILE_RETURNS_ALLOWED = 3;
 
 /** The variable an adapter reads the application's checkout from. */
 export const APP_DIR_VARIABLE = 'PHILEAS_APP_DIR';

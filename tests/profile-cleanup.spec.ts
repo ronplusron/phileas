@@ -88,3 +88,62 @@ test('a profile still being written into while it is deleted is removed', async 
     fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 });
+
+/** A process that writes into `dir` once, `afterMs` from now, and exits. */
+function lateWriter(dir: string, afterMs: number): Promise<unknown> {
+  const file = path.join(dir, 'home', '.copilot', 'logs', 'late.log');
+  const child = spawn(
+    process.execPath,
+    [
+      '-e',
+      `setTimeout(()=>{const fs=require('fs');fs.mkdirSync(${JSON.stringify(path.dirname(file))},{recursive:true});` +
+        `fs.writeFileSync(${JSON.stringify(file)},'late')},${afterMs})`,
+    ],
+    { stdio: 'ignore' }
+  );
+  return new Promise((resolve) => child.once('exit', resolve));
+}
+
+test('a profile recreated just after it was deleted is deleted again', async () => {
+  // Measured on Positron: a helper started as the application closed and
+  // wrote its log after the profile was gone, bringing the folder back.
+  const dir = await makeUserDataDir(buggy);
+  try {
+    // The control: with no watch, the delete returns before the late write
+    // and the folder comes back.
+    const unwatched = lateWriter(dir, 300);
+    await removeProfile(dir, 0);
+    await unwatched;
+    expect(fs.existsSync(dir)).toBe(true);
+
+    const watched = lateWriter(dir, 300);
+    await removeProfile(dir, 1_000);
+    await watched;
+    expect(fs.existsSync(dir)).toBe(false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  }
+});
+
+test('a profile that keeps coming back is reported, not left in silence', async () => {
+  const dir = await makeUserDataDir(buggy);
+  const logs = path.join(dir, 'home', 'logs');
+  const child = spawn(
+    process.execPath,
+    [
+      '-e',
+      `const fs=require('fs');const until=Date.now()+3000;let n=0;` +
+        `const t=setInterval(()=>{try{fs.mkdirSync(${JSON.stringify(logs)},{recursive:true});` +
+        `fs.writeFileSync(require('path').join(${JSON.stringify(logs)},'f'+(n++)),'x')}catch{}` +
+        `if(Date.now()>=until)clearInterval(t)},20)`,
+    ],
+    { stdio: 'ignore' }
+  );
+  const exited = new Promise((resolve) => child.once('exit', resolve));
+  try {
+    await expect(removeProfile(dir, 100)).rejects.toThrow(/kept coming back after it was deleted/);
+  } finally {
+    await exited;
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  }
+});

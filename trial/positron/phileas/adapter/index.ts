@@ -44,6 +44,11 @@ export const positron: AppUnderTest = {
     '--disable-crash-reporter',
   ],
 
+  // A Copilot helper starts as Positron closes and writes its log into the
+  // Route's home folder after the profile was deleted, recreating it. One
+  // second is far longer than the 6 ms it lived, measured 2026-09-26.
+  profileWatchMs: 1_000,
+
   logPaths: (userDataDir) => [path.join(userDataDir, 'logs', 'window1', 'exthost', 'exthost.log')],
 
   // A home folder of the Route's own. The in-page file dialogs set below start
