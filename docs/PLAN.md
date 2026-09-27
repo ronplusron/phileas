@@ -698,7 +698,8 @@ while the known bugs were still 7776, 7098 and 5460, and confirmed on
 question and answered "OK let's do this in order": known findings, below;
 a guard for profiles a Journey leaves in the temp folder; the three old
 releases through the adapter; then steps 3, 4, 5 and 6 as numbered above.
-The first three were done on 2026-09-27; `HISTORY.md` records each.
+The first three were done on 2026-09-27; `HISTORY.md` records each. Weighting
+the draw follows the trial, below.
 
 ### Before the rest of the trial: known findings
 
@@ -745,6 +746,23 @@ question:**
   two added for issues 44 and 46 become entries in the file.
 
 **Built 2026-09-27.** `HISTORY.md` has what landed and how it was proved.
+
+### After the trial: weighting the draw toward new targets
+
+**Placed 2026-09-27,** asked for in the words "Let's do it sooner", and
+chosen from three places offered: right after the Positron trial, before the
+rest of phase 5. Chosen over building it before the trial's remaining steps
+and over placing it beside recording a Fix. The reason given with the
+proposal, not with the answer: before the trial ends, the trial would be
+measuring a chooser its bar was not set against. `OUTSTANDING.md` has the
+idea and what needs deciding before it is built.
+
+It is a second chooser behind the choosing seam, so the hop loop does not
+change and the seeded draw stays available. Whether it replaces the seeded
+draw as the default was not decided.
+
+Boundary: bookkeeping. It changes where Routes go, and says nothing new
+about what the engine finds until a measurement does.
 
 ### Phase 5: the universal tier, and the Route as a test
 

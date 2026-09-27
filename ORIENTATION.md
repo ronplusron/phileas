@@ -120,7 +120,8 @@ The three old releases and the current one are installed as
 **On the old releases, context menus are native whatever the adapter
 sets,** since none of them has `window.menuStyle`. With windows hidden,
 opening one froze nothing in twelve launches; with windows shown, that is
-unmeasured. The trial's steps 3 to 6 are next.
+unmeasured. The trial's steps 3 to 6 are next, then weighting the draw
+toward new targets, which `docs/PLAN.md` places after the trial.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer
 keeps `known-findings.json` beside its spec; a Route that meets a finding in

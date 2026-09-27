@@ -438,6 +438,46 @@ a refactor or a feature rather than a fault. The faults it deferred are in
   demo's copied journal reader, and duplicated expressions in `route.ts`,
   `fixtures.ts` and `bin/phileas.mjs`.
 
+### 1.14 Weighting the draw toward new targets and away from the last one
+
+Raised 2026-09-24 as something to note and not to decide, when it held only
+the first half below. The idea then, close to how it was put: at hop 1 every
+available target is known, and one is chosen. At hop 2 some targets may be
+new, say because hop 1 landed on a dialog, and the Route could weight those
+above the rest.
+
+**Extended on 2026-09-27,** close to how it was put: targets have an average
+weight; new targets are weighted highest; the target just used is weighted
+below average; and as Hops go on, each weight moves back toward average
+until it reaches it. "The idea is that Phileas would favor new things, and
+avoid doing the same thing over and over again. And hopefully make it out of
+London."
+
+**Placed the same day,** asked for in the words "Let's do it sooner": right
+after the Positron trial, before the rest of phase 5, chosen over building
+it before the trial's remaining steps and over placing it beside recording a
+Fix. `PLAN.md` has it in the build order.
+
+**Notes, a reading and not a decision:**
+
+- **Replay survives it.** Each weight is a function of the pools and choices
+  the journal already records, so a weighted draw is still a seeded draw and
+  a replay makes the same choice. It would be a chooser behind the choosing
+  seam, which `../CLAUDE.md` keeps a named interface for exactly this kind of
+  addition, and the journal would need to say which weighting drew each Hop.
+- **It is not the declined route bias, 3.1.** That assigned directions before
+  anything had run. This reacts to what the Route actually did, which is the
+  thing 3.1 called missing.
+- **Which target is "the same" across Hops needs deciding first.** A target is
+  its role, name and `nth`; `nth` shifts when a matching control appears
+  earlier on the page, and a name can change while a Route runs, as
+  Positron's Accounts did. A wrong match makes an old control look new.
+- **The numbers are guesses until measured:** how high a new target starts,
+  how far the last one drops, and how many Hops the return takes. The Eighty
+  Days demo can measure getting out of London with and without it, sooner
+  than phase 8's planted defects can; the same caution 1.6 gives for
+  weighting the keys applies.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -548,31 +588,6 @@ that is the only channel Playwright's workers take: `PHILEAS_ROUTES`,
 and are marked in the printout the same way. Left open when the command was
 agreed on 2026-09-24: whether they are a documented way to set a run, or
 plumbing a person should reach only through the command.
-
-### 2.6 Weighting the candidates a Hop just made appear
-
-Raised 2026-09-24, as something to note and not to decide. The idea, close to
-how it was put: at hop 1 every available target is known, and one is chosen.
-At hop 2 there are several targets, and some may be new, say because hop 1
-landed on a dialog. If the Route tracked between hops what was new, it could
-weight the new targets above the rest, making them more likely to be chosen.
-That is one way to make a Route more semirandom than random.
-
-**Notes, a reading and not a decision:**
-
-- **Replay survives it.** Which candidates are new is a function of two pools
-  the journal already records, so a weighted draw is still a seeded draw and
-  a replay makes the same choice. It would be a chooser behind the choosing
-  seam, which `../CLAUDE.md` keeps a named interface for exactly this kind of
-  addition, and the journal would need to say which weighting drew each Hop.
-- **It is not the declined route bias, 3.1.** That assigned directions before
-  anything had run. This reacts to what the last Hop actually did, which is
-  the thing 3.1 called missing.
-- **What would settle it is measurement.** Whether Routes already reach new
-  surfaces often enough, and whether weighting finds more in `testbed/`'s
-  planted defects than an even draw does, once phase 8 has them. A weight
-  chosen before that is a guess about where bugs are, the same caution 1.6
-  gives for weighting the keys.
 
 ### 2.7 A Fix step naming a control that two controls share
 
