@@ -57,7 +57,7 @@ below.
 needed: "Let's keep it." It earns more here than in the rail demo, since
 stage two's sections depend on values from the ones before them: the run
 folder, the finding id `phileas known add` takes, and whether a pinned seed
-still reaches its bug, which it checks before the section is shown.
+still reached its bug, which it reads from the section's own run.
 
 **What is shared with the rail demo, and what is not.** `present.mjs` there
 is 467 lines, most of it a runner: print a command, wait for Enter, run it,
@@ -147,10 +147,10 @@ go into `data/`, as every date and figure taken from the book is.
 ### How it plays
 
 **The state is small and all of it shows.** Where Fogg is, the date and
-hour, what is left in the carpet-bag, who travels with him (Passepartout, Aouda), whether
-Kiouni is his, and how close the Detective is. Every part of it is on the
-screen somewhere, which is what lets a watcher follow a Route and lets a
-check in phase 6 read it.
+hour, what is left in the carpet-bag, who travels with him (Passepartout,
+Aouda), whether Kiouni is his, and how close the Detective is. Every part
+of it is on the screen somewhere, which is what lets a watcher follow a
+Route and lets a check in phase 6 read it.
 
 **Places.** Two kinds, kept apart in `data/` and never confused:
 
@@ -247,7 +247,8 @@ and there it earns its place:
   lose.
 - **The offer for Kiouni**, made by clicking: "Offer £1,000" to open, then
   "Raise by £200" and "Stand firm", with the offer and the owner's answer
-  shown. It carries the `kiouni-throw` plant.
+  shown. The owner accepts at £2,000, so the offer never goes past it, and
+  the `kiouni-throw` plant fires on the raise that reaches it.
 
 **Why buttons and not a number field.** A Trip types only from a fixed
 list of values: empty, "a", "travel", "Carpet", "0", two spaces, and two
@@ -298,7 +299,12 @@ purpose, such as the bullock cart, the data says so.
   clock.
 
 **It always has a way on.** Every ending, won or lost, offers "Set out
-again", and a game lost midway offers it too. A screen with no way on
+again", and a game lost midway offers it too. **Only an ending offers it.**
+The menu's Game > Set out again is disabled until the game has ended, and
+a disabled entry is never offered (`src/menu.ts:144`). Offered all the
+time, it would take a share of the menu's eighth of the draw on every Hop,
+and over a few hundred Hops a Route would be sent back to London several
+times, losing its Fix's progress with it. A screen with no way on
 would strand every Route that reached it, and would say something about
 the game rather than find a bug in it. The one screen with no way out is
 the `bradshaw-trap` plant, on purpose, and it strands rather than fails:
@@ -313,13 +319,16 @@ The current place is the main screen. A top bar reaches the rest:
   from, to, days, and a heading counting them ("8 passages, 79
   days"). Each passage opens to a disclosure, "Show Passepartout's diary",
   holding his line about it.
-- **Ledger.** The wager's terms at the head, then one ruled row per
-  passage with its days, and beneath them the total against the eighty and
-  the arrival date counting the day gained eastward. Rows and total are on
-  the one screen because a structural check reads one screen at a time
-  (`PLAN.md`, phase 6), so the `sledge-days-missing` plant can be caught by
-  comparing the total with its own rows. Beneath it all, one line for the
-  carpet-bag.
+- **Ledger.** The wager's terms at the head, then one ruled row for
+  everything that cost time, in days and hours: each passage, and each
+  wait, delay and stay, such as a night at the Hotel, the day in court at
+  Calcutta or the hours lost to the warrant. Beneath them, the total
+  against the eighty, and the arrival date counting the day gained
+  eastward. Nothing moves the clock without a row, so the rows are the
+  whole account of the time. Rows and total are on the one screen because
+  a structural check reads one screen at a time (`PLAN.md`, phase 6), so
+  the `sledge-days-missing` plant can be caught by comparing the total with
+  its own rows. Beneath it all, one line for the carpet-bag.
 - **Bradshaw.** The railway guide, as a tree: country, line, train. A
   search box over it, with a heading counting matches.
 - **About.** A heading, the credits for the engravings, and one outbound
@@ -432,9 +441,10 @@ at its head on a card from the Reform Club.
 
 **The centerpiece is a map**, which the game calls the chart, since Map is
 a planned engine term (`GLOSSARY.md`) and the application never says it. A
-world chart on the Circuit screen, drawn to match the engravings, with each passage traced over it in its mode's color
-as it is taken, and a marker at the place reached. It is the one thing in
-the demo a person watching from the back of a room can follow without
+world chart on the Circuit screen, drawn to match the engravings, with
+each passage traced over it in its mode's color as it is taken, and a
+marker at the place reached. It is the one thing in the demo a person
+watching from the back of a room can follow without
 reading a line: every Route draws its own line round the world, and a
 Route that leaves the book's path draws it somewhere the book never went.
 The clock sits beside it as a brass dial with the date reached and the days
@@ -511,13 +521,25 @@ The rail demo's pattern, kept so this demo stands on its own:
   that shows why a Fix exists, in the game's own terms: a known start,
   Fogg's, and an unpredictable continuation, where the three Routes go
   three ways from the same quay. Its length is whatever the book's choices
-  take, counted when it is written, and it is kept to about twenty-five
-  steps. Every Fix step surveys, settles, runs the checks and waits out the
-  hop delay (`src/route.ts:899-916`, `:961`), so a long Fix costs tens of
-  seconds per Route in a watched run, before the Trip starts.
+  take, counted when it is written. Every Fix step surveys, settles, runs
+  the checks and waits out the hop delay (`src/route.ts:899-916`, `:961`),
+  so a long Fix costs tens of seconds per Route in a watched run, before
+  the Trip starts. A rough count puts London to Hong Kong near forty steps,
+  since buying Kiouni alone takes about eight, so if the watched-run budget
+  cannot carry it, the default Fix ends at Calcutta instead and the name
+  follows.
 - **One Fix per stage-two section where a plant sits late in the game**,
   such as `omaha` for the sledge's plants, so the section's Trip starts
   near its bug rather than needing a seed that wanders there from London.
+
+**A plant never sits on a Fix's path.** A Fix that walked through a planted
+bug would fail inside the Fix on every Route, which is reported as one
+Fix failure and never reaches the Trip at all. So each section's Fix stops
+short of its plant, and no plant is placed on the default Fix's path: the
+Kiouni plant, for one, is shown with a Fix that ends at Kholby, never with
+the default. The guided demo's own check of each section's seed would
+catch a Fix that strayed onto a plant, since the finding would appear as a
+Fix failure rather than on a Trip Hop.
 
 Three Routes each, fixed seed by default, and `PHILEAS_SEED` or `--seed` for
 another. The Trip length is set by the balance measurement above.
@@ -570,13 +592,16 @@ to the check that catches it:
 The `date-line` plant is the novel's own ending turned into a bug, and it
 is the one to point at when explaining what a specified oracle is: the game
 computes the arrival date, the check computes it again, and the two
-disagree. **What the check may read from the screen is only which
-departures were taken**, by the mode, from and to on each Ledger row. The
-days for each come from `data/`, and the date, the clock and the date line
-are computed by the check itself. If it took each row's days from the
-screen, a wrong day count in the game would appear on both sides and
-agree. `CLAUDE.md` says why the check must not share the game's logic, and
-this is the concrete case.
+disagree. **What the check computes is the date line, and only that.** It
+reads the Ledger's rows, adds them itself rather than taking the Ledger's
+total, and turns the sum into a date from the starting moment and the
+date-line rule, both taken from `data/`. It does not recompute how long
+each passage or delay took: that depends on every rule in the game, from
+the court day to the warrant, and a check that reimplemented them all
+would be a second copy of the game's logic, which is the trap `CLAUDE.md`
+names. So the specified part is narrow and independent, and whether each
+row's time is right is a different question, left to the structural and
+metamorphic checks.
 
 **`bradshaw-trap` is shown apart from the rest.** A Route that strands is
 reported as stranded, never as failed, and a stranding has no signature
@@ -611,6 +636,14 @@ setup's returned function calls `finishJourney({ journalsRoot,
 knownFindings })` (`src/start.ts:165-170`). The rail demo passes neither
 (`demo/rail-itinerary/phileas/journey.spec.ts:24-34`, `global-setup.ts:10-12`).
 
+**The demo's known findings file is never committed.** Every Journey that
+finds something adds to it, so a committed file would change on every run
+with a plant on. It lives beside the journals, under `.phileas-journals/`,
+which is already ignored, and the guided demo points `knownFindings` at its
+own scratch copy. The trial's committed file is different in kind: it
+records real bugs filed against Positron, where these are planted ones
+that exist to be found again.
+
 **The seeds have to be found, and they move.** A planted bug is found by a
 Journey rather than steered to, since steering would show the check and not
 the search, and that is the point of a demo. So each stage-two section
@@ -630,14 +663,24 @@ double every section's time.
 
 A review of this plan found twenty-one problems, and the fixes are written
 into the sections above rather than listed here. The ones that would have
-broken the demo as first written: a replay after a Journey that had filed
-nothing would still travel past the bug; a six-second hang does not fire
+broken the demo as first written: a replay run after the Journey that
+found a bug would travel past it, since that Journey's end adds the
+finding as known; a six-second hang does not fire
 the still-responding check; a Trip cannot type a number other than 0, so
 number fields whose effect depends on a value were unreachable; a slider
 clicked by a Trip always lands at its middle; text changed after an
 animation could change what the next Hop is offered; and native menu
 entries are never offered as `menuitemcheckbox`. Several facts about the
 book were also wrong and are corrected, still to be checked at the text.
+
+## A second review, 2026-09-27
+
+Read afresh after the fixes above, and found eight more, each fixed in the
+section it belongs to. Three would have broken the demo: Set out again on
+offer in the menu at every Hop would have sent Routes back to London
+several times over; the date-line oracle could not compute the arrival
+date from departures alone without copying the game's rules; and a plant on
+a Fix's path would fail every Route inside its Fix.
 
 ## Settled in review
 
