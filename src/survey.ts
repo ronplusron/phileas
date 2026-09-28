@@ -430,6 +430,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   const excluded: ExcludedCandidate[] = [];
   const excludedControls = new Map<PageCandidate, string>();
   let focusOnExcluded: string | undefined;
+  let focusOnDropdown: string | undefined;
 
   for (const candidate of found) {
     let rule: string | undefined;
@@ -446,6 +447,15 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
       if (!rule && candidate.role === 'key') {
         focusOnExcluded ??= await focusedExcluded(excludedControls, timeoutMs);
         if (focusOnExcluded) rule = `focus: ${focusOnExcluded}`;
+      }
+
+      // On a focused native dropdown, these open its list, which the operating
+      // system draws outside the window and so on the real screen, whatever the
+      // window mode: measured on macOS on 2026-09-28, where they opened it and
+      // never changed the choice. The dropdown stays reachable by `select`.
+      if (!rule && candidate.role === 'key' && OPEN_A_DROPDOWN.has(candidate.key)) {
+        focusOnDropdown ??= await focusedDropdown(page, timeoutMs);
+        if (focusOnDropdown) rule = `focus: native dropdown ${focusOnDropdown}`;
       }
     }
 
@@ -496,6 +506,38 @@ async function focusedExcluded(
     if (focused) return control.name;
   }
   return '';
+}
+
+/** The common keys that open a focused native dropdown's list. */
+const OPEN_A_DROPDOWN: ReadonlySet<string> = new Set(['Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+
+/**
+ * Which native dropdown has focus, named by its label, if one does: a
+ * `<select>` showing one choice at a time, whose list the operating system
+ * draws. A `<select multiple>`, or one with a `size`, is a list drawn in the
+ * page, and the arrows move through it there.
+ *
+ * An empty string when none does, so a survey asks the page once however many
+ * keys it reaches.
+ */
+async function focusedDropdown(page: Page, timeoutMs: number | undefined): Promise<string> {
+  return (
+    page
+      .locator('body')
+      .evaluate(
+        () => {
+          const element = document.activeElement;
+          if (!(element instanceof HTMLSelectElement) || element.multiple || element.size > 1) return '';
+          const label = element.labels?.[0]?.textContent?.trim() || element.getAttribute('aria-label') || element.id;
+          return label ? `"${label}"` : 'with no label';
+        },
+        undefined,
+        timeoutMs === undefined ? {} : { timeout: timeoutMs }
+      )
+      // **Fails closed,** as for an excluded control: a focus that could not be
+      // read might be on a dropdown, and the list would then open on the screen.
+      .catch((error: unknown) => `unknown (${error instanceof Error ? error.message.split('\n')[0] : String(error)})`)
+  );
 }
 
 /** Which exclusion rule keeps this candidate out of the draw, if any. */

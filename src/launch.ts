@@ -5,6 +5,7 @@ import type { AppUnderTest, UniversalCheck } from './app-under-test';
 import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle';
 import { stubOpenExternal, clearOpenExternal } from './external';
 import { stubNativeDialogs } from './dialogs';
+import { prepareFirstLine } from './first-line';
 
 /**
  * How the engine got into the application.
@@ -325,8 +326,9 @@ export function showWindows(): boolean {
  *      creates its window with `show: true` never calls show(), and usually
  *      creates it after this runs, so the first two parts never reach it:
  *      measured on Positron on 2026-09-26, whose window stayed on the screen
- *      for whole runs that reported hidden mode. Such a window still flashes
- *      briefly; it just does not stay up.
+ *      for whole runs that reported hidden mode. Such a window is still put on
+ *      the screen for a moment before it is hidden, which is why the launch
+ *      also makes every window transparent: see `TRANSPARENT_FROM_THE_FIRST_LINE`.
  *
  * Set PHILEAS_SHOW=1 to watch a run instead, which is genuinely useful when
  * working out why something fails.
@@ -373,6 +375,34 @@ export async function hideWindows(app: ElectronApplication): Promise<void> {
     });
   });
 }
+
+/**
+ * Run in hidden mode before the application's own first line: every window is
+ * made fully transparent as it is created, and stays so.
+ *
+ * Hiding a window cannot stop it being put on the screen first. Electron shows
+ * a window created with `show: true` just after 'browser-window-created', from
+ * native code no replaced method reaches, and macOS then fades a hidden window
+ * out over about 300 ms. Measured 2026-09-28 by polling macOS's list of
+ * on-screen windows, which needs no screen recording: a window was on the
+ * screen at full opacity for 318 ms on `buggy`, about 290 ms on the current
+ * Positron and about 300 ms on 2024.11. Transparent from creation, the same
+ * windows were still put on the screen and then hidden, but at opacity 0 for
+ * every sample, on all three.
+ *
+ * Opacity rather than creating every window hidden, which was tried first: that
+ * meant replacing what `require('electron')` hands the application, and the
+ * current Positron loads Electron with `import`, which never passes through it.
+ * The window-created event reaches both. Installed at the first line, since
+ * the first window can be created before any call into the main process after
+ * the launch; see `src/first-line.ts`.
+ */
+const TRANSPARENT_FROM_THE_FIRST_LINE = `(() => {
+  require('electron').app.on('browser-window-created', (_event, window) => window.setOpacity(0));
+})()`;
+
+/** How long the first-line install may take, from the process starting. */
+const FIRST_LINE_TIMEOUT_MS = 20_000;
 
 /** What Playwright says when the main process drops the answer to a call. */
 const DROPPED_ANSWER = 'Resulting promise was garbage collected';
@@ -512,26 +542,48 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
     );
   }
 
-  const app = await electron.launch({
-    executablePath: bundle.executable,
-    // The profile rather than wherever the run was started, which is the
-    // consumer's repository. An application writing a file by a relative path
-    // then writes into what the Route throws away: measured on Positron on
-    // 2026-09-26, where a bundled extension left a log in the Journey's folder.
-    cwd: userDataDir,
-    args: [`--user-data-dir=${userDataDir}`, ...launchArgs],
-    env: {
-      ...process.env,
-      ...(typeof cfg.env === 'function' ? cfg.env(userDataDir) : (cfg.env ?? {})),
-    } as Record<string, string>,
-    timeout: 20_000,
-  });
+  const mode = windowMode();
+
+  // Started before the launch and awaited after it, since each waits on the
+  // other: the launch returns only once the application has gone on past its
+  // first line, and it goes on only once this has let it. A failure is kept
+  // rather than thrown here, so it is reported once the launch is known.
+  const firstLine =
+    mode === 'hidden' ? await prepareFirstLine(TRANSPARENT_FROM_THE_FIRST_LINE, FIRST_LINE_TIMEOUT_MS) : undefined;
+  const installed = firstLine?.run().then(
+    () => undefined,
+    (error: unknown) => error
+  );
+
+  const app = await electron
+    .launch({
+      executablePath: bundle.executable,
+      // The profile rather than wherever the run was started, which is the
+      // consumer's repository. An application writing a file by a relative path
+      // then writes into what the Route throws away: measured on Positron on
+      // 2026-09-26, where a bundled extension left a log in the Journey's folder.
+      cwd: userDataDir,
+      // The first-line pause last, so nothing an adapter passes shadows it.
+      args: [`--user-data-dir=${userDataDir}`, ...launchArgs, ...(firstLine ? [firstLine.launchArg] : [])],
+      env: {
+        ...process.env,
+        ...(typeof cfg.env === 'function' ? cfg.env(userDataDir) : (cfg.env ?? {})),
+      } as Record<string, string>,
+      timeout: 20_000,
+    })
+    .catch(async (error: unknown) => {
+      // A launch that timed out waiting on a first line that never let the
+      // application go on says so, rather than only that it timed out.
+      const notInstalled = await installed;
+      throw notInstalled ? new Error(`The launch failed, and so did the first-line install.`, { cause: notInstalled }) : error;
+    });
 
   // Everything after the launch is inside this, so a step that throws closes
   // the application rather than leaking it: the fixture never receives a
   // launch that did not return, so nothing else would.
   try {
-    const mode = windowMode();
+    const notInstalled = await installed;
+    if (notInstalled) throw notInstalled;
 
     // Before any call that changes something, since some releases drop the
     // answer to the first call made.

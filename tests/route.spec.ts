@@ -1363,3 +1363,26 @@ test('stranded because every control was unnamed says so, and what they were', a
   expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
   expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/2 element\(s\) carried a hoppable role and no accessible name.*button, button/);
 });
+
+test('the keys that open a focused native dropdown are withheld, and the rest are offered', async ({ page, app }) => {
+  // On macOS an arrow or Enter on a focused <select> opens its list, which the
+  // operating system draws on the real screen whatever the window mode.
+  const opening = ['Enter', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+  const keys = (found: Awaited<ReturnType<typeof survey>>) =>
+    found.candidates.filter((candidate) => candidate.source === 'key' && candidate.role === 'key').map((c) => c.name);
+  const surveyed = () =>
+    survey({ page, app, exclusions: NO_EXCLUSIONS, hopIndex: 0, tally: createExclusionTally(NO_EXCLUSIONS) });
+
+  // The control: with the dropdown not focused, every common key is offered.
+  await page.getByRole('button', { name: 'Summary', exact: true }).focus();
+  expect(keys(await surveyed())).toEqual(expect.arrayContaining(opening));
+
+  await page.locator('#category').focus();
+  const found = await surveyed();
+  expect(keys(found)).toEqual(['Escape', 'Tab']);
+  expect(found.excluded.filter((entry) => entry.rule === 'focus: native dropdown "Category"').map((entry) => entry.candidate.name)).toEqual(
+    opening
+  );
+  // Still reachable by choosing an option, which never opens the list.
+  expect(found.candidates.some((candidate) => candidate.name === 'Category')).toBe(true);
+});

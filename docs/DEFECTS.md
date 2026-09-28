@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Six of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -234,6 +234,10 @@ failed. The retry covers only the first call, and which later call dropped
 its answer was not captured. Three launches repeated to catch it did not.
 Retrying the launch's other main-process calls the same way, each of which
 either changes nothing or can be made safe to repeat, would close it.
+Seen again on 2026-09-28, from the native-dialog stub, on 1 Route in 6 with
+the first-line pause and 1 in 6 with its script doing nothing; whether the
+pause itself raises the rate was not measured, since 2024.11 was set aside
+in favor of the current release.
 
 ## A stop sent to the `phileas` command alone does not stop the run
 
@@ -269,17 +273,6 @@ Route it appears on. It fails loud. Which ids an application prints is not
 knowable in advance, so the likely shape is a pattern an adapter adds to
 `VARYING` for its own application. Measured on 2026-09-27: it ended 3 of 20
 `data-explorer` Routes, each after a Hop onto Delete Session.
-
-## A window created shown still flashes on the screen
-
-**Filed 2026-09-27, as a defect rather than a limit.** Hiding a window on its
-`show` event, which is how a window created already shown is kept off the
-screen, leaves it drawn for a moment first: `hideWindows` says so, and the
-person running a Positron Journey saw windows flicker all day. C5 says
-nothing takes over the screen, and a flicker on every launch and every
-second window is not nothing. No way to reach such a window before it is
-first drawn has been found; `NODE_OPTIONS=--require` was measured not to
-reach a packaged main process in phase 1.
 
 ## Two things that will look like candidates, and are not
 

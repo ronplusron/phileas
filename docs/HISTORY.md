@@ -57,6 +57,66 @@ recorded, `bradshaw-trap` stranded after the same eight, `mudge` found the
 same two bugs on the same five Routes, and `passepartout` played the same
 three games. The demo's suite passed, 26 of 26 with the probe.
 
+## 2026-09-28: a hidden run no longer flashes windows or opens dropdown lists on the screen
+
+**Why.** Hidden mode promises nothing takes over the screen (C5), and two
+things broke it. Every launch flashed a window: one created shown, as
+Positron's is, was hidden on its `show` event, which left it on the screen
+first, and the person running the engine saw windows flicker all day. And
+a Hop's arrow key on a focused native dropdown opened its list, which the
+operating system draws outside the window; reported by the Eighty Days
+demo's session with a probe, `demo/eighty-days/tests/dropdown.spec.ts`,
+and seen on the screen during a hidden-only run.
+
+**Measured, the flash.** By polling macOS's list of on-screen windows,
+which needs no screen recording: with today's hiding, a window was on the
+screen at full opacity for 318 ms on `buggy`, about 290 ms on the current
+Positron and about 300 ms on 2024.11, most of it macOS fading the hidden
+window out. Electron shows a window created with `show: true` just after
+'browser-window-created', from native code, with no call a replaced method
+could catch: a trace of every window method on the current Positron found
+none before the window was visible.
+
+**What was tried first.** A Fable agent found the way in:
+`--inspect-brk=<port>` beside Playwright's `--inspect=0` pauses a packaged
+app on the first line of its main script, before any window exists, and
+Playwright's launch waits until a second inspector client lets it go on.
+Its fix at that pause, handing `require('electron')` a `BrowserWindow` that
+is always created hidden, removed the flash on `buggy`, and reached no
+window at all on the current Positron, which loads Electron with `import`.
+The agent was stopped with the approach proven and not yet built.
+
+**What landed.** `src/first-line.ts`, from the agent: a small inspector
+client that runs a script in the main process at that pause and then lets
+the app go on, whatever happened, so a failure is reported rather than
+turning into a launch that timed out. In hidden mode `launchApp` uses it to
+make every window fully transparent as it is created, which the window-
+created event reaches however the app loads Electron. Windows are still put
+on the screen and hidden, invisibly. For dropdowns, `survey` withholds the
+arrows and Enter while a native `<select>` showing one choice has focus,
+reported as `focus: native dropdown "<label>"`, and fails closed when focus
+cannot be read; the dropdown stays reachable by `select`. Decided, over
+never focusing a select, which would also have dropped the keys that do not
+open the list. What is given up: an app's own arrow handlers on a native
+select, and elsewhere than macOS, arrows that change the value directly.
+The pools change, so recorded seeds move, Eighty Days' included.
+
+**Measured, the fix.** Opacity 0 at every sample on all three apps, where
+the controls reached 1.0; and a Route on the current Positron through the
+engine passed with its window on the screen for 8 samples, all at opacity
+0. On 2024.11, a known defect, a dropped answer to a later call, failed 1
+Route in 6 both with the fix and with its script doing nothing;
+`DEFECTS.md` has it.
+
+**Tested.** `buggy` records from its own main process each moment its
+window is visible and not transparent, so the evidence does not rest on the
+engine's hiding: with today's hiding alone the record fills, and through
+the engine it stays empty, and it fills again with the script disabled.
+The first-line client runs a script before a program's first line, and a
+script that throws is reported with the program still let go on. The
+dropdown keys are withheld only while the dropdown has focus, and the test
+fails with the rule disabled. 254 tests in all.
+
 ## 2026-09-28: a Fix step waits for its target to appear
 
 **Why.** A Fix's `hop` surveyed once and failed if its target was not in

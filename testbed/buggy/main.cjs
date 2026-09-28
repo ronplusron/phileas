@@ -37,6 +37,21 @@ function createWindow() {
   });
 
   if (!shownAtCreation) win.once('ready-to-show', () => win.show());
+
+  // The application's own record of whether its window was ever where a person
+  // could see it: visible and not fully transparent. Kept here rather than by
+  // the engine, so the evidence that hidden mode kept a window off the screen
+  // does not depend on the engine's hiding having worked. Polled every 2 ms for
+  // the first 5 seconds, where a flash of a few hundred milliseconds falls;
+  // read by the tests as `buggySightings`.
+  globalThis.buggySightings = [];
+  const createdAt = Date.now();
+  const watching = setInterval(() => {
+    if (win.isDestroyed() || Date.now() - createdAt > 5_000) return clearInterval(watching);
+    if (win.isVisible() && win.getOpacity() > 0) {
+      globalThis.buggySightings.push({ at: Date.now() - createdAt, opacity: win.getOpacity() });
+    }
+  }, 2);
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
   // Both ways out of the window, closed the same way. Leaving only the first

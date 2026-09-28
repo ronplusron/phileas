@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { test, expect, type ElectronApplication } from '@playwright/test';
+import { test, expect, _electron, type ElectronApplication } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import {
   launchApp,
@@ -9,6 +9,7 @@ import {
   resolveBundle,
   assertBundleFresh,
   reachMainProcess,
+  prepareWindows,
   MAIN_PROCESS_ATTEMPTS,
 } from '../src/index';
 import { openedExternally, nativeDialogs } from '../src/index';
@@ -212,6 +213,47 @@ test('a window created already shown is off the screen too', async () => {
 
     expect(visible, 'no window exists, so this asserts nothing').toHaveLength(1);
     expect(visible).toEqual([false]);
+  });
+});
+
+/** What buggy saw of its own window: each moment it was visible and not transparent. */
+const sightings = (app: ElectronApplication) =>
+  app.evaluate(() => (globalThis as unknown as { buggySightings?: { at: number; opacity: number }[] }).buggySightings);
+
+test('a window created already shown is never visible, not even for a moment', async () => {
+  // Hiding it on its 'show' event left it on the screen for about 300 ms first,
+  // at full opacity, on every launch. The evidence is buggy's own record of its
+  // window, polled every 2 ms from its main process, so it does not rest on the
+  // engine's hiding having worked.
+  const shownAtCreation: AppUnderTest = { ...buggy, launchArgs: ['--buggy-shown-at-creation'] };
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 1_500));
+
+  // The control: the hiding as it was, installed after a plain launch. It has
+  // to catch the flash, or the empty record below could mean the record is
+  // blind rather than that the window stayed off the screen.
+  const dir = await makeUserDataDir(shownAtCreation);
+  const plain = await _electron.launch({
+    executablePath: resolveBundle(shownAtCreation).executable,
+    cwd: dir,
+    args: [`--user-data-dir=${dir}`, '--buggy-shown-at-creation'],
+  });
+  try {
+    await reachMainProcess(plain);
+    await prepareWindows(plain, 'hidden');
+    await plain.firstWindow();
+    await settle();
+    expect(await sightings(plain), 'the record never started, so this asserts nothing').toBeDefined();
+    expect((await sightings(plain))?.length).toBeGreaterThan(0);
+  } finally {
+    await plain.close().catch(() => {});
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  }
+
+  await withApp(shownAtCreation, async (launched) => {
+    await shownAtCreation.waitForReady(await launched.app.firstWindow());
+    await settle();
+    expect(await sightings(launched.app), 'the record never started, so this asserts nothing').toBeDefined();
+    expect(await sightings(launched.app)).toEqual([]);
   });
 });
 
