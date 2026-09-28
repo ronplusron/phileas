@@ -765,7 +765,10 @@ Each answered 2026-09-27, in the words given:
   `--layout=screens`, so the demo can show the engine's limits and a better
   chooser can be measured against it; and the default layout follows the
   engine, switching back to the original once a chooser gets Routes out of
-  London in it, measured, with the panel then retired.
+  London in it, measured, with the panel then retired. The "before" was
+  taken on 2026-09-28 with the uniform draw, seed `layout-baseline`, and
+  `HISTORY.md` has it: a median of one place beyond London in the first
+  layout against three in the panel.
 - **The application's name** is "Eighty Days".
 - **The shared runner:** "Do this." The rail demo's runner is lifted into
   `demo/presenting.mjs` as the first step of the build.

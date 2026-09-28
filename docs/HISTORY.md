@@ -25,6 +25,35 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: a baseline for Eighty Days' original layout, before a better chooser
+
+**Why.** The plan's settled decision keeps the game's first layout behind
+`EIGHTY_DAYS_LAYOUT=screens` so that a chooser weighted toward new targets
+can be measured against it, and makes that layout the default again once a
+chooser gets Routes out of London in it. That needs a "before", taken with
+today's uniform draw, which had not been measured in the restored layout.
+
+**Measured.** Six Routes of 150 Hops from the `accept` Fix, which sets out
+from London, with seed `layout-baseline`, once in each layout, the window
+hidden and nothing planted:
+
+| | `screens`, the first layout | `panel`, the default |
+| --- | --- | --- |
+| Places reached beyond London, per Route | 0, 1, 3, 1, 1, 1 | 3, 3, 1, 3, 3, 2 |
+| Median | 1 | 3 |
+| Furthest | Aden, one Route | Aden, four Routes |
+| Outcomes | 1 lost, 5 still going | 3 lost, 3 still going |
+| Page candidates a Hop, median | 9 | 13 |
+
+So the uniform draw still gets few Routes far from London when a screen
+replaces the place. As first built, three Routes of sixty Hops in this
+layout reached no other place; these got a little further, and the two
+measurements differ in Trip length and in everything the game has gained
+since, so they do not say which. A chooser has done what the plan
+asks of it when the first column moves toward the second, measured the same
+way with the same seed. Neither layout wins from London in 150 Hops, which
+is why the demo's default Journey starts at Hong Kong.
+
 ## 2026-09-28: Eighty Days stage two, a planted bug found, replayed, filed and traveled past
 
 **What landed.** Build step 8 of `DEMO_PLAN_EIGHTY_DAYS.md`, the last: six
