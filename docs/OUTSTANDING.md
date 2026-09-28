@@ -120,7 +120,9 @@ will surface more than it fixes.
 ### 1.6 The keyboard: what it left open
 
 The keyboard work landed on 2026-09-24, and `HISTORY.md` records what it does
-and why. Two things stayed open.
+and why. Two things stayed open, and one is left: how the arrows move
+through a native dropdown was measured on 2026-09-28, and `HISTORY.md` has
+it.
 
 **An assessment to make: different likelihoods per common key.** Up, Escape
 and Enter could be drawn more often than Tab or the other arrows. Fixed
@@ -129,11 +131,6 @@ because nothing measured says one key finds more than another, and weights
 chosen without that are guesses about where bugs are. Assess it once Journeys
 on a real IDE have run: if a key-only behavior, such as console history on
 Up, is being reached too rarely, the journals are the evidence to weight from.
-
-**Moving through a native dropdown by keyboard is unmeasured.** `select`
-chooses an option directly and never opens the list. The arrows are now
-pressed on whatever has focus, including a focused dropdown, and whether they
-change its choice on macOS has not been checked.
 
 ### 1.7 An optional map, in phase 10
 

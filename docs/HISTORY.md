@@ -25,6 +25,38 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: what the arrows do to a native dropdown, and the Eighty Days seeds on the new engine
+
+**Why.** Watching the Eighty Days demo, a small list of three items, "an
+hour", "a night" and something else, was seen to pop up every so often, a
+choice made and the list gone. It was the Hotel's Stay dropdown. How the
+engine's keys move through a native dropdown had been recorded as
+unmeasured since the keyboard work.
+
+**Measured**, with `demo/eighty-days/tests/dropdown.spec.ts`, which does
+what a Hop does, focus through the locator and keys through the page's
+keyboard, and reads the dropdown's value after each, once hidden and once
+shown behind other windows. On macOS an arrow key on a focused native
+dropdown opens its list and leaves the choice as it was; ArrowDown twice,
+Enter, ArrowUp and Escape left "an hour" chosen throughout, and the next
+key closes the list. With the list opened, a Hop's click on another tab
+returned at once and landed. All of it was the same hidden and shown, so it
+does not split a seed's replay between window modes, and the test requires
+that. **But the list reaches the screen in a hidden run.** It is drawn by
+the operating system, outside the window the engine keeps off the screen:
+watched by eye while the probe ran hidden and no game window appeared, the
+three-item list was seen on screen. That breaks C5, that nothing takes over
+the screen, for any application with a native dropdown. It was sent to the
+session working on the engine to file and fix, since the fix changes which
+keys are offered and so moves recorded seeds.
+
+**The seeds held.** `main` gained the engine's temp folder per run and a
+change to the printed shortcuts a survey offers. Every Eighty Days seed was
+run again on it: each plant's seed met its bug at the same Trip hop as
+recorded, `bradshaw-trap` stranded after the same eight, `mudge` found the
+same two bugs on the same five Routes, and `passepartout` played the same
+three games. The demo's suite passed, 26 of 26 with the probe.
+
 ## 2026-09-28: a baseline for Eighty Days' original layout, before a better chooser
 
 **Why.** The plan's settled decision keeps the game's first layout behind
