@@ -45,8 +45,10 @@ demo/eighty-days/
   phileas/                           adapter, journeys, spec, global setup, config
   watch.mjs                          the watched run
   present.mjs, PRESENTING.md         the guided demo, and its script
-  seeds.mjs                          the default seed, which both use
+  seeds.mjs                          the default seed, and each plant's
+  plants.cjs                         the planted bugs and layouts, read by game and adapter
   measure.mjs                        how each Route's game went, from its journals
+  tests/                             the rules, determinism and plant tests
 ```
 
 The watcher itself is shared with the rail demo, as `demo/watching.mjs`,
@@ -121,10 +123,13 @@ worth writing down gets the check that fails when it is broken. They live in
 `demo/eighty-days/tests/determinism.spec.ts`, beside two tests of the
 comparison itself, which run against the rail demo: one finds no difference
 between two launches, and one finds a difference planted before a chosen
-Hop. **Once the game exists, a `coin-flip` plant joins them**: one event
-decided by `Math.random`, switched on by its flag, which the two game tests
-must fail on. It is the control that shows the tests catch randomness in the
-game itself, and not only a note planted from outside.
+Hop. **A `coin-flip` plant is the third test of the game**: one event
+decided by `Math.random`, the odds the Morning Chronicle quotes at the
+Reform Club, switched on by its flag. The test plays with it on twice and
+requires the comparison to find the difference before the first Trip Hop,
+so the suite stays green while showing that the two game tests would fail
+on randomness in the game itself, and not only on a note planted from
+outside.
 
 ### The people, and the words the game uses
 
@@ -571,8 +576,10 @@ The rail demo's pattern, kept so this demo stands on its own:
   the Trip starts. Written, it is twenty-seven steps, of which buying
   Kiouni takes six.
 - **One Fix per stage-two section where a plant sits late in the game**,
-  such as `omaha` for the sledge's plants, so the section's Trip starts
-  near its bug rather than needing a seed that wanders there from London.
+  so the section's Trip starts near its bug rather than needing a seed that
+  wanders there from London: `kholby`, `fort-kearney`, `new-york`, `london`
+  and `reform-club`, in `phileas/journeys/stage-two.ts`. The plants reached
+  from the menu, and the Carnatic's, need none beyond `hong-kong`.
 
 **A plant never sits on a Fix's path.** A Fix that walked through a planted
 bug would fail inside the Fix on every Route, which is reported as one
@@ -581,7 +588,24 @@ short of its plant, and no plant is placed on the default Fix's path: the
 Kiouni plant, for one, is shown with a Fix that ends at Kholby, never with
 the default. The guided demo's own check of each section's seed would
 catch a Fix that strayed onto a plant, since the finding would appear as a
-Fix failure rather than on a Trip Hop.
+Fix failure rather than on a Trip Hop. So the Fixes past Hong Kong go on by
+the Tankadere rather than the Carnatic, cross the prairie with the sail
+down, and take coal on the Henrietta.
+
+**Two Fixes stop one step short of their plant, and say so.** Estimated by
+counting the controls on offer, not measured: with the offer at £1,000, a
+Trip at Kholby would raise it four times before leaving about one Route in
+eighty, and at Fort Kearney would open the sledge's tab and then hoist the
+sail before leaving about one in sixteen. So `kholby` raises the offer three
+times, leaving the raise that reaches £2,000 to the Trip, and `fort-kearney`
+opens the sledge's tab, leaving the hoist to it. Neither step is the plant,
+and the Trip still has to choose the one that is.
+
+**Each plant is proved apart from any seed**, in
+`demo/eighty-days/tests/plants.spec.ts`: from its section's Fix, a chooser
+picks the planted control and the test requires the named check to fire,
+then the same moves with the plant off must pass. That shows the plant and
+its check, and nothing about the search, which is the seeds' job.
 
 Three Routes each, fixed seed by default, and `PHILEAS_SEED` or `--seed` for
 another. The Trip length is set by the balance measurement above.
@@ -618,7 +642,7 @@ to the check that catches it:
 
 | Plant | What happens | Caught by | Runs |
 | --- | --- | --- | --- |
-| `kiouni-throw` | Raising the offer for Kiouni past £2,000 throws an uncaught error in the page | uncaught error | today |
+| `kiouni-throw` | The raise that brings the offer for Kiouni to £2,000 throws an uncaught error in the page | uncaught error | today |
 | `export-throw` | Game > Export the ledger throws in the main process, from a timer, as `buggy`'s `plant:main-throw` does (`testbed/buggy/main.cjs`), so no IPC handler catches it | uncaught error, main process | today |
 | `sail-console-error` | Hoisting the sledge's sail with the wind at its middle setting or above logs a console error. The middle is where a Trip's click sets the slider | console error | today |
 | `coal-hang` | Burning the Henrietta's woodwork busies the page for twelve seconds. A stall is found only when a call outruns the Hop timeout, 3 s, plus the responsive wait, 5 s (`DEFAULT_HOP_TIMEOUT_MS` in `src/route.ts`, `DEFAULT_RESPONSIVE_TIMEOUT_MS` and `bounded` in `src/oracles/index.ts`), so six would pass. A known hang still ends a Route, decided in the engine's review of 2026-09-27, so this plant is never the one the known-findings loop below is shown with | still responding | today |
@@ -736,7 +760,8 @@ Each answered 2026-09-27, in the words given:
   answer was "Do all three." So: the engine was fixed where it was cheap, and
   the ticket office is strict again (`HISTORY.md`); a launch flag restoring
   the original layout, with screens that replace the place, is built with
-  step 7's flags, so the demo can show the engine's limits and a better
+  step 7's flags as `EIGHTY_DAYS_LAYOUT=screens`, the game's
+  `--layout=screens`, so the demo can show the engine's limits and a better
   chooser can be measured against it; and the default layout follows the
   engine, switching back to the original once a chooser gets Routes out of
   London in it, measured, with the panel then retired.
@@ -765,11 +790,12 @@ Nothing is open. New questions go here as building raises them.
 
 ## Build order
 
-Steps 1 to 6 are built, 2026-09-27, and `HISTORY.md` has what was measured
+Steps 1 to 7 are built, 2026-09-27, and `HISTORY.md` has what was measured
 for each. The balance was measured before the engravings, since the look
 matters less if Routes never leave London, and measured again with step 6,
 which found the game holding Routes at a place with no departures left.
-Steps 7 and 8 are next.
+Step 8 is next, and the four plants whose checks do not exist yet wait for
+them.
 
 1. Lift the rail demo's presenting runner into `demo/presenting.mjs`, with
    the parameters listed under "What is shared", and rename its script to

@@ -60,6 +60,16 @@
       <form method="dialog" id="ticket-form"></form>
     </dialog>
 
+    <!--
+      The bradshaw-trap plant: a modal with nothing in it to press, opened from
+      Game > Consult Bradshaw only when that plant is on. A Route that reaches
+      it has nowhere to go, and strands.
+    -->
+    <dialog id="bradshaw-trap" aria-labelledby="bradshaw-trap-title">
+      <h2 id="bradshaw-trap-title">Bradshaw's Continental Railway Guide</h2>
+      <p>The guide falls open at the timetables for 1869, and will not close.</p>
+    </dialog>
+
     <script src="game.js"></script>
     <script src="chart.js"></script>
     <script src="renderer.js"></script>

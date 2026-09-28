@@ -23,8 +23,9 @@ import { firstDifference, playRecorded } from './determinism';
  * and finds no difference, which shows nothing in a screen varies between
  * launches on its own. The other plants a difference in one play and finds
  * it, which shows the comparison can fail at all: a check that cannot be made
- * to fail is worse than none. Once the game exists, a planted coin flip in
- * the game itself joins them as the control that matters most.
+ * to fail is worse than none. A coin flip planted in the game itself, behind
+ * its own flag, is the control that matters most, and the third test of the
+ * game.
  */
 
 process.env[RUN_VARIABLE] = 'determinism';
@@ -75,6 +76,22 @@ test.describe('Eighty Days', () => {
     const quick = await play(0);
     const slow = await play(700);
     expect(firstDifference(quick, slow)).toBeUndefined();
+  });
+
+  // The control that matters most: randomness in the game itself, not a note
+  // planted from outside. The coin-flip plant quotes odds drawn from
+  // Math.random on the Reform Club's screen, so two plays must differ there,
+  // before the first Trip Hop. If this passed without finding it, the two
+  // tests above would be passing on a game they could not see into.
+  test('finds a coin flip planted in the game', async ({}, testInfo) => {
+    const cfg = { ...(await eightyDays()), launchArgs: ['--plant=coin-flip'] };
+    const play = (n: number) =>
+      playRecorded(cfg, { seed: 'coin-flip', tripLength: 3, journalsRoot: testInfo.outputPath(`coin-${n}`) });
+    const first = await play(1);
+    const second = await play(2);
+    const difference = firstDifference(first, second);
+    expect(difference).toBeDefined();
+    expect(difference).toContain('before Trip hop 1');
   });
 });
 

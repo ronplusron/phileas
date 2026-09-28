@@ -25,6 +25,38 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-27: eight bugs planted in Eighty Days, each found by a seeded Route
+
+**What landed.** Build step 7 of `DEMO_PLAN_EIGHTY_DAYS.md`: the eight plants
+whose checks exist, each behind its own `--plant` flag, which the adapter
+takes from `EIGHTY_DAYS_PLANT`; a `coin-flip` plant for the determinism
+tests; and `EIGHTY_DAYS_LAYOUT=screens`, which restores the game's first
+layout, with screens that replace the place and the ways on as one venue
+tab, as the settled decisions asked. One list, `plants.cjs`, is read by the
+game and the adapter, so the adapter refuses a misspelt name before anything
+launches. The game refuses one too, exiting rather than throwing: an
+uncaught error that early raised no words the engine could collect, which
+is the defect about output before a launch returns, and waited thirty
+seconds for a window. Five Fixes start stage two's sections near their
+plants, each keeping off every plant's path.
+
+**Proved, apart from any seed.** `tests/plants.spec.ts` steers from each
+plant's Fix straight to its control and requires the named check to fire,
+and the same moves with the plant off to pass: sixteen tests, all passing.
+`bradshaw-trap` strands the Route, as planned. A third determinism test
+plays the game twice with `coin-flip` on and finds the difference before
+the first Trip Hop.
+
+**Seeds, searched for and not steered.** For each plant, seeds were tried
+until Route 1 of its Journey met the plant by its own draws, one plant on
+and the window hidden: the first seed tried for four plants, the second for
+two, the third for one, and the ninth for `sail-console-error`, whose
+hoisting sits behind a tab a Trip keeps leaving. Each was replayed once with
+the window shown and a 300 ms pause, and every one met its plant at the same
+Trip hop, from the first Hop to the eleventh. `demo/eighty-days/seeds.mjs`
+holds them. The default seed `passepartout` still plays the same three games
+with every plant off.
+
 ## 2026-09-27: Eighty Days watched and presented, and a game that held Routes at Omaha
 
 **What landed.** Build step 6 of `DEMO_PLAN_EIGHTY_DAYS.md`: `npm run

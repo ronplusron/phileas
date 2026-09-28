@@ -60,7 +60,36 @@ function createWindow() {
   return win;
 }
 
+// Planted bugs, each switched on by its own flag, --plant=<name>, which may be
+// given more than once, as buggy's are. Off by default, so the game shown
+// working is the same build as the game shown broken, and any one bug can be
+// shown alone. The layout is --layout=<name>: "panel", the default, opens the
+// Circuit, Ledger, Bradshaw and About beside the place, with the ways on above
+// the venue tabs; "screens" is the game as first built, where each of those
+// replaces the place and the ways on are one venue tab, the Quay. That layout
+// left Routes unable to leave London, which docs/DEFECTS.md records as the
+// engine's weakness, and it is kept so a better chooser can be measured
+// against it. plants.cjs holds both lists.
+//
+// A name that names nothing is refused, so a misspelt one never runs the game
+// unbroken while seeming to run it broken. The adapter refuses it first, in
+// words a run prints; this is for a launch by hand. It exits rather than
+// throwing, since an uncaught error this early raises a native error box.
+const { PLANTS, LAYOUTS } = require('./plants.cjs');
+function refuse(message) {
+  process.stderr.write(`${message}\n`);
+  process.exit(2);
+}
+const plants = process.argv.filter((arg) => arg.startsWith('--plant=')).map((arg) => arg.slice('--plant='.length));
+for (const plant of plants) {
+  if (!PLANTS.includes(plant)) refuse(`--plant=${plant} names no planted bug. The plants are ${PLANTS.join(', ')}.`);
+}
+const layoutArg = process.argv.find((arg) => arg.startsWith('--layout='));
+const layout = layoutArg ? layoutArg.slice('--layout='.length) : 'panel';
+if (!LAYOUTS.includes(layout)) refuse(`--layout=${layout} names no layout. The layouts are ${LAYOUTS.join(' and ')}.`);
+
 ipcMain.handle('data:all', () => data);
+ipcMain.handle('game:options', () => ({ plants, layout }));
 
 ipcMain.on('log:append', (_event, line) => {
   fs.appendFileSync(logFile(), `${line}\n`);
@@ -71,6 +100,13 @@ ipcMain.on('log:append', (_event, line) => {
 // answered it.
 ipcMain.on('ledger:export', (_event, text) => {
   fs.writeFileSync(path.join(app.getPath('userData'), 'ledger.txt'), `${text}\n`);
+  if (plants.includes('export-throw')) {
+    // Thrown from a timer, outside any handler, so nothing catches it: an
+    // uncaught exception in the main process, as buggy's plant:main-throw is.
+    setTimeout(() => {
+      throw new Error('The ledger would not balance when it was exported');
+    }, 0);
+  }
 });
 
 // Set out again is offered only once the game has ended. Offered all the

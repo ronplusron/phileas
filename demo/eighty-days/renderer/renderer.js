@@ -14,8 +14,19 @@ const $ = (id) => document.getElementById(id);
 let world;
 let data;
 let state;
-// Which panel is open beside the place, if any.
+// Which panel is open beside the place, if any; in the screens layout, which
+// screen is showing instead of the place.
 let panel = '';
+// The planted bugs switched on for this launch, and the layout, both from the
+// main process's flags. None is on unless a flag asks for it.
+let plants = new Set();
+let layout = 'panel';
+// The coin-flip plant's odds, drawn once at launch, which is the randomness
+// the determinism tests exist to catch.
+let odds = 0;
+// How long the coal-hang plant keeps the page busy. Longer than the engine's
+// Hop timeout and its responsive wait together, so the stall is seen.
+const COAL_HANG_MS = 12_000;
 let showClock = true;
 let bradshawQuery = '';
 let bradshawOpen = new Set();
@@ -50,11 +61,28 @@ function dispatch(action) {
   if (state.ledger.length > before.ledger.length) {
     for (const row of state.ledger.slice(before.ledger.length)) {
       if (row.kind === 'passage') window.eightyDays.log(`${G.clockText(state.hours, world.start)} arrived at ${world.places[row.to].name} from ${world.places[row.from].name} by ${row.mode}`);
+      if (row.kind === 'passage' && row.departure === 'carnatic' && plants.has('carnatic-log-error')) {
+        window.eightyDays.log(`${G.clockText(state.hours, world.start)} ERROR the Carnatic's port boiler failed its pressure trial`);
+      }
     }
   }
   if (action.type === 'restart') panel = '';
   window.eightyDays.ended(state.phase === 'ended');
   render();
+
+  if (plants.has('coal-hang') && state.diary.length > before.diary.length) {
+    const burned = world.story.events['henrietta-burned'].diary;
+    if (state.diary.slice(before.diary.length).some((d) => d.text === burned)) {
+      // Busy on purpose: the page answers nothing while the woodwork burns.
+      const until = Date.now() + COAL_HANG_MS;
+      while (Date.now() < until) {}
+    }
+  }
+  if (plants.has('blank-club') && action.type === 'club') {
+    // Everything goes, text and names with the picture, so the window shows
+    // nothing a screen reader could find.
+    document.body.replaceChildren();
+  }
 }
 
 // --- the clock --------------------------------------------------------------
@@ -111,8 +139,9 @@ function renderHere() {
 
   const place = world.places[state.place];
   // The ways on are always on offer; the venues are tabs below them. A place
-  // shows its first venue until another is chosen.
-  const venues = place.venues;
+  // shows its first venue until another is chosen. In the screens layout the
+  // ways on are the Quay, the first tab, and hidden while another is chosen.
+  const venues = layout === 'screens' ? ['quay', ...place.venues] : place.venues;
   const venue = venues.includes(state.venue) ? state.venue : venues[0];
 
   const tabs =
@@ -141,7 +170,7 @@ function renderHere() {
   section.replaceChildren(
     h('div', { class: 'place-head' }, picture(`place-${place.id}`), h('div', {}, h('h2', {}, place.name), h('p', { class: 'about' }, place.about), companions())),
     notice(),
-    renderWaysOn(place),
+    layout === 'panel' && renderWaysOn(place),
     tabs,
     venuePanel
   );
@@ -154,6 +183,8 @@ function companions() {
 
 function renderVenue(place, venue) {
   switch (venue) {
+    case 'quay':
+      return renderWaysOn(place);
     case 'telegraph':
       return renderTelegraph(place);
     case 'market':
@@ -263,7 +294,7 @@ function renderKiouni() {
     { class: 'feature' },
     h('h4', {}, 'An elephant for sale'),
     h('p', {}, `Fogg's offer stands at ${G.pounds(offer)}.`),
-    h('button', { onclick: () => dispatch({ type: 'offer', raise: true }) }, 'Raise the offer'),
+    h('button', { onclick: raiseOffer }, 'Raise the offer'),
     h('button', { onclick: () => dispatch({ type: 'offer', raise: false }) }, 'Stand firm'),
     h('button', { onclick: () => dispatch({ type: 'buy-kiouni' }) }, 'Buy Kiouni'),
     h(
@@ -282,6 +313,13 @@ function renderKiouni() {
     paceControl(),
     state.goods.includes('provisions') && h('button', { onclick: () => dispatch({ type: 'use-good', good: 'provisions' }) }, 'Share out the provisions')
   );
+}
+
+function raiseOffer() {
+  dispatch({ type: 'offer', raise: true });
+  if (plants.has('kiouni-throw') && state.kiouniOffer === G.KIOUNI_OFFERS.length - 1) {
+    throw new Error(`The offer for Kiouni went past what the carpet-bag was told to allow`);
+  }
 }
 
 function paceControl() {
@@ -346,7 +384,12 @@ function renderSledge() {
         id: 'sail',
         checked: state.sail,
         'aria-checked': String(state.sail),
-        onchange: (e) => dispatch({ type: 'sail', value: e.target.checked }),
+        onchange: (e) => {
+          dispatch({ type: 'sail', value: e.target.checked });
+          if (plants.has('sail-console-error') && state.sail && state.wind >= 30) {
+            console.error(`The sail split at ${state.wind} knots`);
+          }
+        },
       }),
       ' Hoist the sail'
     );
@@ -433,6 +476,7 @@ function renderClub() {
     h('div', { class: 'place-head' }, picture('place-club'), h('div', {}, h('h2', {}, 'The Reform Club'), h('p', { class: 'about' }, 'Pall Mall, London. Wednesday, the 2nd of October, 1872.'))),
     notice(),
     h('p', { class: 'terms' }, data.story.wager.terms),
+    plants.has('coin-flip') && h('p', {}, `The Morning Chronicle quotes the odds against Mr. Fogg at ${odds.toLocaleString('en-US')} to 1.`),
     h('div', { class: 'actions' },
       h('button', { onclick: () => dispatch({ type: 'paper' }) }, 'Hear the talk of the bank robbery'),
       h('button', { onclick: () => dispatch({ type: 'whist' }) }, 'Play a rubber of whist'),
@@ -649,9 +693,13 @@ function book() {
 
 // --- all of it --------------------------------------------------------------
 
-/** Open a panel, or close it if it is the one open. The menu only ever opens one. */
+/**
+ * Open a panel, or close it if it is the one open. The menu only ever opens
+ * one. In the screens layout a screen replaces the place, and stays until
+ * another is chosen, Here included, as the game was first built.
+ */
 function togglePanel(next, { open = false } = {}) {
-  panel = panel === next && !open ? '' : next;
+  panel = layout === 'screens' || open || panel !== next ? next : '';
   // Bradshaw folds up whenever it is left, so an open tree never stays on
   // offer behind the next visit.
   if (panel !== 'bradshaw') {
@@ -663,7 +711,8 @@ function togglePanel(next, { open = false } = {}) {
 
 function render() {
   $('panel').hidden = !panel;
-  $('main').classList.toggle('with-panel', !!panel);
+  $('here').hidden = layout === 'screens' && !!panel;
+  $('main').classList.toggle('with-panel', layout === 'panel' && !!panel);
   for (const section of document.querySelectorAll('#panel > section')) section.hidden = section.id !== panel;
   for (const button of document.querySelectorAll('nav.screens button')) {
     button.classList.toggle('selected', button.dataset.panel === panel);
@@ -681,6 +730,18 @@ function render() {
 async function start() {
   const loaded = await window.eightyDays.data();
   data = loaded;
+  const options = await window.eightyDays.options();
+  plants = new Set(options.plants);
+  layout = options.layout;
+  if (plants.has('coin-flip')) odds = 1000 + Math.floor(Math.random() * 1_000_000);
+  if (layout === 'screens') {
+    // The game as first built had a Here screen to come back to.
+    const here = document.createElement('button');
+    here.dataset.panel = '';
+    here.textContent = 'Here';
+    document.querySelector('nav.screens').prepend(here);
+  }
+  $('bradshaw-trap').addEventListener('cancel', (event) => event.preventDefault());
   world = G.prepare(loaded);
   state = G.initialState();
 
@@ -692,8 +753,14 @@ async function start() {
   });
 
   window.eightyDays.onMenu((command) => {
-    if (command === 'restart') dispatch({ type: 'restart' });
-    else if (command === 'bradshaw') togglePanel('bradshaw', { open: true });
+    if (command === 'restart') {
+      // A native confirm the engine does not expect.
+      if (plants.has('set-out-confirm') && !window.confirm('Set out again from the Reform Club?')) return;
+      dispatch({ type: 'restart' });
+    } else if (command === 'bradshaw' && plants.has('bradshaw-trap')) {
+      // A modal with nothing in it to press, which Escape does not close.
+      $('bradshaw-trap').showModal();
+    } else if (command === 'bradshaw') togglePanel('bradshaw', { open: true });
     else if (command === 'circuit') togglePanel('circuit', { open: true });
     else if (command === 'ledger') togglePanel('ledger', { open: true });
     else if (command === 'clock') {
