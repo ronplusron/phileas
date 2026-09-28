@@ -27,6 +27,32 @@ const WORKBENCH_WINDOW_TIMEOUT_MS = 60_000;
  */
 const isWorkbench = (page: Page) => /^http:\/\/127\.0\.0\.1:\d+\//.test(page.url());
 
+/** The folders of the system temp path, as RStudio shows them, fixed for this machine. */
+const TEMP_PATH_FOLDERS = new Set(fs.realpathSync(os.tmpdir()).split('/').filter(Boolean));
+
+/**
+ * Whether a link in RStudio's in-page file dialog names a folder above the
+ * Route's home. The dialog opens in the home and shows one link per folder of
+ * its path, up to `/`, measured on 2026-09-28. Two reasons to keep a Route
+ * below: from the root a Route could save a file anywhere the user running
+ * the Journey can write, and two of those folders are the run's own and the
+ * Route's own, named at random, so a replay's pool would differ from the run's
+ * and its draws would go elsewhere.
+ *
+ * The run's folder comes from PHILEAS_TEMP_FOLDER and every profile in it is a
+ * Route's, this one's included. The engine refuses a Route without that
+ * variable, so this refuses too rather than letting those links through.
+ * What a Route can type holds no `/`, `..` or `~`, so the dialog's File name
+ * and Go to directory boxes cannot name a folder outside the home either; a
+ * slash added to the engine's typed values would undo that.
+ */
+function isAboveHome(name: string): boolean {
+  if (name === '/' || TEMP_PATH_FOLDERS.has(name)) return true;
+  const run = process.env.PHILEAS_TEMP_FOLDER;
+  if (!run) throw new Error('PHILEAS_TEMP_FOLDER is unset, so the folders above the Route\'s home are unknown.');
+  return name === path.basename(run) || fs.readdirSync(run).includes(name);
+}
+
 export const rstudio: AppUnderTest = {
   productName: 'RStudio',
   bundleDir,
@@ -76,6 +102,19 @@ export const rstudio: AppUnderTest = {
     // The library inside the home, which makes the home too. R skips an
     // R_LIBS_USER that does not exist.
     await fs.promises.mkdir(libraryIn(userDataDir), { recursive: true });
+
+    // File and message dialogs drawn in the page, where a Route can see and
+    // use them. RStudio's native ones are drawn by macOS, which Phileas cannot
+    // reach, so the engine's stub answers each as cancelled and nothing inside
+    // one is explored. Raised on 2026-09-28; with it off, Open File and Load
+    // Workspace each opened in the page and the stub recorded nothing. The
+    // stub stays, for any native dialog this does not reach.
+    const config = path.join(homeIn(userDataDir), '.config', 'rstudio');
+    await fs.promises.mkdir(config, { recursive: true });
+    await fs.promises.writeFile(
+      path.join(config, 'rstudio-prefs.json'),
+      JSON.stringify({ native_file_dialogs: false }, null, 2)
+    );
   },
 
   // Menu paths are written as the engine reads them, with RStudio's `&`
@@ -94,6 +133,9 @@ export const rstudio: AppUnderTest = {
       // The Packages pane's way into the dialog excluded from the Tools menu
       // below, surveyed on 2026-09-28.
       'Check for package updates',
+      // The Global Options setting that would bring native dialogs back
+      // mid-Route, undoing what beforeLaunch sets.
+      'Use native file and message dialog boxes',
     ],
     menuPaths: [
       ['&View', 'Show Pos&it Assistant'],
@@ -147,10 +189,14 @@ export const rstudio: AppUnderTest = {
     // And a choice of the machine's R library. The Install Packages dialog's
     // "Install to Library:" offers it beside the Route's own, surveyed on
     // 2026-09-28, and an option is chosen as a candidate of its own.
+    //
+    // And a file dialog's path links above the Route's home; isAboveHome says
+    // why.
     exclude: (candidate) =>
       (candidate.source === 'page' && / used by R session\b/.test(candidate.name)) ||
       /copilot/i.test(candidate.name.replace(/&/g, '')) ||
-      (candidate.source === 'page' && candidate.role === 'option' && /\/R\.framework\//.test(candidate.name)),
+      (candidate.source === 'page' && candidate.role === 'option' && /\/R\.framework\//.test(candidate.name)) ||
+      (candidate.source === 'page' && candidate.role === 'link' && isAboveHome(candidate.name)),
   },
 
   /**
