@@ -5,6 +5,7 @@ import { _electron as electron, type ElectronApplication, type Page } from '@pla
 import type { AppUnderTest, UniversalCheck } from './app-under-test';
 import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle';
 import { stubOpenExternal, clearOpenExternal } from './external';
+import { stubNativeDialogs } from './dialogs';
 
 /**
  * How the engine got into the application.
@@ -306,13 +307,36 @@ export function showWindows(): boolean {
 export async function hideWindows(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ app: electronApp, BrowserWindow }) => {
     BrowserWindow.prototype.show = function () {};
-    for (const window of BrowserWindow.getAllWindows()) window.hide();
+    // **Full screen, too.** On macOS it gives a window a Space of its own,
+    // which hiding does not reach: measured on Positron on 2026-09-27, where
+    // a Route's Zen Mode took over the screen of whoever was running the
+    // Journey. So every way in is replaced, and a window that gets there
+    // anyway is brought back out and hidden.
+    const leaveFullScreen = BrowserWindow.prototype.setFullScreen;
+    const proto = BrowserWindow.prototype as unknown as Record<string, unknown>;
+    for (const name of ['setFullScreen', 'setSimpleFullScreen', 'setKiosk']) proto[name] = function () {};
+    // **And moveTop,** which on macOS brings a hidden window forward and
+    // visible without a 'show' event: measured on Positron on 2026-09-27,
+    // whose editor moved into a window of its own was revealed by it alone
+    // and stayed on the screen.
+    proto.moveTop = function () {};
+    const keepOff = (window: Electron.BrowserWindow) => {
+      window.on('show', () => window.hide());
+      window.on('enter-full-screen', () => {
+        leaveFullScreen.call(window, false);
+        window.hide();
+      });
+    };
+    for (const window of BrowserWindow.getAllWindows()) {
+      keepOff(window);
+      window.hide();
+    }
     // On its 'show' event rather than on creation: a window created with
     // show: true is shown after 'browser-window-created' fires, so hiding it
     // there was undone at once. This also catches showInactive() and any
     // other way in that does not go through the replaced show().
     electronApp.on('browser-window-created', (_event, window) => {
-      window.on('show', () => window.hide());
+      keepOff(window);
       window.hide();
     });
   });
@@ -497,6 +521,7 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
     app.process().stderr?.on('data', (chunk) => launched.stderr.push(String(chunk)));
 
     await stubOpenExternal(app);
+    await stubNativeDialogs(app);
 
     // Which page is the application, rather than which window appeared first: an
     // application with a splash has more than one, and firstWindow() would hand

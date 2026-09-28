@@ -11,7 +11,7 @@ import {
   reachMainProcess,
   MAIN_PROCESS_ATTEMPTS,
 } from '../src/index';
-import { openedExternally } from '../src/index';
+import { openedExternally, nativeDialogs } from '../src/index';
 import type { AppUnderTest } from '../src/index';
 import { launchOrRemove } from './scratch';
 
@@ -238,6 +238,71 @@ test('the outbound-link stub took effect, and nothing opened', async () => {
     await expect
       .poll(() => openedExternally(launched.app))
       .toEqual(['https://example.com/buggy']);
+  });
+});
+
+type Planted = { buggy: { plant(name: string): Promise<unknown> } };
+
+test('a window asked to go full screen in a hidden run stays off the screen', async () => {
+  // Measured on Positron: a Route's Zen Mode took the window full screen,
+  // which on macOS is a Space of its own that hiding does not reach. Not run
+  // with the block removed, since that would put the window over the screen
+  // of whoever runs the suite; the plant's answer is the evidence the request
+  // was made.
+  const cfg: AppUnderTest = { ...buggy, launchArgs: ['--buggy-plant=full-screen'] };
+  await withApp(cfg, async (launched) => {
+    const page = await launched.app.firstWindow();
+    await buggy.waitForReady(page);
+    expect(await page.evaluate(() => (window as unknown as Planted).buggy.plant('full-screen'))).toBe('asked');
+    await page.waitForTimeout(1_500);
+    const windows = await launched.app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows().map((window) => ({ fullScreen: window.isFullScreen(), visible: window.isVisible() }))
+    );
+    expect(windows).toEqual([{ fullScreen: false, visible: false }]);
+  });
+});
+
+test('a second window brought forward with moveTop in a hidden run stays off the screen', async () => {
+  // Measured on Positron: an editor moved into a window of its own was
+  // revealed by moveTop alone, which fires no 'show' event, and stayed on the
+  // screen. Not run with the replacement removed, for the reason the
+  // full-screen test gives.
+  const cfg: AppUnderTest = { ...buggy, launchArgs: ['--buggy-plant=second-window'] };
+  await withApp(cfg, async (launched) => {
+    const page = await launched.app.firstWindow();
+    await buggy.waitForReady(page);
+    expect(await page.evaluate(() => (window as unknown as Planted).buggy.plant('second-window'))).toBe('opened');
+    await page.waitForTimeout(1_000);
+    const visible = await launched.app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows().map((window) => window.isVisible())
+    );
+    expect(visible, 'the second window was not created, so this asserts nothing').toHaveLength(2);
+    expect(visible).toEqual([false, false]);
+  });
+});
+
+test('a native dialog is answered as cancelled and recorded, never shown', async () => {
+  // Measured on Positron: the native menu's File > Open entries opened the
+  // operating system's dialog on the screen of whoever ran the Journey. The
+  // application's own side is the evidence the stub answered: a real dialog
+  // would wait for a person, and this call would not return.
+  const cfg: AppUnderTest = { ...buggy, launchArgs: ['--buggy-plant=native-dialog'] };
+  await withApp(cfg, async (launched) => {
+    const page = await launched.app.firstWindow();
+    await buggy.waitForReady(page);
+    expect(await nativeDialogs(launched.app)).toEqual([]);
+    const answer = await page.evaluate(() => (window as unknown as Planted).buggy.plant('native-dialog'));
+    expect(answer).toEqual({ canceled: true, filePaths: [] });
+    expect(await nativeDialogs(launched.app)).toEqual([{ kind: 'showOpenDialog', text: 'Choose a map' }]);
+
+    // A message box is answered with its cancel, by Electron's own rule.
+    const answers = await launched.app.evaluate(({ dialog }) => [
+      dialog.showMessageBoxSync({ message: 'a', buttons: ['Save', 'Cancel'] }),
+      dialog.showMessageBoxSync({ message: 'b', buttons: ['Yes', '&No'] }),
+      dialog.showMessageBoxSync({ message: 'c', buttons: ['Keep', 'Discard'] }),
+      dialog.showMessageBoxSync({ message: 'd', buttons: ['Keep', 'Discard'], cancelId: 1 }),
+    ]);
+    expect(answers).toEqual([1, 1, 0, 1]);
   });
 });
 

@@ -139,6 +139,10 @@ export const positron: AppUnderTest = {
           'window.menuStyle': 'custom',
           'window.dialogStyle': 'custom',
           'files.simpleDialog.enable': true,
+          // Zen Mode goes full screen by default, and did, over the screen of
+          // whoever ran the Journey on 2026-09-27. The engine blocks full
+          // screen too; this keeps Zen Mode itself explorable.
+          'zenMode.fullScreen': false,
           // Only for the early releases, which cannot run the machine's R.
           ...(positronFamily === 'early' ? { 'positron.r.customBinaries': [EARLY_R_BINARY] } : {}),
         },

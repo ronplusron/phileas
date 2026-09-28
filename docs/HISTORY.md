@@ -257,6 +257,51 @@ and more ways on is the branching that was asked for. Whether the demo keeps
 the harder game available, for measuring a better chooser against it, is
 open in the plan.
 
+## 2026-09-27: a hidden run kept off the screen, and a longer step-6 run
+
+**Why.** During the longer run, the person running it saw Positron reach
+their screen: native Open dialogs that stayed up, second windows that
+stayed up, and once a window that went full screen, taking over the display
+until the Route ended. C5 says nothing takes over the screen.
+
+**Measured.**
+- Zen Mode, reached twice by a Route, takes a window full screen, which is
+  Positron's default for it; on macOS that is a Space of its own.
+- A second window, an editor moved into its own, was revealed by `moveTop`
+  alone: it was the only window call made, and the window stayed visible.
+  Replacing `moveTop` kept it hidden for the whole of the same sequence.
+- The native menu's File > Open entries were drawn from dozens of times a
+  Route, the likely source of the native dialogs.
+- Five Routes at a time put the load average at 26.9 on 8 cores and left
+  114 MB of memory free; two at a time peaked at 11.8, as Positron gathered
+  extension hosts over 100-Hop Routes, three or four a Route, each with its
+  own Python locator.
+
+**What landed.** In hidden mode, `setFullScreen`, `setSimpleFullScreen`,
+`setKiosk` and `moveTop` do nothing, and a window that enters full screen
+anyway is taken out and hidden. `src/dialogs.ts` answers every Electron
+dialog as cancelled, a message box by its own cancel, and records each call,
+read with `nativeDialogs`. The Positron adapter writes `zenMode.fullScreen:
+false`, and the trial runs two Routes at a time. Four defects filed: a stop
+sent to the `phileas` command alone, stack lines read as errors, ids in
+signatures, and the flicker a window created shown still makes.
+
+**The longer run.** 20 Routes of 100 Hops for each Journey, two at a time,
+stopped during `quarto` when the full screen appeared: `no-fix` 16 of 20,
+`session` 16 of 20, `notebook` 16 of 20, `quarto` 9 of 15 with 2 cut off.
+Its 30 findings were triaged by reading: three are the stack-line defect,
+eight are routine editor cancellations, six are sign-in or an assistant with
+no model, one is an extension's provider failing, and seven are Positron
+candidates with no recipe yet. Three are Positron's window closing mid-Route,
+not yet looked into, and two are hangs that ran at a load near 11 and are
+not judged.
+
+**Tested.** Three new tests, 245 in all, each through a `buggy` plant: full
+screen asked for, a second window brought forward, and a native dialog.
+None was run with its fix removed, since the first two would put a window
+over the screen of whoever runs the suite; the dialog's is its own evidence,
+since a real dialog would not have returned.
+
 ## 2026-09-27: the first step-6 run on Positron, and two engine bugs it found
 
 **Why.** The trial's question is whether the engine finds bugs in Positron

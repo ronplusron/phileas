@@ -491,7 +491,12 @@ branch and unmerged when this was written, prints these from a run's
 journals. **They go stale when that branch merges:** it adds "1" and "2" to
 the values a Route types, so every seed that types anything travels
 differently from then on. Measure the baselines again, on the same values
-as the weighted runs, before comparing.
+as the weighted runs, before comparing. **The game itself changed too,** on
+main at e0e274e, reported by the second Eighty Days session: a place with no
+departure left now loses the game, three invented departures were retimed,
+and the default Trip went from 200 Hops to 150. Every baseline above was
+taken before it, and the demo's pinned seeds will be searched for again once
+a weighted chooser lands.
 
 ## 2. Undecided
 

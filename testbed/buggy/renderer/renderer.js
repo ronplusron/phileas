@@ -94,6 +94,9 @@ const PLANTED = {
   'log-error': ['Write in the logbook', () => window.buggy.plant('log-error')],
   'renderer-crash': ['Drop the lantern', () => window.buggy.plant('renderer-crash')],
   'main-exit': ['Miss the boat', () => window.buggy.plant('main-exit')],
+  'full-screen': ['Unfold the big map', () => window.buggy.plant('full-screen')],
+  'native-dialog': ['Open the map case', () => window.buggy.plant('native-dialog')],
+  'second-window': ['Open a second window', () => window.buggy.plant('second-window')],
   miscount: ['Count the luggage', () => {
     miscount = true;
     render();

@@ -14,6 +14,13 @@
     "source": "journey"
   },
   {
+    "id": "6e257d24",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 [Extension Host] Error: User did not consent to login. at MainThreadAuthentication.doGetSession (workbench.desktop.main.js)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
     "id": "1759e6e8",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 [lifecycle]: Error during will-shutdown phase in default joiners (error: Canceled)",
@@ -22,12 +29,89 @@
     "source": "command"
   },
   {
+    "id": "0f31d456",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Cannot read properties of undefined (reading 'id'): TypeError: Cannot read properties of undefined (reading 'id') at ViewDescriptorService.loadCustomViewDescriptor (workbench.desktop.main.js)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "511b6d75",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Could not find a notebook editor for session 'python-notebook-53750b52'",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
     "id": "be0fbc95",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 Error: Aborted onWillSaveTextDocument-event after N ms  (workbench.desktop.main.js)",
     "added": "2026-09-27",
     "source": "journey",
     "issue": "ronplusron/phileas#54"
+  },
+  {
+    "id": "35c1a4a1",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Failed to open Posit Assistant chat Error: No model selected. Cannot submit prompt programmatically.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "b282aad0",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 lock() request could not be registered.: InvalidStateError: lock() request could not be registered.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "0ed6a90d",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Request textDocument/hover (1) is canceled due to subsequent mutation: Error: Request textDocument/hover (1) is canceled due to subsequent mutation at dn (extension.js)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "6f8d684f",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Request textDocument/hover (11) is canceled due to subsequent mutation: Error: Request textDocument/hover (11) is canceled due to subsequent mutation at dn (extension.js)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "be79f7e9",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Request textDocument/hover (2) is canceled due to subsequent mutation: Error: Request textDocument/hover (2) is canceled due to subsequent mutation at dn (extension.js)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "f08f5ce3",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Request textDocument/hover (3) is canceled due to subsequent mutation: Error: Request textDocument/hover (3) is canceled due to subsequent mutation at dn (extension.js)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "1ddd63ac",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-6eaf3abc) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "8d889c81",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-cfbb872a) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "353fd565",
+    "check": "console-error",
+    "signature": "console-error: %c[Extension Host] %cError: User did not consent to login. at MainThreadAuthentication.doGetSession (workbench.desktop.main.js)",
+    "added": "2026-09-27",
+    "source": "journey"
   },
   {
     "id": "23740607",
@@ -59,9 +143,23 @@
     "source": "journey"
   },
   {
+    "id": "fff1c768",
+    "check": "console-error",
+    "signature": "console-error: Posit Assistant could not be opened: No model selected. Cannot submit prompt programmatically.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
     "id": "0cbcc9de",
     "check": "console-error",
     "signature": "console-error: Positron R Language Server (4.6.0) client: couldn't create connection to server.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "471a1b2f",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] [meta.pyrefly] provider FAILED",
     "added": "2026-09-27",
     "source": "journey"
   },
@@ -88,6 +186,13 @@
     "source": "journey"
   },
   {
+    "id": "202b0770",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: Channel has been closed",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
     "id": "c38ad77b",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] Error: Client is not running and can't be stopped. It's current state is: starting",
@@ -95,9 +200,51 @@
     "source": "journey"
   },
   {
+    "id": "23032475",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: ENOENT: no such file or directory, stat 'Untitled-1.ipynb'",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "f7295b15",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: No model selected. Cannot submit prompt programmatically.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
     "id": "ecc397a2",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] Error: Pending response rejected since connection got disposed",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "bbb15253",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: Request textDocument/hover (1) is canceled due to subsequent mutation",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "35f80a14",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: Request textDocument/hover (11) is canceled due to subsequent mutation",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "819f8314",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: Request textDocument/hover (2) is canceled due to subsequent mutation",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "338b929e",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: Request textDocument/hover (3) is canceled due to subsequent mutation",
     "added": "2026-09-27",
     "source": "journey"
   },
@@ -122,5 +269,68 @@
     "issue": "ronplusron/phileas#44",
     "added": "2026-09-27",
     "source": "command"
+  },
+  {
+    "id": "7557abd4",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: at gNe.error (<profile>/extensions/posit.assistant-1.3.1/dist/extension.js:3215:86)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "466bfd99",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: at Object.error (<profile>/extensions/posit.assistant-1.3.1/dist/extension.js:3250:6318)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "8afe79ae",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: at Object.error (file:///Applications/Positron.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:63115:9)",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "db19254a",
+    "check": "no-error-notification",
+    "signature": "no-error-notification: error notification: Posit Assistant could not be opened: No model selected. Cannot submit prompt programmatically.",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "28da4349",
+    "check": "still-responding",
+    "signature": "still-responding: hop N's click on button \"Manage\" was bounded to N ms and had not returned after N ms: the application stopped answering",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "80fa5f67",
+    "check": "still-responding",
+    "signature": "still-responding: the main process could not be reached: electronApplication.evaluate: Target page, context or browser has been closed",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "5000fa21",
+    "check": "still-responding",
+    "signature": "still-responding: the renderer could not be reached: page.evaluate: Target page, context or browser has been closed",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "a06c57c5",
+    "check": "still-responding",
+    "signature": "still-responding: the settle wait was bounded to N ms and had not returned after N ms: the application stopped answering",
+    "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "81072f59",
+    "check": "still-responding",
+    "signature": "still-responding: the window closed",
+    "added": "2026-09-27",
+    "source": "journey"
   }
 ]

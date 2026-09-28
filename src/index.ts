@@ -48,6 +48,7 @@ export {
   type MenuEntry,
 } from './menu';
 export { stubOpenExternal, openedExternally, clearOpenExternal } from './external';
+export { stubNativeDialogs, nativeDialogs, type NativeDialogCall } from './dialogs';
 export {
   defineJourney,
   routeNumbers,

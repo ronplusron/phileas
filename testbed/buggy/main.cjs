@@ -10,7 +10,7 @@
 // Nothing is broken unless a flag says so. Launched plainly, this is the
 // unbroken version its own baseline tests record; the planted defects below are
 // each switched on by a --buggy-plant flag.
-const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain, dialog } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -81,6 +81,9 @@ const PLANTS = [
   'renderer-crash',
   'main-exit',
   'miscount',
+  'full-screen',
+  'native-dialog',
+  'second-window',
 ];
 const plants = process.argv
   .filter((arg) => arg.startsWith('--buggy-plant='))
@@ -129,6 +132,29 @@ ipcMain.handle('plant:renderer-crash', (event) => {
 // The application quits on its own, mid-Trip, with no dialog and no error.
 ipcMain.handle('plant:main-exit', () => {
   setTimeout(() => app.exit(3), 0);
+});
+
+// Asks for full screen, which a hidden run must never grant: on macOS it
+// gives the window a Space of its own, out of reach of the engine's hiding.
+ipcMain.handle('plant:full-screen', (event) => {
+  BrowserWindow.fromWebContents(event.sender).setFullScreen(true);
+  return 'asked';
+});
+
+// A native Open dialog, drawn by the operating system rather than in the
+// page. Answered with what came back, so a test sees the application's own
+// side of it.
+ipcMain.handle('plant:native-dialog', async (event) =>
+  dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender), { title: 'Choose a map' })
+);
+
+// A second window, created hidden and brought forward with moveTop, which on
+// macOS reveals a window without a 'show' event.
+ipcMain.handle('plant:second-window', () => {
+  const second = new BrowserWindow({ show: false, width: 300, height: 200, title: 'Second window' });
+  second.loadURL('data:text/html,<p>second window</p>');
+  second.moveTop();
+  return 'opened';
 });
 
 ipcMain.handle('plant:log-error', () => {

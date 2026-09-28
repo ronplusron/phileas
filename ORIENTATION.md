@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and forty-two tests, after a
+through, and `npm test` runs two hundred and forty-five tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -97,7 +97,8 @@ launches. Five came with checks an adapter declares: `buggy`'s own firing on
 a planted miscount, a declaration refused by name, a check that hangs or
 throws, and one matched against a known finding. Two came from the first
 step-6 run on Positron: a shortcut printed as an arrow, and a text box that
-is not an input.
+is not an input. Three keep a hidden run off the screen: a window asked to go
+full screen, one brought forward with moveTop, and a native dialog.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -127,8 +128,8 @@ The three old releases and the current one are installed as
 `POSITRON_JOURNEY` chooses the Journey: `no-fix`, the default, `session`,
 whose Fix starts an R session, `notebook` and `quarto`, which open a new
 notebook or Quarto document, and `data-explorer`, which starts R and shows
-`mtcars`. The trial's Routes run five at a time, set in its
-`playwright.config.ts`. **The old releases need R 4.4.3,** installed beside 4.6 with rig,
+`mtcars`. The trial's Routes run two at a time, set in its
+`playwright.config.ts`; five put the load at 26.9 on 8 cores. **The old releases need R 4.4.3,** installed beside 4.6 with rig,
 since R 4.6.0 crashes as it starts on 2025.01 and 2025.02; the session Fix
 refuses by name without it. The adapter has one check of its own,
 `no-error-notification`, run on the current release only: studying each
@@ -158,7 +159,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Eleven defects are open,
+**Read `docs/DEFECTS.md` before writing any of it.** Fifteen defects are open,
 six of them deferred from the review of 2026-09-27 and two found tuning the
 Eighty Days demo. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.
@@ -247,7 +248,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and forty-two tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and forty-five tests against `testbed/buggy/`.
 It fails if the run leaves a `phileas-*` folder in the system temp folder.
 Another run making those folders at the same time, such as a Journey in a
 second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the

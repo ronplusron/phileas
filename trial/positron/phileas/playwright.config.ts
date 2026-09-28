@@ -7,11 +7,12 @@ export default defineConfig({
   testDir: '.',
   globalSetup: './global-setup.ts',
   ...playwrightTimeouts(journey),
-  // Five Routes at a time, asked for on 2026-09-27. Routes share nothing, so
-  // this changes no Route; what it can change is load, since five Positrons
-  // compete for the machine, and a Route slowed by that can read as a hang.
+  // Two Routes at a time. Routes share nothing, so this changes no Route;
+  // what it changes is load. Five at a time, asked for on 2026-09-27, put
+  // the load average at 26.9 on 8 cores and left 114 MB of memory free, and
+  // a Route slowed by that reads as a hang.
   fullyParallel: true,
-  workers: 5,
+  workers: 2,
   retries: 0,
   reporter: [['list']],
 });

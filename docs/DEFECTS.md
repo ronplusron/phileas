@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Eleven defects are recorded.** The launch layer landed in phase 1, so this
+**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Six of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -234,6 +234,51 @@ failed. The retry covers only the first call, and which later call dropped
 its answer was not captured. Three launches repeated to catch it did not.
 Retrying the launch's other main-process calls the same way, each of which
 either changes nothing or can be made safe to repeat, would close it.
+
+## A stop sent to the `phileas` command alone does not stop the run
+
+**Filed 2026-09-27, measured.** `bin/phileas.mjs` starts Playwright and
+ignores SIGINT itself, on the reading that Ctrl-C reaches the whole process
+group and Playwright stops on its own. That holds at a terminal. A SIGINT
+sent to the command's process alone, as a script stopping a run does, is
+swallowed: a Journey sent one kept running for eleven more minutes, until
+Playwright's own process was sent it. A SIGTERM ends the command and leaves
+Playwright running with nothing reporting it. Forwarding the signal as it
+stands would deliver Ctrl-C to Playwright twice, and a second interrupt makes
+Playwright quit without its teardown, which leaves profiles and processes
+behind. Starting Playwright in a process group of its own and forwarding
+once would close it, and needs measuring at a terminal as well as by pid.
+
+## The log check reads a logged error's stack as more errors
+
+**Filed 2026-09-27.** The log check takes every appended line holding the
+word "error". A logged error's stack follows it line by line, and a frame
+such as `at Object.error (…)` names a function called `error`, so one error
+in the log became up to three findings on Positron, each with a signature
+of its own and each ending a Route until filed. Reading a frame line as part
+of the error above it, rather than as one of its own, would close it.
+
+## A signature keeps ids that change on every Route
+
+**Filed 2026-09-27.** `VARYING` in `src/known.mjs` takes out temporary
+folders, timestamps, process ids, durations and Hop numbers. Positron's
+console names a session by an id made fresh for each one, as in
+"Session R 4.6.0 (r-6eaf3abc)", so the same error has a new signature on
+every Route: filed as known, it never matches again, and it ends every
+Route it appears on. It fails loud. Which ids an application prints is not
+knowable in advance, so the likely shape is a pattern an adapter adds to
+`VARYING` for its own application.
+
+## A window created shown still flashes on the screen
+
+**Filed 2026-09-27, as a defect rather than a limit.** Hiding a window on its
+`show` event, which is how a window created already shown is kept off the
+screen, leaves it drawn for a moment first: `hideWindows` says so, and the
+person running a Positron Journey saw windows flicker all day. C5 says
+nothing takes over the screen, and a flicker on every launch and every
+second window is not nothing. No way to reach such a window before it is
+first drawn has been found; `NODE_OPTIONS=--require` was measured not to
+reach a packaged main process in phase 1.
 
 ## Two things that will look like candidates, and are not
 
