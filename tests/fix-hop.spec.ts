@@ -95,8 +95,29 @@ test('a name that is not on screen fails the Fix and lists what is', async ({ pa
   // The list of what is on screen is the whole point: a wrong name says what
   // the right one is.
   expect(step?.kind === 'fix-hop' ? step.error : '').toMatch(
-    /button "Sumary" is not on screen\. What is: .*button "Summary"/
+    /button "Sumary" is not on screen after \d+ ms\. What is: .*button "Summary"/
   );
+});
+
+test('a Fix step waits for a target that appears after the step before it settled', async ({ page, app }) => {
+  // Positron's New File list filled in after the step that opened it had
+  // settled, and a single survey lost 1 of 7 Routes to it on 2026-09-27. Here
+  // the button arrives well after the settle wait and inside the hop timeout.
+  const { outcome, entries } = await routeWithFix(page, app, async ({ page, step, hop }) => {
+    await step('a button that arrives late', () =>
+      page.evaluate(() => {
+        setTimeout(() => {
+          const button = document.createElement('button');
+          button.textContent = 'Late arrival';
+          document.body.appendChild(button);
+        }, 1_500);
+      })
+    );
+    await hop('button "Late arrival"');
+  });
+  expect(outcome).not.toBeInstanceOf(FixFailure);
+  const late = entries.find((entry) => entry.kind === 'fix-hop' && entry.name === 'button "Late arrival"');
+  expect(late?.kind === 'fix-hop' ? late.error : 'no such step').toBeUndefined();
 });
 
 test('an excluded control is refused to a Fix, by its rule', async ({ page, app }) => {

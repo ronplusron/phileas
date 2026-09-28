@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Six of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -269,17 +269,6 @@ Route it appears on. It fails loud. Which ids an application prints is not
 knowable in advance, so the likely shape is a pattern an adapter adds to
 `VARYING` for its own application. Measured on 2026-09-27: it ended 3 of 20
 `data-explorer` Routes, each after a Hop onto Delete Session.
-
-## A Fix step fails when its target has not appeared yet
-
-**Filed 2026-09-27.** A Fix's `hop` in `src/route.ts` surveys once and fails
-if the target is not in that survey; it does not wait for the target to
-appear. `quarto`'s Fix failed this way on 1 of 7 Routes: its last step, the
-Quarto Document option in the list New File opens, was not on screen yet,
-and the other six Routes reached it. A Fix failure ends the Route before it
-travels, and its message says to expect every Route in the Journey to report
-the same, which an intermittent one does not. Whether the wait belongs in
-the engine's `hop` or in the adapter's Fix is not decided.
 
 ## A window created shown still flashes on the screen
 

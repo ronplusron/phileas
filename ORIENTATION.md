@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and forty-nine tests, after a
+through, and `npm test` runs two hundred and fifty tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -163,7 +163,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are open,
+**Read `docs/DEFECTS.md` before writing any of it.** Fifteen defects are open,
 six of them deferred from the review of 2026-09-27 and two found tuning the
 Eighty Days demo. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.
@@ -252,7 +252,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and forty-nine tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and fifty tests against `testbed/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
@@ -299,8 +299,9 @@ engine's own form: `button "Open Alps by rail"`, `menu View > Show Timetable`.
 Where a Fix exists it then runs it, printing each step, and prints what the
 engine sees after it, so a Fix of several steps is written one at a time.
 A Fix step takes a line as it is: `({ hop }) => hop('button "Open Alps by
-rail"')`, with a second argument for text to type. A name that is not on screen
-fails the Fix and lists what is, and the exclusion list applies to a Fix too.
+rail"')`, with a second argument for text to type. A step waits up to the hop
+timeout for its target to appear; a name still not on screen then fails the
+Fix and lists what is, and the exclusion list applies to a Fix too.
 `step()` with Playwright code stays available for anything else.
 
 **A replay used to need the same window mode as the run it retraces,** because

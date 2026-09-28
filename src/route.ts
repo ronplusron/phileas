@@ -475,6 +475,9 @@ export interface RunRouteOptions {
  */
 const DEFAULT_HOP_TIMEOUT_MS = 3_000;
 
+/** How often a Fix step surveys again while its target has not appeared. */
+const FIX_TARGET_POLL_MS = 250;
+
 /** How long to wait for the page to stop moving. See `settle`. */
 const DEFAULT_SETTLE_TIMEOUT_MS = 2_000;
 
@@ -1046,14 +1049,26 @@ async function runFix(
 
   const hop: FixContext['hop'] = (target, value) =>
     step(value === undefined ? target : `${target}, typing ${JSON.stringify(value)}`, async () => {
-      const found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
-      const match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+      // Surveyed again until the target appears, within the hop timeout, since
+      // a list can fill in after the step that opened it has settled: Positron's
+      // New File list, measured 2026-09-27, lost 1 of 7 `quarto` Routes to a
+      // single survey. A survey takes no draw, so waiting changes nothing a
+      // replay depends on. An excluded target fails at once: waiting cannot
+      // change a rule.
+      const deadline = Date.now() + hopTimeoutMs;
+      let found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
+      let match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+      while (!match && !found.excluded.some((entry) => targetText(entry.candidate) === target) && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, FIX_TARGET_POLL_MS));
+        found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
+        match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+      }
       if (!match) {
         const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
         throw new Error(
           refused
             ? `${target} is on screen but excluded (${refused.rule}), so a Fix cannot act on it either.`
-            : `${target} is not on screen. What is: ${found.candidates
+            : `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${found.candidates
                 .filter((candidate) => !isCommonKey(candidate))
                 .map((candidate) => targetText(journaled(candidate)))
                 .join('; ')}.`

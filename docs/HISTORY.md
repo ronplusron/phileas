@@ -57,6 +57,33 @@ recorded, `bradshaw-trap` stranded after the same eight, `mudge` found the
 same two bugs on the same five Routes, and `passepartout` played the same
 three games. The demo's suite passed, 26 of 26 with the probe.
 
+## 2026-09-28: a Fix step waits for its target to appear
+
+**Why.** A Fix's `hop` surveyed once and failed if its target was not in
+that survey. On 2026-09-27, `quarto`'s Fix failed on 1 of 7 Routes at its
+last step: the Quarto Document option in the list New File opens had not
+filled in yet, though the step before had settled, and the other six
+Routes reached it. A Fix failure ends a Route before it travels, so over
+the trial's 500 Routes this would have thrown Routes away one at a time.
+
+**Decided,** chosen over a wait written into each adapter's Fix: the wait
+goes in the engine's `hop`, so every Fix has it, as Playwright's locators
+do.
+
+**What landed.** `hop(target)` in `src/route.ts` surveys again every 250 ms
+until the target appears, within the hop timeout of 3 seconds, and fails
+as before if it never does, now saying how long it waited. An excluded
+target still fails at once, since waiting cannot change a rule. A survey
+takes no draw, so nothing a replay depends on changes. The Fix failure's
+message still says to expect every Route to report the same, which a
+failure that remains after the wait more nearly deserves.
+
+**Tested.** A Fix step whose button arrives 1.5 seconds after the step
+before it passes, and fails with the wait set to zero. The misspelled name
+still fails, after waiting, and the excluded control still fails at once.
+Not yet measured on Positron, where the failure came at 1 in 7. 250
+tests in all.
+
 ## 2026-09-28: a baseline for Eighty Days' original layout, before a better chooser
 
 **Why.** The plan's settled decision keeps the game's first layout behind
