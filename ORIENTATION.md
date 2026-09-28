@@ -114,11 +114,15 @@ verification points rather than bookkeeping.
 
 **RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
-Nothing yet travels through RStudio: one launch was measured, from a copy of
-the installed release with two fuses switched back on, at
-`~/Applications/RStudio-2026.09.1-fuses.app`, since the installed release
-refuses the ordinary launch. `docs/PLAN.md` has the decision, what an
-adapter needs and what is not decided, under "Stepping away from the trial".
+The adapter is in `trial/rstudio/`, pointed at a copy of the installed
+release with two fuses switched back on, since the installed release refuses
+the ordinary launch: for example
+`PHILEAS_APP_DIR=~/Applications/RStudio-2026.09.1-fuses.app phileas run trial/rstudio/phileas`.
+Four Routes of twenty Hops have run through it, one Route at a time, and the
+first RStudio finding came from them: closing a terminal logs a socket
+error. Its Journey fails the run when the machine's R libraries changed.
+`docs/PLAN.md` has the decision, what the adapter does and why, and what is
+not decided, under "Stepping away from the trial".
 
 **A measured trial on Positron was the thing to do before that,** decided
 2026-09-26: part of phase 5's checks, a Positron adapter, and runs against old
@@ -173,9 +177,9 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Fourteen defects are open,
-six of them deferred from the review of 2026-09-27 and two found tuning the
-Eighty Days demo. That file holds what is wrong, confirmed by reading the
+**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are open,
+six of them deferred from the review of 2026-09-27, two found tuning the
+Eighty Days demo, and two found on RStudio. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `testbed/`.** Rail Itinerary is the

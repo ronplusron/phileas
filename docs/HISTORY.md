@@ -25,6 +25,61 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: an RStudio adapter, its first finding, and a username kept out of signatures
+
+**The adapter** is in `trial/rstudio/`, pointed at the fuse-flipped copy in
+the entry below. What each setting rests on, all measured this day with
+windows hidden unless said:
+
+- **A splash window.** Three launches each opened a splash from a file in
+  the bundle beside the workbench, and closed it about 2.5 seconds later.
+  The engine takes the first window by default, which was sometimes the
+  splash: one survey failed when it closed. `RS_NO_SPLASH=1`, raised the
+  same day, left only the workbench on the next launch, and the adapter
+  also picks the workbench page by its loopback address.
+- **Logs.** A healthy launch into a fresh home wrote `rdesktop.log`, empty,
+  and no session log; `rsession-<user>.log` appears once the session logs
+  something. The engine's log check then says it did not run on every Hop,
+  which `DEFECTS.md` now carries.
+- **Exclusions.** The startup survey offered about 60 page controls and
+  over 200 menu entries, with RStudio's `&` mnemonic markers left in the
+  menu labels, so an exclusion has to spell them the same way. All 26
+  exclusions in the first set matched something. Copilot shows nowhere at
+  startup: it is off by default, and its one control found is the "GitHub
+  Copilot" option in Global Options' Assistant page. The R memory reading
+  changed its name between launches, 121,920 KiB against 122,288 KiB.
+- **Packages reach the machine's R.** The machine's R library is writable by
+  the user running the Journey, with no prompt. With HOME a fresh folder,
+  R's only library was the machine's. With `R_LIBS_USER` naming an existing
+  folder inside that home, RStudio's own console listed it first, and the
+  Install Packages dialog defaulted to it; the dialog still offers the
+  machine's library as a choice. The Packages pane has its own Install and
+  Update buttons beside the Tools menu's entries. Every RStudio launch moved
+  the machine library folder's own time within two seconds, before any Hop,
+  while no package in it changed. Four tests make the guard fire on a change
+  and stay quiet on that folder time.
+
+**Four Routes of 20 Hops ran, one at a time.** Two passed. One failed at
+hop 18, when "Close current terminal session" left an error in
+the session log: `system error 57 (Socket is not connected)` for an
+unknown handle. The fourth was its replay, from the same seed: it retraced
+all 18 Hops and failed at the same Hop with the same error. A script taking only two steps, opening the
+Terminal tab and closing its session, reproduced it on 3 of 3 launches,
+and opening without closing logged nothing. It also answered why the Hop
+recorded the line twice: RStudio writes each line twice, with the same
+timestamp, so the engine was not reading it twice. Filed as
+ronplusron/phileas issue 61. No run wrote into the real home, and the R
+library guard reported no change after each.
+
+**The first finding's signature carried the username** of whoever ran it,
+since RStudio names its session log and each of its lines for the user,
+and the Journey's end wrote that into `known-findings.json`, which a
+consumer commits. Caught before anything was committed. Signatures now
+replace the running user's name, as a whole word, with `<user>`, so a
+finding also matches across machines; a test covers it. The same
+signature keeps the terminal's handle, a new id each time, which
+`DEFECTS.md` carries.
+
 ## 2026-09-28: RStudio Desktop launched the ordinary way, from a copy with two fuses switched back on
 
 **The question was which way into RStudio Desktop,** once testing it was

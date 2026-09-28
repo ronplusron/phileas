@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
+**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Six of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -273,6 +273,38 @@ Route it appears on. It fails loud. Which ids an application prints is not
 knowable in advance, so the likely shape is a pattern an adapter adds to
 `VARYING` for its own application. Measured on 2026-09-27: it ended 3 of 20
 `data-explorer` Routes, each after a Hop onto Delete Session.
+
+**Seen on RStudio on 2026-09-28 as well.** Closing a terminal logs an error
+naming the terminal's handle, `Unknown handle: "3968F855"`, a new id each
+time, so that finding took a different signature on each of the two runs
+that met it, and would end every Route that closes a terminal.
+
+## One missing log makes the whole log check say it did not run
+
+**Filed 2026-09-28, measured on RStudio.** An adapter can name several logs.
+When any of them does not exist and nothing was found in the others, the
+log check reports not run, naming the missing one. The logs it did read are
+not mentioned, so a Hop whose other log was read and was clean reads the
+same as one where nothing was read at all. RStudio writes its session log
+only once the session first logs something, so on a healthy Route every Hop
+said the check did not run, while `rdesktop.log` was read on each.
+
+**Why it is a defect and not a limit.** The check cannot tell a log that
+does not exist yet, which is normal for RStudio, from a mistyped path, which
+is the case the rule exists for, and its report hides what it did read. Two
+ways would close it, neither decided: an adapter marking a log as created on
+its first write, or a verdict that says per log what was read and what was
+missing.
+
+## The settings printout says the staleness guard is on when it cannot run
+
+**Filed 2026-09-28.** `startJourney` prints `Staleness guard: on` whenever
+`PHILEAS_ALLOW_STALE` is unset, in `src/start.ts`, without asking whether
+the adapter gave any sources to compare against. An adapter pointed at an
+installed binary has none, so the guard cannot run, and each Route's
+attachment says so; the printout at the top of the run says the opposite.
+Seen on every RStudio run. Printing that there are no sources to check,
+where the adapter names none, would close it.
 
 ## Two things that will look like candidates, and are not
 

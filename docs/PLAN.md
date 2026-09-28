@@ -880,28 +880,50 @@ shipped. It launched the ordinary way at the first try, main process and
 menu included; `HISTORY.md` has the measurement. A build from source stays
 the way to older releases, should any be wanted as positive controls.
 
-**What an adapter needs, as known so far:**
+**The adapter, built 2026-09-28 in `trial/rstudio/`,** in the consumer
+layout Positron's uses. The code carries the measurement behind each
+setting, and `HISTORY.md` has them together. In short:
 
 - **`PHILEAS_APP_DIR` names the copy,** on this machine
   `~/Applications/RStudio-2026.09.1-fuses.app`, never the installed
   release, which refuses the launch. The staleness guard cannot run, since
   there are no sources.
-- **`RSTUDIO_DISABLE_WHATS_NEW=1` in its launch environment,** raised on
-  2026-09-28 because the What's New screen masks the IDE. Read in the
-  copy's main process the same day: any value but empty disables it.
-- **A home folder per Route, inside its profile,** beside the
-  `--user-data-dir` the engine already supplies. RStudio's configuration and
-  R's follow `HOME`, and Electron's profile follows only `--user-data-dir`,
-  measured on 2026-09-24.
-- **An R that RStudio finds,** since a session starts at launch.
-- **Exclusions for six ways to quit,** three of them not buttons, recorded
-  on 2026-09-21, one of which is harmless until the last editor tab is
-  closed and so needs a predicate.
+- **Its launch environment:** a home folder per Route inside its profile;
+  `RSTUDIO_DISABLE_WHATS_NEW=1`, raised because the What's New screen masks
+  the IDE; `RS_NO_SPLASH=1`, raised the same day; and `R_LIBS_USER`, a
+  package library inside the Route's home, so an install lands there and not
+  in the machine's R.
+- **It chooses the workbench page,** never the splash, should one appear.
+- **Its logs** are `rdesktop.log` and the session log, `rsession-<user>.log`,
+  both under the Route's home. The session log is named although it is
+  backed up to `.1.log` and on as it grows, a detail raised on 2026-09-28.
+- **Its exclusions,** each with its reason in the code: Posit Assistant and
+  anything naming Copilot, chosen from two options offered on 2026-09-28 and
+  asked for with "Exclude Copilot as well"; Global Options' Assistant page;
+  RStudio's own Quit Session and New Session; its deliberate crash command;
+  package updates; update checks; outbound help pages; a choice of the
+  machine's R library in the Install Packages dialog; and the R memory
+  reading, whose name changes every second. Installing a package is
+  allowed, since it goes to the Route's library, asked for in the words
+  "doesn't that mean that we're restricting features?"
+- **Its Journey fails the run when the machine's R libraries changed,**
+  through `r-library-guard.ts`, which reads them rather than trusting the
+  redirect. Every launch moves the library folder's own time while no
+  package changes, so the guard compares packages only.
 
-Where the adapter lives, which Fixes it starts with, which log the log check
-reads, and what to do about Posit Assistant and Copilot, which need a
-sign-in and held a quarter of the Desktop bugs in
-`research/rstudio-effectiveness.md`, are not decided.
+**The first RStudio finding,** the same day: closing a terminal logs an
+error in the session log. Filed as ronplusron/phileas issue 61, to be moved
+to rstudio/rstudio once checked against the installed release by hand.
+Findings filed here for an application under test start their title with
+its name, asked for when this one was filed.
+
+Still not decided: which Fixes the adapter starts with; whether RStudio's
+Update button writes into the machine's library, so its exclusion stays;
+and the shortcut recorded on 2026-09-21 that closes the application once
+the last editor tab is closed, which has no predicate yet and is not
+measured on this release. A Route that closes RStudio fails
+still-responding, so that one would fail loudly rather than go unseen.
+`DEFECTS.md` has what this turned up in the engine.
 
 ### After the trial: weighting the draw toward new targets
 
