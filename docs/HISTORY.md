@@ -25,6 +25,30 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: RStudio's first three Fixes
+
+Written one step at a time from `phileas survey`. `script` clicks New File
+and R Script, then types three lines of R; `session-data` moves the focus to
+the console through View -> Move Focus to Console and runs three lines that
+make a data frame, a model and a plot; `r-markdown` clicks New File and R
+Markdown... and stops in the dialog. Each ended where it meant to on its
+survey: the script's code drawn in the editor, the Environment pane
+describing the data frame as 5 obs. of 3 variables and the Plots pane
+offering Export, and the dialog open.
+
+**The editor and the console share a name.** With a script open, the survey
+shows two text boxes both named "Cursor at row 1", the case
+`OUTSTANDING.md` 2.7 describes, where a `hop()` naming it acts on whichever
+comes first. So both Fixes type with Playwright into whatever has the focus,
+and each ends on a step that waits for what the typing produced, which is
+also its evidence that the keys landed where meant.
+
+**The R Markdown dialog is a true modal:** with it open the survey offered
+only its own controls, its four kinds, three fields, three output formats
+and its buttons, and not the workbench behind it, unlike the in-page file
+dialog. rmarkdown, knitr and tinytex are in the machine's R library, so it
+did not stop to install anything.
+
 ## 2026-09-28: the first RStudio Journey of ten Routes, and two gaps in its exclusions
 
 **Ten Routes of 20 Hops, one at a time, windows hidden: eight passed and

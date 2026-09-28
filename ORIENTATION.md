@@ -125,7 +125,9 @@ the ordinary launch: for example
 `PHILEAS_APP_DIR=~/Applications/RStudio-2026.09.1-fuses.app phileas run trial/rstudio/phileas`.
 Four Routes of twenty Hops have run through it, one Route at a time, and the
 first RStudio finding came from them: closing a terminal logs a socket
-error. Its Journey fails the run when the machine's R libraries changed.
+error. `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
+R script with code in it, `session-data`, code run in the console, or
+`r-markdown`, the dialog for a new R Markdown document. Its Journey fails the run when the machine's R libraries changed.
 `docs/PLAN.md` has the decision, what the adapter does and why, and what is
 not decided, under "Stepping away from the trial".
 

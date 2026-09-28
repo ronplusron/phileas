@@ -1,9 +1,17 @@
 import { defineFixes } from '@drugstoresushi/phileas';
+import { script } from './script';
+import { rMarkdown } from './r-markdown';
+import { sessionData } from './session-data';
 
 /**
  * RStudio's Fixes, by the name a Journey or `phileas run --fix` chooses them
- * by. None yet: which to write first is not decided, and docs/PLAN.md lists
- * it among what is open. `--fix none`, or no `--fix`, starts wherever RStudio
- * starts.
+ * by. `script` opens a new R script with code in it. `session-data` runs code
+ * in the console that leaves objects, history and a plot. `r-markdown` opens
+ * the dialog for creating an R Markdown document. `--fix none`, or no
+ * `--fix`, starts wherever RStudio starts.
  */
-export const fixes = defineFixes({});
+export const fixes = defineFixes({
+  script,
+  'session-data': sessionData,
+  'r-markdown': rMarkdown,
+});

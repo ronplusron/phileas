@@ -923,7 +923,15 @@ RStudio's issue, which is not wanted.
 Findings filed here for an application under test start their title with
 its name, asked for when this one was filed.
 
-Still not decided: which Fixes the adapter starts with; whether RStudio's
+**Its first Fixes, 2026-09-28,** after a Journey of ten Routes from the
+start screen found no RStudio bug: `script`, a new R script with code in it;
+`session-data`, code run in the console that leaves a data frame, a model
+and a plot; and `r-markdown`, which stops inside the dialog for creating an
+R Markdown document. Three were proposed with a project as the third, and
+the answer was to do the first two and, instead of a project, "create an R
+Markdown file which will give us the R Markdown-creation dialog".
+
+Still not decided: whether RStudio's
 Update button writes into the machine's library, so its exclusion stays;
 and the shortcut recorded on 2026-09-21 that closes the application once
 the last editor tab is closed, which has no predicate yet and is not
