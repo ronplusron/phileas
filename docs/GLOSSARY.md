@@ -107,5 +107,6 @@ phases are marked by number.
 | `PHILEAS_SURVEY` | `1` makes a Route print what it sees at its start, run its Fix printing each step, print what it sees after, and stop, with no Trip or journal. Set by `phileas survey`. |
 | `PHILEAS_FOLLOW` | `1` prints each Route's journal as it is written, one line per Hop; `0` or unset, one line per Route. Changes no draw. Set by `--follow`. |
 | `PHILEAS_ALLOW_STALE` | `1` runs against a build the staleness guard finds stale, and the printed settings say the guard is off. Anything but `1` or `0` is refused. |
-| `PHILEAS_ALLOW_TEMP_LEFTOVERS` | `1` skips the check that fails a run, or `npm test`, which left a `phileas-` folder in the system temp folder, and says what was left. For another run making such folders at the same time. |
+| `PHILEAS_ALLOW_TEMP_LEFTOVERS` | `1` skips the check that fails a run, or `npm test`, which left anything in its own folder in the system temp folder, and says what was left. |
+| `PHILEAS_TEMP_FOLDER` | The run's own folder in the system temp folder, `phileas-<application>-<random>`, which `startJourney` in global setup makes and every Route's profile goes inside, so two runs at once never see each other's folders. Not set by hand: a profile asked for with it unset is refused by name. |
 | `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |

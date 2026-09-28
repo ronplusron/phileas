@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { FullConfig } from '@playwright/test';
 import { finishJourney, startJourney } from '@drugstoresushi/phileas';
 import { exploration } from './journeys/exploration';
+import { buggy } from './adapter';
 
 /** Where this run's seed is written, for a Route to check its own against. */
 export const seedRecordPath = (rootDir: string): string =>
@@ -22,7 +23,7 @@ export const seedRecordPath = (rootDir: string): string =>
  * exist yet.
  */
 export default function globalSetup(config: FullConfig): () => void {
-  const { seed } = startJourney(exploration);
+  const { seed } = startJourney(exploration, buggy);
 
   // Written to disk as well as to the environment, deliberately. A Route that
   // checked its seed against the environment variable would be checking the

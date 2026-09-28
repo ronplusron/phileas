@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and forty-five tests, after a
+through, and `npm test` runs two hundred and forty-nine tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -81,10 +81,12 @@ answer, one keeps a window created already shown off the screen, and two
 remove a profile that is read-only in part or still being written into, and
 one reports an application that opens no window in its own words. Two delete
 a profile again when something recreates it, and report one that keeps
-coming back. Eleven cover known findings: signatures, the file, what a
-Journey's end adds, the command, and a Route carrying on past one. Five
-fail a Journey that leaves a profile in the temp folder, including when
-another end-of-Journey check fails first. Thirty-four came with the fixes
+coming back. Twelve cover known findings: signatures in either temp folder layout, the file, what a
+Journey's end adds, the command, and a Route carrying on past one. Eight
+keep a Journey to its own temp folder: failing one that leaves a profile in
+it, even when another end-of-Journey check fails first, never failing on
+another run's folder, refusing a profile with no folder, and putting back
+the folder in force before. Thirty-four came with the fixes
 from the whole-codebase review of 2026-09-27: a crash and a quit firing the
 checks, one verdict per renderer error, a known hang still ending a Route,
 bounded survey and Fix calls, the surveyed and all-abandoned outcomes, the
@@ -148,8 +150,10 @@ it records which and carries on. A Journey adds what it found to that file,
 unfiled, when it ends, and prints each with its id, and `phileas known add
 <id> --issue <issue>` files one. A narrowing is only for what is normal for
 an application. `docs/GLOSSARY.md` defines the terms. The same end of a
-Journey fails the run on a profile it left in the temp folder, for every
-consumer whose global setup returns `finishJourney`.
+Journey fails the run on a profile it left in its own folder in the system
+temp folder, for every consumer whose global setup returns `finishJourney`.
+`startJourney(journey, adapter)` makes that folder, named for the
+application, and hands it to every Route in `PHILEAS_TEMP_FOLDER`.
 
 **Phase 5 was next until then.** Running the engine against real
 applications for a demo found gaps phase 5 would otherwise have built on, and
@@ -159,7 +163,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Fifteen defects are open,
+**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are open,
 six of them deferred from the review of 2026-09-27 and two found tuning the
 Eighty Days demo. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.
@@ -248,11 +252,12 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and forty-five tests against `testbed/buggy/`.
-It fails if the run leaves a `phileas-*` folder in the system temp folder.
-Another run making those folders at the same time, such as a Journey in a
-second terminal, fails it too; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the
-check for one run, and the run says it did.
+`npm test` typechecks, then runs the engine's own two hundred and forty-nine tests against `testbed/buggy/`.
+It gives the run its own `phileas-suite-*` folder in the system temp folder,
+makes every profile and scratch folder inside it, and fails if anything is
+left there. A Journey keeps to a folder of its own the same way, so two runs
+at once never see each other's folders; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1`
+skips the check for one run, and the run says it did.
 `npm run journey` runs the Journey from the consumer's own config at
 `testbed/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them, through the `phileas` command. It prints

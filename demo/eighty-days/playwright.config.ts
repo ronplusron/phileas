@@ -7,6 +7,7 @@ import { defineConfig } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
+  globalSetup: './tests/temp-folder.ts',
   fullyParallel: false,
   workers: 1,
   // Zero, as the engine's own suite has it: a play that differs and then

@@ -15,6 +15,7 @@ import {
   FixFailure,
   RUN_VARIABLE,
   type Fix,
+  runTempFolder,
 } from '../src/index';
 
 /**
@@ -33,7 +34,7 @@ process.env[RUN_VARIABLE] = TEST_RUN;
 
 /** Run a Route with a Fix and a one-hop Trip, and hand back its journal. */
 async function routeWithFix(page: Parameters<Fix>[0]['page'], app: Parameters<Fix>[0]['app'], fix: Fix) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-fix-hop-test-'));
+  const root = fs.mkdtempSync(path.join(runTempFolder(), 'fix-hop-test-'));
   const streams = deriveRouteStreams('fix-hop-seed', 1);
   try {
     const outcome = await runRoute({
@@ -108,7 +109,7 @@ test('an excluded control is refused to a Fix, by its rule', async ({ page, app 
 });
 
 test('a survey-only Route runs the Fix, travels nowhere, and writes no journal', async ({ page, app }) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-fix-hop-test-'));
+  const root = fs.mkdtempSync(path.join(runTempFolder(), 'fix-hop-test-'));
   try {
     const outcome = await runRoute({
       page,
@@ -134,7 +135,7 @@ test('a survey-only Route runs the Fix, travels nowhere, and writes no journal',
 });
 
 test('the hop delay pauses after each Fix step, outside the time the step records', async ({ page, app }) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-fix-hop-test-'));
+  const root = fs.mkdtempSync(path.join(runTempFolder(), 'fix-hop-test-'));
   const streams = deriveRouteStreams('delay-seed', 1);
   try {
     await runRoute({

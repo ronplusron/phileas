@@ -3,8 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
+import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import {
   defineJourney,
+  finishJourney,
   overriddenTerms,
   startJourney,
   OVERRIDE_VARIABLES,
@@ -12,6 +14,7 @@ import {
   RUN_VARIABLE,
   WINDOW_MODE_VARIABLE,
   HOP_DELAY_VARIABLE,
+  TEMP_FOLDER_VARIABLE,
 } from '../src/index';
 import { parse } from '../bin/phileas.mjs';
 
@@ -33,6 +36,7 @@ const TOUCHED = [
   RUN_VARIABLE,
   WINDOW_MODE_VARIABLE,
   HOP_DELAY_VARIABLE,
+  TEMP_FOLDER_VARIABLE,
 ];
 
 /** Run a body with some variables set, and put every one the command touches back afterwards. */
@@ -120,17 +124,22 @@ test('a bad override is refused by the variable it came from', () => {
 test('startJourney refuses a bad window mode or hop delay before anything launches', () => {
   const journey = withEnvironment({}, () => defineJourney({ routes: 1, tripLength: 1 }));
   withEnvironment({ PHILEAS_SHOW: 'frnt' }, () => {
-    expect(() => startJourney(journey)).toThrow(/PHILEAS_SHOW="frnt" is not a window mode/);
+    expect(() => startJourney(journey, buggy)).toThrow(/PHILEAS_SHOW="frnt" is not a window mode/);
   });
   withEnvironment({ PHILEAS_HOP_DELAY_MS: 'soon' }, () => {
-    expect(() => startJourney(journey)).toThrow(/PHILEAS_HOP_DELAY_MS="soon" is not a delay/);
+    expect(() => startJourney(journey, buggy)).toThrow(/PHILEAS_HOP_DELAY_MS="soon" is not a delay/);
   });
 });
 
 test('startJourney prints every setting, and marks each one set for this run', () => {
   const settings = withEnvironment(
     { PHILEAS_ROUTES: '2', PHILEAS_SEED: 'given', PHILEAS_SHOW: 'back', PHILEAS_HOP_DELAY_MS: '300' },
-    () => startJourney(defineJourney({ routes: 5, tripLength: 20 })).settings
+    () => {
+      const { settings } = startJourney(defineJourney({ routes: 5, tripLength: 20 }), buggy);
+      // Ended, so the Journey's own folder in the system temp folder is removed.
+      finishJourney();
+      return settings;
+    }
   );
   const line = (name: string) => settings.find((l) => l.startsWith(`${name}:`)) ?? '';
 

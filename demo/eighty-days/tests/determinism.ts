@@ -65,7 +65,13 @@ async function screenOf(page: Page): Promise<string> {
  */
 export async function playRecorded(cfg: AppUnderTest, options: PlayOptions): Promise<Recording> {
   const userDataDir = await makeUserDataDir(cfg);
-  const launched = await launchApp(cfg, userDataDir);
+  // A launch that throws never reaches the `finally` below, so its profile is
+  // removed here: the suite's leftover check found five left this way on
+  // 2026-09-28, from launches refused for want of a packaged build.
+  const launched = await launchApp(cfg, userDataDir).catch(async (error: unknown) => {
+    await removeProfile(userDataDir, cfg.profileWatchMs);
+    throw error;
+  });
   try {
     const page = cfg.selectPage ? await cfg.selectPage(launched.app) : await launched.app.firstWindow();
     await cfg.waitForReady(page);

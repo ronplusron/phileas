@@ -23,6 +23,8 @@ export {
   closeApp,
   reloadRenderer,
   makeUserDataDir,
+  runTempFolder,
+  TEMP_FOLDER_VARIABLE,
   removeProfile,
   DEFAULT_PROFILE_WATCH_MS,
   hideWindows,
@@ -66,7 +68,7 @@ export {
   type Journey,
   type JourneyTerms,
 } from './journey';
-export { startJourney, finishJourney, runEveryCheck, watchTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start';
+export { startJourney, finishJourney, runEveryCheck, startTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start';
 export {
   signatureOf,
   findingId,

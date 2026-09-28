@@ -82,6 +82,73 @@ Hops without drawing it, with it on offer at every menu Hop they took,
 which is less likely than chance suggests and too few Routes to call a
 bias.
 
+## 2026-09-28: every run keeps to a temp folder of its own, and a renderer error loses its second prefix
+
+**Why.** The leftover check read the whole system temp folder and failed a
+run on any new `phileas-*` folder, whoever made it. So two runs at once, a
+demo, the Positron trial, `buggy` or `npm test`, failed each other whenever
+one had a Route mid-flight as the other ended. Seen on 2026-09-27: the
+Eighty Days guided demo's section 3 failed on a profile the trial had made.
+`PHILEAS_ALLOW_TEMP_LEFTOVERS=1` was the only way past it, and it skipped
+the check for everything else too.
+
+**Decided before building, in the words it was agreed in where quoted:**
+
+- A parent folder per run, `phileas-<application>-<random>/<random>`. Asked
+  which approach: "Parent folder."
+- Made once, in global setup at the Journey's start, and handed to every
+  Route in `PHILEAS_TEMP_FOLDER`, like the run's name. Not made at the first
+  launch, since a name worked out again later would let the check read the
+  wrong folder and pass. The end check reads only that folder.
+- The application is a required argument, `startJourney(journey, adapter)`,
+  so the compiler enforces it for every consumer, raised as "what happens
+  when we add a fifth, and sixth, and seventh". A profile asked for with no
+  run folder is refused by name, never made in the shared temp folder.
+  Agreed: "Got it. Let's do it this way."
+- The engine's own suite gets a folder of its own the same way, chosen over
+  Journeys only, which would have left a Journey beside `npm test` failing it.
+
+**What landed.** `startTempFolder` in `src/start.ts` makes the folder, sets
+the variable, and returns the check, which fails on anything left inside,
+removes the folder when it is empty, and puts back the variable's earlier
+value. `startJourney` calls it last, after every setting is accepted, so a
+refused run makes nothing. `makeUserDataDir` makes each profile inside it.
+Every consumer's global setup passes its adapter. `tests/leftover-temp.ts`
+and a new `demo/eighty-days/tests/temp-folder.ts` give the two scripted
+suites their own folders, and the engine suite's scratch folders go inside
+its folder. `VARYING` in `src/known.mjs` reads a profile in either layout as
+`<profile>`, so findings filed before keep matching.
+
+**Measured.** The profile's socket path on Positron is 94 characters, where
+the limit is 103 and the old path was 87, and a Route of 5 Hops on the
+current release launched and passed with it.
+
+**Found on the way, and fixed with it:**
+
+- **Eighty Days' determinism tests leaked a profile whenever a launch
+  threw,** since the profile was made before the `try` that removes it. The
+  suite's new check caught five at once, from launches refused because the
+  worktree had no packaged build. The profile is now removed when the launch
+  throws.
+- **`tests/profile-cleanup.spec.ts` failed `npm test` once** and passed 8 of
+  8 alone. Its control, a plain delete that should lose to a writer, won:
+  the writer stopped on a timer, and under load the delete could start after
+  it. The writer now runs until stopped, and the control gets 20 tries to
+  lose. 24 of 24 passed six at a time.
+- **An uncaught renderer error read "renderer: renderer: Error: ...",**
+  reported by the Eighty Days demo's session on its `kiouni-throw` plant.
+  `rendererObservation` adds the prefix and the uncaught-error check added
+  it again, which also handed a narrowing a different form in the check
+  than in the fixture. Every renderer finding's id changes with the fix;
+  the Positron trial's known findings hold none, checked by the same search
+  finding its 25 console errors.
+
+**Tested.** Journey-end tests for another run's folder not failing a
+Journey, with this Journey's own leftover as the control, for a refused
+profile, and for the earlier folder put back; a signature test across both
+layouts. Two tests now demand exactly one `renderer: `, and both failed with
+the second prefix put back. 249 tests in all.
+
 ## 2026-09-27: eight bugs planted in Eighty Days, each found by a seeded Route
 
 **What landed.** Build step 7 of `DEMO_PLAN_EIGHTY_DAYS.md`: the eight plants

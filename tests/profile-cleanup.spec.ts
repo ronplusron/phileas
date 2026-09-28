@@ -40,7 +40,7 @@ test('a profile still being written into while it is deleted is removed', async 
   fs.mkdirSync(busy);
   // The exit is captured when the writer starts, since it can finish before
   // anything waits on it.
-  const writing = (ms: number): Promise<unknown> => {
+  const writer = (ms: number) => {
     const child = spawn(
       process.execPath,
       [
@@ -52,24 +52,47 @@ test('a profile still being written into while it is deleted is removed', async 
       ],
       { stdio: 'ignore' }
     );
-    return new Promise((resolve) => child.once('exit', resolve));
+    const exited = new Promise((resolve) => child.once('exit', resolve));
+    return { exited, stop: () => (child.kill(), exited) };
   };
+  const writing = (ms: number): Promise<unknown> => writer(ms).exited;
 
   // Node takes around a tenth of a second to start, so wait for the writer's
   // own files rather than for a fixed time, or the delete can run first.
   const writerStarted = async () => {
     const started = Date.now();
-    while (fs.readdirSync(busy).length < 3) {
+    // Missing counts as empty: a delete that won is followed by the writer
+    // making the folder again.
+    while ((fs.existsSync(busy) ? fs.readdirSync(busy).length : 0) < 3) {
       if (Date.now() - started > 5_000) throw new Error('the writer never started writing');
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
   };
 
   try {
-    const plain = writing(600);
-    await writerStarted();
-    await expect(fs.promises.rm(dir, { recursive: true, force: true })).rejects.toThrow(/ENOTEMPTY/);
-    await plain;
+    // The control: a plain delete loses to the writer. The writer runs until
+    // stopped, and the delete gets several tries, because under load one try
+    // could start after a timed writer had finished, or find the writer off
+    // the CPU for its whole walk, and succeed. That once failed `npm test` on
+    // 2026-09-28 while passing 8 of 8 alone. After a delete that wins, the
+    // writer makes the folder again, so each try waits for its files first.
+    const plain = writer(30_000);
+    let refused = false;
+    try {
+      for (let attempt = 0; attempt < 20 && !refused; attempt += 1) {
+        await writerStarted();
+        refused = await fs.promises.rm(dir, { recursive: true, force: true }).then(
+          () => false,
+          (error: NodeJS.ErrnoException) => {
+            if (error.code !== 'ENOTEMPTY') throw error;
+            return true;
+          }
+        );
+      }
+    } finally {
+      await plain.stop();
+    }
+    expect(refused).toBe(true);
 
     fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(busy, { recursive: true });

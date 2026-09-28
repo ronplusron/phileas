@@ -354,7 +354,11 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
           switch (check) {
             case 'uncaught-error':
               return judge(check, async () => {
-                const renderer = pageErrors.splice(0).map((error) => `renderer: ${error}`);
+                // Already in `rendererObservation`'s form, prefix included.
+                // Adding it here too once made every renderer finding read
+                // "renderer: renderer: ", and a narrowing see a different form
+                // here than in the fixture.
+                const renderer = pageErrors.splice(0);
                 const main = await readMain();
                 if (typeof main === 'string') {
                   // Renderer errors are still evidence; only an empty result

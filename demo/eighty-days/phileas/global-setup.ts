@@ -1,5 +1,6 @@
 import { finishJourney, startJourney } from '@drugstoresushi/phileas';
 import { journey } from './journeys';
+import { eightyDays } from './adapter';
 import { journalsRoot, knownFindings } from './paths';
 
 /**
@@ -8,7 +9,7 @@ import { journalsRoot, knownFindings } from './paths';
  * known findings file, and the check for a profile left behind.
  */
 export default function globalSetup(): () => void {
-  startJourney(journey);
+  startJourney(journey, eightyDays);
   return () => {
     finishJourney({ journalsRoot, knownFindings });
   };

@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
 import type { AppUnderTest, UniversalCheck } from './app-under-test';
@@ -82,13 +81,46 @@ export type LaunchedApp = {
     }
 );
 
+/**
+ * The variable that hands every Route its run's own folder in the system temp
+ * folder, set once by `startTempFolder` in start.ts, like the run's name.
+ */
+export const TEMP_FOLDER_VARIABLE = 'PHILEAS_TEMP_FOLDER';
+
+/**
+ * An application's name as the engine's folder names carry it. productName is
+ * optional, so it falls back rather than throwing on an application that
+ * declares no name anywhere. The name is a convenience for whoever lists the
+ * system temp folder.
+ */
+export function folderName(cfg: Pick<AppUnderTest, 'productName'>): string {
+  return (cfg.productName ?? 'app').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+
+/**
+ * The run's own folder in the system temp folder, refused by name when none
+ * was made. Never the shared temp folder instead: a folder made there is one
+ * another run's leftover check would see.
+ */
+export function runTempFolder(forWhat = 'a profile'): string {
+  const folder = process.env[TEMP_FOLDER_VARIABLE];
+  if (!folder) {
+    throw new Error(
+      `${TEMP_FOLDER_VARIABLE} is not set, so there is no run folder to make ${forWhat} in. ` +
+        `startJourney() makes it in a Journey's global setup, and startTempFolder() in a scripted suite's.`
+    );
+  }
+  return folder;
+}
+
+/**
+ * A Route's profile, inside the run's own folder rather than beside every
+ * other run's, so that two runs at once never see each other's folders. The
+ * profile's own name is kept to mkdtemp's six characters: Positron puts a
+ * socket inside it, and a socket's path is limited to 103 characters.
+ */
 export async function makeUserDataDir(cfg: AppUnderTest): Promise<string> {
-  // productName is optional now, so the slug falls back rather than throwing on
-  // an application that declares no name anywhere. The folder is temporary and
-  // its name is a convenience for whoever lists the system temp folder.
-  // `phileas-` is what the leftover check watches for, so it must stay.
-  const slug = (cfg.productName ?? 'app').toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  return fs.promises.mkdtemp(path.join(os.tmpdir(), `phileas-${slug}-`));
+  return fs.promises.mkdtemp(runTempFolder(`${cfg.productName ?? 'the application'}'s profile`) + path.sep);
 }
 
 /** Make everything under a folder writable by its owner, so it can be deleted. */
@@ -122,7 +154,7 @@ async function makeWritable(dir: string): Promise<void> {
  * and wrote its log into the Route's home folder afterwards, bringing the
  * profile back. A writer later than the watch can still leak one, and the
  * end of a Journey fails the run on it, naming the folder: see
- * `watchTempFolder` in start.ts.
+ * `startTempFolder` in start.ts.
  *
  * Throws if the folder cannot be removed or keeps coming back, rather than
  * leaving it silently: the fixture's teardown then fails, naming it.

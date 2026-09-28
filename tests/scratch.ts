@@ -1,7 +1,6 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { launchApp, type AppUnderTest, type LaunchedApp } from '../src/index';
+import { launchApp, runTempFolder, type AppUnderTest, type LaunchedApp } from '../src/index';
 
 /**
  * Temporary folders for a test, removed once the test is over.
@@ -11,13 +10,15 @@ import { launchApp, type AppUnderTest, type LaunchedApp } from '../src/index';
  * than from here, because a hook declared while this module is first imported
  * would attach to whichever spec happened to import it first and to no other.
  *
- * `tests/leftover-temp.ts` is what notices when a folder escapes this.
+ * Made inside the run's own folder, never beside other runs' in the system
+ * temp folder. `tests/leftover-temp.ts` makes that folder, and is what notices
+ * when a folder escapes this.
  */
 
 const made = new Set<string>();
 
 export function scratch(prefix: string): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  const dir = fs.mkdtempSync(path.join(runTempFolder('a scratch folder'), prefix));
   made.add(dir);
   return dir;
 }

@@ -52,6 +52,17 @@ test('two runs of the same bug have the same signature, and what varies is taken
   expect(findingId(first as string)).toBe(findingId(second as string));
 });
 
+test("a profile inside its run's folder signs the same as one directly in the temp folder", () => {
+  // Profiles moved into a folder per run on 2026-09-28. A finding filed
+  // before then carries the old layout, and must still match the new one.
+  const opening = (profile: string) =>
+    signatureOf('uncaught-error', `ENOENT: no such file or directory, open '${profile}/User/settings.json'`);
+  const before = opening('/var/folders/qd/7kw1mv0tn3r58bx62hcyl4f90000gq/T/phileas-positron-Y2Bp11');
+  const after = opening('/private/var/folders/qd/7kw1mv0tn3r58bx62hcyl4f90000gq/T/phileas-positron-a1b2c3/qSDPVM');
+  expect(before).toBe("uncaught-error: ENOENT: no such file or directory, open '<profile>/User/settings.json'");
+  expect(after).toBe(before);
+});
+
 test('a hang keeps its control and loses its Hop and its timings', () => {
   const hang = (hop: number, ms: number) =>
     signatureOf(
@@ -153,7 +164,7 @@ test("finishJourney finds the Journey's run by its seed and run name", () => {
   const found = runWith([{ signature: 'console-error: from the run', known: false }]);
   process.env[SEED_VARIABLE] = 'known-seed';
   try {
-    const { run } = startJourney(defineJourney({ routes: 1, tripLength: 1 }));
+    const { run } = startJourney(defineJourney({ routes: 1, tripLength: 1 }), buggy);
     const folder = journalFolder(root, 'known-seed', run);
     fs.mkdirSync(folder, { recursive: true });
     fs.copyFileSync(path.join(found, 'route-001-abc.jsonl'), path.join(folder, 'route-001-abc.jsonl'));
@@ -288,7 +299,7 @@ throwing('a known renderer error lets the Route carry on and the test pass', asy
   }).catch((error: unknown) => error);
   expect(first).toBeInstanceOf(CheckFailure);
   const signature = (first as CheckFailure).failed[0]?.findings?.[0]?.signature ?? '';
-  expect(signature).toMatch(/^uncaught-error: renderer: /);
+  expect(signature).toMatch(/^uncaught-error: renderer: (?!renderer: )/);
 
   const outcome = await runRoute({
     ...common,

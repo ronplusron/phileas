@@ -139,7 +139,9 @@ function firesOn(plant: string, control: string, check: string, observed: RegExp
   });
 }
 
-firesOn('renderer-throw', 'Weigh the trunk', 'uncaught-error', /renderer: .*too heavy to weigh/);
+// Exactly one "renderer: ": the prefix was once added twice, and a pattern
+// that allowed either passed through it.
+firesOn('renderer-throw', 'Weigh the trunk', 'uncaught-error', /^renderer: (?!renderer: ).*too heavy to weigh/);
 firesOn('main-throw', 'Strap the trunk', 'uncaught-error', /main process: .*strap snapped/);
 firesOn('console-error', 'Check the tickets', 'console-error', /could not be checked/);
 firesOn('renderer-hang', 'Wait for the tide', 'still-responding', /renderer did not answer/);

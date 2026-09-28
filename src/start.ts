@@ -4,7 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { journalFolder } from './journal';
 import { recordJourneyFindings, renderJourneyFindings, type JourneyFindings } from './known.mjs';
-import { windowMode } from './launch';
+import { folderName, TEMP_FOLDER_VARIABLE, windowMode } from './launch';
+import type { AppUnderTest } from './app-under-test';
 import { allowStaleFromEnvironment } from './bundle';
 import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route';
 
@@ -27,11 +28,21 @@ import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment }
  * and every Hop draws the same whatever the Trip length. Still, a changed run
  * must never be mistaken for the default. The engine prints them rather than the consumer, so that no
  * consumer prints half of them.
+ *
+ * **The application is a required argument,** because the run's own folder in
+ * the system temp folder is named for it, and a required argument is one the
+ * compiler checks for every consumer, however many there come to be. The
+ * folder is made last, once every setting has been accepted, so a refused run
+ * makes nothing.
  */
-export function startJourney(journey: Journey): {
+export function startJourney(
+  journey: Journey,
+  application: AppUnderTest
+): {
   seed: string;
   run: string;
   settings: string[];
+  tempFolder: string;
 } {
   const seedGiven = Boolean(process.env[SEED_VARIABLE]);
   const seed = resolveSeed(journey.seed);
@@ -73,54 +84,80 @@ export function startJourney(journey: Journey): {
   );
 
   for (const line of settings) console.log(line);
-  leftoverCheck = watchTempFolder(
+  const started = startTempFolder(
+    folderName(application),
     'Journey',
-    'Each is a profile, or another engine folder, that should have been removed. Something in the ' +
-      'application may still be writing into it after its Route ended.'
+    'Each is a profile that should have been removed. Something in the application may still be ' +
+      'writing into it after its Route ended.'
   );
-  return { seed, run, settings };
+  leftoverCheck = started.check;
+  return { seed, run, settings, tempFolder: started.folder };
 }
 
 /** The variable that skips the leftover check, for a Journey and for `npm test` alike. */
 export const ALLOW_TEMP_LEFTOVERS_VARIABLE = 'PHILEAS_ALLOW_TEMP_LEFTOVERS';
 
-/** The engine's folders in the system temp folder: every Route's profile is one. */
-function phileasFolders(): Set<string> {
-  return new Set(fs.readdirSync(os.tmpdir()).filter((name) => name.startsWith('phileas-')));
-}
-
 /**
- * Note the engine's folders in the system temp folder now, and return the
- * check that fails, naming each one, on a folder that appeared since and is
- * still there. Names are compared rather than counts, so folders from earlier
- * runs do not count. `PHILEAS_ALLOW_TEMP_LEFTOVERS=1` skips the check, and it
- * says what was left.
+ * Make the run's own folder in the system temp folder, hand it to everything
+ * the run starts through `PHILEAS_TEMP_FOLDER`, and return it with the check
+ * for its end. The check fails, naming each one, on anything still inside the
+ * folder, and removes the folder when it is empty. `PHILEAS_ALLOW_TEMP_LEFTOVERS=1`
+ * skips the failure, says what was left, and leaves the folder where it is.
  *
- * One check for a Journey's end and for the engine's own suite, so the two
- * cannot drift apart. `what` names the run in the message, and `hint` says
- * what most likely left a folder there. Another run making `phileas-` folders
- * at the same time shows up too, and the message says so.
+ * **Only this run's folder is read.** The check once read the whole system
+ * temp folder, so two runs at once failed each other: measured on 2026-09-27,
+ * when the Eighty Days demo failed on a profile the Positron trial had made
+ * while both ran. Each run now owns one folder, named
+ * `phileas-<name>-<random>`, and sees nothing outside it.
+ *
+ * Made once, where the run starts, rather than at a first launch: a name worked
+ * out again later could differ, and the check would then read the wrong folder
+ * and pass. The check puts back whatever `PHILEAS_TEMP_FOLDER` was before, so
+ * a Journey started inside another run, as the engine's own tests do, leaves
+ * that run's folder in force.
+ *
+ * One mechanism for a Journey and for a scripted suite, so the two cannot
+ * drift apart. `what` names the run in the message, and `hint` says what most
+ * likely left a folder there.
  */
-export function watchTempFolder(what: string, hint: string): () => void {
-  const before = phileasFolders();
-  return () => {
-    const left = [...phileasFolders()].filter((name) => !before.has(name)).sort();
-    if (left.length === 0) return;
+export function startTempFolder(name: string, what: string, hint: string): { folder: string; check: () => void } {
+  const previous = process.env[TEMP_FOLDER_VARIABLE];
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), `phileas-${name}-`));
+  process.env[TEMP_FOLDER_VARIABLE] = folder;
 
-    const listing = left.map((name) => `  ${name}`).join('\n');
+  const check = () => {
+    if (previous === undefined) delete process.env[TEMP_FOLDER_VARIABLE];
+    else process.env[TEMP_FOLDER_VARIABLE] = previous;
+
+    // Read failing is reported, never taken for an empty folder: a check that
+    // could not look must not read like one that looked.
+    const inside = () => fs.readdirSync(folder).sort();
+    let left = inside();
+    if (left.length === 0) {
+      try {
+        fs.rmdirSync(folder);
+        return;
+      } catch (error) {
+        // Something wrote into it between the read and the removal.
+        left = inside();
+        if (left.length === 0) throw error;
+      }
+    }
+
+    const listing = left.map((entry) => `  ${entry}`).join('\n');
     if (process.env[ALLOW_TEMP_LEFTOVERS_VARIABLE] === '1') {
       console.warn(
         `${ALLOW_TEMP_LEFTOVERS_VARIABLE}=1, so the leftover check is skipped. This ${what} left ` +
-          `${left.length} folder(s) in ${os.tmpdir()}:\n${listing}`
+          `${left.length} folder(s) in ${folder}:\n${listing}`
       );
       return;
     }
     throw new Error(
-      `This ${what} left ${left.length} folder(s) in ${os.tmpdir()}:\n${listing}\n\n${hint} ` +
-        `If another run was making phileas-* folders at the same time, ` +
-        `set ${ALLOW_TEMP_LEFTOVERS_VARIABLE}=1 to skip this check.`
+      `This ${what} left ${left.length} folder(s) in ${folder}:\n${listing}\n\n${hint} ` +
+        `Set ${ALLOW_TEMP_LEFTOVERS_VARIABLE}=1 to skip this check.`
     );
   };
+  return { folder, check };
 }
 
 /**
@@ -167,8 +204,8 @@ let leftoverCheck: (() => void) | undefined;
  * **The leftover check is the other half of deleting profiles.** A helper
  * that writes into a profile later than the engine watches for recreates it,
  * measured on Positron on 2026-09-27, and nothing looked at the temp folder
- * after a Journey. So any `phileas-` folder that appeared during the Journey
- * and is still there fails the run, by name, unless
+ * after a Journey. So anything still in the Journey's own folder fails the
+ * run, by name, unless
  * `PHILEAS_ALLOW_TEMP_LEFTOVERS=1`, which is announced.
  */
 export function finishJourney(options: { journalsRoot?: string; knownFindings?: string } = {}): JourneyFindings | undefined {

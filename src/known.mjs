@@ -44,8 +44,14 @@ import path from 'node:path';
  * @type {readonly [RegExp, string][]}
  */
 const VARYING = [
-  // A Route's own profile, under the system temp folder.
-  [/(?:\/private)?\/var\/folders\/[^\s:]*?\/phileas-[a-z0-9-]*?-[A-Za-z0-9]{6}(?=[/\s:]|$)/g, '<profile>'],
+  // A Route's own profile, under the system temp folder: inside its run's
+  // folder, `phileas-<name>-<random>/<random>`, and before 2026-09-28 directly
+  // in the temp folder, which signatures already filed still carry. Both
+  // become the same `<profile>`, so a finding filed before keeps matching.
+  [
+    /(?:\/private)?\/var\/folders\/[^\s:]*?\/phileas-[a-z0-9-]*?-[A-Za-z0-9]{6}(?:\/[A-Za-z0-9]{6})?(?=[/\s:]|$)/g,
+    '<profile>',
+  ],
   // A log named by its full path: only its file name identifies it.
   [/^[^\s:]*\/([^/\s:]+\.log): /, '$1: '],
   // Timestamps, as logs and ISO dates write them.

@@ -1,6 +1,7 @@
 import os from 'node:os';
 import { finishJourney, runEveryCheck, startJourney } from '@drugstoresushi/phileas';
 import { journey } from './journeys';
+import { positron } from './adapter';
 import { guardHome } from './home-guard';
 import { journalsRoot, knownFindings } from './paths';
 
@@ -17,7 +18,7 @@ import { journalsRoot, knownFindings } from './paths';
  * the profile. The run's own output there is not counted.
  */
 export default function globalSetup(): () => void {
-  startJourney(journey);
+  startJourney(journey, positron);
   const checkHome = guardHome(os.homedir(), {
     dir: process.cwd(),
     ownEntries: ['.phileas-journals', 'test-results', 'playwright-report'],

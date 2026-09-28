@@ -10,6 +10,7 @@ import {
   renderEntry,
   shortened,
   FOLLOW_VARIABLE,
+  runTempFolder,
   type JournalEntry,
 } from '../src/index';
 import { journalsFor } from '../bin/phileas.mjs';
@@ -153,7 +154,7 @@ test('a long name is cut to its column, a menu path in the middle, and never run
 });
 
 test('show finds the latest run from a run, a seed, or the journals folder', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'phileas-report-test-'));
+  const root = fs.mkdtempSync(path.join(runTempFolder(), 'report-test-'));
   try {
     const write = (seed: string, run: string, route: string) => {
       fs.mkdirSync(path.join(root, seed, run), { recursive: true });
