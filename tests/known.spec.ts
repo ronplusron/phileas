@@ -19,6 +19,7 @@ import {
   recordJourneyFindings,
   renderJourneyFindings,
   runRoute,
+  refuseUnfitVarying,
   signatureOf,
   startJourney,
   type AppUnderTest,
@@ -99,6 +100,19 @@ test("the name of whoever ran it becomes <user>, as a whole word only", () => {
   expect(logged('bea')).toBe(logged('ann'));
   // The running user by default, whoever that is, never left in.
   expect(signatureOf('log-error', `ERROR for ${os.userInfo().username}`)).toBe('log-error: ERROR for <user>');
+});
+
+test("an adapter's own patterns take out an id made fresh each time, and one without g is refused", () => {
+  // RStudio's terminal handle, a new one for each terminal.
+  const closed = (handle: string, varying?: readonly (readonly [RegExp, string])[]) =>
+    signatureOf('log-error', `ERROR system error 57 (Socket is not connected) [description: Unknown handle: "${handle}"]`, 'ann', varying);
+  const handle: readonly [RegExp, string] = [/Unknown handle: "[0-9A-F]{8}"/g, 'Unknown handle: "<handle>"'];
+  expect(closed('3968F855')).not.toBe(closed('64E9346F'));
+  expect(closed('3968F855', [handle])).toBe(closed('64E9346F', [handle]));
+  expect(closed('3968F855', [handle])).toContain('Unknown handle: "<handle>"');
+
+  expect(() => refuseUnfitVarying([handle])).not.toThrow();
+  expect(() => refuseUnfitVarying([[/Unknown handle: "[0-9A-F]{8}"/, 'x']])).toThrow(/without the g flag/);
 });
 
 test('a message worded differently is a different finding', () => {

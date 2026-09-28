@@ -9,7 +9,7 @@ import {
   type UniversalCheck,
 } from '../app-under-test';
 import type { JournaledCheck } from '../journal';
-import { findingId, signatureOf, type KnownFindings } from '../known.mjs';
+import { findingId, refuseUnfitVarying, signatureOf, type KnownFindings } from '../known.mjs';
 
 /**
  * The checks, run after every Hop, Fix steps included (R15).
@@ -199,6 +199,8 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   // Before anything is watched, so a mistake in the declaration stops the
   // Route at its start rather than on its first Hop.
   assertAppChecks(appChecks);
+  const varying = cfg.varyingInSignatures ?? [];
+  refuseUnfitVarying(varying);
   const known = new Map((options.known?.entries ?? []).map((entry) => [entry.signature, entry]));
   const responsiveTimeoutMs = options.responsiveTimeoutMs ?? DEFAULT_RESPONSIVE_TIMEOUT_MS;
 
@@ -347,7 +349,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     bounded,
     async check(tree) {
       const judge = (check: UniversalCheck, run: () => Promise<Verdict> | Verdict) =>
-        judged(check, cfg.narrowedChecks?.[check], known, run);
+        judged(check, cfg.narrowedChecks?.[check], known, varying, run);
 
       const universal = await Promise.all(
         CHECK_ORDER.map((check) => {
@@ -398,7 +400,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
       const own: JournaledCheck[] = [];
       for (const appCheck of appChecks) {
         own.push(
-          await judged(appCheck.name, undefined, known, () =>
+          await judged(appCheck.name, undefined, known, varying, () =>
             runAppCheck(appCheck, { page, app, tree }, responsiveTimeoutMs)
           )
         );
@@ -489,6 +491,7 @@ async function judged(
   check: string,
   narrowing: Narrowing | undefined,
   known: ReadonlyMap<string, { readonly issue?: string }>,
+  varying: readonly (readonly [RegExp, string])[],
   run: () => Promise<Verdict> | Verdict
 ): Promise<JournaledCheck> {
   if (narrowing?.kind === 'off') {
@@ -506,7 +509,7 @@ async function judged(
   // the check, so the Route carries on past a bug already found; any other
   // violation on the same check still fails it.
   const findings = violations.map((violation) => {
-    const signature = signatureOf(check, violation);
+    const signature = signatureOf(check, violation, undefined, varying);
     const entry = known.get(signature);
     return {
       violation,

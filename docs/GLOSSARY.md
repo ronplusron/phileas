@@ -78,7 +78,7 @@ phases are marked by number.
 | Positive control | Running a check against something known to be there before trusting a check that found nothing, since a broken check also finds nothing. |
 | Narrowing | An adapter switching off or loosening one universal check for its own application, with a required reason that reaches the report (R19). For what is normal for that application; a known bug is a known finding instead. |
 | Finding | One violation a check saw, named by its signature and a short id taken from it. Each Hop's journal line lists the findings of each check. |
-| Signature | A finding with what varies from run to run taken out: temporary folders, timestamps, process ids, durations and Hop numbers, and a stack frame's position. Two runs of the same bug share one; a message worded differently is a different finding. |
+| Signature | A finding with what varies from run to run taken out: temporary folders, timestamps, process ids, durations and Hop numbers, a stack frame's position, the name of the user running it, which becomes `<user>`, and whatever the adapter names in `varyingInSignatures`, such as an id its application makes fresh each time. Two runs of the same bug share one; a message worded differently is a different finding. |
 | Known finding | A finding held in the consumer's `known-findings.json`, filed with its issue or not yet filed. A Route that meets one records it and carries on. A Journey adds what it found to the file, unfiled, when it ends, and `phileas known add` files one. Every Route of a Journey reads the same file, which is written only when the Journey ends. |
 | Fix failure | A broken Fix step, reported apart from a failed Route, since ten Routes failing on one broken step is one problem (R11). |
 

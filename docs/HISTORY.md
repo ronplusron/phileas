@@ -25,6 +25,29 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: an adapter says what varies in its own messages, and RStudio's terminal finding becomes known
+
+**The engine takes an adapter's own patterns out of a signature,** after
+its own, through `varyingInSignatures`: each a pattern with the `g` flag and
+what to put in its place. A pattern without the flag is refused by name,
+since it would take out only the first of two ids and the finding would
+still never match. Each Route's opening journal line records the patterns,
+because they decide which findings are known and so where a Route ends.
+
+**RStudio's adapter takes out a terminal's handle,** eight upper-case hex
+digits on all five launches that logged one. Replaying the seed that first
+found issue 61 then gave its four log lines one signature, `451feaf9`,
+where each run before had given a new one. Filed with `phileas known add`
+as issue 61, the next replay recorded it as known at hop 18 and carried on,
+passing after 20 Hops.
+
+**That replay parted from the earlier ones at hop 15,** Load workspace,
+which now opened the in-page dialog where the stub had answered it before.
+Every pool after it differed, so the seed took a different Route from
+there, as it should once the adapter changes what the application offers;
+the terminal close at hop 18 was drawn again by chance. The journal's
+pools show the difference, which is what R14 will read.
+
 ## 2026-09-28: RStudio's dialogs drawn in the page, and one home guard for both trials
 
 **Native dialogs.** RStudio's native Open and Save dialogs are drawn by

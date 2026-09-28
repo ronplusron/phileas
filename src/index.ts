@@ -73,6 +73,7 @@ export { startJourney, finishJourney, runEveryCheck, startTempFolder, ALLOW_TEMP
 export { defineFixes, fixFor, fixName, NO_FIX, type Fixes } from './fixes';
 export {
   signatureOf,
+  refuseUnfitVarying,
   findingId,
   readKnownFindings,
   markFiled,

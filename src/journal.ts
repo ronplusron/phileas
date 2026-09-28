@@ -272,6 +272,14 @@ export interface OpeningEntry {
    */
   readonly knownFindings?: { readonly version: string; readonly entries: number };
   /**
+   * The adapter's own patterns for what a signature takes out, each as its
+   * source text and its replacement. Written for the known findings' reason:
+   * they decide which findings match a known one, and so where a Route ends.
+   * Absent where the adapter gives none, and in journals written before
+   * 2026-09-28.
+   */
+  readonly varyingInSignatures?: readonly (readonly [string, string])[];
+  /**
    * Which Fix the Route opened with: its name in `fixes/index.ts`, or the
    * function's own name where it has one, and a fingerprint of its source. Written because a Fix is part of what a seed
    * reproduces, and a replay after the Fix was edited would otherwise look like

@@ -254,22 +254,20 @@ in the log became up to three findings on Positron, each with a signature
 of its own and each ending a Route until filed. Reading a frame line as part
 of the error above it, rather than as one of its own, would close it.
 
-## A signature keeps ids that change on every Route
+## Positron's session ids still give a finding a new signature on every Route
 
-**Filed 2026-09-27.** `VARYING` in `src/known.mjs` takes out temporary
-folders, timestamps, process ids, durations and Hop numbers. Positron's
-console names a session by an id made fresh for each one, as in
-"Session R 4.6.0 (r-6eaf3abc)", so the same error has a new signature on
-every Route: filed as known, it never matches again, and it ends every
-Route it appears on. It fails loud. Which ids an application prints is not
-knowable in advance, so the likely shape is a pattern an adapter adds to
-`VARYING` for its own application. Measured on 2026-09-27: it ended 3 of 20
-`data-explorer` Routes, each after a Hop onto Delete Session.
+**Filed 2026-09-27.** Positron's console names a session by an id made fresh
+for each one, as in "Session R 4.6.0 (r-6eaf3abc)", so the same error has a
+new signature on every Route: filed as known, it never matches again, and it
+ends every Route it appears on. It fails loud. Measured on 2026-09-27: it
+ended 3 of 20 `data-explorer` Routes, each after a Hop onto Delete Session.
 
-**Seen on RStudio on 2026-09-28 as well.** Closing a terminal logs an error
-naming the terminal's handle, `Unknown handle: "3968F855"`, a new id each
-time, so that finding took a different signature on each of the two runs
-that met it, and would end every Route that closes a terminal.
+**The engine can take such an id out since 2026-09-28,** through an
+adapter's `varyingInSignatures`, which RStudio's adapter uses for its
+terminal handles. Positron's adapter does not use it yet, which is what
+leaves this open. Adding a pattern changes the signatures of the five
+entries `trial/positron/phileas/known-findings.json` holds for these
+sessions, which would collapse into one new finding to file.
 
 ## One missing log makes the whole log check say it did not run
 

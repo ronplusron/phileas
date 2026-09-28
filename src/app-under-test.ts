@@ -412,6 +412,21 @@ export interface AppUnderTest {
   checks?: readonly AppCheck[];
 
   /**
+   * What varies from run to run in this application's own messages, taken out
+   * of a finding's signature after what the engine takes out itself: each a
+   * pattern with the `g` flag and what to put in its place.
+   *
+   * A known finding matches by signature, so an id the application makes
+   * fresh each time gives the same bug a new signature on every Route, and it
+   * never matches again once filed. Which ids an application prints cannot be
+   * known in advance, which is why it is the adapter's to say. The case this
+   * exists for is RStudio naming a terminal by a new handle each time,
+   * `Unknown handle: "3968F855"`. Written in every journal, since the patterns
+   * decide which findings are known and so where a Route ends.
+   */
+  varyingInSignatures?: readonly (readonly [RegExp, string])[];
+
+  /**
    * How long the page must stay unchanged after a Hop to count as settled, in
    * milliseconds. Leave it out for the engine's default.
    *

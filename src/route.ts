@@ -696,6 +696,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     ...shares,
     allowStandardMenuRoles: (cfg.exclusions.allowStandardMenuRoles ?? []).map((role) => role.toLowerCase()),
     ...(known ? { knownFindings: { version: known.version, entries: known.entries.length } } : {}),
+    ...(cfg.varyingInSignatures?.length
+      ? { varyingInSignatures: cfg.varyingInSignatures.map(([pattern, replacement]) => [String(pattern), replacement] as const) }
+      : {}),
     ...(fix ? { fix: { ...namedFix(fix), fingerprint: fixFingerprint(fix) } } : {}),
   }, { follow });
 

@@ -98,6 +98,12 @@ export const rstudio: AppUnderTest = {
     return [path.join(logs, 'rdesktop.log'), path.join(logs, `rsession-${os.userInfo().username}.log`)];
   },
 
+  // A terminal's handle, made fresh for each terminal: eight upper-case hex
+  // digits on all five launches that logged it on 2026-09-28, such as
+  // 3968F855. Without this, closing a terminal, ronplusron/phileas issue 61,
+  // had a new signature each time and could never match as known.
+  varyingInSignatures: [[/Unknown handle: "[0-9A-F]{8}"/g, 'Unknown handle: "<handle>"']],
+
   async beforeLaunch(userDataDir: string): Promise<void> {
     // The library inside the home, which makes the home too. R skips an
     // R_LIBS_USER that does not exist.

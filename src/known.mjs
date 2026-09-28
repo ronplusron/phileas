@@ -78,18 +78,45 @@ const VARYING = [
  * logs its user's name would otherwise put it there: RStudio's session log
  * names itself `rsession-<name>` on every line, seen 2026-09-28. It also keeps
  * a finding filed on one machine matching on another.
+ *
+ * An adapter's own patterns for what varies in its application's messages,
+ * `varyingInSignatures`, apply after the engine's.
  * @param {string} check
  * @param {string} violation
  * @param {string | undefined} [user] whose name to take out; the running user's by default
+ * @param {readonly (readonly [RegExp, string])[]} [varying] the adapter's own patterns
  * @returns {string}
  */
-export function signatureOf(check, violation, user = runningUser()) {
+export function signatureOf(check, violation, user = runningUser(), varying = []) {
   const [first = '', ...rest] = violation.split('\n');
   const frame = rest.map((line) => line.trim()).find((line) => line.startsWith('at '));
   let text = first.trim();
-  for (const [pattern, replacement] of VARYING) text = text.replace(pattern, replacement);
+  for (const [pattern, replacement] of [...VARYING, ...varying]) text = text.replace(pattern, replacement);
   const where = frame?.replace(/\s*\(?(?:file:\/\/)?[^()]*?([^/()]+?)(?::\d+)+\)?$/, ' ($1)');
   return withoutUser(`${check}: ${text.trim()}${where ? ` ${where}` : ''}`, user);
+}
+
+/**
+ * Refuses an adapter's signature patterns that would not take out every
+ * occurrence. Without the `g` flag a pattern replaces only the first, so a
+ * message naming the same id twice would keep the second, and the finding
+ * would still never match: refused by name rather than half-working.
+ * @param {readonly (readonly [RegExp, string])[]} varying
+ * @returns {void}
+ */
+export function refuseUnfitVarying(varying) {
+  for (const entry of varying) {
+    const [pattern, replacement] = entry;
+    if (!(pattern instanceof RegExp) || typeof replacement !== 'string') {
+      throw new TypeError('Each of varyingInSignatures is a pattern and the text to put in its place.');
+    }
+    if (!pattern.global) {
+      throw new RangeError(
+        `varyingInSignatures has ${pattern} without the g flag, which would take out only its first ` +
+          `occurrence. Write it as ${pattern}g.`
+      );
+    }
+  }
 }
 
 /**
