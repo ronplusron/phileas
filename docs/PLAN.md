@@ -856,6 +856,53 @@ question:**
 
 **Built 2026-09-27.** `HISTORY.md` has what landed and how it was proved.
 
+### Stepping away from the trial: RStudio Desktop
+
+**Decided 2026-09-28, in the words it was put:** "Let's step away from this
+now. And from Positron. I want to test RStudio, specifically RStudio
+Desktop." The Positron trial stops where it stands: steps 1 to 4 done as far
+as they go, step 5 not started, step 6 run in part and well short of its 500
+Routes, and the bar not judged. Nothing was said about whether or when it
+resumes, or about what this does to weighting the draw, which was placed
+right after the trial, below. Both are open, not settled.
+
+It also moves RStudio ahead of where `OUTSTANDING.md` 1.8 and phase 9 had it,
+after the two first consumers. The IDE items that list schedules for the
+IDEs' turn arrive with it and are not built: reading inside frames, where
+RStudio's Help, Viewer and data viewer live, other windows, and more kinds of
+action. Which of them this needs first was not discussed.
+
+**The way in, decided the same day, from three offered with a
+recommendation:** a copy of the installed release with the two fuses
+Playwright needs switched back on, chosen with "Let's flip." over a build
+from source and over the debugging-port launch against the release as
+shipped. It launched the ordinary way at the first try, main process and
+menu included; `HISTORY.md` has the measurement. A build from source stays
+the way to older releases, should any be wanted as positive controls.
+
+**What an adapter needs, as known so far:**
+
+- **`PHILEAS_APP_DIR` names the copy,** on this machine
+  `~/Applications/RStudio-2026.09.1-fuses.app`, never the installed
+  release, which refuses the launch. The staleness guard cannot run, since
+  there are no sources.
+- **`RSTUDIO_DISABLE_WHATS_NEW=1` in its launch environment,** raised on
+  2026-09-28 because the What's New screen masks the IDE. Read in the
+  copy's main process the same day: any value but empty disables it.
+- **A home folder per Route, inside its profile,** beside the
+  `--user-data-dir` the engine already supplies. RStudio's configuration and
+  R's follow `HOME`, and Electron's profile follows only `--user-data-dir`,
+  measured on 2026-09-24.
+- **An R that RStudio finds,** since a session starts at launch.
+- **Exclusions for six ways to quit,** three of them not buttons, recorded
+  on 2026-09-21, one of which is harmless until the last editor tab is
+  closed and so needs a predicate.
+
+Where the adapter lives, which Fixes it starts with, which log the log check
+reads, and what to do about Posit Assistant and Copilot, which need a
+sign-in and held a quarter of the Desktop bugs in
+`research/rstudio-effectiveness.md`, are not decided.
+
 ### After the trial: weighting the draw toward new targets
 
 **Placed 2026-09-27,** asked for in the words "Let's do it sooner", and

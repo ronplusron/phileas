@@ -112,16 +112,25 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: eleven phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**A measured trial on Positron is the next thing to do,** decided
+**RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
+carrying on with the Positron trial below, which stops where it stands.
+Nothing yet travels through RStudio: one launch was measured, from a copy of
+the installed release with two fuses switched back on, at
+`~/Applications/RStudio-2026.09.1-fuses.app`, since the installed release
+refuses the ordinary launch. `docs/PLAN.md` has the decision, what an
+adapter needs and what is not decided, under "Stepping away from the trial".
+
+**A measured trial on Positron was the thing to do before that,** decided
 2026-09-26: part of phase 5's checks, a Positron adapter, and runs against old
 releases carrying known bugs, judged against a bar set in advance.
 `docs/PLAN.md` has it under "Before the rest of phase 5", and the rest of
 phase 5 waits for its answer. Its first two steps, the checks and the
 adapter, are done: the adapter is in `trial/positron/`, three Routes of
 twenty Hops each passed through it on the current release, and one Route on
-each old release. Two Positron bugs have
-been found and filed, `ronplusron/phileas` issues 44 and 46, and
-`trial/positron/phileas/known-findings.json` holds their signatures.
+each old release. Four Positron bug candidates have
+been found and filed, `ronplusron/phileas` issues 44, 46, 53 and 54, none
+yet followed by hand, and `trial/positron/phileas/known-findings.json` holds
+their signatures.
 `docs/PLAN.md` has everything measured and decided for it.
 The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
@@ -141,8 +150,9 @@ go.
 **On the old releases, context menus are native whatever the adapter
 sets,** since none of them has `window.menuStyle`. With windows hidden,
 opening one froze nothing in twelve launches; with windows shown, that is
-unmeasured. Step 5 and the rest of step 6 are next, then weighting the draw toward new
-targets, which `docs/PLAN.md` places after the trial.
+unmeasured. Step 5 and the rest of step 6 were next when the trial stopped,
+then weighting the draw toward new targets, which `docs/PLAN.md` places
+after the trial; where that goes now is not decided.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer
 keeps `known-findings.json` beside its spec; a Route that meets a finding in

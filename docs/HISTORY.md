@@ -25,6 +25,65 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: RStudio Desktop launched the ordinary way, from a copy with two fuses switched back on
+
+**The question was which way into RStudio Desktop,** once testing it was
+chosen over carrying on with the Positron trial. `PLAN.md` has that
+decision. The installed release, 2026.09.1+183, refuses Playwright's
+ordinary launch, recorded on 2026-09-21, and the remedy then recorded was a
+build from source without the hardening.
+
+**Its fuses, read from the installed application.** The Electron framework
+is a universal binary and carries one fuse wire per architecture, both
+reading `000000011`. Against the fuse order in `electron/fuses`, fetched the
+same day rather than recalled, that is RunAsNode, cookie encryption, the
+`NODE_OPTIONS` variable, the inspector arguments, asar integrity checking,
+loading only from the asar and the browser-process snapshot all off, and
+extra file-protocol privileges and WebAssembly trap handlers on. With asar
+integrity checking off, switching fuses in a copy looked likely to work
+without disturbing anything else, which is why it was offered; whether it
+would also work with that check on was not tried.
+
+**Three ways in were offered:** switching the two fuses Playwright needs back
+on in a copy, building from source, and the debugging-port launch against
+the release as shipped. Chosen with "Let's flip." after a table of
+tradeoffs and a recommendation. The reasons given with the recommendation:
+it takes minutes rather than a build, it runs the release's own compiled
+code, and it keeps the main process, so hidden windows, the menu, the link
+stub and the main-process checks all work. A build from source stays the way
+to older releases, as positive controls.
+
+**What was done.** The application was copied with `ditto` to
+`~/Applications/RStudio-2026.09.1-fuses.app`, outside `/Applications` and
+leaving the installed one untouched. RunAsNode and the inspector arguments
+were switched on in both wires, found by the fuse sentinel, with the script
+refusing unless there were exactly two wires each reading `000000011`
+first. The copy was re-signed ad hoc, which drops Posit's signature and the
+hardened runtime, and `codesign --verify --deep --strict` passed.
+
+**Measured with one launch,** through Playwright's own Electron launch as
+`launch.ts` makes it, with `--user-data-dir` and `HOME` both pointed at a
+throwaway folder, and windows shown since the script did not use the
+engine's hidden mode. The launch returned in 9.2 seconds. A call into the
+main process answered with the version, one window, and the native menu's
+thirteen top-level entries, RStudio through Help. The page's accessibility
+snapshot held about 58 named controls: the main toolbar, the panes and their
+tab sets.
+
+**Nothing was written outside the throwaway folder,** checked against the
+real `~/.config/rstudio`, `~/.local/share/rstudio`, Application Support,
+caches, preferences, `.Rhistory` and `.RData`. The control was the
+throwaway home, which held RStudio's `.Rhistory`, configuration and
+preferences written during the run. The first comparison was wrong and was
+redone: `ditto` keeps modification times, so the copy's own files dated
+from the original install and matched everything since. No RStudio or R
+process outlived the close.
+
+**What it does not settle.** One launch, not a Route. The What's New screen
+was not switched off, so whether it was in that snapshot is unknown. And the
+copy is not the artifact a user installs: two fuse bytes and the signature
+differ, and a finding from it says so.
+
 ## 2026-09-28: Eighty Days chooses its Fix with --fix, shows it before its Trip, and a leak in the guided runner
 
 **Found rehearsing the guided demo with the window shown.**

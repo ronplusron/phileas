@@ -182,6 +182,9 @@ Recorded 2026-09-23. Four applications, reached in this order:
 - **Positron and RStudio, eventually.** Targets, not candidates to be weighed:
   both are to be tested, after the engine has proven itself on the first two.
   Positron is the stronger of the two, for measured reasons below.
+  **Changed twice since:** a trial on Positron came first, on 2026-09-26, and
+  on 2026-09-28 RStudio Desktop was chosen over carrying the trial on.
+  `PLAN.md` has both.
 
 trickster-tales is not one of the four. It served on 2026-09-23 as a demo, the
 first real application the engine traveled through, and its dropdowns found a
@@ -221,13 +224,18 @@ and a search against the tales whose text matches.
 
 **RStudio.**
 
-- **Launch:** the release build ships hardened, so the engine gets in only over
-  the debugging port, which reaches no main process: no link stub, no hidden
-  windows, no menus, no main-process checks. The first of its three recorded
-  bugs is a main-process exception that path would travel straight past. The
-  remedy is building it from source without the hardening, the second
-  deployment shape. It is heavy, and it is a cost rather than a wall. Its
-  source is AGPL: build it and test it, and copy nothing from it.
+- **Launch:** the release build ships hardened, so as installed the engine
+  gets in only over the debugging port, which reaches no main process: no
+  link stub, no hidden windows, no menus, no main-process checks. The first
+  of its three recorded bugs is a main-process exception that path would
+  travel straight past. **The remedy, since 2026-09-28, is a copy of the
+  installed release with RunAsNode and the inspector arguments switched back
+  on and re-signed for local use,** which launches the ordinary way;
+  `HISTORY.md` has the measurement. The release leaves asar integrity
+  checking off, and whether that matters has not been tried. A build from
+  source without the hardening, the
+  remedy recorded before, stays the way to older releases. Its source is
+  AGPL: build it and test it, and copy nothing from it.
 - **Discovery** reaches its toolbars, menus, dialogs and panes, which are well
   named: 80 of the 84 elements found by role on the resting screen carry a
   usable name. It stops at the console, the
@@ -293,7 +301,8 @@ by approving a proposal made at the end of the session that recorded them:
 - **In phase 5, where `PLAN.md` already has them:** native dialogs, and bugs
   that happen on quitting.
 - **At RStudio's turn, after phase 9:** the debugging-port launch, or a build
-  from source.
+  from source. **Settled on 2026-09-28, and brought forward:** neither, a
+  copy of the release with two fuses switched back on, below.
 
 A reading, not a reason given with the approval: the three measured items
 bear on what phase 5 and R31 build on, since both rest on the survey and the
@@ -317,9 +326,11 @@ repeating it.
   and Viewer are webviews and equally out of reach; its data explorer is drawn
   in the page and is reachable. Scheduled above, at the IDEs' turn.
 - **The debugging-port launch** that a hardened release needs is named in the
-  engine's types and has never been built. For RStudio the chosen remedy is a
-  build without the hardening instead, and how hard that build is has not been
-  measured. Whichever way in, each Route needs its own Electron profile,
+  engine's types and has never been built. RStudio no longer needs it: since
+  2026-09-28 a copy of its release with two fuses switched back on launches
+  the ordinary way, as 1.8 says, and how hard a build from source would be is
+  still unmeasured. Whether the same works on a release that checks its
+  asar's integrity has not been tried. Whichever way in, each Route needs its own Electron profile,
   through `--user-data-dir`: measured on RStudio, the profile ignores `HOME`,
   so without it every Route shares one profile's cookies and storage, which is
   the inherited state R3 forbids. The folder needs a short path: Positron
@@ -494,6 +505,28 @@ departure left now loses the game, three invented departures were retimed,
 and the default Trip went from 200 Hops to 150. Every baseline above was
 taken before it, and the demo's pinned seeds will be searched for again once
 a weighted chooser lands.
+
+### 1.15 Weighting the draw by a control's role
+
+Raised 2026-09-28, close to how it was put: the kinds of control are few,
+such as button and option, and they could be weighted, so that Phileas
+would draw a button more often than an option. Recorded as an idea to
+measure before any weight is chosen, asked for with "yes" to that proposal;
+nothing else is decided.
+
+**Notes, a reading and not a decision:**
+
+- **Replay survives it.** Fixed weights per role are part of the seeded
+  draw, the way 1.6 says of weights per key. It would be a chooser behind the
+  choosing seam, like 1.14's, and the two could combine.
+- **Its strongest case is crowding.** One open listbox can put dozens of
+  options into a pool beside a handful of buttons, so a uniform draw spends
+  most Hops among the options. A weight per role, or a share per group of
+  options, would answer that without judging which control matters.
+- **Weights chosen without measurement are guesses about where bugs are,**
+  1.6's caution. The journals already record every pool and each target's
+  role, so the Positron runs can say, before any number is picked, which
+  roles changed the screen when drawn and how often each crowded a pool.
 
 ## 2. Undecided
 
