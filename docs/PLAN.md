@@ -923,6 +923,18 @@ RStudio's issue, which is not wanted.
 Findings filed here for an application under test start their title with
 its name, asked for when this one was filed.
 
+**Web dialogs stay on, decided 2026-09-28,** after a finding they led to
+turned out to be one RStudio's developers had called not a high priority:
+opening a folder as a project from the web Open Project dialog, rstudio/rstudio
+issue 14985, which their native dialogs handle. The web dialogs are not
+RStudio Desktop's default on macOS, so findings in them may be set aside
+the same way. They stay, confirmed in the words "Keep them, since Playwright
+can't access native dialogs, right?": a native dialog is drawn by macOS,
+beyond what Playwright reaches, so every flow through a file dialog would
+go unexplored, and the same thread says the web dialogs are what RStudio
+Server's open-source edition uses. A finding reached through a web dialog
+says so.
+
 **Its first Fixes, 2026-09-28,** after a Journey of ten Routes from the
 start screen found no RStudio bug: `script`, a new R script with code in it;
 `session-data`, code run in the console that leaves a data frame, a model

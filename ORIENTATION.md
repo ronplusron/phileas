@@ -184,9 +184,9 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Fourteen defects are open,
+**Read `docs/DEFECTS.md` before writing any of it.** Fifteen defects are open,
 five of them deferred from the review of 2026-09-27, two found tuning the
-Eighty Days demo, and one found on RStudio. That file holds what is wrong, confirmed by reading the
+Eighty Days demo, and two found on RStudio. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `testbed/`.** Rail Itinerary is the

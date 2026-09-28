@@ -1,5 +1,13 @@
 [
   {
+    "id": "e0fe2964",
+    "check": "log-error",
+    "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR system error 100 (Protocol error) [project-file: <profile>/home, user-msg: The project file did not include a Version attribute (it may have been created by a more recent version of RStudio)]; OCCURRED AT Error rstudio::core::r_util::readProjectFile(const FilePath &, const RProjectConfig &, const RProjectBuildDefaults &, RProjectConfig *, bool *, std::string *) src/cpp/core/r_util/RProjectFile.cpp:569; LOGGED FROM: void rstudio::session::projects::startup(const std::string &) src/cpp/session/projects/SessionProjects.cpp:1206",
+    "added": "2026-09-28",
+    "source": "journey",
+    "issue": "rstudio/rstudio#14985"
+  },
+  {
     "id": "451feaf9",
     "check": "log-error",
     "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR system error 57 (Socket is not connected) [description: Unknown handle: \"<handle>\"]; OCCURRED AT Error rstudio::session::console_process::ConsoleProcessSocket::sendRawText(const std::string &, const std::string &) src/cpp/session/SessionConsoleProcessSocket.cpp:283; LOGGED FROM: void rstudio::session::console_process::ConsoleProcess::enqueOutputEvent(const std::string &) src/cpp/session/SessionConsoleProcess.cpp:763",

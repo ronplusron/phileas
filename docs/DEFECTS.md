@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -231,7 +231,7 @@ the first-line pause and 1 in 6 with its script doing nothing; whether the
 pause itself raises the rate was not measured, since 2024.11 was set aside
 in favor of the current release.
 
-## A native print dialog holds the Journey until someone closes it
+## A Route whose page stops answering can hold the Journey at teardown
 
 **Filed 2026-09-28, seen once on RStudio.** A Route chose File -> Print...,
 which opens macOS's print dialog. The engine's stub answers Electron's file
@@ -251,6 +251,36 @@ blocks. RStudio's adapter now excludes anything that prints, which keeps
 RStudio's Routes off it and leaves this open for any application that
 prints. Two things would close it: stubbing printing in the main process
 the way the other dialogs are, and finding and bounding the wait.
+
+**Seen again the same day with no dialog at all.** The Mac's lid was closed
+for about five seconds during a Route, which lost the connection to
+RStudio's window: the Route failed with the window closed and the renderer
+unreachable, as it should. Its RStudio process stayed alive, and the Journey
+made no progress for about five minutes, until that process was killed by
+hand, when it carried on. So the wait is not about printing: it follows any
+Route that loses its page while the application's process lives on, which
+is why stubbing printing alone would not close this entry.
+
+**The same moment on Rail Itinerary, measured by the Eighty Days demo
+session:** its Route failed at the same second with the same two findings,
+and its Journey sat for over ten minutes until the worker and the
+application were killed by hand, leaving an empty temp folder behind. That
+session also measured that the application's window had not closed, which
+the next entry is about.
+
+## "The window closed" is reported when only Playwright's page did
+
+**Filed 2026-09-28, from two runs at the same moment.** Still-responding
+records "the window closed" when Playwright's page object fires `close`,
+in `src/oracles/index.ts`, and treats it as the application closing its
+window. When the Mac slept for about five seconds, both an RStudio Route
+and a Rail Itinerary Route failed that way. The Eighty Days demo session
+then measured, eleven minutes later, that Rail Itinerary's window was
+still open, its processes alive and its debugging port listing the page.
+So the finding was false, and it ends the Route as a real hang would.
+Checking the application's own windows from the main process before
+calling it closed would tell the two apart, and a lost connection would
+then be reported as that.
 
 ## A stop sent to the `phileas` command alone does not stop the run
 

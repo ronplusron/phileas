@@ -25,6 +25,30 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: a Journey from each RStudio Fix, and a sleeping Mac
+
+**Five Routes of 20 Hops from each Fix, one at a time, windows hidden:**
+`r-markdown` 5 of 5 passed, `session-data` 4 of 5 and `script` 4 of 5.
+
+**`script`'s failure was a finding reached through a web dialog.** Route 4
+chose File -> Open Project..., declined to save the script, and clicked
+Open in the web Open Project dialog with nothing chosen; the session log
+then held "The project file did not include a Version attribute", naming
+the home folder as the project file. Reproduced alone on 3 of 3 launches,
+with nothing shown on screen, and not when Cancel was clicked instead. It
+is rstudio/rstudio issue 14985, open since 2024, where RStudio's developers
+called it not a high priority since their native dialogs handle it; in
+2024 macOS showed the message on screen, and in 2026.09.1 nothing showed.
+The known finding points at it, and `PLAN.md` has why web dialogs stay on.
+
+**`session-data`'s failure was the Mac sleeping.** The lid was closed for
+about five seconds during Route 1, which then failed with "the window
+closed" and the renderer unreachable, and the Journey sat until that
+Route's RStudio was killed by hand. The Eighty Days demo session saw the
+same on Rail Itinerary at the same second, and measured that its window
+had never closed. `DEFECTS.md` has both defects this shows. The two
+findings the Journey's end added were removed by hand.
+
 ## 2026-09-28: RStudio's first three Fixes
 
 Written one step at a time from `phileas survey`. `script` clicks New File
