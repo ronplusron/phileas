@@ -80,9 +80,15 @@ async function pause(prompt) {
     reader = readline.createInterface({ input: process.stdin, output: process.stdout });
     reader.on('close', () => (inputEnded = true));
   }
+  // The close listener comes off again once the wait is over. Left on, every
+  // pause added one, and past ten Node warned of a leak mid-demo.
   await new Promise((resolve) => {
-    reader.once('close', resolve);
-    reader.question(dim(`  ${prompt} `)).then(resolve, resolve);
+    const done = () => {
+      reader.off('close', done);
+      resolve();
+    };
+    reader.once('close', done);
+    reader.question(dim(`  ${prompt} `)).then(done, done);
   });
 }
 

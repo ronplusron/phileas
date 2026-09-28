@@ -117,7 +117,7 @@ described from memory, and it checks its arithmetic against the journal.
 
 Show two files, or let the guided command show the parts that matter:
 
-- `demo/rail-itinerary/phileas/journeys/demo.ts`: the Journey. Three Routes,
+- `demo/rail-itinerary/phileas/journeys/index.ts`: the Journey. Three Routes,
   fifty Hops each.
 - `demo/rail-itinerary/phileas/adapter/index.ts`: the adapter. Where the
   application's build is, how to tell it has started, and what never to touch.
@@ -135,7 +135,7 @@ phileas run --seed <anything> --routes 5 --trip-length 100 --show front --follow
 PHILEAS_FIX=open-alps PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
 ```
 
-Show the Fix, in `journeys/demo.ts`:
+Show the Fix, in `fixes/open-alps.ts`:
 
 ```ts
 export const openAlps: Fix = ({ hop }) => hop('button "Open Alps by rail"');
@@ -151,7 +151,7 @@ where every Route's Trip begins.
 PHILEAS_FIX=add-leg-then-buy PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
 ```
 
-Show `journeys/tickets.ts`. This Fix opens the same itinerary, adds a leg from
+Show `fixes/add-leg-then-buy.ts`. This Fix opens the same itinerary, adds a leg from
 Geneva to Zurich, and opens the ticket purchase dialog, in nine steps. It was
 built one step at a time: run the survey, copy the line for the next control,
 run the survey again.

@@ -1,5 +1,5 @@
 import { type Fix } from '@drugstoresushi/phileas';
-import { toHongKong } from './hongkong';
+import { toHongKong } from './hong-kong';
 
 /**
  * The Fixes stage two's sections start from, one for each place a planted bug

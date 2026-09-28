@@ -58,7 +58,7 @@ const SURVEY_HOLD = { PHILEAS_HOP_DELAY_MS: '2000' };
 const FIX_HOLD = { PHILEAS_HOP_DELAY_MS: '700' };
 
 // The Journey sections 4 to 6 share: the default, from the Hong Kong quay.
-const JOURNEY_ENV = { EIGHTY_DAYS_JOURNEY: 'hong-kong', ...KNOWN };
+const JOURNEY_ENV = { ...KNOWN };
 const JOURNEY_ARGS = [CONFIG, '--seed', DEMO_SEED, '--routes', '3', '--trip-length', String(TRIP_LENGTH), '--hop-delay-ms', '300'];
 let journey; // section 4's printout and run folder, which 5 and 6 use
 
@@ -86,7 +86,7 @@ const sections = [
       say('Nobody tells Phileas what is in the game. It reads the screen the way a screen reader');
       say('does, and keeps every control that is visible, enabled and has a name. Here is');
       say('everything it finds when the game starts:\n');
-      const lines = await phileasShown('survey', [CONFIG], { EIGHTY_DAYS_JOURNEY: 'no-fix', ...SURVEY_HOLD });
+      const lines = await phileasShown('survey', [CONFIG], { PHILEAS_FIX: 'none', ...SURVEY_HOLD });
       print(startListing(lines));
       say('Only buttons and menu entries here, since the club has little to do. Out in the world');
       say('each place adds its own: tabs for its venues, dropdowns, text fields, a slider, a');
@@ -99,8 +99,8 @@ const sections = [
       say('A Fix is written by copying lines from that listing, one step at a time. This one plays');
       say("Fogg's choices from the book, London to Hong Kong, so every Route's Trip starts where the");
       say("book's Fogg stood on the quay:\n");
-      showCode(excerpt('journeys/hongkong.ts', /export const toHongKong[\s\S]*?\n\};/));
-      const lines = await phileasShown('survey', [CONFIG], { EIGHTY_DAYS_JOURNEY: 'hong-kong', ...FIX_HOLD });
+      showCode(excerpt('fixes/hong-kong.ts', /export const toHongKong[\s\S]*?\n\};/));
+      const lines = await phileasShown('survey', [CONFIG], { PHILEAS_FIX: 'hong-kong', ...FIX_HOLD });
       print(fixAndAfter(lines));
       say('That listing is where every Trip in the next section begins: a known start.');
     },
@@ -164,7 +164,7 @@ const sections = [
     async run() {
       say('Now the same game with bugs planted in it, each behind a switch of its own, so the build');
       say('shown working is the same build shown broken, and any one bug can be shown alone:\n');
-      for (const [plant, { journey: from }] of Object.entries(PLANT_SEEDS)) say(`  ${plant.padEnd(22)}${dim(`reached from ${from}`)}`);
+      for (const [plant, { fix: from }] of Object.entries(PLANT_SEEDS)) say(`  ${plant.padEnd(22)}${dim(`reached from ${from}`)}`);
       say('');
       say('A planted bug is found by a Journey, not steered to: a seed was searched for whose Route');
       say('meets it on its own. Each section says so if its seed no longer does.');
@@ -191,14 +191,14 @@ const sections = [
       fs.rmSync(trapFile, { force: true });
       const run = await phileasShown(
         'run',
-        [CONFIG, '--seed', trap.seed, '--routes', '1', '--trip-length', String(trap.tripLength), '--hop-delay-ms', '300', '--follow'],
-        { EIGHTY_DAYS_PLANT: 'bradshaw-trap', EIGHTY_DAYS_JOURNEY: trap.journey, EIGHTY_DAYS_KNOWN: fromRepo(trapFile) },
+        [CONFIG, '--fix', trap.fix, '--seed', trap.seed, '--routes', '1', '--trip-length', String(trap.tripLength), '--hop-delay-ms', '300', '--follow'],
+        { EIGHTY_DAYS_PLANT: 'bradshaw-trap', EIGHTY_DAYS_KNOWN: fromRepo(trapFile) },
         { mayFail: true }
       );
       const folder = runFolderOf(run.lines);
       const met = metIn(folder);
       if (met.where !== 'stranded') seedMissed(run, 'bradshaw-trap', trap);
-      print([...tripTail(run.lines, 3), ...journeyEndLines(run.lines)]);
+      print([...fixLines(run.lines), ...tripTail(run.lines, 3), ...journeyEndLines(run.lines)]);
       say(`Stranded after Trip hop ${met.hop}, with no finding and nothing added to the known findings. A trap`);
       say('may be a bug or a corner with nothing more to do; the engine says what it saw and no more.');
     },
@@ -213,7 +213,7 @@ const sections = [
       const again = await runPlanted(FOUND, { mayFail: true });
       const met = metIn(again.folder);
       if (met.where !== 'trip' || met.hop !== found.hop) seedMissed(again.run, FOUND.plant, FOUND);
-      print(tripTail(again.run.lines, 3));
+      print([...fixLines(again.run.lines), ...tripTail(again.run.lines, 3)]);
       say(bold(retraceVerdict(hopsOf(found.folder, 1), hopsOf(again.folder, 1))));
       say(`\nThe same game, straight back to Trip hop ${met.hop}, and the same finding, ${met.ids.join(', ')}. That is what makes`);
       say('a finding worth filing: anyone can watch it happen again.');
@@ -232,7 +232,7 @@ const sections = [
         const m = line.match(/^route \d+ {2}hop (\d+) /);
         return m ? Math.abs(Number(m[1]) - found.hop) <= 1 : /^route \d+ {2}(passed|failed|stranded) /.test(line);
       });
-      print([...around, ...journeyEndLines(past.run.lines)]);
+      print([...fixLines(past.run.lines), ...around, ...journeyEndLines(past.run.lines)]);
       say(`At Trip hop ${found.hop} the line says the finding is known, with its issue, and the Route carries on to`);
       say('the end of its Trip. The summary still says it was seen, so a filed bug never goes quiet.');
     },
@@ -244,8 +244,8 @@ const sections = [
       fs.rmSync(severalFile, { force: true });
       const run = await phileasShown(
         'run',
-        [CONFIG, '--seed', SEVERAL.seed, '--routes', String(SEVERAL.routes), '--trip-length', String(SEVERAL.tripLength), '--hop-delay-ms', '300'],
-        { EIGHTY_DAYS_PLANT: SEVERAL.plants.join(','), EIGHTY_DAYS_JOURNEY: SEVERAL.journey, EIGHTY_DAYS_KNOWN: fromRepo(severalFile) },
+        [CONFIG, '--fix', SEVERAL.fix, '--seed', SEVERAL.seed, '--routes', String(SEVERAL.routes), '--trip-length', String(SEVERAL.tripLength), '--hop-delay-ms', '300'],
+        { EIGHTY_DAYS_PLANT: SEVERAL.plants.join(','), EIGHTY_DAYS_KNOWN: fromRepo(severalFile) },
         { mayFail: true }
       );
       const folder = runFolderOf(run.lines);
@@ -296,8 +296,8 @@ let found; // the found section's run: its folder, the Hop, the finding's id and
 async function runPlanted(p, options) {
   const run = await phileasShown(
     'run',
-    [CONFIG, '--seed', p.seed, '--routes', '1', '--trip-length', String(p.tripLength), '--hop-delay-ms', '300', '--follow'],
-    { EIGHTY_DAYS_PLANT: p.plant, EIGHTY_DAYS_JOURNEY: p.journey, ...KNOWN },
+    [CONFIG, '--fix', p.fix, '--seed', p.seed, '--routes', '1', '--trip-length', String(p.tripLength), '--hop-delay-ms', '300', '--follow'],
+    { EIGHTY_DAYS_PLANT: p.plant, ...KNOWN },
     options
   );
   return { run, folder: runFolderOf(run.lines) };
@@ -308,7 +308,12 @@ async function runFound() {
   const { run, folder } = await runPlanted(FOUND, { mayFail: true });
   const met = metIn(folder);
   if (met.where !== 'trip') seedMissed(run, FOUND.plant, FOUND);
-  const shown = [...run.lines.filter((line) => /^route \d+ {2}(hop|failed|passed|stranded) /.test(line)), '', ...journeyEndLines(run.lines)];
+  const shown = [
+    ...fixLines(run.lines),
+    ...run.lines.filter((line) => /^route \d+ {2}(hop|failed|passed|stranded) /.test(line)),
+    '',
+    ...journeyEndLines(run.lines),
+  ];
   found = { folder, hop: met.hop, id: met.ids[0], shown };
 }
 
@@ -354,6 +359,16 @@ function seedMissed(run, plant, p) {
     `With seed ${p.seed} and a Trip of ${p.tripLength} Hops, the ${plant} bug was not met the way it was measured to be. ` +
       'Something changed the game, the draw or the survey since the seed was searched for, and the seed needs searching for again.'
   );
+}
+
+/**
+ * A run's Fix steps, one line each and a blank after, so a watcher sees the
+ * Route start where the game starts and play its way to the section's place,
+ * rather than seem to begin there.
+ */
+function fixLines(lines) {
+  const steps = lines.filter((line) => /^route \d+ {2}fix /.test(line));
+  return steps.length ? [...steps, ''] : [];
 }
 
 /** The last few Trip hop lines of a run, and its ending. */

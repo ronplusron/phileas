@@ -25,6 +25,63 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: Eighty Days chooses its Fix with --fix, shows it before its Trip, and a leak in the guided runner
+
+**Found rehearsing the guided demo with the window shown.**
+
+**The switch was misnamed, and the engine had no name for a Fix.**
+`EIGHTY_DAYS_JOURNEY` chose a Fix, not a Journey: all eight of its values
+shared one set of Journey terms and differed only in where each Trip
+started. Reading how the engine met a Fix explained why: `defineJourney`
+took none, a consumer's spec passed one to `runRoute`, and nothing recorded
+which, so the demo had invented a name. Renaming it `EIGHTY_DAYS_FIX` was
+agreed as "a good idea, add it", and the missing link was sent to the
+session working on the engine, which made named Fixes part of it the same
+day. Asked whether to merge the rename first or hold it, the answer was
+"Hold and fold", so `EIGHTY_DAYS_FIX` never reached `main`. Eighty Days now
+follows the engine's layout, as the rail demo does: its Journey names
+`hong-kong` as its own Fix, `phileas/fixes/index.ts` lists all seven by
+name, and `phileas run --fix` or `PHILEAS_FIX` chooses another. The five
+stage-two Fixes stay in one file, since each builds on the one before it.
+`EIGHTY_DAYS_JOURNEY` is refused by name, pointing at `--fix`, since a shell
+that still set it would otherwise run the default Fix without saying so.
+
+**The seeds held.** The same engine change withholds the arrows and Enter
+while a native dropdown has focus, which changes pools and could have moved
+every seed. None moved: each plant's seed met its bug at the same Trip hop,
+`mudge` found the same two bugs on the same five Routes, and `passepartout`
+played the same three games, since no Route had a dropdown focused before
+the Hop that mattered. Every Route's journal now records its Fix, as
+`hong-kong` with fingerprint `9a2d0e7e4d65`, for one.
+
+**The dropdown probe is gone from the demo's suite.** Run with the rest of
+the suite, it opened a window and the native list on the screen, which is
+what it was written to show, and it did so on every run of the suite. It
+tested the engine rather than the game, which a demo's suite is not for,
+and since the engine now withholds the keys it pressed, it guarded nothing.
+Its measurements are in the entry below, and the test itself in commit
+acc837e.
+
+**The rail demo's guided script pointed at files that had gone.** The
+engine's conversion of the rail demo moved its Fixes to `phileas/fixes/`,
+and its sections 5 to 7 still read `journeys/demo.ts` and
+`journeys/tickets.ts`, so they would have stopped the demo. They read the
+new files now, and its `PRESENTING.md` names them.
+
+**Stage two's sections printed only the Trip.** They left out each Route's
+Fix steps, so a Route seemed to begin at Kholby when it had played its way
+there from the Reform Club. Asked for in the words "show the Fix lines too",
+sections 8 to 11 now print each Route's Fix steps before its Trip Hops.
+
+**The shared runner leaked a listener at every pause.** Waiting for Enter
+added a close listener to its reader and never took it off, so past ten
+pauses Node printed a warning of a possible leak in the middle of stage
+two; the rail demo pauses fewer times and never showed it. The listener now
+comes off when the wait ends. Fifteen pauses fed one Enter at a time drew
+the warning from the old runner and not from the new; fed all at once, the
+input ended and neither warned, which is why the first attempt at that
+check proved nothing and was not kept.
+
 ## 2026-09-28: what the arrows do to a native dropdown, and the Eighty Days seeds on the new engine
 
 **Why.** Watching the Eighty Days demo, a small list of three items, "an

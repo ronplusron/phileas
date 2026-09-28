@@ -113,7 +113,7 @@ const sections = [
     title: 'How it is configured',
     async run() {
       say('Two small files. The Journey says how much to explore:\n');
-      showCode(excerpt('journeys/demo.ts', /export const demo = defineJourney\(\{[\s\S]*?\}\);/));
+      showCode(excerpt('journeys/index.ts', /export const journey = defineJourney\(\{[\s\S]*?\}\);/));
       say('The adapter tells Phileas about this one application: where its build is, how to tell');
       say('it has started, and what it must never touch. The last part looks like this:\n');
       showCode(excerpt('adapter/index.ts', /\n {2}exclusions: \{[\s\S]*?\n {2}\},/));
@@ -126,7 +126,7 @@ const sections = [
     async run() {
       say('A Fix is written by copying a line from the survey. This one opens an itinerary, so every');
       say("Route's Trip starts inside it:\n");
-      showCode(excerpt('journeys/demo.ts', /export const openAlps[^\n]*/));
+      showCode(excerpt('fixes/open-alps.ts', /export const openAlps[^\n]*/));
       const lines = await phileasShown('survey', ['demo/rail-itinerary/phileas'],
         { PHILEAS_FIX: 'open-alps', ...SURVEY_HOLD });
       print(fixAndAfter(lines));
@@ -138,7 +138,7 @@ const sections = [
       say('This Fix opens the same itinerary, adds a leg from Geneva to Zurich, and opens the');
       say('ticket purchase dialog. It was built one step at a time: run the survey, copy the next');
       say('line, run the survey again.\n');
-      showCode(excerpt('journeys/tickets.ts', /export const addLegThenBuy[\s\S]*?\n\};/));
+      showCode(excerpt('fixes/add-leg-then-buy.ts', /export const addLegThenBuy[\s\S]*?\n\};/));
       say('One step is ordinary Playwright code instead of a copied line. The From and To lists name');
       say('the same stations, so a copied line cannot say which list it means. A Fix can always drop');
       say('down to Playwright for a step like that.\n');

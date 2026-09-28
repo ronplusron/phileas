@@ -39,11 +39,14 @@ Commands below run from the repository root. Where they say `phileas`, type
 the command itself. `phileas survey` takes no flags, so its window mode and
 its pause go in front of it as `PHILEAS_SHOW=front` and `PHILEAS_HOP_DELAY_MS`.
 
-Three switches are this demo's own, not the engine's. `EIGHTY_DAYS_JOURNEY`
-chooses a Journey: `no-fix`, which starts in the Reform Club; `accept`,
-whose Fix takes the wager; `hong-kong`, the default, whose Fix plays the
-book to the Hong Kong quay; and five that start stage two near its bugs,
-`kholby`, `fort-kearney`, `new-york`, `london` and `reform-club`.
+Two switches are this demo's own, not the engine's, and one is the engine's.
+`phileas run --fix <name>`, or `PHILEAS_FIX` in front of a survey, chooses
+the Fix every Route follows, and so where its Trip starts: `none`, no Fix
+at all, which starts in the Reform Club; `accept`, whose Fix takes the
+wager; `hong-kong`, the Journey's own, whose Fix plays the book to the Hong
+Kong quay; and five that start stage two near its bugs, `kholby`,
+`fort-kearney`, `new-york`, `london` and `reform-club`. The Fixes are in
+`demo/eighty-days/phileas/fixes/`.
 `EIGHTY_DAYS_PLANT` switches planted bugs on, by name, commas between.
 `EIGHTY_DAYS_KNOWN` names the known findings file: the guided command keeps
 its own under `demo/eighty-days/phileas/.phileas-journals/present/` and
@@ -76,7 +79,7 @@ what lets a seed replay a Route, and a test in the demo's own suite checks it.
 ## 2. What Phileas finds at the Reform Club
 
 ```
-EIGHTY_DAYS_JOURNEY=no-fix PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/eighty-days/phileas
+PHILEAS_FIX=none PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/eighty-days/phileas
 ```
 
 Point at the listing. Nobody told Phileas what is in the game: it reads the
@@ -92,10 +95,10 @@ Electron application gets, such as Quit, and anything the adapter lists.
 ## 3. The book's own opening, as a Fix
 
 ```
-EIGHTY_DAYS_JOURNEY=hong-kong PHILEAS_HOP_DELAY_MS=700 PHILEAS_SHOW=front phileas survey demo/eighty-days/phileas
+PHILEAS_FIX=hong-kong PHILEAS_HOP_DELAY_MS=700 PHILEAS_SHOW=front phileas survey demo/eighty-days/phileas
 ```
 
-Show `demo/eighty-days/phileas/journeys/hongkong.ts`. Twenty-seven steps, each
+Show `demo/eighty-days/phileas/fixes/hong-kong.ts`. Twenty-seven steps, each
 a line copied from a survey like section 2's, playing Fogg's choices from the
 book: the Mongolia, the passport, Kiouni bought for £2,000 after four raises,
 Aouda rescued, the Rangoon. Nobody read the game's code to write it.
@@ -109,7 +112,7 @@ Trip in the next section starts.
 ## 4. Three fates from one Journey
 
 ```
-EIGHTY_DAYS_JOURNEY=hong-kong EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed passepartout --routes 3 --trip-length 150 --hop-delay-ms 300 --show front
+EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed passepartout --routes 3 --trip-length 150 --hop-delay-ms 300 --show front
 node demo/eighty-days/measure.mjs demo/eighty-days/phileas/.phileas-journals/passepartout/<run>
 ```
 
@@ -159,7 +162,7 @@ game and shows the same Journey finding them.
 ## 6. The same seed, the same game
 
 ```
-EIGHTY_DAYS_JOURNEY=hong-kong EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed passepartout --routes 3 --trip-length 150 --hop-delay-ms 300 --show front -- --grep 'route 1$'
+EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed passepartout --routes 3 --trip-length 150 --hop-delay-ms 300 --show front -- --grep 'route 1$'
 ```
 
 Route 1 of section 4's Journey again, on its own, about two and a half minutes.
@@ -187,7 +190,7 @@ search working and not only the check.
 ## 8. Found
 
 ```
-EIGHTY_DAYS_PLANT=kiouni-throw EIGHTY_DAYS_JOURNEY=kholby EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed fogg --routes 1 --trip-length 40 --hop-delay-ms 300 --show front --follow
+EIGHTY_DAYS_PLANT=kiouni-throw EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --fix kholby --seed fogg --routes 1 --trip-length 40 --hop-delay-ms 300 --show front --follow
 ```
 
 The bug: the raise that brings the offer for Kiouni to £2,000 throws an
@@ -203,7 +206,7 @@ unfiled.
 ## 9. Stranded, which is not a finding
 
 ```
-EIGHTY_DAYS_PLANT=bradshaw-trap EIGHTY_DAYS_JOURNEY=hong-kong EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-trap.json phileas run demo/eighty-days/phileas --seed fogg --routes 1 --trip-length 80 --hop-delay-ms 300 --show front --follow
+EIGHTY_DAYS_PLANT=bradshaw-trap EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-trap.json phileas run demo/eighty-days/phileas --fix hong-kong --seed fogg --routes 1 --trip-length 80 --hop-delay-ms 300 --show front --follow
 ```
 
 Game > Consult Bradshaw opens a dialog with nothing in it to press, and
@@ -243,7 +246,7 @@ fixed or not reached.
 ## 12. Several at once
 
 ```
-EIGHTY_DAYS_PLANT=carnatic-log-error,export-throw,sail-console-error,coal-hang EIGHTY_DAYS_JOURNEY=hong-kong EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-several.json phileas run demo/eighty-days/phileas --seed mudge --routes 5 --trip-length 150 --hop-delay-ms 300 --show front
+EIGHTY_DAYS_PLANT=carnatic-log-error,export-throw,sail-console-error,coal-hang EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-several.json phileas run demo/eighty-days/phileas --fix hong-kong --seed mudge --routes 5 --trip-length 150 --hop-delay-ms 300 --show front
 ```
 
 Four bugs on together, five Routes from Hong Kong, a few minutes. The

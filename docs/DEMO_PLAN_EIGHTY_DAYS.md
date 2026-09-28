@@ -554,11 +554,18 @@ ships beside them.
 the demo is shown on one screen at a time. Light only: a projector washes
 out a dark page, and a second theme is work the demo does not need.
 
-## The Journeys, chosen by `EIGHTY_DAYS_JOURNEY`
+## The Fixes, chosen by `--fix`
 
-The rail demo's pattern, kept so this demo stands on its own:
+One Journey, whose own Fix is `hong-kong`, and the Fixes listed by name in
+`phileas/fixes/index.ts`, as the engine's `defineFixes` has them since
+2026-09-28; `phileas run --fix <name>`, or `PHILEAS_FIX`, chooses another
+for one run, and every Route's journal records the Fix it followed. Until
+then the demo chose its Fix with a switch of its own, `EIGHTY_DAYS_JOURNEY`,
+named as though it chose a Journey, since the engine had no name for a Fix;
+that switch is now refused by name, so a shell that still sets it does not
+run the default Fix unawares.
 
-- **`no-fix`**: no Fix. The game opens at the Reform Club with the wager
+- **`none`**: no Fix. The game opens at the Reform Club with the wager
   offered and not yet taken, so a Route with no Fix may wander the club's
   screen for a while before it accepts. That is the unanchored mode Loki
   was, and it is the first look.
@@ -578,7 +585,7 @@ The rail demo's pattern, kept so this demo stands on its own:
 - **One Fix per stage-two section where a plant sits late in the game**,
   so the section's Trip starts near its bug rather than needing a seed that
   wanders there from London: `kholby`, `fort-kearney`, `new-york`, `london`
-  and `reform-club`, in `phileas/journeys/stage-two.ts`. The plants reached
+  and `reform-club`, in `phileas/fixes/stage-two.ts`. The plants reached
   from the menu, and the Carnatic's, need none beyond `hong-kong`.
 
 **A plant never sits on a Fix's path.** A Fix that walked through a planted

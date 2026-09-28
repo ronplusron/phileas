@@ -24,7 +24,7 @@ await watch({
   // The Route whose game ended is the one worth replaying: it meets the same
   // fate at the same Hop. That was measured for the default seed and Journey
   // only, so any other replays Route 1.
-  replayRoute: process.env.PHILEAS_SEED || process.env.EIGHTY_DAYS_JOURNEY ? 1 : REPLAY_ROUTE,
+  replayRoute: process.env.PHILEAS_SEED || process.env.PHILEAS_FIX ? 1 : REPLAY_ROUTE,
   afterRun(folder) {
     console.log('How each game went from Hong Kong:');
     for (const line of fateLines(folder, 'Hong Kong')) console.log(`  ${line}`);
