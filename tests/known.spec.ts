@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
@@ -81,6 +82,23 @@ test('a stack keeps its first frame and loses the frame position', () => {
     );
   expect(at(7225)).toBe('uncaught-error: main process: unhandled rejection: Canceled: Canceled at UniqueContainer.value (main.js)');
   expect(at(9000)).toBe(at(7225));
+});
+
+test("the name of whoever ran it becomes <user>, as a whole word only", () => {
+  // RStudio's session log names itself for the user on every line. The name
+  // here is invented; the default reads the running user's.
+  const logged = (user: string) =>
+    signatureOf(
+      'log-error',
+      `/var/folders/qd/7kw1mv0tn3r58bx62hcyl4f90000gq/T/phileas-rstudio-a1b2c3/qSDPVM/home/.local/share/rstudio/log/rsession-${user}.log: ` +
+        `2026-09-28T14:44:54.756633Z [rsession-${user}] ERROR annotate failed for ${user}`,
+      user
+    );
+  expect(logged('ann')).toBe('log-error: rsession-<user>.log: [rsession-<user>] ERROR annotate failed for <user>');
+  // Filed on one machine, it matches on another.
+  expect(logged('bea')).toBe(logged('ann'));
+  // The running user by default, whoever that is, never left in.
+  expect(signatureOf('log-error', `ERROR for ${os.userInfo().username}`)).toBe('log-error: ERROR for <user>');
 });
 
 test('a message worded differently is a different finding', () => {

@@ -1,0 +1,11 @@
+{
+  "name": "rstudio-trial",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Phileas adapter and Journeys for RStudio Desktop. docs/PLAN.md has why and how it is launched.",
+  "type": "module",
+  "author": "Drugstore Sushi",
+  "devDependencies": {
+    "@drugstoresushi/phileas": "file:../.."
+  }
+}

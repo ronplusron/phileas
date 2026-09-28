@@ -12,6 +12,7 @@
 
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 /**
@@ -71,17 +72,51 @@ const VARYING = [
  * first frame without its position, since line and column change between
  * releases of the same application while the frame's name mostly does not.
  * A message whose wording changes is a new finding, on purpose.
+ *
+ * **The name of whoever ran it becomes `<user>`.** A signature is written into
+ * `known-findings.json`, which a consumer commits, and an application that
+ * logs its user's name would otherwise put it there: RStudio's session log
+ * names itself `rsession-<name>` on every line, seen 2026-09-28. It also keeps
+ * a finding filed on one machine matching on another.
  * @param {string} check
  * @param {string} violation
+ * @param {string | undefined} [user] whose name to take out; the running user's by default
  * @returns {string}
  */
-export function signatureOf(check, violation) {
+export function signatureOf(check, violation, user = runningUser()) {
   const [first = '', ...rest] = violation.split('\n');
   const frame = rest.map((line) => line.trim()).find((line) => line.startsWith('at '));
   let text = first.trim();
   for (const [pattern, replacement] of VARYING) text = text.replace(pattern, replacement);
   const where = frame?.replace(/\s*\(?(?:file:\/\/)?[^()]*?([^/()]+?)(?::\d+)+\)?$/, ' ($1)');
-  return `${check}: ${text.trim()}${where ? ` ${where}` : ''}`;
+  return withoutUser(`${check}: ${text.trim()}${where ? ` ${where}` : ''}`, user);
+}
+
+/**
+ * The name of the user running this process, or undefined where it cannot be
+ * read, in which case nothing is taken out and the caller's text stands.
+ * @returns {string | undefined}
+ */
+function runningUser() {
+  try {
+    return os.userInfo().username || undefined;
+  } catch {
+    return process.env.USER || undefined;
+  }
+}
+
+/**
+ * A text with every whole-word appearance of a user's name made `<user>`.
+ * Whole words only, where a letter, digit or underscore on either side keeps
+ * it: `rsession-ann.log` loses the name, `annotate` does not.
+ * @param {string} text
+ * @param {string | undefined} user
+ * @returns {string}
+ */
+function withoutUser(text, user) {
+  if (!user) return text;
+  const name = user.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(`(?<![A-Za-z0-9_])${name}(?![A-Za-z0-9_])`, 'g'), '<user>');
 }
 
 /**
