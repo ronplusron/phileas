@@ -798,6 +798,10 @@ that an aborted save logs a few seconds after a new notebook opens. It came
 with nothing done to the notebook in 1 of 3 launches, and never right after
 closing it or running a cell; filed as ronplusron/phileas issue 54.
 
+**Step 6 finished for `data-explorer` and `quarto`, 2026-09-27:** no new
+finding, and the bar not yet judgeable. `HISTORY.md` has the triage and the
+reading against each clause.
+
 **Order agreed 2026-09-27 for what remains of the trial,** proposed with the
 question and answered "OK let's do this in order": known findings, below;
 a guard for profiles a Journey leaves in the temp folder; the three old

@@ -257,6 +257,33 @@ and more ways on is the branching that was asked for. Whether the demo keeps
 the harder game available, for measuring a better chooser against it, is
 open in the plan.
 
+## 2026-09-27: step 6 finished for data-explorer and quarto, and read against the bar
+
+**Why.** The longer run below was stopped during `quarto` before
+`data-explorer` ran, so step 6 had no reading for either. Asked for as the
+first of what remained: finish the measurement, then judge it against the
+trial's bar.
+
+**Measured.** 20 Routes of 100 Hops for `data-explorer`, then 7 for
+`quarto` to make up the Routes the stopped run did not finish, two at a
+time: 17 of 20 and 6 of 7 passed. The load peaked near 6 on 8 cores, and
+free memory fell to about 190 MB twice with no hang. No Positron process
+and no new temp folder was left behind.
+
+**Triaged, four failures and no new finding.** Three are one console error,
+a session that "is not active" after a Hop clicked Delete Session, each
+recorded as a new finding only because the session id in it changes: the
+defect "A signature keeps ids that change on every Route" in `DEFECTS.md`.
+The fourth is `quarto`'s Fix failing on its last step, the Quarto Document
+option not on screen yet, while the other six Fixes reached it;
+`DEFECTS.md` has that one too.
+
+**Against the bar, not met and not yet judgeable.** The false-alarm clause
+holds: the four failures took minutes to triage. The new-bug clause rests on
+issues 44, 53 and 54, none yet followed by hand. The known-bug clause is
+step 5, not run. Step 6 has had about 160 of its 500 Routes on the current
+release, at Trip lengths of 20 and 100.
+
 ## 2026-09-27: a hidden run kept off the screen, and a longer step-6 run
 
 **Why.** During the longer run, the person running it saw Positron reach

@@ -139,7 +139,7 @@ go.
 **On the old releases, context menus are native whatever the adapter
 sets,** since none of them has `window.menuStyle`. With windows hidden,
 opening one froze nothing in twelve launches; with windows shown, that is
-unmeasured. Steps 5 and 6 are next, then weighting the draw toward new
+unmeasured. Step 5 and the rest of step 6 are next, then weighting the draw toward new
 targets, which `docs/PLAN.md` places after the trial.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer

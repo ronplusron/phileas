@@ -93,10 +93,31 @@
     "source": "journey"
   },
   {
+    "id": "ec5bbc69",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-058df68c) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
+    "added": "2026-09-28",
+    "source": "journey"
+  },
+  {
+    "id": "535a73d2",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-357d668c) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
+    "added": "2026-09-28",
+    "source": "journey"
+  },
+  {
     "id": "1ddd63ac",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-6eaf3abc) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
     "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "16e73132",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-a53b8400) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
+    "added": "2026-09-28",
     "source": "journey"
   },
   {
