@@ -1,30 +1,25 @@
-import type { Fix, Journey } from '@drugstoresushi/phileas';
-import { demo, openAlps } from './demo';
-import { tickets, addLegThenBuy } from './tickets';
+import { defineJourney } from '@drugstoresushi/phileas';
 
 /**
- * Which of the demo's Journeys runs, chosen by `RAIL_DEMO_JOURNEY`.
+ * The demo's Journey: a few Routes, short enough to watch, each opening with
+ * the `open-alps` Fix. `phileas run --fix add-leg-then-buy` opens them in the
+ * ticket dialog instead, and `--fix none` with no Fix at all.
  *
- * Unset, or `open-alps`, runs the one-step Fix; `tickets` runs the Fix of
- * several steps, which ends in the ticket purchase dialog; `no-fix` runs with
- * no Fix at all, starting wherever the application starts. Anything else is
- * refused by name rather than read as the default. This is the demo's own
- * switch, not the engine's: a consuming repository with several Journeys
- * chooses among them however suits it.
+ * No seed here. The demo's seeds are set by watch.mjs and present.mjs, which
+ * are where the demo is run from.
  */
-const journeys: Record<string, { journey: Journey; fix?: Fix }> = {
-  'open-alps': { journey: demo, fix: openAlps },
-  tickets: { journey: tickets, fix: addLegThenBuy },
-  'no-fix': { journey: demo },
-};
+export const journey = defineJourney({
+  routes: 3,
+  tripLength: 50,
+  fix: 'open-alps',
+});
 
-const chosen = process.env.RAIL_DEMO_JOURNEY || 'open-alps';
-const entry = journeys[chosen];
-if (!entry) {
+// Replaced by `--fix` on 2026-09-28. Refused rather than ignored, since a run
+// that silently dropped it would open with a different Fix than was asked for.
+if (process.env.RAIL_DEMO_JOURNEY) {
+  const replacement = { 'no-fix': 'none', tickets: 'add-leg-then-buy' }[process.env.RAIL_DEMO_JOURNEY] ?? process.env.RAIL_DEMO_JOURNEY;
   throw new Error(
-    `RAIL_DEMO_JOURNEY is "${chosen}", which names no Journey. ` +
-      `It takes ${Object.keys(journeys).join(' or ')}.`
+    `RAIL_DEMO_JOURNEY is no longer read. Choose the Fix with phileas run --fix ${replacement}, ` +
+      `or PHILEAS_FIX, and unset RAIL_DEMO_JOURNEY.`
   );
 }
-
-export const { journey, fix } = entry;

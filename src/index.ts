@@ -62,6 +62,7 @@ export {
   SEED_VARIABLE,
   resolveRun,
   OVERRIDE_VARIABLES,
+  FIX_OVERRIDE_VARIABLE,
   overriddenTerms,
   requireRun,
   RUN_VARIABLE,
@@ -69,6 +70,7 @@ export {
   type JourneyTerms,
 } from './journey';
 export { startJourney, finishJourney, runEveryCheck, startTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start';
+export { defineFixes, fixFor, fixName, NO_FIX, type Fixes } from './fixes';
 export {
   signatureOf,
   findingId,

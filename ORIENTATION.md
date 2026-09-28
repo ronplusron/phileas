@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and fifty-four tests, after a
+through, and `npm test` runs two hundred and sixty tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -127,10 +127,10 @@ The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
 `Positron.app`, and `PHILEAS_APP_DIR` names which one a run uses, for example
 `PHILEAS_APP_DIR=/Applications/Positron.app phileas run trial/positron/phileas`.
-`POSITRON_JOURNEY` chooses the Journey: `no-fix`, the default, `session`,
-whose Fix starts an R session, `notebook` and `quarto`, which open a new
-notebook or Quarto document, and `data-explorer`, which starts R and shows
-`mtcars`. The trial's Routes run two at a time, set in its
+`phileas run --fix <name>` chooses the Fix, from those
+`trial/positron/phileas/fixes/index.ts` lists: none by default, `session`,
+which starts an R session, `notebook` and `quarto`, which open a new notebook
+or Quarto document, and `data-explorer`, which starts R and shows `mtcars`. The trial's Routes run two at a time, set in its
 `playwright.config.ts`; five put the load at 26.9 on 8 cores. **The old releases need R 4.4.3,** installed beside 4.6 with rig,
 since R 4.6.0 crashes as it starts on 2025.01 and 2025.02; the session Fix
 refuses by name without it. The adapter has one check of its own,
@@ -252,7 +252,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and fifty-four tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and sixty tests against `testbed/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

@@ -91,8 +91,9 @@ Route's Trip visibly starts inside the dialog. One step is Playwright code
 rather than a copied line, because the From and To dropdowns list the same
 stations and a copied line always reaches From, which is `OUTSTANDING.md` 2.7;
 the demo keeps that visible rather than hiding it. A third runs with no Fix, for
-a first look before the Fix is introduced. `RAIL_DEMO_JOURNEY` chooses among
-them, `no-fix`, `open-alps` or `tickets`, a switch of the demo's own.
+a first look before the Fix is introduced. They are one Journey and two Fixes,
+`open-alps`, the Journey's own, and `add-leg-then-buy`, chosen with `--fix`,
+and `--fix none` for none.
 
 **Designed for discovery,** since the point is to watch Phileas find its way
 with nothing handed to it:

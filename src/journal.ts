@@ -271,7 +271,23 @@ export interface OpeningEntry {
    * journals written before 2026-09-27.
    */
   readonly knownFindings?: { readonly version: string; readonly entries: number };
+  /**
+   * Which Fix the Route opened with: its name in `fixes/index.ts`, or the
+   * function's own name where it has one, and a fingerprint of its source. Written because a Fix is part of what a seed
+   * reproduces, and a replay after the Fix was edited would otherwise look like
+   * a changed application or a changed outcome (R14). The fingerprint is of the
+   * Fix function's own source, so it catches an edit to that function and not
+   * one to a function it calls, such as a Fix that begins by running another;
+   * the `fix-hop` lines, which name every step in order, cover that case.
+   * Absent for a Route with no Fix, and in journals written before 2026-09-28.
+   */
+  readonly fix?: { readonly name?: string; readonly fingerprint: string };
   readonly startedAt: string;
+}
+
+/** A Fix's fingerprint: the first twelve hex digits of a hash of its source. */
+export function fixFingerprint(fix: (...args: never[]) => unknown): string {
+  return createHash('sha256').update(fix.toString()).digest('hex').slice(0, 12);
 }
 
 /**

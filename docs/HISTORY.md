@@ -57,6 +57,52 @@ recorded, `bradshaw-trap` stranded after the same eight, `mudge` found the
 same two bugs on the same five Routes, and `passepartout` played the same
 three games. The demo's suite passed, 26 of 26 with the probe.
 
+## 2026-09-28: a Journey names its Fix, and every run records the one it used
+
+**Why.** Reported by the Eighty Days demo's session from reading the code:
+nothing in the engine linked a Journey to its Fix, and no run recorded which
+Fix it used. Each consumer's spec handed both to `runRoute`, so three
+consumers had grown three variables, `POSITRON_JOURNEY`, `RAIL_DEMO_JOURNEY`
+and `EIGHTY_DAYS_JOURNEY`, each named as if it chose a Journey and each in
+fact choosing a Fix: the Rail Itinerary demo's two "Journeys" had identical
+terms and differed only in their Fix. The Fixes themselves sat in each
+consumer's `journeys/` folder beside Journey terms, in files nothing marked
+as Fixes. And a replay after a Fix was edited could not tell that from a
+changed application or a changed outcome (R14).
+
+**Decided, in the order it was asked:** a Fix's name and a fingerprint of its
+source on each Route's journal line, taken over filing it for R13 and R14
+or linking Journey and Fix first; the name then read by the engine itself
+rather than passed by each consumer, which was asked as "Shouldn't this be
+Phileas-level?"; Fixes in a folder of their own, once it was plain the files
+gave no sign of being Fixes; and choosing a run's Fix as an engine setting
+rather than a variable each consumer invents: "This should be an
+engine-level field." Different Fixes for different Routes stays open,
+`OUTSTANDING.md` 2.4.
+
+**What landed.** A Journey's terms take `fix`, a name, and left out means no
+Fix. `defineFixes` in `src/fixes.ts` lists a consumer's Fixes by name, from
+`phileas/fixes/index.ts`, and refuses a name `--fix` could not take.
+`phileas run --fix <name>`, which travels as `PHILEAS_FIX`, chooses another
+for one run, and `--fix none` none; `fixFor` looks the name up and refuses
+one not listed, naming those that are, and `startJourney` does it before
+anything launches. The printed settings show `Fix:`, marked when set for the
+run. Each Route's opening journal line records the Fix's name and the first
+twelve hex digits of a hash of its source, which catches an edit to the Fix
+and not to a function it calls; its `fix-hop` lines cover that. The Positron
+trial and Rail Itinerary moved their Fixes into `fixes/`; Rail Itinerary's
+two Journeys became one Journey and two Fixes. Their old variables are
+refused by name, with the `--fix` that replaces them. Eighty Days keeps
+`EIGHTY_DAYS_JOURNEY` until its session moves it.
+
+**Tested.** A Journey opens with the Fix its terms name, or none; `--fix`
+overrides it and `none` turns it off; an unlisted name is refused by
+`fixFor` and by `startJourney` before anything launches, naming the listed
+ones; the printed line reads the Fix in force; a name `--fix` cannot take is
+refused; and the opening journal line records the listed name, or a Fix's
+own constant name, with fingerprints that differ between two Fixes doing the
+same. 260 tests in all.
+
 ## 2026-09-28: a hidden run no longer flashes windows or opens dropdown lists on the screen
 
 **Why.** Hidden mode promises nothing takes over the screen (C5), and two

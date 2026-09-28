@@ -34,8 +34,8 @@ its pause go in front of it as `PHILEAS_SHOW=front` and `PHILEAS_HOP_DELAY_MS=20
 The pause holds each screen for two seconds, which a survey otherwise shows
 for a moment.
 
-`RAIL_DEMO_JOURNEY` is this demo's own switch between its three Journeys, not a
-setting of the engine: `no-fix`, `open-alps` (the default) and `tickets`.
+`PHILEAS_FIX` chooses which Fix every Route opens with, the same as `--fix`:
+`open-alps` (the Journey's own), `add-leg-then-buy`, or `none`.
 
 Put the terminal and the application's window side by side. The window opens
 and closes with every run, because every Route starts the application fresh.
@@ -58,7 +58,7 @@ happen again.
 ## 2. A first look
 
 ```
-RAIL_DEMO_JOURNEY=no-fix phileas run demo/rail-itinerary/phileas --seed first-look --routes 1 --trip-length 10 --hop-delay-ms 700 --follow --show front
+PHILEAS_FIX=none phileas run demo/rail-itinerary/phileas --seed first-look --routes 1 --trip-length 10 --hop-delay-ms 700 --follow --show front
 ```
 
 A whole Journey, as small as it gets: one Route of ten Hops, with no Fix, so it
@@ -76,7 +76,7 @@ Say that the rest of the demo takes this apart.
 ## 3. How Phileas finds controls
 
 ```
-RAIL_DEMO_JOURNEY=no-fix PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
+PHILEAS_FIX=none PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
 ```
 
 Point at the listing. Nobody told Phileas what is in the
@@ -92,7 +92,7 @@ was missed.
 ## 4. How it decides each move
 
 ```
-RAIL_DEMO_JOURNEY=no-fix phileas run demo/rail-itinerary/phileas --seed how-it-decides --routes 1 --trip-length 3 --hop-delay-ms 1500 --follow --show front
+PHILEAS_FIX=none phileas run demo/rail-itinerary/phileas --seed how-it-decides --routes 1 --trip-length 3 --hop-delay-ms 1500 --follow --show front
 node demo/rail-itinerary/explain-hop.mjs demo/rail-itinerary/phileas/.phileas-journals/how-it-decides/<run> 1
 ```
 
@@ -132,7 +132,7 @@ phileas run --seed <anything> --routes 5 --trip-length 100 --show front --follow
 ## 6. A Fix of one step
 
 ```
-RAIL_DEMO_JOURNEY=open-alps PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
+PHILEAS_FIX=open-alps PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
 ```
 
 Show the Fix, in `journeys/demo.ts`:
@@ -148,7 +148,7 @@ where every Route's Trip begins.
 ## 7. A Fix of several steps
 
 ```
-RAIL_DEMO_JOURNEY=tickets PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
+PHILEAS_FIX=add-leg-then-buy PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
 ```
 
 Show `journeys/tickets.ts`. This Fix opens the same itinerary, adds a leg from
@@ -168,7 +168,7 @@ is where every Trip in the next section starts.
 ## 8. A Journey in action
 
 ```
-RAIL_DEMO_JOURNEY=tickets phileas run demo/rail-itinerary/phileas --seed rail-demo --routes 3 --trip-length 15 --hop-delay-ms 300 --follow --show front
+PHILEAS_FIX=add-leg-then-buy phileas run demo/rail-itinerary/phileas --seed rail-demo --routes 3 --trip-length 15 --hop-delay-ms 300 --follow --show front
 ```
 
 Point at the settings block first: the seed, three Routes, fifteen Hops. Then
@@ -181,8 +181,8 @@ pointing at once: a Hop that does nothing is recorded honestly, not skipped.
 ## 9. Seeding
 
 ```
-RAIL_DEMO_JOURNEY=no-fix phileas run demo/rail-itinerary/phileas --seed five-then-ten --routes 1 --trip-length 5 --hop-delay-ms 500 --follow --show front
-RAIL_DEMO_JOURNEY=no-fix phileas run demo/rail-itinerary/phileas --seed five-then-ten --routes 1 --trip-length 10 --hop-delay-ms 500 --follow --show front
+PHILEAS_FIX=none phileas run demo/rail-itinerary/phileas --seed five-then-ten --routes 1 --trip-length 5 --hop-delay-ms 500 --follow --show front
+PHILEAS_FIX=none phileas run demo/rail-itinerary/phileas --seed five-then-ten --routes 1 --trip-length 10 --hop-delay-ms 500 --follow --show front
 ```
 
 The same seed, five Hops and then ten. Point at the first five lines of the
@@ -190,7 +190,7 @@ second run: they are the first run's, exactly, and then it carries on. The
 seed decides every move; the Trip length only decides where a Route stops.
 
 ```
-RAIL_DEMO_JOURNEY=tickets phileas run demo/rail-itinerary/phileas --seed rail-demo --routes 3 --trip-length 15 --hop-delay-ms 300 --show front -- --grep 'route 1$'
+PHILEAS_FIX=add-leg-then-buy phileas run demo/rail-itinerary/phileas --seed rail-demo --routes 3 --trip-length 15 --hop-delay-ms 300 --show front -- --grep 'route 1$'
 ```
 
 Route 1 of section 8's Journey again, on its own. The guided command compares
@@ -199,7 +199,7 @@ and read it against section 8's Route 1. A replay needs the seed, a Route count
 that includes the Route, and a Trip at least as long as the part to retrace.
 
 ```
-RAIL_DEMO_JOURNEY=no-fix phileas run demo/rail-itinerary/phileas --seed another-seed --routes 1 --trip-length 5 --hop-delay-ms 500 --follow --show front
+PHILEAS_FIX=none phileas run demo/rail-itinerary/phileas --seed another-seed --routes 1 --trip-length 5 --hop-delay-ms 500 --follow --show front
 ```
 
 A different seed makes different moves: read it against the five-Hop run.

@@ -2,13 +2,17 @@ import {
   createTest,
   expect,
   deriveRouteStreams,
+  fixFor,
   requireSeed,
   routeNumbers,
   runRoute,
 } from '@drugstoresushi/phileas';
-import { journey, fix } from './journeys';
+import { journey } from './journeys';
+import { fixes } from './fixes';
 import { positron } from './adapter';
 import { journalsRoot, knownFindings } from './paths';
+
+const fix = fixFor(journey, fixes);
 
 /** One test per Route, and nothing else. */
 const test = createTest(positron);

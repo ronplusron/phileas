@@ -1,15 +1,4 @@
-import { defineJourney, type Fix } from '@drugstoresushi/phileas';
-
-/**
- * The demo's Journey with a Fix of several steps.
- *
- * Its terms match the first Journey's, so the only difference between the two
- * is where each Route's Trip begins.
- */
-export const tickets = defineJourney({
-  routes: 3,
-  tripLength: 50,
-});
+import type { Fix } from '@drugstoresushi/phileas';
 
 /**
  * A Fix of several steps: open an itinerary, add a leg from Geneva to Zurich,

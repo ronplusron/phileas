@@ -65,6 +65,15 @@ export interface JourneyTerms {
    * author's own code and can wait on anything.
    */
   routeDeadlineMs?: number;
+
+  /**
+   * The Fix every Route opens with, by the name `fixes/index.ts` lists it
+   * under, which `fixFor` looks up. Left out means no Fix: every Route starts
+   * wherever the application starts, which is the unanchored mode `CLAUDE.md`
+   * explains and keeps on purpose. `phileas run --fix <name>` chooses another
+   * for one run, and `--fix none` none.
+   */
+  fix?: string;
 }
 
 /**
@@ -114,11 +123,20 @@ export const OVERRIDE_VARIABLES = {
 
 type OverridableTerm = keyof typeof OVERRIDE_VARIABLES;
 
+/**
+ * The variable that chooses a run's Fix by name, apart from the others since
+ * its value is a name rather than a count. `none` means no Fix.
+ */
+export const FIX_OVERRIDE_VARIABLE = 'PHILEAS_FIX';
+
+/** A term a run can set, the counted ones and the Fix. */
+type OverriddenTerm = OverridableTerm | 'fix';
+
 /** Which terms each Journey took from the environment, for startJourney to mark. */
-const overridden = new WeakMap<Journey, readonly OverridableTerm[]>();
+const overridden = new WeakMap<Journey, readonly OverriddenTerm[]>();
 
 /** The terms a Journey took from the environment for this run, rather than from its file. */
-export function overriddenTerms(journey: Journey): readonly OverridableTerm[] {
+export function overriddenTerms(journey: Journey): readonly OverriddenTerm[] {
   return overridden.get(journey) ?? [];
 }
 
@@ -135,7 +153,7 @@ export function overriddenTerms(journey: Journey): readonly OverridableTerm[] {
  */
 export function defineJourney(fileTerms: JourneyTerms): Journey {
   const terms: JourneyTerms = { ...fileTerms };
-  const fromEnvironment: OverridableTerm[] = [];
+  const fromEnvironment: OverriddenTerm[] = [];
   for (const [term, variable] of Object.entries(OVERRIDE_VARIABLES) as [OverridableTerm, string][]) {
     const raw = process.env[variable];
     if (raw === undefined || raw === '') continue;
@@ -157,6 +175,15 @@ export function defineJourney(fileTerms: JourneyTerms): Journey {
 
   if (terms.seed !== undefined && terms.seed.length === 0) {
     throw new RangeError('seed was given as an empty string; leave it out instead');
+  }
+
+  const fixGiven = process.env[FIX_OVERRIDE_VARIABLE];
+  if (fixGiven !== undefined && fixGiven !== '') {
+    if (fixGiven === 'none') delete terms.fix;
+    else terms.fix = fixGiven;
+    fromEnvironment.push('fix');
+  } else if (terms.fix !== undefined && terms.fix.length === 0) {
+    throw new RangeError('fix was given as an empty string; leave it out for no Fix');
   }
 
   const journey = Object.freeze(terms) as Journey;

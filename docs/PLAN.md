@@ -744,7 +744,8 @@ console. The old releases draw all of this differently; below.
 
 **A session needs a Fix.** With none running, the session checks compare
 nothing, and starting one takes three particular Hops in order. So the
-trial's Journeys are chosen with `POSITRON_JOURNEY`: `no-fix`, as before, or
+trial's Journeys are chosen with `POSITRON_JOURNEY` (replaced on 2026-09-28
+by the engine's `--fix`; `HISTORY.md` has why): `no-fix`, as before, or
 `r-session`, whose Fix starts an R session and waits for it. Both were
 proposed together, answered "Perfect", and the Fix asked for with "Yes,
 write it". The Fix names R by pattern rather than by a copied line,

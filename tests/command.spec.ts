@@ -9,6 +9,7 @@ import {
   finishJourney,
   overriddenTerms,
   startJourney,
+  FIX_OVERRIDE_VARIABLE,
   OVERRIDE_VARIABLES,
   SEED_VARIABLE,
   RUN_VARIABLE,
@@ -32,6 +33,7 @@ const command = path.join(repo, 'bin', 'phileas.mjs');
 
 const TOUCHED = [
   ...Object.values(OVERRIDE_VARIABLES),
+  FIX_OVERRIDE_VARIABLE,
   SEED_VARIABLE,
   RUN_VARIABLE,
   WINDOW_MODE_VARIABLE,
@@ -64,6 +66,7 @@ test('the command reads its flags, a config, and what goes to Playwright', () =>
     settings: { PHILEAS_ROUTES: '3', PHILEAS_SHOW: 'front' },
     passThrough: ['--grep', 'route 1$'],
   });
+  expect(parse(['run', '--fix', 'quarto'])).toMatchObject({ settings: { PHILEAS_FIX: 'quarto' } });
 });
 
 test('the command refuses what it cannot read, by name', () => {
@@ -156,6 +159,7 @@ test('startJourney prints every setting, and marks each one set for this run', (
     'Run',
     'Routes',
     'Trip length',
+    'Fix',
     'Route deadline',
     'Journey deadline',
     'Window mode',

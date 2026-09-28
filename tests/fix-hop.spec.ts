@@ -16,6 +16,7 @@ import {
   RUN_VARIABLE,
   type Fix,
   runTempFolder,
+  defineFixes,
 } from '../src/index';
 
 /**
@@ -204,4 +205,23 @@ test('the hop delay holds a survey on screen after it prints', async ({ page, ap
   // A survey with no Fix prints one listing, so it pauses once. Without the
   // pause it takes a fraction of this.
   expect(Date.now() - started).toBeGreaterThanOrEqual(1450);
+});
+
+test("the Route's opening line records its Fix by name and by a fingerprint of its source", async ({ page, app }) => {
+  // So a replay can tell a changed Fix from a changed application (R14).
+  const summary: Fix = async ({ hop }) => hop('button "Summary"');
+  const listed = defineFixes({ 'open-summary': summary });
+
+  const opening = (entries: ReturnType<typeof readJournal>) => entries.find((entry) => entry.kind === 'route');
+  const first = opening((await routeWithFix(page, app, listed['open-summary'] as Fix)).entries);
+  expect(first?.kind === 'route' && first.fix).toEqual({ name: 'open-summary', fingerprint: expect.stringMatching(/^[0-9a-f]{12}$/) });
+
+  // A Fix never listed is named by its own constant, and a different Fix, even
+  // one doing the same, has a different fingerprint.
+  const alsoSummary: Fix = async ({ hop }) => {
+    await hop('button "Summary"');
+  };
+  const second = opening((await routeWithFix(page, app, alsoSummary)).entries);
+  expect(second?.kind === 'route' && second.fix && second.fix.name).toBe('alsoSummary');
+  expect(second?.kind === 'route' && second.fix && second.fix.fingerprint).not.toBe(first?.kind === 'route' && first.fix && first.fix.fingerprint);
 });

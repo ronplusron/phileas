@@ -12,7 +12,7 @@ phases are marked by number.
 |---|---|
 | Journey | One run of the engine, defined by a seed, a number of Routes, a Trip length, and optionally a Journey deadline and a Route deadline. |
 | Route | One pass through the application, and one Playwright test with its own verdict, deadline and trace. Routes know nothing of each other. |
-| Fix | The fixed opening of every Route: a sequence of fix hops, written in advance by the Journey's author and the same every time. A step is usually `hop()` naming a control as `phileas survey` prints it, or `step()` with Playwright code. |
+| Fix | The fixed opening of every Route: a sequence of fix hops, written in advance by the Journey's author and the same every time. A step is usually `hop()` naming a control as `phileas survey` prints it, or `step()` with Playwright code. A consumer keeps each in `phileas/fixes/`, listed by name in `fixes/index.ts` with `defineFixes`; the Journey's terms name the one it opens with, `--fix` chooses another for one run, and each Route's journal records its name and a fingerprint of its source. |
 | Trip | The unpredictable rest of a Route after its Fix. A Route with no Fix is all Trip. |
 | Semirandom | A known start and an unpredictable continuation: what a Fix followed by a Trip makes a Route. A Route with no Fix is random instead. |
 | Hop | One interaction with the application. Numbered from 1 within the Fix and within the Trip separately. |
@@ -107,6 +107,7 @@ phases are marked by number.
 | `PHILEAS_SURVEY` | `1` makes a Route print what it sees at its start, run its Fix printing each step, print what it sees after, and stop, with no Trip or journal. Set by `phileas survey`. |
 | `PHILEAS_FOLLOW` | `1` prints each Route's journal as it is written, one line per Hop; `0` or unset, one line per Route. Changes no draw. Set by `--follow`. |
 | `PHILEAS_ALLOW_STALE` | `1` runs against a build the staleness guard finds stale, and the printed settings say the guard is off. Anything but `1` or `0` is refused. |
+| `PHILEAS_FIX` | Which of the consumer's Fixes every Route opens with for this run, by name, over the one the Journey names; `none` for no Fix. A name the consumer does not list is refused before anything launches. Set by `--fix`. |
 | `PHILEAS_ALLOW_TEMP_LEFTOVERS` | `1` skips the check that fails a run, or `npm test`, which left anything in its own folder in the system temp folder, and says what was left. |
 | `PHILEAS_TEMP_FOLDER` | The run's own folder in the system temp folder, `phileas-<application>-<random>`, which `startJourney` in global setup makes and every Route's profile goes inside, so two runs at once never see each other's folders. Not set by hand: a profile asked for with it unset is refused by name. |
 | `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |

@@ -45,8 +45,8 @@ const { excerpt, runFolderOf } = demoFolders(path.join(here, 'phileas'));
 // closes: a survey otherwise looks and closes the application in a moment.
 const SURVEY_HOLD = { PHILEAS_HOP_DELAY_MS: '2000' };
 
-// The Journey sections 8 to 10 share: the Fix that ends in the ticket dialog.
-const JOURNEY_ENV = { RAIL_DEMO_JOURNEY: 'tickets' };
+// The Fix sections 8 to 10 share: the one that ends in the ticket dialog.
+const FIX_ENV = { PHILEAS_FIX: 'add-leg-then-buy' };
 const JOURNEY_ARGS = ['demo/rail-itinerary/phileas', '--seed', 'rail-demo', '--routes', '3',
   '--trip-length', '15', '--hop-delay-ms', '300'];
 let journeyRun; // the run folder section 8 makes, which 9 and 10 use
@@ -78,7 +78,7 @@ const sections = [
       say(`  ${bold('Acted on')}      the control, by its kind and name, and any text typed into it`);
       say(`  ${bold('What changed')}  headings that appeared (+) or went away (-), or "no change"\n`);
       const lines = await phileasShown('run', ['demo/rail-itinerary/phileas', '--seed', 'first-look',
-        '--routes', '1', '--trip-length', '10', '--hop-delay-ms', '700', '--follow'], { RAIL_DEMO_JOURNEY: 'no-fix' });
+        '--routes', '1', '--trip-length', '10', '--hop-delay-ms', '700', '--follow'], { PHILEAS_FIX: 'none' });
       print(withColumnHeadings(afterSettings(lines)));
       say('The rest of the demo takes that apart.');
     },
@@ -90,7 +90,7 @@ const sections = [
       say('reader does, and keeps every control that is visible, enabled and has a name.');
       say('Here is everything it finds when Rail Itinerary starts:\n');
       const lines = await phileasShown('survey', ['demo/rail-itinerary/phileas'],
-        { RAIL_DEMO_JOURNEY: 'no-fix', ...SURVEY_HOLD });
+        { PHILEAS_FIX: 'none', ...SURVEY_HOLD });
       print(startListing(lines));
       say('"excluded" marks what it never touches: the standard menu entries every app gets, such');
       say('as Quit, and whatever the adapter lists. The keys are offered on every screen.');
@@ -103,7 +103,7 @@ const sections = [
       say('things: find, click, type. Phileas decides which thing, one move at a time.');
       say('Watch one short Route of three Hops, slowly:\n');
       const lines = await phileasShown('run', ['demo/rail-itinerary/phileas', '--seed', 'how-it-decides',
-        '--routes', '1', '--trip-length', '3', '--hop-delay-ms', '1500', '--follow'], { RAIL_DEMO_JOURNEY: 'no-fix' });
+        '--routes', '1', '--trip-length', '3', '--hop-delay-ms', '1500', '--follow'], { PHILEAS_FIX: 'none' });
       print(afterSettings(lines));
       say('Now Hop 1 in slow motion, worked out from what the engine wrote down:\n');
       await explainHop(runFolderOf(lines), 1);
@@ -128,7 +128,7 @@ const sections = [
       say("Route's Trip starts inside it:\n");
       showCode(excerpt('journeys/demo.ts', /export const openAlps[^\n]*/));
       const lines = await phileasShown('survey', ['demo/rail-itinerary/phileas'],
-        { RAIL_DEMO_JOURNEY: 'open-alps', ...SURVEY_HOLD });
+        { PHILEAS_FIX: 'open-alps', ...SURVEY_HOLD });
       print(fixAndAfter(lines));
     },
   },
@@ -143,7 +143,7 @@ const sections = [
       say('the same stations, so a copied line cannot say which list it means. A Fix can always drop');
       say('down to Playwright for a step like that.\n');
       const lines = await phileasShown('survey', ['demo/rail-itinerary/phileas'],
-        { RAIL_DEMO_JOURNEY: 'tickets', ...SURVEY_HOLD });
+        { PHILEAS_FIX: 'add-leg-then-buy', ...SURVEY_HOLD });
       print(fixAndAfter(lines));
       say('After the Fix, the only controls on offer are the dialog\'s. That is where every Trip starts.');
     },
@@ -154,7 +154,7 @@ const sections = [
       say('Three Routes of fifteen Hops, with the Fix from the last section. Each Route starts the');
       say('application fresh, follows the Fix into the ticket dialog, and takes its Trip from there.');
       say('One line per Hop: what it acted on, how, and what changed.\n');
-      const lines = await phileasShown('run', [...JOURNEY_ARGS, '--follow'], JOURNEY_ENV);
+      const lines = await phileasShown('run', [...JOURNEY_ARGS, '--follow'], FIX_ENV);
       print(lines);
       journeyRun = runFolderOf(lines);
     },
@@ -165,9 +165,9 @@ const sections = [
       say('The seed decides every move. One Route of five Hops, then the same seed for ten:\n');
       const seedArgs = (hops) => ['demo/rail-itinerary/phileas', '--seed', 'five-then-ten', '--routes', '1',
         '--trip-length', String(hops), '--hop-delay-ms', '500', '--follow'];
-      const fiveLines = await phileasShown('run', seedArgs(5), { RAIL_DEMO_JOURNEY: 'no-fix' });
+      const fiveLines = await phileasShown('run', seedArgs(5), { PHILEAS_FIX: 'none' });
       print(afterSettings(fiveLines));
-      const tenLines = await phileasShown('run', seedArgs(10), { RAIL_DEMO_JOURNEY: 'no-fix' });
+      const tenLines = await phileasShown('run', seedArgs(10), { PHILEAS_FIX: 'none' });
       print(afterSettings(tenLines));
       const five = hopsOf(runFolderOf(fiveLines), 1);
       const ten = hopsOf(runFolderOf(tenLines), 1);
@@ -181,13 +181,13 @@ const sections = [
 
       const first = await ensureJourneyRun();
       say('A Route can also be replayed on its own. Route 1 of the Journey from section 8, again:\n');
-      const again = runFolderOf(await phileasShown('run', [...JOURNEY_ARGS, '--', '--grep', 'route 1$'], JOURNEY_ENV));
+      const again = runFolderOf(await phileasShown('run', [...JOURNEY_ARGS, '--', '--grep', 'route 1$'], FIX_ENV));
       const a = hopsOf(first, 1);
       const b = hopsOf(again, 1);
       say(bold(retraceVerdict(a, b)));
       say('\nAnd a different seed makes different moves, against the five-Hop Route above:\n');
       print(afterSettings(await phileasShown('run', ['demo/rail-itinerary/phileas', '--seed', 'another-seed',
-        '--routes', '1', '--trip-length', '5', '--hop-delay-ms', '500', '--follow'], { RAIL_DEMO_JOURNEY: 'no-fix' })));
+        '--routes', '1', '--trip-length', '5', '--hop-delay-ms', '500', '--follow'], { PHILEAS_FIX: 'none' })));
     },
   },
   {
@@ -217,7 +217,7 @@ const sections = [
 async function ensureJourneyRun() {
   if (journeyRun) return journeyRun;
   say(dim('(Running the Journey from section 8 first, since the demo started after it.)\n'));
-  journeyRun = runFolderOf(await phileasShown('run', JOURNEY_ARGS, JOURNEY_ENV));
+  journeyRun = runFolderOf(await phileasShown('run', JOURNEY_ARGS, FIX_ENV));
   say('');
   return journeyRun;
 }

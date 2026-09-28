@@ -27,7 +27,7 @@ costs the whole reporting model:
 | --- | --- | --- |
 | Journey | the run | Holds the seed, the route count, the Trip length, and the optional Journey and Route deadlines |
 | Route | a test | The unit with a verdict, the fixture scope, the timeout boundary, the retry unit, the trace boundary |
-| Fix | `beforeEach` | Anchors every Route's start. Defined once per Journey, applied at the start of each Route. Optional, and usually present |
+| Fix | `beforeEach` | Anchors every Route's start. Named in the Journey's terms, applied at the start of each Route. Optional, and usually present |
 | Hop | `test.step` | Hops nest in the trace without each becoming a separate pass or fail |
 
 Journey was claimed to be the test early on and that was wrong. If the Journey
@@ -371,7 +371,8 @@ following the `cypress/` and `.storybook/` precedent:
 ```
 phileas/
   adapter/            that application's AppUnderTest implementation
-  journeys/           journey definitions
+  journeys/           the Journey's terms, naming the Fix it opens with
+  fixes/              one file per Fix, and index.ts listing them by name
   journey.spec.ts     the spec Playwright collects
 tests/                the scripted suite, keeping Playwright's default meaning
 ```

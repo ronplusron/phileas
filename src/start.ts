@@ -6,6 +6,7 @@ import { journalFolder } from './journal';
 import { recordJourneyFindings, renderJourneyFindings, type JourneyFindings } from './known.mjs';
 import { folderName, TEMP_FOLDER_VARIABLE, windowMode } from './launch';
 import type { AppUnderTest } from './app-under-test';
+import { fixFor, type Fixes } from './fixes';
 import { allowStaleFromEnvironment } from './bundle';
 import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route';
 
@@ -37,7 +38,8 @@ import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment }
  */
 export function startJourney(
   journey: Journey,
-  application: AppUnderTest
+  application: AppUnderTest,
+  fixes?: Fixes
 ): {
   seed: string;
   run: string;
@@ -52,6 +54,9 @@ export function startJourney(
   const follow = followFromEnvironment();
   const surveyOnly = surveyFromEnvironment();
   const allowStale = allowStaleFromEnvironment();
+  // Looked up here as well as by each Route, so a Fix name that is not one of
+  // the consumer's is refused before anything launches, not once per Route.
+  fixFor(journey, fixes);
 
   const forThisRun = new Set<string>(overriddenTerms(journey));
   const mark = (term: string) => (forThisRun.has(term) ? 'set for this run' : '');
@@ -66,6 +71,7 @@ export function startJourney(
     ['Run', run, ''],
     ['Routes', String(journey.routes), mark('routes')],
     ['Trip length', String(journey.tripLength), mark('tripLength')],
+    ['Fix', journey.fix ?? 'none', mark('fix')],
     ['Route deadline', deadline(journey.routeDeadlineMs), mark('routeDeadlineMs')],
     ['Journey deadline', deadline(journey.journeyDeadlineMs), mark('journeyDeadlineMs')],
     ['Window mode', mode, ''],

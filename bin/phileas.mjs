@@ -50,6 +50,7 @@ const FLAGS = /** @type {Record<string, string>} */ ({
   '--journey-deadline-ms': 'PHILEAS_JOURNEY_DEADLINE_MS',
   '--show': 'PHILEAS_SHOW',
   '--hop-delay-ms': 'PHILEAS_HOP_DELAY_MS',
+  '--fix': 'PHILEAS_FIX',
 });
 
 /** Flags that take no value, and the variable each sets to 1. */

@@ -2,7 +2,8 @@ import type { ElectronApplication, Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test';
 import type { Rng, RouteStreams } from './random';
 import { effectOf, type HopEffect } from './effect';
-import { Journal, journalFolder, type HopAction, type JournaledCandidate, type JournaledCheck } from './journal';
+import { fixName } from './fixes';
+import { Journal, fixFingerprint, journalFolder, type HopAction, type JournaledCandidate, type JournaledCheck } from './journal';
 import { requireRun } from './journey';
 import { clickMenuItem } from './menu';
 import { renderEntry, targetText } from './report/render.mjs';
@@ -475,6 +476,15 @@ export interface RunRouteOptions {
  */
 const DEFAULT_HOP_TIMEOUT_MS = 3_000;
 
+/**
+ * A Fix's name for the journal: the one `defineFixes` listed it under, or the
+ * function's own, which JavaScript takes from the constant it was assigned to.
+ */
+function namedFix(fix: Fix): { name?: string } {
+  const name = fixName(fix) ?? fix.name;
+  return name ? { name } : {};
+}
+
 /** How often a Fix step surveys again while its target has not appeared. */
 const FIX_TARGET_POLL_MS = 250;
 
@@ -686,6 +696,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     ...shares,
     allowStandardMenuRoles: (cfg.exclusions.allowStandardMenuRoles ?? []).map((role) => role.toLowerCase()),
     ...(known ? { knownFindings: { version: known.version, entries: known.entries.length } } : {}),
+    ...(fix ? { fix: { ...namedFix(fix), fingerprint: fixFingerprint(fix) } } : {}),
   }, { follow });
 
   const tally = createExclusionTally(cfg.exclusions);

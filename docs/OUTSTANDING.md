@@ -598,6 +598,11 @@ designed, and it was not tracked here until 2026-09-23. A Journey has one Fix
 today, applied fresh to every Route. Wanted: Routes of one Journey starting
 from different Fixes.
 
+Since 2026-09-28 the Journey's terms name its Fix, from the consumer's
+`fixes/index.ts`, and each Route's journal records which Fix it opened with.
+So a Route given a different Fix would already say so; what remains is how it
+would be given one.
+
 Undecided, including how a Route would be given its Fix. The constraint is the
 one `../CLAUDE.md` puts on the planner: it may decide how many Routes there
 are, and never what they explore, so whatever assigns a Fix must not become a

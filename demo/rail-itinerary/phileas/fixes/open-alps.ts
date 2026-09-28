@@ -1,18 +1,7 @@
-import { defineJourney, type Fix } from '@drugstoresushi/phileas';
+import type { Fix } from '@drugstoresushi/phileas';
 
 /**
- * The demo's Journey: a few Routes, short enough to watch.
- *
- * No seed here. The demo's seeds are set by watch.mjs and present.mjs, which
- * are where the demo is run from.
- */
-export const demo = defineJourney({
-  routes: 3,
-  tripLength: 50,
-});
-
-/**
- * The demo's Fix: open an itinerary that has legs, so every Route's Trip
+ * The demo's default Fix: open an itinerary that has legs, so every Route's Trip
  * starts inside one.
  *
  * Written by copying a line from `phileas survey`, which is the point of it:
