@@ -5,6 +5,7 @@ import {
   type AppCheck,
   type AppCheckContext,
   type AppUnderTest,
+  type LogPath,
   type Narrowing,
   type UniversalCheck,
 } from '../app-under-test';
@@ -159,7 +160,7 @@ export interface WatchOptions {
  * rather than reading none. The log check would then report "not run" on every
  * Hop for a reason that is the caller's mistake and not the adapter's choice.
  */
-function resolveLogPaths(cfg: AppUnderTest, userDataDir: string | undefined): string[] {
+function resolveLogPaths(cfg: AppUnderTest, userDataDir: string | undefined): LogPath[] {
   if (typeof cfg.logPaths !== 'function') return cfg.logPaths ?? [];
   if (userDataDir === undefined) {
     throw new Error(
@@ -255,7 +256,14 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   // Where each log ended when the Route started, so only what a Hop appended
   // is read. A file that does not exist yet starts at nothing.
   const logOffsets = new Map<string, number>();
-  for (const file of resolveLogPaths(cfg, options.userDataDir)) logOffsets.set(file, sizeOf(file) ?? 0);
+  // Logs the adapter marked as created on their first write, whose absence is
+  // not a reason to say the check did not run.
+  const createdOnFirstWrite = new Set<string>();
+  for (const log of resolveLogPaths(cfg, options.userDataDir)) {
+    const file = typeof log === 'string' ? log : log.path;
+    if (typeof log !== 'string' && log.createdOnFirstWrite) createdOnFirstWrite.add(file);
+    logOffsets.set(file, sizeOf(file) ?? 0);
+  }
 
   const readMain = async (): Promise<string[] | string> => {
     if (mainWatched !== undefined) return `the main process could not be watched: ${mainWatched}`;
@@ -278,7 +286,8 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
       // nothing, a mistyped path or a log that moved passed on every Hop while
       // checking nothing; Positron's is named by a path measured once.
       if (size === undefined) {
-        missing.push(file);
+        // Not written yet, for a log the adapter marked as appearing that way.
+        if (!createdOnFirstWrite.has(file)) missing.push(file);
         continue;
       }
       // A log that shrank was rotated or truncated; read it from the start.

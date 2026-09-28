@@ -8,6 +8,7 @@ export type {
   AppCheck,
   AppCheckContext,
   AppCheckVerdict,
+  LogPath,
 } from './app-under-test';
 export { UNIVERSAL_CHECKS } from './app-under-test';
 export {

@@ -169,6 +169,21 @@ test('startJourney prints every setting, and marks each one set for this run', (
     'Survey only',
   ]);
   expect(line('Survey only')).toBe('Survey only: off');
+  // buggy names its sources, so the guard is on.
+  expect(line('Staleness guard')).toBe('Staleness guard: on');
+});
+
+test('an adapter with no sources is printed as a staleness guard that cannot run, not as on', () => {
+  // As for an installed binary, such as RStudio's.
+  const { staleness: _sources, ...noSources } = buggy;
+  const settings = withEnvironment({ PHILEAS_SEED: 'given' }, () => {
+    const { settings } = startJourney(defineJourney({ routes: 1, tripLength: 1 }), noSources);
+    finishJourney();
+    return settings;
+  });
+  expect(settings.find((l) => l.startsWith('Staleness guard:'))).toBe(
+    'Staleness guard: cannot run: the adapter names no sources to compare the bundle against'
+  );
 });
 
 test('the command runs a Journey with its settings changed, and the file unchanged', () => {

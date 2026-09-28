@@ -474,7 +474,7 @@ writtenTest.afterEach(async () => {
 });
 
 /** Writes the next piece before each Hop, and clicks Summary and Inventory in turn. */
-function writing(pieces: string[]): Chooser {
+function writing(pieces: readonly (string | undefined)[]): Chooser {
   let hop = 0;
   return {
     choose: (candidates) => {
@@ -489,12 +489,17 @@ function writing(pieces: string[]): Chooser {
   };
 }
 
-async function logRoute(page: import('@playwright/test').Page, app: import('@playwright/test').ElectronApplication, pieces: string[]) {
+async function logRoute(
+  page: import('@playwright/test').Page,
+  app: import('@playwright/test').ElectronApplication,
+  pieces: readonly (string | undefined)[],
+  cfg: AppUnderTest = writtenLog
+) {
   const root = scratch();
   const error = await runRoute({
     page,
     app,
-    cfg: writtenLog,
+    cfg,
     streams: deriveRouteStreams('written-log', 1),
     journeySeed: 'written-log',
     routeNumber: 1,
@@ -529,6 +534,17 @@ writtenTest('a named log that does not exist is not run, and says so, rather tha
     expect(check?.result).toBe('not-run');
     expect(check?.observation).toMatch(/does not exist, so it could not be read/);
   }
+});
+
+writtenTest('a log marked as created on its first write passes until it appears, then is read from its start', async ({ page, app }) => {
+  // RStudio's session log does not exist until the session first logs
+  // something. Marked, its absence is clean rather than not run; the same log
+  // unmarked is the test above.
+  const marked: AppUnderTest = { ...buggy, logPaths: [{ path: WRITTEN, createdOnFirstWrite: true }] };
+  const { error, hops } = await logRoute(page, app, [undefined, 'ERROR the session broke\n'], marked);
+  expect(hops.map((check) => check?.result)).toEqual(['passed', 'failed']);
+  expect(hops[1]?.observation).toMatch(/ERROR the session broke/);
+  expect(error).toBeInstanceOf(CheckFailure);
 });
 
 /** A check of the adapter's own, for the tests below. */

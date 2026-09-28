@@ -83,8 +83,9 @@ export const rstudio: AppUnderTest = {
    * `rdesktop.log`, empty, and no session log at all, measured 2026-09-28: the
    * session log is created when the session first logs something. It is the
    * one that matters most, since it is where a client exception that showed
-   * nothing on screen was left, docs/HISTORY.md 2026-09-21. Until it exists
-   * the log check says it did not run rather than passing.
+   * nothing on screen was left, docs/HISTORY.md 2026-09-21. So it is marked
+   * as created on its first write: until it appears it counts as clean,
+   * where before every Hop of a healthy Route said the check did not run.
    *
    * RStudio backs the session log up as it grows, to `rsession-<user>.1.log`,
    * `.2.log` and on. Only the current one is named: a backup holds lines
@@ -95,7 +96,10 @@ export const rstudio: AppUnderTest = {
    */
   logPaths: (userDataDir) => {
     const logs = path.join(homeIn(userDataDir), '.local', 'share', 'rstudio', 'log');
-    return [path.join(logs, 'rdesktop.log'), path.join(logs, `rsession-${os.userInfo().username}.log`)];
+    return [
+      path.join(logs, 'rdesktop.log'),
+      { path: path.join(logs, `rsession-${os.userInfo().username}.log`), createdOnFirstWrite: true },
+    ];
   },
 
   // A terminal's handle, made fresh for each terminal: eight upper-case hex

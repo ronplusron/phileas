@@ -81,7 +81,18 @@ export function startJourney(
     // a run that would otherwise travel nowhere.
     // Printed, so a run against a stale build says so where it is read, not
     // only in an attachment that a passing test's report never shows.
-    ['Staleness guard', allowStale ? 'OFF: a stale build will run, and findings may describe code nobody runs' : 'on', ''],
+    [
+      'Staleness guard',
+      // An adapter pointed at an installed binary has no sources, so the
+      // guard cannot run whatever the switch says: printed as on, the top of
+      // every RStudio run contradicted each Route's attachment.
+      !application.staleness
+        ? 'cannot run: the adapter names no sources to compare the bundle against'
+        : allowStale
+          ? 'OFF: a stale build will run, and findings may describe code nobody runs'
+          : 'on',
+      '',
+    ],
     ['Survey only', surveyOnly ? 'on: nothing is traveled, and every Route is skipped' : 'off', ''],
   ];
   const width = Math.max(...rows.map(([name, value]) => `${name}: ${value}`.length));

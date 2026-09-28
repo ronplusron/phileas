@@ -25,6 +25,25 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: a log created on its first write, and a staleness guard printed as unable to run
+
+**The log check said it did not run on every Hop of a healthy RStudio
+Route,** because RStudio creates its session log only when the session
+first logs something, and a named log that does not exist makes the check
+not run. That rule stays, since read as nothing a mistyped path would pass
+while checking nothing. Chosen from two offered, with a recommendation: an
+adapter can now mark a log as created on its first write. A marked log
+that does not exist counts as clean, and is read from its start when it
+appears; an unmarked one still says the check did not run. RStudio's
+adapter marks its session log, and a Route afterwards recorded the log
+check as passed on all 20 Hops. A test makes a marked log appear with an
+error on the second Hop and fail it.
+
+**The settings printout said `Staleness guard: on` for an adapter with no
+sources,** where the guard cannot run, contradicting each Route's
+attachment on every RStudio run. It now says the guard cannot run when the
+adapter names no sources, and a test covers both cases.
+
 ## 2026-09-28: an adapter says what varies in its own messages, and RStudio's terminal finding becomes known
 
 **The engine takes an adapter's own patterns out of a signature,** after

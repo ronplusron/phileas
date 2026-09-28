@@ -270,6 +270,21 @@ export interface AppCheckContext {
 /** Each violation as one observation, or why the check could not look. */
 export type AppCheckVerdict = readonly string[] | { readonly notRun: string };
 
+/**
+ * A log for the log check: its absolute path, or the path marked as a log the
+ * application creates only when it first writes to it.
+ *
+ * A named log that does not exist makes the check say it did not run, since
+ * read as nothing a mistyped path would pass on every Hop while checking
+ * nothing. Some logs do not exist on a healthy run: RStudio creates its
+ * session log only when the session first logs something, measured on
+ * 2026-09-28, and every Hop of a healthy Route said the check did not run.
+ * Marked, such a log counts as clean until it appears, and is read from its
+ * start when it does. Mark only a log measured to appear this way; an
+ * unmarked one keeps a mistyped path loud.
+ */
+export type LogPath = string | { readonly path: string; readonly createdOnFirstWrite: true };
+
 export interface AppUnderTest {
   /**
    * A readable name for the application, for reports and for naming temporary
@@ -382,7 +397,7 @@ export interface AppUnderTest {
    * folder per Route has to sit inside that Route's profile. The function form
    * needs `runRoute` to be given the folder, and refuses to start without it.
    */
-  logPaths?: string[] | ((userDataDir: string) => string[]);
+  logPaths?: LogPath[] | ((userDataDir: string) => LogPath[]);
 
   /**
    * Recognize a process belonging to this application.
