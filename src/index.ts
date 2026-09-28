@@ -43,7 +43,7 @@ export {
   type LaunchedApp,
   type LaunchPath,
 } from './launch';
-export { createTest, expect, rendererVerdict, type PhileasFixtures } from './fixtures';
+export { createTest, expect, rendererVerdict, screenshotWithin, type PhileasFixtures } from './fixtures';
 export {
   clickMenuItem,
   menuLabels,

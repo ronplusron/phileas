@@ -1,4 +1,5 @@
-import { createTest, expect, rendererVerdict } from '../src/index';
+import { test as plain } from '@playwright/test';
+import { createTest, expect, rendererVerdict, screenshotWithin } from '../src/index';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 
 /**
@@ -76,4 +77,20 @@ narrowedTest('a narrowing written against the checks\' form accepts the error in
   expect(verdict.unjudged).toHaveLength(1);
   expect(verdict.unacceptable).toHaveLength(0);
   // And the test passes at its end, which is the fixture reaching the same verdict.
+});
+
+plain('a screenshot that never returns is given up on within the bound, and says why', async () => {
+  // As on RStudio behind a native print dialog, where Playwright's own
+  // screenshot timeout was not honored and the Journey sat until the dialog
+  // was closed by hand.
+  const never = { screenshot: () => new Promise<Buffer>(() => undefined) };
+  const startedAt = Date.now();
+  const shot = await screenshotWithin(never, 200);
+  expect(Date.now() - startedAt).toBeLessThan(2_000);
+  expect(shot).toBeInstanceOf(Error);
+  expect((shot as Error).message).toMatch(/screenshot/);
+
+  // The control: a page that answers gives its picture.
+  const answers = { screenshot: async () => Buffer.from('png') };
+  expect(await screenshotWithin(answers, 200)).toEqual(Buffer.from('png'));
 });

@@ -25,6 +25,26 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: a failed Route's teardown no longer waits on a screenshot forever
+
+**Three times that day a failed Route held its Journey at teardown,** with
+the application's process alive: twice after RStudio's native print dialog
+and once after the Mac slept, in this session and in the Eighty Days demo
+session at the same second. Every step of the teardown read as bounded, so
+it was measured instead: timing lines at each stage, and a temporary Fix
+that opened the print dialog on purpose. The teardown stopped at the
+failure screenshot. `page.screenshot` was given Playwright's own 5-second
+timeout, had not returned 60 seconds later, and returned only when the
+process was killed; each later stage then took milliseconds.
+
+**The screenshot is now bounded by the engine,** as the DOM and the trace
+already were, through `screenshotWithin`, and a test gives it a page whose
+screenshot never answers. The same reproduction then ended by itself in 78
+seconds over two Routes: each screenshot gave up with its reason attached,
+and each close ended in a forced kill that took the dialog with it. The
+sleep was not reproduced, so that it stopped at the same place is likely
+rather than measured; nothing else in the teardown is left unbounded.
+
 ## 2026-09-28: a Journey from each RStudio Fix, and a sleeping Mac
 
 **Five Routes of 20 Hops from each Fix, one at a time, windows hidden:**

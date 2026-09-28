@@ -840,3 +840,24 @@ Declined 2026-09-20. Both non-standard, and `app` actively harmful because it
 collides with "the application" -- it caused a real misreading during the
 session that chose against it. Replaced by `src/` here and `phileas/adapter/`
 in a consuming repository.
+
+### 3.4 Stubbing printing in the engine
+
+Declined on 2026-09-28, in the words "Leave printing to the exclusions".
+RStudio's File -> Print... had opened macOS's print dialog on the screen of
+a hidden run, and nothing in the engine answers printing the way its stub
+answers file and message dialogs.
+
+**Measured before deciding, the same day:** a stub on `webContents.print`
+in RStudio's main process caught a direct call to it, the control, and
+did not catch File -> Print..., after which the page stopped answering
+because the dialog opened. So that stub would take effect and do nothing,
+the flaw the outbound-link stub already carries. RStudio most likely
+prints from the page, with the browser's own print on a hidden frame; a
+stub injected into the page was not tried.
+
+**What made declining acceptable:** since the teardown stopped waiting on
+a screenshot forever, a print path an adapter misses costs one Route and
+about 20 seconds of dialog, not a stuck Journey. Each adapter excludes its
+own ways into printing, as RStudio's does. Reopen if a missed path turns
+up on a real run, and try the page-side stub first.

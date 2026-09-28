@@ -189,7 +189,7 @@ export function createTest(cfg: AppUnderTest) {
         //
         // Bounded, like everything else that talks to the application: a hung
         // one would otherwise hold the test's end for as long as it hangs.
-        const shot = await page.screenshot({ timeout: DIAGNOSTIC_TIMEOUT_MS }).catch((error: Error) => error);
+        const shot = await screenshotWithin(page, DIAGNOSTIC_TIMEOUT_MS);
         if (Buffer.isBuffer(shot)) {
           await testInfo.attach('window.png', { body: shot, contentType: 'image/png' });
         } else {
@@ -256,6 +256,27 @@ export { expect };
  * watch saw, and of those the ones the adapter's narrowing does not accept.
  * Its own function so the verdict can be tested without failing a test to see it.
  */
+/**
+ * A screenshot of the page, or why there is none, within a bound the engine
+ * keeps itself.
+ *
+ * Playwright's own screenshot timeout is not enough. On RStudio on
+ * 2026-09-28, with a native print dialog blocking the page, a screenshot given
+ * a 5-second timeout had not returned 60 seconds later, and returned only
+ * when the process was killed. The failed Route's teardown waited on it, so
+ * the whole Journey sat until someone closed the dialog, three times that
+ * day: twice after a print dialog and once after the Mac slept. Every other
+ * diagnostic here was already bounded by the engine, and this one alone
+ * trusted Playwright's.
+ */
+export function screenshotWithin(page: Pick<Page, 'screenshot'>, timeoutMs: number): Promise<Buffer | Error> {
+  return answered(
+    'the page, asked for a screenshot,',
+    page.screenshot({ timeout: timeoutMs }),
+    timeoutMs
+  ).catch((error: Error) => error);
+}
+
 export function rendererVerdict(
   cfg: AppUnderTest,
   page: Page,
