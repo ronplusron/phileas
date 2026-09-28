@@ -912,8 +912,14 @@ setting, and `HISTORY.md` has them together. In short:
   package changes, so the guard compares packages only.
 
 **The first RStudio finding,** the same day: closing a terminal logs an
-error in the session log. Filed as ronplusron/phileas issue 61, to be moved
-to rstudio/rstudio once checked against the installed release by hand.
+error in the session log. Filed as ronplusron/phileas issue 61, then
+confirmed on RStudio by hand and filed as rstudio/rstudio issue 18976.
+RStudio's developers submitted a fix as rstudio/rstudio pull request 18983,
+"terminate the shell when a terminal is closed"; both showed open on
+2026-09-28. The installed release still has it, so it stays a known
+finding, now pointing at 18976. Issue 61 is left as it is, on purpose: a
+comment there linking 18976 would put a reference to this repository on
+RStudio's issue, which is not wanted.
 Findings filed here for an application under test start their title with
 its name, asked for when this one was filed.
 
