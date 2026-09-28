@@ -3,7 +3,7 @@ import { finishJourney, runEveryCheck, startJourney } from '@drugstoresushi/phil
 import { journey } from './journeys';
 import { fixes } from './fixes';
 import { positron } from './adapter';
-import { guardHome } from './home-guard';
+import { POSITRON, guardHome } from '../../home-guard';
 import { journalsRoot, knownFindings } from './paths';
 
 
@@ -20,7 +20,7 @@ import { journalsRoot, knownFindings } from './paths';
  */
 export default function globalSetup(): () => void {
   startJourney(journey, positron, fixes);
-  const checkHome = guardHome(os.homedir(), {
+  const checkHome = guardHome(os.homedir(), POSITRON, {
     dir: process.cwd(),
     ownEntries: ['.phileas-journals', 'test-results', 'playwright-report'],
   });

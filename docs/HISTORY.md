@@ -25,6 +25,43 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: RStudio's dialogs drawn in the page, and one home guard for both trials
+
+**Native dialogs.** RStudio's native Open and Save dialogs are drawn by
+macOS, which Phileas cannot see or act in, so the engine's stub answers
+each as cancelled; measured the same day, "Open an existing file" and
+"Load workspace" each reached the stub, titled Open File and Load
+Workspace. RStudio has a setting to draw them in the page instead,
+`native_file_dialogs`, raised as "Use native file and message dialog
+boxes". With it off, both opened in the page with a File name box, Open
+and Cancel, and the stub recorded nothing. The adapter now writes it off
+before every launch, excludes the Global Options checkbox that would turn
+it back on, and keeps the stub for anything it misses.
+
+**The in-page dialog shows one link per folder of its path, up to `/`.**
+From there a Route could have saved a file anywhere the user can write,
+and two of the links are named for the run's and the Route's own random
+temp folders, so a replay's pool would have differed from the run's. The
+adapter excludes every folder link above the Route's home; asked where
+things could then be saved, the answer was only inside that home, since
+the values a Route types hold no `/`, `..` or `~`. Checked through the
+engine with a temporary Fix that opened the dialog: all nine links above
+the home were excluded, and the home, File name, Open and Cancel stayed.
+The survey also offered the whole workbench behind the dialog, the gap
+`OUTSTANDING.md` 1.10 records for dialogs that are not native modals.
+
+**The home guard is shared,** in `trial/home-guard.ts`, as a trial states
+its application: the folders it was measured writing, its executable, and
+what its Routes carry on their command line. RStudio's are its
+configuration, its state, `.Rhistory`, `.RData` and its Application
+Support folder, from what a launch wrote into a Route's home; a known root
+may now be a file. Moving it closed its own defect, a guard that read an
+unreadable folder as empty and a failed `ps` as no other copy running: it
+now refuses a folder it cannot read, says unknown for a failed `ps`, and
+prints how much it read when clean. A Route through RStudio afterwards
+ended with nothing written among 1,603 files and 250 entries, and the R
+library guard's 110 entries unchanged.
+
 ## 2026-09-28: an RStudio adapter, its first finding, and a username kept out of signatures
 
 **The adapter** is in `trial/rstudio/`, pointed at the fuse-flipped copy in

@@ -28,8 +28,8 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
-file is no longer empty for the reason it used to be empty. Six of them were
+**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
+file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
 
@@ -147,14 +147,6 @@ an attachment no console reporter prints. Deferred rather than fixed because
 Positron needed the forced close often enough to have its own defect, and
 failing on it could turn every Positron Route red: how often a clean
 Positron Route needs it is to be counted first.
-
-## The Positron home guard can report clean without having read anything
-
-`entries()` in `trial/positron/phileas/home-guard.ts` returns an empty set on
-any error, and "nothing written" is printed all the same. When `ps` fails,
-`outsidePositrons()` returns 0 and the refusal then says no other Positron was
-running. A guard that could not look reads like one that looked. Printing how
-much was read, and "unknown" for a failed `ps`, closes it.
 
 ## Signatures are stable only under macOS's usual temp folder
 
