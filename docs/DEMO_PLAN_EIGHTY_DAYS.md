@@ -671,8 +671,9 @@ metamorphic checks.
 
 **`bradshaw-trap` is shown apart from the rest.** A Route that strands is
 reported as stranded, never as failed, and a stranding has no signature
-and no id. So it appears in step 1 below as a third outcome, and not in
-steps 2 to 4, which are about findings.
+and no id. So it appears as a third outcome in a section of its own, right
+after step 1 below, with a known findings file of its own so its summary
+shows nothing found, and not in steps 2 to 4, which are about findings.
 
 **The known findings file decides the order.** When a Journey ends, every new
 finding is added to the file as known but unfiled, and an unfiled finding
@@ -790,12 +791,12 @@ Nothing is open. New questions go here as building raises them.
 
 ## Build order
 
-Steps 1 to 7 are built, 2026-09-27, and `HISTORY.md` has what was measured
-for each. The balance was measured before the engravings, since the look
+Steps 1 to 7 are built, 2026-09-27, and step 8 on 2026-09-28; `HISTORY.md`
+has what was measured for each. The balance was measured before the engravings, since the look
 matters less if Routes never leave London, and measured again with step 6,
 which found the game holding Routes at a place with no departures left.
-Step 8 is next, and the four plants whose checks do not exist yet wait for
-them.
+The four plants whose checks do not exist yet wait for them, and every seed
+waits to be searched for again when the weighted chooser lands.
 
 1. Lift the rail demo's presenting runner into `demo/presenting.mjs`, with
    the parameters listed under "What is shared", and rename its script to

@@ -1,10 +1,12 @@
 # Presenting Phileas on Eighty Days
 
 A script for showing Phileas to people who have not seen it, technical or not.
-This is stage one of `docs/DEMO_PLAN_EIGHTY_DAYS.md`: exploring, with every
-check passing and nothing planted. It runs about twenty minutes, plus
-questions, most of it in sections 4 and 6, where the game plays itself while
-you talk. The rail demo, `demo/rail-itinerary/PRESENTING.md`, is the shorter
+It has both stages of `docs/DEMO_PLAN_EIGHTY_DAYS.md`. Sections 1 to 6 are
+stage one, exploring with every check passing and nothing planted; sections
+7 to 12 are stage two, planted bugs found, replayed, filed and traveled
+past. It runs about half an hour, plus questions, most of it in sections 4,
+6 and 12, where the game plays itself while you talk. `-- --from 7` gives
+stage two alone. The rail demo, `demo/rail-itinerary/PRESENTING.md`, is the shorter
 first look and takes the pieces apart more slowly; this one assumes less
 patience and shows more.
 
@@ -37,14 +39,19 @@ Commands below run from the repository root. Where they say `phileas`, type
 the command itself. `phileas survey` takes no flags, so its window mode and
 its pause go in front of it as `PHILEAS_SHOW=front` and `PHILEAS_HOP_DELAY_MS`.
 
-Two switches are this demo's own, not the engine's. `EIGHTY_DAYS_JOURNEY`
-chooses among three Journeys: `no-fix`, which starts in the Reform Club;
-`accept`, whose Fix takes the wager; and `hong-kong`, the default, whose Fix
-plays the book to the Hong Kong quay. `EIGHTY_DAYS_KNOWN` names the known
-findings file: the guided command empties its own when it starts, so the
-Journey's summary begins from nothing; by hand, delete
-`demo/eighty-days/phileas/.phileas-journals/present/known-findings.json`
-first to do the same.
+Three switches are this demo's own, not the engine's. `EIGHTY_DAYS_JOURNEY`
+chooses a Journey: `no-fix`, which starts in the Reform Club; `accept`,
+whose Fix takes the wager; `hong-kong`, the default, whose Fix plays the
+book to the Hong Kong quay; and five that start stage two near its bugs,
+`kholby`, `fort-kearney`, `new-york`, `london` and `reform-club`.
+`EIGHTY_DAYS_PLANT` switches planted bugs on, by name, commas between.
+`EIGHTY_DAYS_KNOWN` names the known findings file: the guided command keeps
+its own under `demo/eighty-days/phileas/.phileas-journals/present/` and
+empties each one before the section that needs it empty; by hand, delete
+the file named in a command first to do the same. The seeds below are in
+`demo/eighty-days/seeds.mjs`, each searched for rather than steered, and a
+change to the game or the engine can move them; the guided command says so
+if a seed no longer reaches its bug, rather than carrying on.
 
 Put the terminal and the game's window side by side. The window opens and
 closes with every Route, because every Route starts the game fresh. It is laid
@@ -167,11 +174,95 @@ A Route that had found a bug would walk straight back to it, which is what
 makes a finding worth filing. A replay needs the seed, a Route count that
 includes the Route, and a Trip at least as long as the part to retrace.
 
+## 7. Stage two: planting a bug
+
+No command. Eight bugs are planted in the game, each behind its own switch,
+so the build shown working in stage one is the build shown broken now, and
+any one can be shown alone. The guided command lists them with the place
+each is reached from. Say the most important thing about them: **a planted
+bug is found by a Journey, not steered to**. Each one's seed was searched
+for until a Route met the bug by its own draws, which is what shows the
+search working and not only the check.
+
+## 8. Found
+
+```
+EIGHTY_DAYS_PLANT=kiouni-throw EIGHTY_DAYS_JOURNEY=kholby EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed fogg --routes 1 --trip-length 40 --hop-delay-ms 300 --show front --follow
+```
+
+The bug: the raise that brings the offer for Kiouni to £2,000 throws an
+error in the page. The Fix ends at Kholby with the offer at £1,800, so one
+raise is left for the Trip to choose. It does at Trip hop 11.
+
+Point at the line for that Hop: the failed check, what it saw, and the
+finding's id, which is the same every time the same bug is seen. The Route
+ends there, not after its Trip: Hops after a known-broken state are noise.
+Then at the Journey's end: the finding was added to the known findings, as
+unfiled.
+
+## 9. Stranded, which is not a finding
+
+```
+EIGHTY_DAYS_PLANT=bradshaw-trap EIGHTY_DAYS_JOURNEY=hong-kong EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-trap.json phileas run demo/eighty-days/phileas --seed fogg --routes 1 --trip-length 80 --hop-delay-ms 300 --show front --follow
+```
+
+Game > Consult Bradshaw opens a dialog with nothing in it to press, and
+Escape does not close it. The Route strands after Trip hop 8: no move left.
+Stranded is the third outcome, neither a pass nor a failure, and the
+summary shows no finding. A trap may be a bug or a corner with nothing
+more to do, and the engine reports what it saw rather than guessing which.
+
+## 10. Replayed
+
+Delete the known findings file, putting it back as it was before section 8,
+then run section 8's command again.
+
+The same Route, from the same seed, plays the same game straight back to
+Trip hop 11 and the same finding. The guided command compares the two
+journals and says whether every Hop matched. This is what makes a finding
+worth filing: whoever gets the report can watch it happen again, from the
+seed alone. It had to be run against the file as it was, since a finding
+the file already holds no longer ends a Route; the next section is that.
+
+## 11. Filed, and traveled past
+
+```
+phileas known add <id> --issue demo-1 demo/eighty-days/phileas/.phileas-journals/present/known-findings.json
+```
+
+Then section 8's command once more. `<id>` is the finding's id from
+section 8; the guided command fills it in.
+
+Filed, the bug no longer ends the Route. Point at Trip hop 11 again: the
+line now says the finding is known, with its issue, and the Route carries
+on to the end of its Trip and passes. Point at the summary: it still lists
+the finding, as seen, with its issue. A filed bug stops blocking without
+going quiet, and one not seen in a later Journey is reported as possibly
+fixed or not reached.
+
+## 12. Several at once
+
+```
+EIGHTY_DAYS_PLANT=carnatic-log-error,export-throw,sail-console-error,coal-hang EIGHTY_DAYS_JOURNEY=hong-kong EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-several.json phileas run demo/eighty-days/phileas --seed mudge --routes 5 --trip-length 150 --hop-delay-ms 300 --show front
+```
+
+Four bugs on together, five Routes from Hong Kong, a few minutes. The
+guided command prints how each Route ended, then the summary: each finding
+once, with how often it was seen. With this seed, Game > Export the ledger
+throws in four of the Routes and the Carnatic's log error ends the fifth.
+Every Route ended at its first bug, since none was known yet. The sledge's
+and the Henrietta's bugs were planted and not reached, and the summary does
+not pretend otherwise: it lists what was seen, never what was not looked
+for.
+
 ## Questions that tend to come up
 
 - **Does it find bugs?** Six checks run after every step, and against Positron
-  they found real bugs. This stage has nothing planted, so it shows exploring
-  and replaying; the next stage plants bugs in the game.
+  they found real bugs. Stage two shows it here, on bugs planted in the game,
+  each found by a seeded Route rather than steered to.
+- **Why does a failed Route stop at the bug?** Hops after a known-broken
+  state are noise that buries the one that mattered. Filing the bug, as in
+  section 11, lets later Routes carry on past it.
 - **Why does a Route keep going after the game ends?** A Route's Trip is a
   number of Hops, not a goal. Winning or losing the wager is a fate for the
   audience; the engine's work is to explore and to check.

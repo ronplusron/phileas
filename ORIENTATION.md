@@ -144,10 +144,11 @@ watches it and `npm run demo:train:present` presents it, through the runner
 both guided demos share, `demo/presenting.mjs`. Eighty Days is the longer
 one, a deterministic game after the novel, planned in
 `docs/DEMO_PLAN_EIGHTY_DAYS.md`: `npm run demo:eighty-days` watches it and
-`npm run demo:eighty-days:present` presents stage one. Eight bugs are
+`npm run demo:eighty-days:present` presents both stages: exploring, then
+planted bugs found, replayed, filed and traveled past. Eight bugs are
 planted in it, each switched on through `EIGHTY_DAYS_PLANT`, and
 `EIGHTY_DAYS_LAYOUT=screens` restores its original layout; its build order
-says the stage-two sections are next. Its default Journey starts every Trip
+is done but for the four plants waiting on checks. Its default Journey starts every Trip
 at Hong Kong, `demo/eighty-days/seeds.mjs` holds the seed whose three Routes
 win, lose and wander and a seed for each plant, and
 `demo/eighty-days/measure.mjs` reads a run's journals for the balance

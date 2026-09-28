@@ -10,14 +10,16 @@
 //   npm run demo:eighty-days:present -- --auto=15    play through, 15 seconds apart
 //   npm run demo:eighty-days:present -- --from 4     start at section 4
 //
-// This is stage one of docs/DEMO_PLAN_EIGHTY_DAYS.md: exploring, with the
-// checks passing and nothing planted. PRESENTING.md beside this file is the
-// same demo as a script to read from. The runner, shared with the other demos,
-// is demo/presenting.mjs; this file holds only the sections.
+// Both stages of docs/DEMO_PLAN_EIGHTY_DAYS.md: sections 1 to 6 are stage one,
+// exploring with the checks passing and nothing planted, and 7 to 12 are stage
+// two, a planted bug found, replayed, filed and traveled past, and several
+// found at once. PRESENTING.md beside this file is the same demo as a script
+// to read from. The runner, shared with the other demos, is
+// demo/presenting.mjs; this file holds only the sections.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkTally, hopsOf, journeyEndLines, retraceVerdict } from '../journals.mjs';
+import { checkTally, entriesOf, hopsOf, journeyEndLines, retraceVerdict } from '../journals.mjs';
 import {
   bold,
   demoFolders,
@@ -30,9 +32,10 @@ import {
   say,
   showCode,
   startListing,
+  stop,
 } from '../presenting.mjs';
 import { fateLines } from './measure.mjs';
-import { DEMO_SEED, REPLAY_ROUTE, TRIP_LENGTH } from './seeds.mjs';
+import { DEMO_SEED, PLANT_SEEDS, REPLAY_ROUTE, SEVERAL, TRIP_LENGTH } from './seeds.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const configDir = path.join(here, 'phileas');
@@ -155,6 +158,114 @@ const sections = [
       say('\nThe same fate at the same Hop. A Route that found a bug would walk straight back to it.');
     },
   },
+  // --- stage two: finding bugs -----------------------------------------------
+  {
+    title: 'Stage two: planting a bug',
+    async run() {
+      say('Now the same game with bugs planted in it, each behind a switch of its own, so the build');
+      say('shown working is the same build shown broken, and any one bug can be shown alone:\n');
+      for (const [plant, { journey: from }] of Object.entries(PLANT_SEEDS)) say(`  ${plant.padEnd(22)}${dim(`reached from ${from}`)}`);
+      say('');
+      say('A planted bug is found by a Journey, not steered to: a seed was searched for whose Route');
+      say('meets it on its own. Each section says so if its seed no longer does.');
+    },
+  },
+  {
+    title: 'Found',
+    async run() {
+      say(`The ${FOUND.plant} bug: raising the offer for Kiouni to £2,000 throws an error. From an empty`);
+      say('known findings file, one Route from Kholby, where the offer already stands at £1,800:\n');
+      await runFound();
+      print(found.shown);
+      say(`Route 1 ended at Trip hop ${found.hop}, the Hop that raised the offer. The failed check names it,`);
+      say(`and the finding's id, ${found.id}, is the same every time the same bug is seen. The Journey's`);
+      say('end added it to the known findings as unfiled, which the next section undoes on purpose.');
+    },
+  },
+  {
+    title: 'Stranded, which is not a finding',
+    async run() {
+      const trap = PLANT_SEEDS['bradshaw-trap'];
+      say('The bradshaw-trap bug: Game > Consult Bradshaw opens a dialog with nothing in it to press.');
+      say('A Route that reaches it has no move left. That is a third outcome, not a failure:\n');
+      fs.rmSync(trapFile, { force: true });
+      const run = await phileasShown(
+        'run',
+        [CONFIG, '--seed', trap.seed, '--routes', '1', '--trip-length', String(trap.tripLength), '--hop-delay-ms', '300', '--follow'],
+        { EIGHTY_DAYS_PLANT: 'bradshaw-trap', EIGHTY_DAYS_JOURNEY: trap.journey, EIGHTY_DAYS_KNOWN: fromRepo(trapFile) },
+        { mayFail: true }
+      );
+      const folder = runFolderOf(run.lines);
+      const met = metIn(folder);
+      if (met.where !== 'stranded') seedMissed(run, 'bradshaw-trap', trap);
+      print([...tripTail(run.lines, 3), ...journeyEndLines(run.lines)]);
+      say(`Stranded after Trip hop ${met.hop}, with no finding and nothing added to the known findings. A trap`);
+      say('may be a bug or a corner with nothing more to do; the engine says what it saw and no more.');
+    },
+  },
+  {
+    title: 'Replayed',
+    async run() {
+      await ensureFound();
+      say('The known findings file is put back as it was before the bug was found, and the same Route');
+      say('runs again from its seed:\n');
+      fs.rmSync(knownFile, { force: true });
+      const again = await runPlanted(FOUND, { mayFail: true });
+      const met = metIn(again.folder);
+      if (met.where !== 'trip' || met.hop !== found.hop) seedMissed(again.run, FOUND.plant, FOUND);
+      print(tripTail(again.run.lines, 3));
+      say(bold(retraceVerdict(hopsOf(found.folder, 1), hopsOf(again.folder, 1))));
+      say(`\nThe same game, straight back to Trip hop ${met.hop}, and the same finding, ${met.ids.join(', ')}. That is what makes`);
+      say('a finding worth filing: anyone can watch it happen again.');
+    },
+  },
+  {
+    title: 'Filed, and traveled past',
+    async run() {
+      await ensureFound();
+      say('Filing the finding with the issue it was reported as:\n');
+      print(await phileasShown('known', ['add', found.id, '--issue', 'demo-1', fromRepo(knownFile)]));
+      say('And the same Route once more. This time the bug is known, so it no longer ends the Route:\n');
+      const past = await runPlanted(FOUND, { mayFail: true });
+      if (past.run.code !== 0) stop(past.run.output, 'The Route should have traveled past the filed bug, and did not.');
+      const around = past.run.lines.filter((line) => {
+        const m = line.match(/^route \d+ {2}hop (\d+) /);
+        return m ? Math.abs(Number(m[1]) - found.hop) <= 1 : /^route \d+ {2}(passed|failed|stranded) /.test(line);
+      });
+      print([...around, ...journeyEndLines(past.run.lines)]);
+      say(`At Trip hop ${found.hop} the line says the finding is known, with its issue, and the Route carries on to`);
+      say('the end of its Trip. The summary still says it was seen, so a filed bug never goes quiet.');
+    },
+  },
+  {
+    title: 'Several at once',
+    async run() {
+      say(`${SEVERAL.plants.length} bugs planted together, ${SEVERAL.routes} Routes from Hong Kong, from an empty known findings file:\n`);
+      fs.rmSync(severalFile, { force: true });
+      const run = await phileasShown(
+        'run',
+        [CONFIG, '--seed', SEVERAL.seed, '--routes', String(SEVERAL.routes), '--trip-length', String(SEVERAL.tripLength), '--hop-delay-ms', '300'],
+        { EIGHTY_DAYS_PLANT: SEVERAL.plants.join(','), EIGHTY_DAYS_JOURNEY: SEVERAL.journey, EIGHTY_DAYS_KNOWN: fromRepo(severalFile) },
+        { mayFail: true }
+      );
+      const folder = runFolderOf(run.lines);
+      const end = journeyEndLines(run.lines);
+      const findings = end.filter((line) => /^ {2}UNFILED/.test(line)).length;
+      if (findings < 2) stop(run.output, `With seed ${SEVERAL.seed} this Journey found ${findings} of the planted bugs, fewer than the two it was measured to find.`);
+      for (let route = 1; route <= SEVERAL.routes; route++) {
+        const met = metIn(folder, route);
+        const how =
+          met.where === 'trip' ? `found ${met.checks.join(', ')} at Trip hop ${met.hop}, finding ${met.ids.join(', ')}` : met.where === 'stranded' ? `stranded after Trip hop ${met.hop}` : `${met.outcome} its Trip`;
+        say(`  route ${route}  ${how}`);
+      }
+      say('');
+      print(end);
+      say('Each finding once, with how often it was seen. Every Route ended at its first bug, since');
+      say('none was known yet; from the next Journey on, these are, and the Routes go further. A bug');
+      say('planted where no Route went does not appear: the summary says what was seen, and a bug');
+      say('nobody reached is not reported as absent.');
+    },
+  },
 ];
 
 async function runJourney() {
@@ -168,6 +279,88 @@ async function ensureJourney() {
   say(dim('(Running the Journey from section 4 first, since the demo started after it.)\n'));
   await runJourney();
   say('');
+}
+
+
+// --- stage two's helpers -----------------------------------------------------
+
+/** The bug the found, replayed and filed sections share, and the seed measured to reach it. */
+const FOUND = { plant: 'kiouni-throw', ...PLANT_SEEDS['kiouni-throw'] };
+// The trap and the several-at-once sections keep files of their own, so
+// neither reads the finding the found section added, nor adds to its file.
+const trapFile = path.join(journalsRoot, 'present', 'known-trap.json');
+const severalFile = path.join(journalsRoot, 'present', 'known-several.json');
+let found; // the found section's run: its folder, the Hop, the finding's id and what was shown
+
+/** Run a plant's Journey, one Route, from its measured seed, reading and writing the demo's known findings. */
+async function runPlanted(p, options) {
+  const run = await phileasShown(
+    'run',
+    [CONFIG, '--seed', p.seed, '--routes', '1', '--trip-length', String(p.tripLength), '--hop-delay-ms', '300', '--follow'],
+    { EIGHTY_DAYS_PLANT: p.plant, EIGHTY_DAYS_JOURNEY: p.journey, ...KNOWN },
+    options
+  );
+  return { run, folder: runFolderOf(run.lines) };
+}
+
+async function runFound() {
+  fs.rmSync(knownFile, { force: true });
+  const { run, folder } = await runPlanted(FOUND, { mayFail: true });
+  const met = metIn(folder);
+  if (met.where !== 'trip') seedMissed(run, FOUND.plant, FOUND);
+  const shown = [...run.lines.filter((line) => /^route \d+ {2}(hop|failed|passed|stranded) /.test(line)), '', ...journeyEndLines(run.lines)];
+  found = { folder, hop: met.hop, id: met.ids[0], shown };
+}
+
+/** The found section's run, made now if the demo started after it. */
+async function ensureFound() {
+  if (found) return;
+  say(dim('(Running the found section first, since the demo started after it.)\n'));
+  await runFound();
+  say('');
+}
+
+/**
+ * How one Route of a run met its plant, read from its journal rather than from
+ * what was printed: a check that failed on a Trip hop, with the check's name
+ * and the finding's id; a check that failed inside the Fix, which would mean a
+ * Fix walked into a plant; a Route that stranded; or none of these.
+ */
+function metIn(folder, route = 1) {
+  const entries = entriesOf(folder, route);
+  const failedOn = (kind) =>
+    entries.find((e) => e.kind === kind && (e.checks ?? []).some((c) => c.result === 'failed'));
+  const inFix = failedOn('fix-hop');
+  if (inFix) return { where: 'fix', hop: inFix.hop };
+  const trip = failedOn('trip-hop');
+  if (trip) {
+    const failed = trip.checks.filter((c) => c.result === 'failed');
+    return {
+      where: 'trip',
+      hop: trip.hop,
+      checks: failed.map((c) => c.check),
+      ids: failed.flatMap((c) => (c.findings ?? []).filter((f) => !f.known).map((f) => f.id)),
+    };
+  }
+  const outcome = entries.findLast((e) => e.kind === 'outcome');
+  const hops = entries.filter((e) => e.kind === 'trip-hop').length;
+  return outcome?.outcome === 'stranded' ? { where: 'stranded', hop: hops } : { where: 'none', outcome: outcome?.outcome ?? 'did not finish' };
+}
+
+/** Say, from the run just made, that its seed no longer reaches its plant, and stop. */
+function seedMissed(run, plant, p) {
+  stop(
+    run.output,
+    `With seed ${p.seed} and a Trip of ${p.tripLength} Hops, the ${plant} bug was not met the way it was measured to be. ` +
+      'Something changed the game, the draw or the survey since the seed was searched for, and the seed needs searching for again.'
+  );
+}
+
+/** The last few Trip hop lines of a run, and its ending. */
+function tripTail(lines, count) {
+  const hops = lines.filter((line) => /^route \d+ {2}hop /.test(line));
+  const ending = lines.filter((line) => /^route \d+ {2}(passed|failed|stranded) /.test(line));
+  return [...hops.slice(-count), ...ending, ''];
 }
 
 // --- run ---------------------------------------------------------------------

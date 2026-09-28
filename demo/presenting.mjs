@@ -132,8 +132,14 @@ const SHOW = process.env.PHILEAS_SHOW || 'front';
  *
  * `run` gets the window mode as its --show flag; `survey` takes no flags, so it
  * gets it as PHILEAS_SHOW in front, the way a person would type it.
+ *
+ * With `mayFail`, a run that exits with an error does not stop the demo: it
+ * resolves to `{ lines, code, output }` instead of the lines, for a section
+ * whose run is meant to find a bug. That section then decides from the run's
+ * own journals whether the failure was the one it was showing, and calls
+ * `stop` with the whole output when it was not.
  */
-export async function phileasShown(command, commandArgs, env = {}) {
+export async function phileasShown(command, commandArgs, env = {}, { mayFail = false } = {}) {
   const shownEnv = { ...env };
   const argv = [command, ...commandArgs];
   if (command === 'run') {
@@ -143,7 +149,14 @@ export async function phileasShown(command, commandArgs, env = {}) {
   if (command === 'survey') shownEnv.PHILEAS_SHOW = SHOW;
   const prefix = Object.entries(shownEnv).map(([k, v]) => `${k}=${v} `).join('');
   await announce(`${prefix}phileas ${typed(argv)}`);
-  return runPhileas(argv, shownEnv);
+  return runPhileas(argv, shownEnv, mayFail);
+}
+
+/** Print a run's whole output, unfiltered, say why, and end the demo. */
+export function stop(output, why) {
+  console.log(output);
+  console.log(bold(`\n${why} The demo stops here.`));
+  process.exit(1);
 }
 
 /**
@@ -152,7 +165,7 @@ export async function phileasShown(command, commandArgs, env = {}) {
  * everything, unfiltered, and stops the demo: a filtered failure would be a
  * demo hiding the thing it is meant to show.
  */
-function runPhileas(commandArgs, env) {
+function runPhileas(commandArgs, env, mayFail = false) {
   return new Promise((resolve) => {
     const runEnv = Object.fromEntries(
       Object.entries(process.env).filter(([k]) => !INHERITED_PREFIXES_REFUSED.some((p) => k.startsWith(p)))
@@ -167,7 +180,7 @@ function runPhileas(commandArgs, env) {
     child.stdout.on('data', (chunk) => (output += chunk));
     child.stderr.on('data', (chunk) => (output += chunk));
     child.on('close', (code) => {
-      if (code !== 0) {
+      if (code !== 0 && !mayFail) {
         console.log(output);
         console.log(bold(`\nThat run failed (exit ${code}), so the demo stops here.`));
         process.exit(code || 1);
@@ -184,7 +197,7 @@ function runPhileas(commandArgs, env) {
         lines.push(line);
         if (/^Follow: |^Journals in /.test(line)) lines.push('');
       }
-      resolve(lines);
+      resolve(mayFail ? { lines, code, output } : lines);
     });
   });
 }

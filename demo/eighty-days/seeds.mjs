@@ -25,3 +25,17 @@ export const PLANT_SEEDS = {
   'carnatic-log-error': { journey: 'hong-kong', seed: 'aouda', tripLength: 60, hop: 5 },
   'bradshaw-trap': { journey: 'hong-kong', seed: 'fogg', tripLength: 80, hop: 8 },
 };
+
+// The several-at-once section: four plants on together, five Routes from Hong
+// Kong. Measured 2026-09-28 with this seed: export-throw seen 4 times and
+// carnatic-log-error once, every Route ending at its first bug, since none was
+// known yet; the sledge's and the Henrietta's plants were planted and not
+// reached. Of five seeds tried, three gave two findings and two gave one, since
+// Export the ledger is on offer at every Hop and ends most Routes first.
+export const SEVERAL = {
+  journey: 'hong-kong',
+  seed: 'mudge',
+  routes: 5,
+  tripLength: 150,
+  plants: ['carnatic-log-error', 'export-throw', 'sail-console-error', 'coal-hang'],
+};

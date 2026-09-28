@@ -25,6 +25,34 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: Eighty Days stage two, a planted bug found, replayed, filed and traveled past
+
+**What landed.** Build step 8 of `DEMO_PLAN_EIGHTY_DAYS.md`, the last: six
+sections added to the guided demo, and to `PRESENTING.md`. A bug found, with
+the failed check naming the Hop and the finding's id; a trap that strands,
+with its own known findings file so its summary shows nothing found; the
+same Route replayed against the file as it was, back to the same Hop; the
+finding filed with `phileas known add` and the Route traveling past it; and
+four bugs planted at once, with each finding listed once and how often it
+was seen. The shared runner can now show a run that is meant to fail: it no
+longer stops the demo on that run's exit, and the section decides from the
+run's own journals whether the failure was the bug it was showing, and
+stops the demo with the whole output when it was not. So a seed that no
+longer reaches its bug says so, from the run just made, instead of carrying
+on.
+
+**Measured.** Run end to end, hidden: found at Trip hop 11 as finding
+`8ddb8f32`; stranded after Trip hop 8 with nothing found; the replay
+retraced all 11 Hops; filed, the Route passed its 40 Hops with the Hop
+marked known; and several at once, from seed `mudge`, found Export the
+ledger's error four times and the Carnatic's log error once, as measured.
+Of five seeds tried for that section, three found two bugs and two found
+only the export, because Game > Export the ledger is on offer at every Hop
+and a Route ends at its first unknown bug. Two of those Routes went 150
+Hops without drawing it, with it on offer at every menu Hop they took,
+which is less likely than chance suggests and too few Routes to call a
+bias.
+
 ## 2026-09-27: eight bugs planted in Eighty Days, each found by a seeded Route
 
 **What landed.** Build step 7 of `DEMO_PLAN_EIGHTY_DAYS.md`: the eight plants
