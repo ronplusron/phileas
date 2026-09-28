@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Thirteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -230,6 +230,27 @@ Seen again on 2026-09-28, from the native-dialog stub, on 1 Route in 6 with
 the first-line pause and 1 in 6 with its script doing nothing; whether the
 pause itself raises the rate was not measured, since 2024.11 was set aside
 in favor of the current release.
+
+## A native print dialog holds the Journey until someone closes it
+
+**Filed 2026-09-28, seen once on RStudio.** A Route chose File -> Print...,
+which opens macOS's print dialog. The engine's stub answers Electron's file
+and message dialogs as cancelled but does not reach printing, so the dialog
+appeared on the screen of whoever ran the Journey, though windows were
+hidden, and blocked RStudio's page. The still-responding check failed and
+the Route ended at once, as it should. The Journey then made no progress
+for about 16 minutes, with that RStudio still running, until the dialog was
+closed by hand; after that it carried on and finished. Nothing hung is
+cleaned up by itself, which breaks C5 on an unattended run.
+
+**Where it waits is not found.** Every step of the fixtures' teardown read
+on the day is bounded, the close included, which ends in SIGKILL, and the
+process was never killed, so the close was never reached. The wait is
+somewhere before it, possibly inside Playwright on a renderer the dialog
+blocks. RStudio's adapter now excludes anything that prints, which keeps
+RStudio's Routes off it and leaves this open for any application that
+prints. Two things would close it: stubbing printing in the main process
+the way the other dialogs are, and finding and bounding the wait.
 
 ## A stop sent to the `phileas` command alone does not stop the run
 

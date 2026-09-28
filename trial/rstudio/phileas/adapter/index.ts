@@ -154,6 +154,9 @@ export const rstudio: AppUnderTest = {
       // RStudio's own Quit, apart from the standard Quit the engine already
       // skips; and a second RStudio window, which a Route does not survey.
       ['&Session', '&Quit Session...'],
+      // The same command in the File menu, missed at first: a Route chose it
+      // on 2026-09-28 and RStudio quit.
+      ['&File', '&Quit Session...'],
       ['&Session', '&New Session'],
       // A crash on purpose, which is RStudio's own diagnostic, not a bug.
       ['&Help', 'Dia&gnostics', 'Crash RStudio Desktop (DA&NGER)'],
@@ -202,11 +205,18 @@ export const rstudio: AppUnderTest = {
     //
     // And a file dialog's path links above the Route's home; isAboveHome says
     // why.
+    //
+    // And anything that prints. File -> Print... opens macOS's print dialog,
+    // which the engine's stub does not reach: on 2026-09-28 it blocked
+    // RStudio's page, failed a Route, and held the Journey until it was
+    // closed by hand. Print entries appear only once a document is open, so
+    // by name rather than by path; `&` is taken out so "Pr&int..." matches.
     exclude: (candidate) =>
       (candidate.source === 'page' && / used by R session\b/.test(candidate.name)) ||
       /copilot/i.test(candidate.name.replace(/&/g, '')) ||
       (candidate.source === 'page' && candidate.role === 'option' && /\/R\.framework\//.test(candidate.name)) ||
-      (candidate.source === 'page' && candidate.role === 'link' && isAboveHome(candidate.name)),
+      (candidate.source === 'page' && candidate.role === 'link' && isAboveHome(candidate.name)) ||
+      /\bprint\b/i.test(candidate.name.replace(/&/g, '')),
   },
 
   /**

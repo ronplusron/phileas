@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and seventy-four tests, after a
+through, and `npm test` runs two hundred and seventy-five tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -101,11 +101,11 @@ throws, and one matched against a known finding. Two came from the first
 step-6 run on Positron: a shortcut printed as an arrow, and a text box that
 is not an input. Three keep a hidden run off the screen: a window asked to go
 full screen, one brought forward with moveTop, and a native dialog.
-Fourteen came with RStudio: its R library guard, what its adapter excludes
+Fifteen came with RStudio: its R library guard, what its adapter excludes
 from a file dialog and sets before launch, the shared home guard's new
 readings, a username kept out of signatures, an adapter's own signature
-patterns, a log created on its first write, and a staleness guard printed
-as unable to run.
+patterns, a log created on its first write, a staleness guard printed
+as unable to run, and nothing that prints.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -182,9 +182,9 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Thirteen defects are open,
-five of them deferred from the review of 2026-09-27 and two found tuning the
-Eighty Days demo. That file holds what is wrong, confirmed by reading the
+**Read `docs/DEFECTS.md` before writing any of it.** Fourteen defects are open,
+five of them deferred from the review of 2026-09-27, two found tuning the
+Eighty Days demo, and one found on RStudio. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `testbed/`.** Rail Itinerary is the
@@ -271,7 +271,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and seventy-four tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and seventy-five tests against `testbed/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

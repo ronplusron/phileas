@@ -25,6 +25,26 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: the first RStudio Journey of ten Routes, and two gaps in its exclusions
+
+**Ten Routes of 20 Hops, one at a time, windows hidden: eight passed and
+two failed, and neither failure was an RStudio bug.** Route 2 chose File ->
+Quit Session..., the same command as Session -> Quit Session..., which was
+excluded while this one was missed, and RStudio quit. Route 5 chose File ->
+Print..., whose native print dialog appeared on the screen and blocked the
+page; the Route failed at once, and the Journey then waited about 16
+minutes until the dialog was closed by hand, which `DEFECTS.md` now
+carries. The Journey took 21 minutes where about 4 were expected. No
+RStudio was left running, both guards were clean, and issue 18976's finding
+was not met.
+
+**Both gaps are closed in the adapter:** File -> Quit Session... is
+excluded, and so is anything whose name has the word print, since print
+entries appear only once a document is open. The Journey's end had added
+the three still-responding findings from those two Routes to
+`known-findings.json` as unfiled bugs; they were removed by hand, since
+there is no command to, and `OUTSTANDING.md` 1.16 asks for one.
+
 ## 2026-09-28: a log created on its first write, and a staleness guard printed as unable to run
 
 **The log check said it did not run on every Hop of a healthy RStudio

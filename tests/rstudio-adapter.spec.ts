@@ -60,3 +60,10 @@ test('before launch, native dialogs are switched off and the package library exi
   expect(prefs).toEqual({ native_file_dialogs: false });
   expect(fs.statSync(path.join(profile, 'home', 'R', 'library')).isDirectory()).toBe(true);
 });
+
+test('anything that prints is excluded, in the menu or the page, and a word merely containing print is not', async () => {
+  // File -> Print... opened macOS's print dialog, which the stub does not reach.
+  expect(await excluded({ source: 'menu', role: 'menuitem', name: 'Pr&int...', menuPath: ['&File', 'Pr&int...'] })).toBe(true);
+  expect(await excluded({ source: 'page', role: 'button', name: 'Print the current file' })).toBe(true);
+  expect(await excluded({ source: 'page', role: 'button', name: 'Blueprint' })).toBe(false);
+});
