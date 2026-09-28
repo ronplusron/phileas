@@ -230,9 +230,9 @@ const sections = [
       if (past.run.code !== 0) stop(past.run.output, 'The Route should have traveled past the filed bug, and did not.');
       const around = past.run.lines.filter((line) => {
         const m = line.match(/^route \d+ {2}hop (\d+) /);
-        return m ? Math.abs(Number(m[1]) - found.hop) <= 1 : /^route \d+ {2}(passed|failed|stranded) /.test(line);
+        return m && Math.abs(Number(m[1]) - found.hop) <= 1;
       });
-      print([...fixLines(past.run.lines), ...around, ...journeyEndLines(past.run.lines)]);
+      print([...fixLines(past.run.lines), ...around, ...endingLines(past.run.lines), ...journeyEndLines(past.run.lines)]);
       say(`At Trip hop ${found.hop} the line says the finding is known, with its issue, and the Route carries on to`);
       say('the end of its Trip. The summary still says it was seen, so a filed bug never goes quiet.');
     },
@@ -310,7 +310,8 @@ async function runFound() {
   if (met.where !== 'trip') seedMissed(run, FOUND.plant, FOUND);
   const shown = [
     ...fixLines(run.lines),
-    ...run.lines.filter((line) => /^route \d+ {2}(hop|failed|passed|stranded) /.test(line)),
+    ...run.lines.filter((line) => /^route \d+ {2}hop /.test(line)),
+    ...endingLines(run.lines),
     '',
     ...journeyEndLines(run.lines),
   ];
@@ -374,8 +375,27 @@ function fixLines(lines) {
 /** The last few Trip hop lines of a run, and its ending. */
 function tripTail(lines, count) {
   const hops = lines.filter((line) => /^route \d+ {2}hop /.test(line));
-  const ending = lines.filter((line) => /^route \d+ {2}(passed|failed|stranded) /.test(line));
-  return [...hops.slice(-count), ...ending, ''];
+  return [...hops.slice(-count), ...endingLines(lines), ''];
+}
+
+/**
+ * A run's ending lines, each with the indented lines of its reason under it: a
+ * failed Route's reason ends in a colon and names the check and the finding on
+ * the lines below. Taking the ending line alone left it ending on the colon.
+ * Stack frames are left out, since each carries the bundle's whole path, and
+ * the known findings summary names where the error was thrown.
+ */
+function endingLines(lines) {
+  const shown = [];
+  for (const [i, line] of lines.entries()) {
+    if (!/^route \d+ {2}(passed|failed|stranded) /.test(line)) continue;
+    shown.push(line);
+    for (const next of lines.slice(i + 1)) {
+      if (!/^ {2}/.test(next)) break;
+      if (!/^\s+at /.test(next)) shown.push(next);
+    }
+  }
+  return shown;
 }
 
 // --- run ---------------------------------------------------------------------

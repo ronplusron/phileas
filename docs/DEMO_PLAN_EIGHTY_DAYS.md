@@ -276,10 +276,12 @@ and there it earns its place:
   every use of money is a choice a watcher can see, and overpaying early
   can leave Fogg unable to buy the Henrietta later, which is one way to
   lose.
-- **The offer for Kiouni**, made by clicking: "Offer £1,000" to open, then
-  "Raise by £200" and "Stand firm", with the offer and the owner's answer
-  shown. The owner accepts at £2,000, so the offer never goes past it, and
-  the `kiouni-throw` plant fires on the raise that reaches it.
+- **The offer for Kiouni**, made by clicking: it stands at £1,000 on
+  arrival, "Raise the offer" moves it up the book's own ladder, £1,200,
+  £1,500, £1,800 and £2,000 (`KIOUNI_OFFERS` in `renderer/game.js`), and
+  "Stand firm" holds it, with the offer and the owner's answer shown. The
+  owner accepts at £2,000, so the offer never goes past it, and the
+  `kiouni-throw` plant fires on the raise that reaches it.
 
 **Why buttons and not a number field.** A Trip types only from a fixed
 list of values: empty, "a", "travel", "Carpet", "0", "1", "2", two spaces,
