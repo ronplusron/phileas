@@ -127,9 +127,17 @@ The adapter is in `trial/rstudio/`, pointed at a copy of the installed
 release with two fuses switched back on, since the installed release refuses
 the ordinary launch: for example
 `PHILEAS_APP_DIR=~/Applications/RStudio-2026.09.1-fuses.app phileas run trial/rstudio/phileas`.
-Four Routes of twenty Hops have run through it, one Route at a time, and the
-first RStudio finding came from them: closing a terminal logs a socket
-error. `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
+More than a hundred Routes have run through it, one Route at a time, and
+two new RStudio bugs came from them, each an error logged with nothing
+wrong on screen: closing a terminal, which RStudio's developers have since
+submitted a fix for, and refreshing an empty Find in Files pane. A third it
+met, opening a folder as a project from the web dialog, RStudio already
+knew of. A batch of 20 Routes of 40 Hops from each start was stopped partway
+on 2026-09-29, when a Route climbed out of its home through the file
+dialog's "Folder .." row. That row is now excluded, and rerunning the batch
+is next. The next Journey to finish re-signs the known findings under the
+current rules, which should merge the two Find in Files entries into one.
+`phileas run --fix <name>` chooses one of its Fixes: `script`, a new
 R script with code in it, `session-data`, code run in the console, or
 `r-markdown`, the dialog for a new R Markdown document. Its Journey fails the run when the machine's R libraries changed.
 `docs/PLAN.md` has the decision, what the adapter does and why, and what is
