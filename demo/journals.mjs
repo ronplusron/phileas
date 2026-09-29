@@ -16,6 +16,33 @@ export function entriesOf(folder, route) {
     .map((line) => JSON.parse(line));
 }
 
+/**
+ * How one Route of a run met its plant, read from its journal rather than from
+ * what was printed: a check that failed on a Trip hop, with the check's name
+ * and the finding's id; a check that failed inside the Fix, which would mean a
+ * Fix walked into a plant; a Route that stranded; or none of these.
+ */
+export function metIn(folder, route = 1) {
+  const entries = entriesOf(folder, route);
+  const failedOn = (kind) =>
+    entries.find((e) => e.kind === kind && (e.checks ?? []).some((c) => c.result === 'failed'));
+  const inFix = failedOn('fix-hop');
+  if (inFix) return { where: 'fix', hop: inFix.hop };
+  const trip = failedOn('trip-hop');
+  if (trip) {
+    const failed = trip.checks.filter((c) => c.result === 'failed');
+    return {
+      where: 'trip',
+      hop: trip.hop,
+      checks: failed.map((c) => c.check),
+      ids: failed.flatMap((c) => (c.findings ?? []).filter((f) => !f.known).map((f) => f.id)),
+    };
+  }
+  const outcome = entries.findLast((e) => e.kind === 'outcome');
+  const hops = entries.filter((e) => e.kind === 'trip-hop').length;
+  return outcome?.outcome === 'stranded' ? { where: 'stranded', hop: hops } : { where: 'none', outcome: outcome?.outcome ?? 'did not finish' };
+}
+
 /** What a replay must reproduce: each Trip hop's target, action, value and draws. `route` counts from 1. */
 export function hopsOf(folder, route) {
   return entriesOf(folder, route)
@@ -62,6 +89,14 @@ export function journeyEndLines(lines) {
   let end = start + 1;
   while (end < lines.length && under.test(lines[end])) end++;
   return lines.slice(start, end);
+}
+
+/** A run's printed lines with its known findings lines taken out, for a demo section about something else. */
+export function withoutJourneyEnd(lines) {
+  const end = journeyEndLines(lines);
+  if (!end.length) return lines;
+  const start = lines.indexOf(end[0]);
+  return [...lines.slice(0, start), ...lines.slice(start + end.length)];
 }
 
 /** Whether two runs made the same Hops, and at least one. Two empty runs agree on nothing. */

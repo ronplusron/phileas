@@ -19,20 +19,24 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkTally, entriesOf, hopsOf, journeyEndLines, retraceVerdict } from '../journals.mjs';
+import { checkTally, hopsOf, journeyEndLines, metIn, retraceVerdict } from '../journals.mjs';
 import {
   bold,
   demoFolders,
   dim,
+  endingLines,
   fixAndAfter,
+  fixLines,
   fromRepo,
   phileasShown,
   present,
   print,
   say,
+  seedMissed,
   showCode,
   startListing,
   stop,
+  tripTail,
 } from '../presenting.mjs';
 import { fateLines } from './measure.mjs';
 import { DEMO_SEED, PLANT_SEEDS, REPLAY_ROUTE, SEVERAL, TRIP_LENGTH } from './seeds.mjs';
@@ -324,80 +328,6 @@ async function ensureFound() {
   say(dim('(Running the found section first, since the demo started after it.)\n'));
   await runFound();
   say('');
-}
-
-/**
- * How one Route of a run met its plant, read from its journal rather than from
- * what was printed: a check that failed on a Trip hop, with the check's name
- * and the finding's id; a check that failed inside the Fix, which would mean a
- * Fix walked into a plant; a Route that stranded; or none of these.
- */
-function metIn(folder, route = 1) {
-  const entries = entriesOf(folder, route);
-  const failedOn = (kind) =>
-    entries.find((e) => e.kind === kind && (e.checks ?? []).some((c) => c.result === 'failed'));
-  const inFix = failedOn('fix-hop');
-  if (inFix) return { where: 'fix', hop: inFix.hop };
-  const trip = failedOn('trip-hop');
-  if (trip) {
-    const failed = trip.checks.filter((c) => c.result === 'failed');
-    return {
-      where: 'trip',
-      hop: trip.hop,
-      checks: failed.map((c) => c.check),
-      ids: failed.flatMap((c) => (c.findings ?? []).filter((f) => !f.known).map((f) => f.id)),
-    };
-  }
-  const outcome = entries.findLast((e) => e.kind === 'outcome');
-  const hops = entries.filter((e) => e.kind === 'trip-hop').length;
-  return outcome?.outcome === 'stranded' ? { where: 'stranded', hop: hops } : { where: 'none', outcome: outcome?.outcome ?? 'did not finish' };
-}
-
-/** Say, from the run just made, that its seed no longer reaches its plant, and stop. */
-function seedMissed(run, plant, p) {
-  stop(
-    run.output,
-    `With seed ${p.seed} and a Trip of ${p.tripLength} Hops, the ${plant} bug was not met the way it was measured to be. ` +
-      'Something changed the game, the draw or the survey since the seed was searched for, and the seed needs searching for again.'
-  );
-}
-
-/**
- * A run's Fix steps, one line each and a blank after, so a watcher sees the
- * Route start where the game starts and play its way to the section's place,
- * rather than seem to begin there.
- */
-function fixLines(lines) {
-  const steps = lines.filter((line) => /^route \d+ {2}fix /.test(line));
-  return steps.length ? [...steps, ''] : [];
-}
-
-/** The last few Trip hop lines of a run, and its ending. */
-function tripTail(lines, count) {
-  const hops = lines.filter((line) => /^route \d+ {2}hop /.test(line));
-  return [...hops.slice(-count), ...endingLines(lines), ''];
-}
-
-/**
- * A run's ending lines, each with the indented lines of its reason under it: a
- * failed Route's reason ends in a colon and names the check and the finding on
- * the lines below. Taking the ending line alone left it ending on the colon.
- * Stack frames are left out, since each carries the bundle's whole path, and
- * the known findings summary names where the error was thrown. A live run
- * prints Playwright's own failure report next, indented the same way and
- * headed "  1) ", so the reason ends there.
- */
-function endingLines(lines) {
-  const shown = [];
-  for (const [i, line] of lines.entries()) {
-    if (!/^route \d+ {2}(passed|failed|stranded) /.test(line)) continue;
-    shown.push(line);
-    for (const next of lines.slice(i + 1)) {
-      if (!/^ {2}/.test(next) || /^ {2}\d+\) /.test(next)) break;
-      if (!/^\s+at /.test(next)) shown.push(next);
-    }
-  }
-  return shown;
 }
 
 // --- run ---------------------------------------------------------------------

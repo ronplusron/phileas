@@ -217,11 +217,92 @@ person. Then show one raw line from a journal: what was on offer, what was
 chosen, both numbers drawn, and what changed. That record is what makes an
 exact replay possible.
 
+## 11. Stage two: planting a bug
+
+No command. Three bugs are planted in the application, each behind its own
+switch, so the build shown working in stage one is the build shown broken
+now, and any one can be shown alone. The guided command lists them. Say the
+most important thing about them: **a planted bug is found by a Journey, not
+steered to**. Each one's seed was searched for until a Route met the bug by
+its own draws, which is what shows the search working and not only the
+check.
+
+## 12. Found
+
+```
+RAIL_DEMO_PLANT=sleeper-throw RAIL_DEMO_KNOWN=demo/rail-itinerary/phileas/.phileas-journals/present/known-findings.json phileas run demo/rail-itinerary/phileas --fix open-alps --seed rail-demo --routes 1 --trip-length 50 --hop-delay-ms 300 --show front --follow
+```
+
+The bug: choosing the sleeper class in the Add a leg form throws an error in
+the page. Nothing steers the Route there. It wanders the timetable and the
+itineraries, opens Add a leg, and picks Sleeper at Trip hop 17.
+
+Point at the line for that Hop: the failed check, what it saw, and the
+finding's id, which is the same every time the same bug is seen. The Route
+ends there, not after its Trip: Hops after a known-broken state are noise.
+Then at the Journey's end: the finding was added to the known findings, as
+unfiled.
+
+## 13. Stranded, which is not a finding
+
+```
+RAIL_DEMO_PLANT=seating-trap RAIL_DEMO_KNOWN=demo/rail-itinerary/phileas/.phileas-journals/present/known-trap.json phileas run demo/rail-itinerary/phileas --fix open-alps --seed vienna --routes 1 --trip-length 50 --hop-delay-ms 300 --show front --follow
+```
+
+With this bug on, the itinerary screen has a Choose seats button, and it
+opens a dialog with nothing in it to press, which Escape does not close. The
+Route strands after Trip hop 7: no move left. Stranded is the third outcome,
+neither a pass nor a failure, and the summary shows no finding. A trap may be
+a bug or a corner with nothing more to do, and the engine reports what it saw
+rather than guessing which.
+
+## 14. Replayed
+
+Delete the known findings file, putting it back as it was before section 12,
+then run section 12's command again.
+
+The same Route, from the same seed, makes the same moves straight back to
+Trip hop 17 and the same finding. The guided command compares the two
+journals and says whether every Hop matched. This is what makes a finding
+worth filing: whoever gets the report can watch it happen again, from the
+seed alone. It had to be run against the file as it was, since a finding the
+file already holds no longer ends a Route; the next section is that.
+
+## 15. Filed, and traveled past
+
+```
+phileas known add <id> --issue demo-1 demo/rail-itinerary/phileas/.phileas-journals/present/known-findings.json
+```
+
+Then section 12's command once more. `<id>` is the finding's id from
+section 12; the guided command fills it in.
+
+Filed, the bug no longer ends the Route. Point at Trip hop 17 again: the line
+now says the finding is known, with its issue, and the Route carries on to the
+end of its Trip and passes. Point at the summary: it still lists the finding,
+as seen, with its issue. A filed bug stops blocking without going quiet, and
+one not seen in a later Journey is reported as possibly fixed or not reached.
+
+## 16. Several at once
+
+```
+RAIL_DEMO_PLANT=sleeper-throw,last-leg-blank RAIL_DEMO_KNOWN=demo/rail-itinerary/phileas/.phileas-journals/present/known-several.json phileas run demo/rail-itinerary/phileas --fix open-alps --seed vienna --routes 5 --trip-length 100 --hop-delay-ms 300 --show front
+```
+
+Two bugs on together, five Routes of a hundred Hops, a few minutes. The
+guided command prints how each Route ended, then the summary: each finding
+once, with how often it was seen. With this seed, removing the Alps
+itinerary's last leg blanks the window on two Routes, and the sleeper class
+throws on a third, at its very last Hop. The other two Routes pass. The trap
+is left out of this section, since a Route that strands on it ends with no
+finding and would hide whatever else it met.
+
 ## Questions that tend to come up
 
 - **Does it find bugs yet?** Some. Six checks run after every step, and
-  against Positron they found real bugs. This demo has none planted, so it
-  shows exploring and replaying rather than finding.
+  against Positron they found real bugs. Stage two of this demo plants three
+  bugs and finds each one; the rest of its planned bugs wait for checks that
+  are not built yet.
 - **Why not just record a tester?** A recording follows one path. Phileas takes
   new paths every run, and still repeats any one of them exactly.
 - **What if it clicks something dangerous?** The adapter's exclusion list keeps
