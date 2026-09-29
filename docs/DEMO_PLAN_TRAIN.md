@@ -239,6 +239,9 @@ runs the watched run; `npm run demo:train:present` runs the guided demo, which
 
 ## Build order for stage two
 
+Built 2026-09-28 for the three plants whose checks exist; `HISTORY.md` has
+what was measured. The rest are planted when their checks land.
+
 1. The three plants behind their flags, the known findings wiring, and the
    plant tests, each with its control.
 2. A seed for each plant, searched for, and one for several at once.

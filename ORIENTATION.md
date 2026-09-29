@@ -209,8 +209,11 @@ code, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
 short first look, planned in `docs/DEMO_PLAN_TRAIN.md`: `npm run demo:train`
-watches it and `npm run demo:train:present` presents it, through the runner
-both guided demos share, `demo/presenting.mjs`. Eighty Days is the longer
+watches it and `npm run demo:train:present` presents both its stages, through
+the runner both guided demos share, `demo/presenting.mjs`. Three bugs are
+planted in it, each switched on through `RAIL_DEMO_PLANT`, with a seed for
+each in `demo/rail-itinerary/seeds.mjs`; the rest of its planned bugs wait
+for their checks. Eighty Days is the longer
 one, a deterministic game after the novel, planned in
 `docs/DEMO_PLAN_EIGHTY_DAYS.md`: `npm run demo:eighty-days` watches it and
 `npm run demo:eighty-days:present` presents both stages: exploring, then

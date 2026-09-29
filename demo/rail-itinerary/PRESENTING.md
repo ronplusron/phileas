@@ -1,7 +1,10 @@
 # Presenting Phileas on Rail Itinerary
 
 A script for showing Phileas to people who have not seen it, technical or not.
-It runs roughly ten minutes, plus questions.
+The commands take about ten minutes, both stages together, measured with no
+pause between sections; with talking, allow twenty, plus questions. Sections
+1 to 10 are stage one, exploring; 11 to 16 are stage two, finding planted
+bugs, and `-- --from 11` starts there.
 
 **Two ways to give it.** `npm run demo:train:present` runs the sections below
 in order, with the application's window on screen, and waits for Enter

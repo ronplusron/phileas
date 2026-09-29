@@ -708,11 +708,11 @@ guided demo keeps its known findings file in a scratch folder and controls it:
 4. **Several at once.** Several plants on, from an empty file, and one
    Journey's summary listing each finding once with how often it was seen.
 
-**The wiring this needs, which the rail demo does not have.** The spec
-passes `knownFindings` to `runRoute` (`RunRouteOptions` in `src/route.ts`),
-and the global setup's returned function calls `finishJourney({
-journalsRoot, knownFindings })` (`src/start.ts`). The rail demo's spec and
-global setup pass neither. The spec also marks a survey-only Route skipped,
+**The wiring this needs, which the rail demo lacked until its own stage
+two.** The spec passes `knownFindings` to `runRoute` (`RunRouteOptions` in
+`src/route.ts`), and the global setup's returned function calls
+`finishJourney({ journalsRoot, knownFindings })` (`src/start.ts`). The rail
+demo's spec and global setup have done the same since 2026-09-28. The spec also marks a survey-only Route skipped,
 as the rail demo's now does, since `surveyed` is an outcome of its own.
 
 **The demo's known findings file is never committed.** Every Journey that
@@ -729,8 +729,8 @@ the search, and that is the point of a demo. So each stage-two section
 carries a Fix that starts near its bug and a seed measured to reach it
 within the Trip, and every change to the draw, the survey or the game
 moves those seeds. The engine's own pinned test seeds have moved that way
-more than once, and `HISTORY.md` records it; the rail demo never had a seed
-pinned to a bug, since its stage two was never built. **How the guided demo
+more than once, and `HISTORY.md` records it; the rail demo's own plant seeds,
+in `demo/rail-itinerary/seeds.mjs`, move the same way. **How the guided demo
 knows a seed still works:** it runs the section's Journey once, as the
 audience watches, then reads that run's journals for the finding. If it is
 not there, the section says, from that same run, that the seed no longer

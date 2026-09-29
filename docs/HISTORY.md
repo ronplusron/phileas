@@ -558,6 +558,67 @@ was not switched off, so whether it was in that snapshot is unknown. And the
 copy is not the artifact a user installs: two fuse bytes and the signature
 differ, and a finding from it says so.
 
+## 2026-09-28: Rail Itinerary stage two, three planted bugs found, and a failure's whole reason shown
+
+**Four open questions in the rail plan were settled first,** each chosen from
+options offered: the name stays Rail Itinerary; the styling stays enough to
+read on a projector; stage two shows its bugs one at a time and then several
+together, as Eighty Days does; and the seating chart's dialog is a native
+modal. An in-page overlay was weighed for that last one, since it would show
+the gap recorded for dialogs that are not native modals, and the native modal
+was chosen so the Route strands cleanly.
+
+**Three plants, the ones today's checks catch:** `sleeper-throw`, choosing
+Sleeper in the Add a leg form, caught as an uncaught error; `last-leg-blank`,
+removing an itinerary's last leg, caught as a window showing nothing; and
+`seating-trap`, a Choose seats button opening a modal with nothing to press,
+which strands. They follow Eighty Days' pattern: `--plant=<name>`,
+`RAIL_DEMO_PLANT`, one list in `plants.cjs`, and a name the list lacks refused
+before anything launches. The Choose seats button exists only while its plant
+is on, so stage one's pools do not change, and it has a name, since a Route
+cannot hop to a control without one. The rail spec and global setup now pass a
+known findings file, which `RAIL_DEMO_KNOWN` points elsewhere.
+`demo/rail-itinerary/tests/plants.spec.ts` steers to each plant with a control
+beside it; the trap's control is that its button is never on offer with the
+plant off, checked against a button that is.
+
+**Seeds, all from the Journey's own `open-alps` Fix, windows hidden, one plant
+at a time, each re-run once and matched:** `rail-demo` met the sleeper at Trip
+hop 17, the only one of ten seeds tried at 50 Hops; `lyon` blanked the window
+at hop 19, one of twelve; and `vienna` stranded on the trap at hop 7, one of
+four of eight seeds that did. Several at once, the two plants that make a
+finding, was harder: three Routes of 50 Hops met both with none of seven
+seeds, and five Routes of 100 with one of four, `vienna`, whose sleeper
+lands on the Trip's last Hop. `demo/rail-itinerary/seeds.mjs` records all of
+it.
+
+**The guided demo's stage two is sections 11 to 16,** and what Eighty Days'
+`present.mjs` did for the same sections moved into `demo/journals.mjs` and
+`demo/presenting.mjs` instead of being copied. Stage one's printouts leave
+out the two lines a Journey's end now prints about known findings, since they
+belong to stage two. The whole rail demo played hidden in 591 seconds, both
+stages, with every section passing.
+
+**A failed Route's reason ended on a colon in both guided demos.** Found
+playing Eighty Days hidden: the ending line reads "A check failed after hop
+11, which acted on button "Raise the offer":" and the lines under it were
+dropped. The first fix took the indented lines under it, and was checked
+against `phileas show` output only. Playing stage two live then showed it
+pulling in Playwright's whole failure report, which a live run prints next at
+the same indent, including the page's HTML. The second fix stops at that
+report's "  1) " header, checked against live output from both demos. The
+Eighty Days plan's Kiouni offer was corrected to match the game: "Raise the
+offer" and "Stand firm", up the ladder in `KIOUNI_OFFERS`.
+
+**One run hung, and the Mac sleeping explains it.** A Route reported "the
+window closed" at a Hop that clicked Itineraries, then held the Journey at
+teardown for over ten minutes. Measured before stopping it: the application
+was still running with its page open, so what had closed was Playwright's page
+object. The session working on the engine saw the same two findings at the
+same moment on RStudio and put it down to the lid being closed for about five
+seconds. The rerun passed, and both defects are fixed: see the entries above
+on a lost connection and on a teardown waiting on a screenshot.
+
 ## 2026-09-28: Eighty Days chooses its Fix with --fix, shows it before its Trip, and a leak in the guided runner
 
 **Found rehearsing the guided demo with the window shown.**

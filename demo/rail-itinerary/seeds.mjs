@@ -18,8 +18,9 @@ export const PLANT_SEEDS = {
 // on it ends with no finding and hides whatever else it would have met.
 // Measured 2026-09-28 with this seed: last-leg-blank on Routes 1 and 2, at Trip
 // hops 81 and 72, and sleeper-throw on Route 4 at hop 100, the Trip's last, so
-// a Trip one Hop shorter loses it. Of the ten seeds tried, it is the only one
-// whose Routes met both; three Routes of fifty met both with none.
+// a Trip one Hop shorter loses it. Three Routes of fifty met both with none of
+// the seven seeds tried, and five Routes of a hundred with one of four:
+// rail-demo and munich met only the sleeper, lyon only the last leg.
 export const SEVERAL = {
   fix: 'open-alps',
   seed: 'vienna',
