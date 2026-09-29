@@ -94,3 +94,23 @@ test("the console errors R's restart makes are accepted, and only those", () => 
   expect(accept('Failed to load resource: net::ERR_NAME_NOT_RESOLVED')).toBe(false);
   expect(accept('Failed to load resource: net::ERR_EMPTY_RESPONSE and then something')).toBe(false);
 });
+
+test("a client exception keeps its message and first frame, without the build's line numbers and versions", async () => {
+  const { signatureOf } = await import('../src/index');
+  const logged = (line: number, version: string) =>
+    signatureOf(
+      'log-error',
+      `rsession-ann.log: [rsession-ann] ERROR CLIENT EXCEPTION (rsession-ann): (TypeError) : Cannot set properties of null (setting 'resultsCount');` +
+        `|||org/rstudio/studio/client/workbench/views/output/find/FindOutputPresenter.java#${line}::findInFilesBeginFind` +
+        `|||org/rstudio/core/client/command/CommandEvent.java#40::dispatch` +
+        `|||Client-ID: 5b1f0c8e-2d47-4a93-b6e1-9c3a7f0d2e84|||User-Agent: Mozilla/5.0 RStudio/${version} Chrome/148.0.7778.280`,
+      'ann',
+      rstudio.varyingInSignatures
+    );
+  expect(logged(537, '2026.09.1+183')).toBe(
+    "log-error: rsession-<user>.log: [rsession-<user>] ERROR CLIENT EXCEPTION (rsession-<user>): (TypeError) : Cannot set properties of null (setting 'resultsCount'); " +
+      'org/rstudio/studio/client/workbench/views/output/find/FindOutputPresenter.java::findInFilesBeginFind'
+  );
+  // The next release: the frame moved and the versions changed, and it is the same finding.
+  expect(logged(541, '2026.12.0+50')).toBe(logged(537, '2026.09.1+183'));
+});

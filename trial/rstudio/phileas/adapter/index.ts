@@ -120,6 +120,13 @@ export const rstudio: AppUnderTest = {
   varyingInSignatures: [
     [/Unknown handle: "[0-9A-F]{8}"/g, 'Unknown handle: "<handle>"'],
     [/Client-ID: [0-9a-f-]{36}/g, 'Client-ID: <client>'],
+    // A client exception's whole stack, which RStudio writes on the one line,
+    // joined by |||, so the engine's rule of keeping only the first frame
+    // without its position never applies. Kept: the first frame, without its
+    // line number; dropped: the rest, the Client-ID and the User-Agent, whose
+    // RStudio, Chrome and Electron versions changed the signature with every
+    // release. Asked for on 2026-09-29.
+    [/\|\|\|([^|]*?)#-?\d+::([^|]*)(?:\|\|\|.*)?$/g, ' $1::$2'],
   ],
 
   async beforeLaunch(userDataDir: string): Promise<void> {

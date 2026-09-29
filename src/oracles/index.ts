@@ -10,7 +10,7 @@ import {
   type UniversalCheck,
 } from '../app-under-test';
 import type { JournaledCheck } from '../journal';
-import { findingId, refuseUnfitVarying, signatureOf, type KnownFindings } from '../known.mjs';
+import { currentSignature, findingId, refuseUnfitVarying, signatureOf, type KnownFindings } from '../known.mjs';
 
 /**
  * The checks, run after every Hop, Fix steps included (R15).
@@ -202,7 +202,10 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   assertAppChecks(appChecks);
   const varying = cfg.varyingInSignatures ?? [];
   refuseUnfitVarying(varying);
-  const known = new Map((options.known?.entries ?? []).map((entry) => [entry.signature, entry]));
+  // Under the rules in force now, so an entry written before a rule changed
+  // still matches from a Route's first Hop, not only once a Journey's end has
+  // rewritten the file.
+  const known = new Map((options.known?.entries ?? []).map((entry) => [currentSignature(entry, varying), entry]));
   const responsiveTimeoutMs = options.responsiveTimeoutMs ?? DEFAULT_RESPONSIVE_TIMEOUT_MS;
 
   // Which of the application's windows this page is, read once at the start,
@@ -549,7 +552,7 @@ type Verdict = string[] | { notRun: string };
 async function judged(
   check: string,
   narrowing: Narrowing | undefined,
-  known: ReadonlyMap<string, { readonly issue?: string }>,
+  known: ReadonlyMap<string, { readonly issue?: string; readonly falseAlarm?: string }>,
   varying: readonly (readonly [RegExp, string])[],
   run: () => Promise<Verdict> | Verdict
 ): Promise<JournaledCheck> {
@@ -577,6 +580,7 @@ async function judged(
         signature,
         known: entry !== undefined,
         ...(entry?.issue ? { issue: entry.issue } : {}),
+        ...(entry?.falseAlarm !== undefined ? { falseAlarm: entry.falseAlarm } : {}),
       },
     };
   });

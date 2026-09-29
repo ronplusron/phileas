@@ -25,6 +25,64 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-29: signatures that survive a new build, and a file that keeps itself current
+
+**Two ways a known finding stopped matching,** found by reading the files.
+Issue 62's two RStudio entries each held the whole one-line log: RStudio
+writes a client exception's stack on one line, joined by `|||`, so the
+engine's rule of keeping only the first frame without its position never
+applied, and each signature carried every frame's line number and the
+User-Agent's RStudio, Chrome and Electron versions. The next release would
+have reported the bug as new and the filed one as possibly fixed. And five
+of Positron's 50 entries were one message differing only in its R session
+id, with a notebook session and a channel id in two more, each a finding
+that could never match again.
+
+**Three changes.** The engine takes out any UUID, and any run of eight or
+more hex digits standing alone, as `<id>`; every varying id met so far had
+that shape, and in Positron's file nothing else matched it. A value inside
+a word, or written `0x...`, is kept, so an error code survives. Adapter
+patterns now run before the engine's, so an adapter's own choice stands.
+RStudio's adapter trims a client exception to its message and first frame,
+without the line number. And stored entries are re-signed under the rules
+in force: a Route matches them that way from its first Hop, and a Journey's
+end rewrites the file, merging entries that now agree, keeping the issue or
+false alarm and the earliest date, and leaving entries whose states clash
+as they are, named in the summary.
+
+**Checked on copies of both real files first.** RStudio's two issue-62
+entries merge into one, and all four of the original log lines, signed
+today, land on it. Positron's five session entries merge into one, and two
+more are re-signed; no clash, and nothing else changed. The real files are
+left for each application's next Journey to rewrite, which its summary
+will list. Tests cover the id rule and what it keeps, the order of adapter
+and engine, re-signing with merges and a clash, a Journey's end rewriting
+the file, and RStudio's trimmed stack surviving a new release.
+
+## 2026-09-29: known findings in three states, with commands to dismiss and remove one
+
+**The question** was how to keep false alarms apart from bugs, raised as a
+thought: the permanent known issues, a queue of potential bugs to review,
+and confirmed false alarms. Two already existed in `known-findings.json`:
+an entry with an issue is a known bug, and the unfiled entries a Journey's
+end adds are the queue. False alarms had no place. Removing one by hand
+only lasted until the next Journey saw it and added it back, and narrowing
+a check takes adapter code meant for patterns, not one signature.
+
+**Built, with both commands asked for together:** an entry may carry
+`falseAlarm`, its reason, and the reader refuses an entry that is both
+filed and a false alarm. `phileas known dismiss <id> --reason <why>` marks
+one; a Route carries past it, a Hop's line and a Journey's summary name it
+a false alarm apart from bugs, and a Journey's end never adds it back,
+since the entry stays. A filed finding cannot be dismissed, and filing a
+dismissed one clears its reason. `phileas known remove <id>` takes one out,
+for an entry that should stop matching rather than keep matching: a bug
+since fixed, so its return reads as a regression; a finding the engine
+caused; one left by a deliberate test; or one whose signature's form
+changed. Four tests cover the states, the refusals, a Journey's end over
+both, and the command's parsing, and the command was tried on a copy of
+RStudio's findings.
+
 ## 2026-09-29: a Route climbed out of its home, and opening a file or folder is stubbed
 
 **A batch of 20 Routes of 40 Hops from each start was stopped partway,**

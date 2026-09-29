@@ -856,6 +856,18 @@ question:**
 
 **Built 2026-09-27.** `HISTORY.md` has what landed and how it was proved.
 
+**A third state and two commands, 2026-09-29,** from a thought that false
+alarms need a place of their own beside known bugs and the queue of
+unfiled ones: `phileas known dismiss` marks a finding a false alarm with
+its reason, and `phileas known remove` takes one out. `HISTORY.md` has
+what each is for.
+
+**Signatures that outlast a build and a rule change, 2026-09-29,** asked
+for as a check Phileas makes itself rather than a review: ids of a common
+shape are taken out by the engine, RStudio's one-line stacks are trimmed
+in its adapter, and stored entries are re-signed under the rules in force,
+at a Route's start and a Journey's end, merging those that now agree.
+
 ### Stepping away from the trial: RStudio Desktop
 
 **Decided 2026-09-28, in the words it was put:** "Let's step away from this

@@ -5,6 +5,8 @@
 //   phileas show [run folder, seed folder, journal file or seed]
 //   phileas survey [config]
 //   phileas known add <id> --issue <issue> [file]
+//   phileas known dismiss <id> --reason <why> [file]
+//   phileas known remove <id> [file]
 //
 // `run` runs a Journey with its settings changed for one run. Real flags need
 // a command of their own, because Playwright refuses any it does not know
@@ -22,7 +24,9 @@
 //
 // `known add` marks a finding filed with its issue. A Journey adds what it found
 // to the known findings by itself when it ends, unfiled; this records the issue
-// once somebody has filed it.
+// once somebody has filed it. `known dismiss` marks one a false alarm, with the
+// reason, so Routes keep carrying past it and it is never added back; `known
+// remove` takes one out, so the next time it is seen it is reported as new.
 //
 // docs/HISTORY.md has the reasoning for each.
 //
@@ -39,7 +43,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderJournal } from '../src/report/render.mjs';
-import { markFiled } from '../src/known.mjs';
+import { dismissFinding, markFiled, removeFinding } from '../src/known.mjs';
 
 /** Flags that take a value, and the variable each travels in. */
 const FLAGS = /** @type {Record<string, string>} */ ({
@@ -69,6 +73,8 @@ const USAGE = `Usage:
   phileas show [what]
   phileas survey [config]
   phileas known add <id> --issue <issue> [file]
+  phileas known dismiss <id> --reason <why> [file]
+  phileas known remove <id> [file]
 
 run: run a Journey, with its settings changed for this run only.
   config    A Playwright config file, or a folder holding playwright.config.ts.
@@ -98,7 +104,20 @@ known add: mark a known finding as filed. A Journey adds each finding it
   meets to the known findings, unfiled, when it ends, and prints its id.
   id        The finding's id, or enough of its start to name one.
   --issue   Where it was filed, such as ronplusron/phileas#44.
-  file      The known findings. Defaults to ${DEFAULT_KNOWN}.`;
+  file      The known findings. Defaults to ${DEFAULT_KNOWN}.
+
+known dismiss: mark a known finding a false alarm: Routes keep carrying past
+  it, a Journey's summary counts it apart from bugs, and it is never added
+  back. A filed finding is refused.
+  id        As for add.
+  --reason  Why it is not a bug.
+  file      As for add.
+
+known remove: take a known finding out, so the next time it is seen it is
+  reported as new: for a bug since fixed, a finding the engine itself caused,
+  or one left by a deliberate test.
+  id        As for add.
+  file      As for add.`;
 
 /**
  * @param {string} message
@@ -114,7 +133,9 @@ function refuse(message) {
  *   | { command: 'run', config: string, settings: Record<string, string>, passThrough: string[] }
  *   | { command: 'show', what: string | undefined }
  *   | { command: 'survey', config: string }
- *   | { command: 'known-add', id: string, issue: string, file: string }} Parsed
+ *   | { command: 'known-add', id: string, issue: string, file: string }
+ *   | { command: 'known-dismiss', id: string, reason: string, file: string }
+ *   | { command: 'known-remove', id: string, file: string }} Parsed
  */
 
 /**
@@ -143,25 +164,36 @@ export function parse(args) {
   }
   if (command === 'known') {
     const [sub, ...args] = rest;
-    if (sub !== 'add') throw new Error(`known takes add, and was given ${sub ?? 'nothing'}`);
+    if (sub !== 'add' && sub !== 'dismiss' && sub !== 'remove') {
+      throw new Error(`known takes add, dismiss or remove, and was given ${sub ?? 'nothing'}`);
+    }
+    // The one flag each takes: add its issue, dismiss its reason, remove none.
+    const flag = sub === 'add' ? '--issue' : sub === 'dismiss' ? '--reason' : undefined;
     /** @type {string | undefined} */ let id;
-    /** @type {string | undefined} */ let issue;
+    /** @type {string | undefined} */ let value;
     /** @type {string | undefined} */ let file;
     for (let i = 0; i < args.length; i += 1) {
       const arg = /** @type {string} */ (args[i]);
-      if (arg === '--issue' || arg.startsWith('--issue=')) {
-        if (issue !== undefined) throw new Error('--issue was given twice');
-        issue = arg.includes('=') ? arg.slice('--issue='.length) : args[(i += 1)];
-        if (!issue || issue.startsWith('-')) throw new Error('--issue needs a value');
+      if (flag && (arg === flag || arg.startsWith(`${flag}=`))) {
+        if (value !== undefined) throw new Error(`${flag} was given twice`);
+        value = arg.includes('=') ? arg.slice(`${flag}=`.length) : args[(i += 1)];
+        if (!value || value.startsWith('-')) throw new Error(`${flag} needs a value`);
       } else if (arg.startsWith('-')) {
         throw new Error(`unknown flag ${arg}`);
       } else if (id === undefined) id = arg;
       else if (file === undefined) file = arg;
-      else throw new Error(`known add takes an id and a file, and was given ${arg} as well`);
+      else throw new Error(`known ${sub} takes an id and a file, and was given ${arg} as well`);
     }
-    if (!id) throw new Error('known add needs the id of a finding');
-    if (!issue) throw new Error('known add needs --issue, saying where the finding was filed');
-    return { command: 'known-add', id, issue, file: file ?? DEFAULT_KNOWN };
+    if (!id) throw new Error(`known ${sub} needs the id of a finding`);
+    if (sub === 'add') {
+      if (!value) throw new Error('known add needs --issue, saying where the finding was filed');
+      return { command: 'known-add', id, issue: value, file: file ?? DEFAULT_KNOWN };
+    }
+    if (sub === 'dismiss') {
+      if (!value) throw new Error('known dismiss needs --reason, saying why it is not a bug');
+      return { command: 'known-dismiss', id, reason: value, file: file ?? DEFAULT_KNOWN };
+    }
+    return { command: 'known-remove', id, file: file ?? DEFAULT_KNOWN };
   }
   if (command !== 'run') {
     throw new Error(
@@ -356,6 +388,31 @@ function knownAdd(id, issue, file) {
   }
 }
 
+/**
+ * Dismiss or remove a known finding, saying what was done.
+ * @param {'dismiss' | 'remove'} action
+ * @param {string} id
+ * @param {string} file
+ * @param {string} [reason]
+ */
+function knownChange(action, id, file, reason) {
+  if (!fs.existsSync(file)) {
+    refuse(`there is no ${file}; a Journey writes it when it ends, or give the file`);
+  }
+  try {
+    if (action === 'dismiss') {
+      const dismissed = dismissFinding(file, id, reason ?? '');
+      console.log(`${dismissed.id} is marked a false alarm (${dismissed.falseAlarm}): ${dismissed.signature}`);
+    } else {
+      const removed = removeFinding(file, id);
+      console.log(`${removed.id} is removed, and will be reported as new if it is seen again: ${removed.signature}`);
+    }
+  } catch (error) {
+    console.error(`phileas: ${/** @type {Error} */ (error).message}`);
+    process.exit(2);
+  }
+}
+
 function main() {
   /** @type {Parsed} */
   let parsed;
@@ -369,6 +426,8 @@ function main() {
   // One Route is enough to see the start, since every Route starts the same way.
   else if (parsed.command === 'survey') run(parsed.config, { PHILEAS_SURVEY: '1', PHILEAS_ROUTES: '1' }, []);
   else if (parsed.command === 'known-add') knownAdd(parsed.id, parsed.issue, parsed.file);
+  else if (parsed.command === 'known-dismiss') knownChange('dismiss', parsed.id, parsed.file, parsed.reason);
+  else if (parsed.command === 'known-remove') knownChange('remove', parsed.id, parsed.file);
   else run(parsed.config, parsed.settings, parsed.passThrough);
 }
 

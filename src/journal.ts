@@ -73,6 +73,8 @@ export interface JournaledCheck {
     readonly signature: string;
     readonly known: boolean;
     readonly issue?: string;
+    /** The reason, where the finding is known as a false alarm rather than a bug. */
+    readonly falseAlarm?: string;
   }[];
 }
 

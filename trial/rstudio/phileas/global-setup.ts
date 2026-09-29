@@ -29,7 +29,7 @@ export default function globalSetup(): () => void {
   return () => {
     runEveryCheck([
       () => {
-        finishJourney({ journalsRoot, knownFindings });
+        finishJourney({ journalsRoot, knownFindings, varying: rstudio.varyingInSignatures });
       },
       checkHome,
       checkLibraries,

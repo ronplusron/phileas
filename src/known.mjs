@@ -22,6 +22,7 @@ import path from 'node:path';
  *   check: string,
  *   signature: string,
  *   issue?: string,
+ *   falseAlarm?: string,
  *   added: string,
  *   source: 'command' | 'journey',
  * }} KnownFinding
@@ -35,7 +36,7 @@ import path from 'node:path';
 
 /**
  * What a Route found, as its journal records it on a Hop.
- * @typedef {{ id: string, signature: string, known: boolean, issue?: string }} FindingRecord
+ * @typedef {{ id: string, signature: string, known: boolean, issue?: string, falseAlarm?: string }} FindingRecord
  */
 
 /**
@@ -62,6 +63,16 @@ const VARYING = [
   // Which Hop it happened on, and how long anything took.
   [/\bhop \d+'s\b/g, "hop N's"],
   [/\b\d+ ?ms\b/g, 'N ms'],
+  // Ids an application makes fresh, which every one met so far has looked
+  // like: a UUID, or a run of eight or more hexadecimal digits standing alone.
+  // RStudio's terminal handle "3968F855" and its Client-ID, Positron's R
+  // session "r-058df68c", its runtime "003663c3...", a notebook session and a
+  // channel, all seen on 2026-09-28 and 2026-09-29. Each gave the same bug a new
+  // signature per Route. A meaningful value of that shape, such as an error
+  // code, is merged by this too; an adapter keeps one where it matters with a
+  // pattern of its own, since those run first.
+  [/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '<id>'],
+  [/(?<![0-9A-Za-z])[0-9A-Fa-f]{8,}(?![0-9A-Za-z])/g, '<id>'],
 ];
 
 /**
@@ -80,7 +91,8 @@ const VARYING = [
  * a finding filed on one machine matching on another.
  *
  * An adapter's own patterns for what varies in its application's messages,
- * `varyingInSignatures`, apply after the engine's.
+ * `varyingInSignatures`, apply before the engine's, so an adapter's choice
+ * for a value stands where the engine's would also match it.
  * @param {string} check
  * @param {string} violation
  * @param {string | undefined} [user] whose name to take out; the running user's by default
@@ -91,7 +103,7 @@ export function signatureOf(check, violation, user = runningUser(), varying = []
   const [first = '', ...rest] = violation.split('\n');
   const frame = rest.map((line) => line.trim()).find((line) => line.startsWith('at '));
   let text = first.trim();
-  for (const [pattern, replacement] of [...VARYING, ...varying]) text = text.replace(pattern, replacement);
+  for (const [pattern, replacement] of [...varying, ...VARYING]) text = text.replace(pattern, replacement);
   const where = frame?.replace(/\s*\(?(?:file:\/\/)?[^()]*?([^/()]+?)(?::\d+)+\)?$/, ' ($1)');
   return withoutUser(`${check}: ${text.trim()}${where ? ` ${where}` : ''}`, user);
 }
@@ -193,7 +205,11 @@ export function readKnownFindings(file) {
                 ? 'has a source that is neither journey nor command'
                 : entry.issue !== undefined && typeof entry.issue !== 'string'
                   ? 'has an issue that is not text'
-                  : undefined;
+                  : entry.falseAlarm !== undefined && (typeof entry.falseAlarm !== 'string' || !entry.falseAlarm.trim())
+                    ? 'has a false alarm with no reason'
+                    : entry.issue !== undefined && entry.falseAlarm !== undefined
+                      ? 'is both filed as a bug and marked a false alarm, and cannot be both'
+                      : undefined;
     if (problem) throw new Error(`Known finding ${index + 1} in ${file} ${problem}: ${entry.signature}`);
   });
   return {
@@ -223,22 +239,90 @@ function writeKnownFindings(file, entries) {
  * @returns {KnownFinding}
  */
 export function markFiled(file, id, issue) {
+  const { entries, match } = findOne(file, id);
+  // The source stays where the finding came from; filing it adds an issue and
+  // changes nothing about how it was found. Filing a false alarm says it was
+  // a bug after all, so its reason goes.
+  const { falseAlarm: _dropped, ...rest } = match;
+  /** @type {KnownFinding} */
+  const filed = { ...rest, issue };
+  writeKnownFindings(file, entries.map((entry) => (entry === match ? filed : entry)));
+  return filed;
+}
+
+/**
+ * How an entry stands, for a person reading a list of them.
+ * @param {KnownFinding} entry
+ * @returns {string}
+ */
+function standing(entry) {
+  return entry.issue ?? (entry.falseAlarm !== undefined ? 'false alarm' : 'unfiled');
+}
+
+/**
+ * The one entry an id, or the start of one, names, with every entry. Refuses
+ * an id that matches nothing, or more than one, listing what is there.
+ * @param {string} file
+ * @param {string} id
+ * @returns {{ entries: KnownFinding[], match: KnownFinding }}
+ */
+function findOne(file, id) {
   const { entries } = readKnownFindings(file);
   const matches = entries.filter((entry) => entry.id.startsWith(id));
   if (matches.length !== 1) {
-    const listed = entries.map((entry) => `  ${entry.id}  ${entry.issue ?? 'unfiled'}  ${entry.signature}`).join('\n');
+    const listed = entries.map((entry) => `  ${entry.id}  ${standing(entry)}  ${entry.signature}`).join('\n');
     throw new Error(
       `${matches.length ? `${matches.length} findings start with` : 'No finding has'} the id ${id} in ${file}.` +
         (listed ? `\n\nThe findings there:\n${listed}` : ' The file holds none yet.')
     );
   }
-  const [match] = /** @type {[KnownFinding]} */ (matches);
-  // The source stays where the finding came from; filing it adds an issue and
-  // changes nothing about how it was found.
+  return { entries, match: /** @type {KnownFinding} */ (matches[0]) };
+}
+
+/**
+ * Mark a finding a false alarm, with the reason, by its id or the start of it.
+ *
+ * Asked for on 2026-09-29. A false alarm stays in the file, so a Route keeps
+ * carrying past it and a Journey's end never adds it back, which a removed
+ * entry would be; a Journey's summary counts it apart from bugs. A filed
+ * finding is refused: a bug with an issue is not a false alarm, and one whose
+ * issue turned out not to be a bug is removed, then dismissed when next seen.
+ * @param {string} file
+ * @param {string} id
+ * @param {string} reason
+ * @returns {KnownFinding}
+ */
+export function dismissFinding(file, id, reason) {
+  if (!reason.trim()) throw new Error('A false alarm needs a reason, saying why it is not a bug.');
+  const { entries, match } = findOne(file, id);
+  if (match.issue) {
+    throw new Error(
+      `${match.id} is filed as ${match.issue}, and a filed bug is not a false alarm. If that issue ` +
+        `turned out not to be a bug, remove the finding, and dismiss it when it is seen again.`
+    );
+  }
   /** @type {KnownFinding} */
-  const filed = { ...match, issue };
-  writeKnownFindings(file, entries.map((entry) => (entry === match ? filed : entry)));
-  return filed;
+  const dismissed = { ...match, falseAlarm: reason.trim() };
+  writeKnownFindings(file, entries.map((entry) => (entry === match ? dismissed : entry)));
+  return dismissed;
+}
+
+/**
+ * Take a finding out of the file, by its id or the start of it, so the next
+ * time it is seen it is reported as new.
+ *
+ * For an entry that should stop matching rather than keep matching: a bug the
+ * application fixed, so its return reads as a regression; a finding the
+ * engine itself caused, now fixed; an entry left by a deliberate test; one
+ * whose signature can no longer match since its form changed.
+ * @param {string} file
+ * @param {string} id
+ * @returns {KnownFinding}
+ */
+export function removeFinding(file, id) {
+  const { entries, match } = findOne(file, id);
+  writeKnownFindings(file, entries.filter((entry) => entry !== match));
+  return match;
 }
 
 /**
@@ -292,11 +376,84 @@ export function findingsInRun(runFolder) {
 }
 
 /**
+ * A stored signature brought to the rules in force now. A signature keeps the
+ * text the rules act on, so applying today's rules to it gives what an
+ * observation of the same finding gives today; the rules leave text they
+ * already changed alone.
+ * @param {KnownFinding} entry
+ * @param {readonly (readonly [RegExp, string])[]} [varying]
+ * @returns {string}
+ */
+export function currentSignature(entry, varying = []) {
+  const prefix = `${entry.check}: `;
+  const text = entry.signature.startsWith(prefix) ? entry.signature.slice(prefix.length) : entry.signature;
+  return signatureOf(entry.check, text, undefined, varying);
+}
+
+/**
+ * Every entry brought to the rules in force now, and entries that now share
+ * a signature merged into one: the issue or false alarm kept, the earliest
+ * date. Entries whose states clash, two different issues or a filed bug and
+ * a false alarm, are left as they are and named, since only a person can
+ * say which is right.
+ *
+ * Asked for on 2026-09-29: a rule changed, in the engine or an adapter, left
+ * every entry written before it unable to match, silently.
+ * @param {readonly KnownFinding[]} entries
+ * @param {readonly (readonly [RegExp, string])[]} [varying]
+ * @returns {{ entries: KnownFinding[], resigned: { from: string, to: string }[], merged: { into: string, from: string[] }[], clashes: string[][] }}
+ */
+export function resignKnownFindings(entries, varying = []) {
+  /** @type {Map<string, KnownFinding[]>} */
+  const groups = new Map();
+  for (const entry of entries) {
+    const signature = currentSignature(entry, varying);
+    groups.set(signature, [...(groups.get(signature) ?? []), entry]);
+  }
+  /** @type {KnownFinding[]} */
+  const result = [];
+  /** @type {{ from: string, to: string }[]} */
+  const resigned = [];
+  /** @type {{ into: string, from: string[] }[]} */
+  const merged = [];
+  /** @type {string[][]} */
+  const clashes = [];
+  for (const [signature, group] of groups) {
+    const issues = [...new Set(group.flatMap((entry) => (entry.issue ? [entry.issue] : [])))];
+    const alarms = group.flatMap((entry) => (entry.falseAlarm !== undefined ? [entry.falseAlarm] : []));
+    if (group.length > 1 && (issues.length > 1 || (issues.length && alarms.length))) {
+      clashes.push(group.map((entry) => entry.id));
+      result.push(...group);
+      continue;
+    }
+    const [first] = /** @type {[KnownFinding]} */ ([...group].sort((a, b) => a.added.localeCompare(b.added)));
+    const id = findingId(signature);
+    /** @type {KnownFinding} */
+    const entry = {
+      id,
+      check: first.check,
+      signature,
+      added: first.added,
+      source: first.source,
+      ...(issues[0] ? { issue: issues[0] } : {}),
+      ...(!issues.length && alarms.length ? { falseAlarm: /** @type {string} */ (alarms[0]) } : {}),
+    };
+    result.push(entry);
+    if (group.length > 1) merged.push({ into: id, from: group.map((each) => each.id) });
+    else if (first.signature !== signature) resigned.push({ from: first.id, to: id });
+  }
+  return { entries: result, resigned, merged, clashes };
+}
+
+/**
  * What a Journey's end did to the known findings.
  * @typedef {{
  *   added: { id: string, signature: string, sightings: number }[],
- *   known: { id: string, signature: string, issue?: string, sightings: number }[],
+ *   known: { id: string, signature: string, issue?: string, falseAlarm?: string, sightings: number }[],
  *   notSeen: KnownFinding[],
+ *   resigned?: { from: string, to: string }[],
+ *   merged?: { into: string, from: string[] }[],
+ *   clashes?: string[][],
  * }} JourneyFindings
  */
 
@@ -310,28 +467,36 @@ export function findingsInRun(runFolder) {
  * @param {string} runFolder
  * @param {string} file
  * @param {string} [today]
+ * @param {readonly (readonly [RegExp, string])[]} [varying] the adapter's signature patterns
  * @returns {JourneyFindings}
  */
-export function recordJourneyFindings(runFolder, file, today = new Date().toISOString().slice(0, 10)) {
-  const { entries } = readKnownFindings(file);
+export function recordJourneyFindings(runFolder, file, today = new Date().toISOString().slice(0, 10), varying = []) {
+  const brought = resignKnownFindings(readKnownFindings(file).entries, varying);
+  const { entries } = brought;
   const bySignature = new Map(entries.map((entry) => [entry.signature, entry]));
   const found = findingsInRun(runFolder);
 
   /** @type {JourneyFindings} */
-  const result = { added: [], known: [], notSeen: [] };
+  const result = { added: [], known: [], notSeen: [], resigned: brought.resigned, merged: brought.merged, clashes: brought.clashes };
   /** @type {KnownFinding[]} */
   const additions = [];
   for (const [signature, { finding, check, sightings }] of found) {
     const entry = bySignature.get(signature);
     if (entry) {
-      result.known.push({ id: entry.id, signature, sightings, ...(entry.issue ? { issue: entry.issue } : {}) });
+      result.known.push({
+        id: entry.id,
+        signature,
+        sightings,
+        ...(entry.issue ? { issue: entry.issue } : {}),
+        ...(entry.falseAlarm !== undefined ? { falseAlarm: entry.falseAlarm } : {}),
+      });
     } else {
       additions.push({ id: finding.id, check, signature, added: today, source: 'journey' });
       result.added.push({ id: finding.id, signature, sightings });
     }
   }
   result.notSeen = entries.filter((entry) => !found.has(entry.signature));
-  if (additions.length) writeKnownFindings(file, [...entries, ...additions]);
+  if (additions.length || brought.resigned.length || brought.merged.length) writeKnownFindings(file, [...entries, ...additions]);
   return result;
 }
 
@@ -344,16 +509,19 @@ export function recordJourneyFindings(runFolder, file, today = new Date().toISOS
 export function renderJourneyFindings(findings, file) {
   /** @type {string[]} */
   const lines = [`Known findings, in ${file}:`];
-  const unfiled = findings.known.filter((finding) => !finding.issue);
+  const unfiled = findings.known.filter((finding) => !finding.issue && finding.falseAlarm === undefined);
   for (const finding of findings.known.filter((known) => known.issue)) {
     lines.push(`  seen ${finding.sightings} time(s), issue ${finding.issue}: ${finding.id}  ${finding.signature}`);
+  }
+  for (const finding of findings.known.filter((known) => known.falseAlarm !== undefined)) {
+    lines.push(`  false alarm, seen ${finding.sightings} time(s) (${finding.falseAlarm}): ${finding.id}  ${finding.signature}`);
   }
   for (const finding of [...findings.added, ...unfiled]) {
     lines.push(`  UNFILED, seen ${finding.sightings} time(s): ${finding.id}  ${finding.signature}`);
   }
   for (const finding of findings.notSeen) {
     lines.push(
-      `  not seen this Journey, possibly fixed or not reached: ${finding.id}  ${finding.issue ?? 'unfiled'}  ${finding.signature}`
+      `  not seen this Journey, possibly fixed or not reached: ${finding.id}  ${standing(finding)}  ${finding.signature}`
     );
   }
   if (findings.added.length) {
@@ -363,6 +531,16 @@ export function renderJourneyFindings(findings, file) {
   }
   if (findings.added.length || unfiled.length) {
     lines.push('  To file one: phileas known add <id> --issue <issue>');
+    lines.push('  To mark one a false alarm: phileas known dismiss <id> --reason <why>');
+  }
+  for (const { from, to } of findings.resigned ?? []) {
+    lines.push(`  re-signed under the rules in force: ${from} is now ${to}`);
+  }
+  for (const { into, from } of findings.merged ?? []) {
+    lines.push(`  merged, now one finding under the rules in force: ${from.join(', ')} into ${into}`);
+  }
+  for (const ids of findings.clashes ?? []) {
+    lines.push(`  NOT MERGED, since their states clash; decide which is right: ${ids.join(', ')}`);
   }
   if (lines.length === 1) lines.push('  none found, and none held.');
   return lines;

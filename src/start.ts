@@ -225,7 +225,14 @@ let leftoverCheck: (() => void) | undefined;
  * run, by name, unless
  * `PHILEAS_ALLOW_TEMP_LEFTOVERS=1`, which is announced.
  */
-export function finishJourney(options: { journalsRoot?: string; knownFindings?: string } = {}): JourneyFindings | undefined {
+export function finishJourney(
+  options: {
+    journalsRoot?: string;
+    knownFindings?: string;
+    /** The adapter's signature patterns, so entries are re-signed under the rules its Routes used. */
+    varying?: readonly (readonly [RegExp, string])[];
+  } = {}
+): JourneyFindings | undefined {
   let findings: JourneyFindings | undefined;
   const recordFindings = () => {
     if (options.knownFindings === undefined) return;
@@ -236,7 +243,7 @@ export function finishJourney(options: { journalsRoot?: string; knownFindings?: 
       throw new Error('finishJourney needs journalsRoot to read what the Journey found for its known findings.');
     }
     const run = journalFolder(options.journalsRoot, requireSeed(), requireRun());
-    findings = recordJourneyFindings(run, options.knownFindings);
+    findings = recordJourneyFindings(run, options.knownFindings, undefined, options.varying ?? []);
     console.log('');
     // Named from where the run was started, so a summary names no home folder.
     const shown = path.relative(process.cwd(), options.knownFindings) || options.knownFindings;

@@ -14,6 +14,9 @@ import {
   finishJourney,
   journalFolder,
   markFiled,
+  dismissFinding,
+  removeFinding,
+  resignKnownFindings,
   readJournal,
   readKnownFindings,
   recordJourneyFindings,
@@ -103,16 +106,68 @@ test("the name of whoever ran it becomes <user>, as a whole word only", () => {
 });
 
 test("an adapter's own patterns take out an id made fresh each time, and one without g is refused", () => {
-  // RStudio's terminal handle, a new one for each terminal.
+  // An id of a shape the engine does not know, as an application might print.
   const closed = (handle: string, varying?: readonly (readonly [RegExp, string])[]) =>
-    signatureOf('log-error', `ERROR system error 57 (Socket is not connected) [description: Unknown handle: "${handle}"]`, 'ann', varying);
-  const handle: readonly [RegExp, string] = [/Unknown handle: "[0-9A-F]{8}"/g, 'Unknown handle: "<handle>"'];
-  expect(closed('3968F855')).not.toBe(closed('64E9346F'));
-  expect(closed('3968F855', [handle])).toBe(closed('64E9346F', [handle]));
-  expect(closed('3968F855', [handle])).toContain('Unknown handle: "<handle>"');
+    signatureOf('log-error', `ERROR socket closed for terminal ${handle}`, 'ann', varying);
+  const terminal: readonly [RegExp, string] = [/terminal term-\d+/g, 'terminal term-<n>'];
+  expect(closed('term-7')).not.toBe(closed('term-9'));
+  expect(closed('term-7', [terminal])).toBe(closed('term-9', [terminal]));
 
-  expect(() => refuseUnfitVarying([handle])).not.toThrow();
-  expect(() => refuseUnfitVarying([[/Unknown handle: "[0-9A-F]{8}"/, 'x']])).toThrow(/without the g flag/);
+  expect(() => refuseUnfitVarying([terminal])).not.toThrow();
+  expect(() => refuseUnfitVarying([[/terminal term-\d+/, 'x']])).toThrow(/without the g flag/);
+});
+
+test('an id made fresh each time, a UUID or eight or more hex digits, is taken out; a short value or an error code is not', () => {
+  const said = (text: string) => signatureOf('console-error', text, 'ann');
+  // Positron's R session, measured with five of them on 2026-09-27 and 28.
+  expect(said('Session R 4.6.0 (r-058df68c) is not active.')).toBe(said('Session R 4.6.0 (r-357d668c) is not active.'));
+  expect(said('Session R 4.6.0 (r-058df68c) is not active.')).toContain('(r-<id>)');
+  // RStudio's terminal handle, and a UUID in one piece.
+  expect(said('Unknown handle: "3968F855"')).toBe(said('Unknown handle: "64E9346F"'));
+  expect(said('Client-ID: 5b1f0c8e-2d47-4a93-b6e1-9c3a7f0d2e84')).toBe('console-error: Client-ID: <id>');
+  // Kept: seven digits, a value inside a word, and an error code written 0x...
+  expect(said('build 1a2b3c4')).toBe('console-error: build 1a2b3c4');
+  expect(said('failed: 0xC0000005')).toBe('console-error: failed: 0xC0000005');
+  expect(said('failed: 0xC0000005')).not.toBe(said('failed: 0xC0000409'));
+});
+
+test('an adapter pattern runs before the engine, so its own choice stands', () => {
+  const handle: readonly [RegExp, string] = [/Unknown handle: "[0-9A-F]{8}"/g, 'Unknown handle: "<handle>"'];
+  expect(signatureOf('log-error', 'Unknown handle: "3968F855"', 'ann', [handle])).toBe('log-error: Unknown handle: "<handle>"');
+});
+
+test('stored entries are re-signed under the rules in force, merged where they now agree, and a clash is left and named', () => {
+  const olderForm = (id: string, added: string, issue?: string): KnownFinding => {
+    const signature = `console-error: Session (r-${id}) is not active.`;
+    return { id: findingId(signature), check: 'console-error', signature, added, source: 'journey', ...(issue ? { issue } : {}) };
+  };
+  const { entries, merged, clashes } = resignKnownFindings([
+    olderForm('058df68c', '2026-09-28'),
+    olderForm('6eaf3abc', '2026-09-27', 'ronplusron/phileas#70'),
+    olderForm('cfbb872a', '2026-09-28'),
+  ]);
+  expect(clashes).toEqual([]);
+  expect(entries).toHaveLength(1);
+  const [one] = entries;
+  // The issue kept, the earliest date, and an id that is its new signature's.
+  expect(one).toMatchObject({ signature: 'console-error: Session (r-<id>) is not active.', issue: 'ronplusron/phileas#70', added: '2026-09-27' });
+  expect(one?.id).toBe(findingId(one?.signature ?? ''));
+  expect(merged).toEqual([{ into: one?.id, from: expect.arrayContaining([findingId('console-error: Session (r-058df68c) is not active.')]) }]);
+
+  // Two issues for what is now one finding: only a person can say which.
+  const clash = resignKnownFindings([olderForm('058df68c', '2026-09-28', 'ronplusron/phileas#1'), olderForm('6eaf3abc', '2026-09-27', 'ronplusron/phileas#2')]);
+  expect(clash.entries).toHaveLength(2);
+  expect(clash.clashes).toHaveLength(1);
+});
+
+test("a Journey's end rewrites the file under the rules in force and says what it merged", () => {
+  const olderSignature = (id: string) => `console-error: Session (r-${id}) is not active.`;
+  const file = knownFile([finding(olderSignature('058df68c')), finding(olderSignature('357d668c'), 'ronplusron/phileas#5')]);
+  const today = 'console-error: Session (r-<id>) is not active.';
+  const result = recordJourneyFindings(runWith([{ signature: today, known: true }]), file, '2026-09-29');
+  expect(readKnownFindings(file).entries.map((entry) => [entry.signature, entry.issue])).toEqual([[today, 'ronplusron/phileas#5']]);
+  expect(result.known).toEqual([{ id: findingId(today), signature: today, sightings: 1, issue: 'ronplusron/phileas#5' }]);
+  expect(renderJourneyFindings(result, file).join('\n')).toMatch(/merged, now one finding under the rules in force: \w{8}, \w{8} into \w{8}/);
 });
 
 test('a message worded differently is a different finding', () => {
@@ -209,6 +264,62 @@ test("finishJourney finds the Journey's run by its seed and run name", () => {
     delete process.env[SEED_VARIABLE];
     delete process.env[RUN_VARIABLE];
   }
+});
+
+test('a false alarm keeps its reason, is refused for a filed bug or without a reason, and filing one clears it', () => {
+  const alarm = 'console-error: normal while R restarts';
+  const bug = 'console-error: a real bug';
+  const file = knownFile([finding(alarm), finding(bug, 'ronplusron/phileas#9')]);
+
+  expect(dismissFinding(file, findingId(alarm).slice(0, 4), 'RStudio logs it on every restart').falseAlarm).toBe(
+    'RStudio logs it on every restart'
+  );
+  expect(() => dismissFinding(file, findingId(bug), 'no')).toThrow(/is filed as ronplusron\/phileas#9, and a filed bug is not a false alarm/);
+  expect(() => dismissFinding(file, findingId(alarm), '  ')).toThrow(/needs a reason/);
+
+  // Filing it after all says it was a bug, so the reason goes.
+  const filed = markFiled(file, findingId(alarm), 'ronplusron/phileas#10');
+  expect(filed.falseAlarm).toBeUndefined();
+  expect(readKnownFindings(file).entries.find((entry) => entry.signature === alarm)).toMatchObject({ issue: 'ronplusron/phileas#10' });
+});
+
+test('an entry both filed and a false alarm is refused when the file is read', () => {
+  const signature = 'console-error: both at once';
+  const file = knownFile([{ ...finding(signature, 'ronplusron/phileas#1'), falseAlarm: 'and not a bug' }]);
+  expect(() => readKnownFindings(file)).toThrow(/is both filed as a bug and marked a false alarm/);
+});
+
+test("a Journey's end never adds back a false alarm, counts it apart, and reports a removed finding as new", () => {
+  const alarm = 'console-error: dismissed';
+  const removed = 'console-error: removed after a fix';
+  const file = knownFile([{ ...finding(alarm), falseAlarm: 'normal for the application' }, finding(removed, 'ronplusron/phileas#2')]);
+  expect(removeFinding(file, findingId(removed)).signature).toBe(removed);
+  expect(readKnownFindings(file).entries.map((entry) => entry.signature)).toEqual([alarm]);
+
+  const result = recordJourneyFindings(runWith([{ signature: alarm, known: true }, { signature: removed, known: false }]), file, '2026-09-29');
+  expect(result.known).toEqual([{ id: findingId(alarm), signature: alarm, sightings: 1, falseAlarm: 'normal for the application' }]);
+  expect(result.added.map((finding) => finding.signature)).toEqual([removed]);
+  // Held once: the false alarm was not written again beside itself.
+  expect(readKnownFindings(file).entries.filter((entry) => entry.signature === alarm)).toHaveLength(1);
+
+  const printed = renderJourneyFindings(result, file).join('\n');
+  expect(printed).toMatch(/false alarm, seen 1 time\(s\) \(normal for the application\): \w{8} {2}console-error: dismissed/);
+  expect(printed).toMatch(/UNFILED, seen 1 time\(s\): \w{8} {2}console-error: removed after a fix/);
+  expect(printed).not.toMatch(/UNFILED[^\n]*dismissed/);
+  expect(printed).toContain('phileas known dismiss <id> --reason <why>');
+});
+
+test('the command parses known dismiss and known remove, and refuses dismiss without a reason', () => {
+  expect(parse(['known', 'dismiss', 'd37a', '--reason', 'normal while R restarts'])).toEqual({
+    command: 'known-dismiss',
+    id: 'd37a',
+    reason: 'normal while R restarts',
+    file: path.join('phileas', 'known-findings.json'),
+  });
+  expect(parse(['known', 'remove', 'd37a', 'other.json'])).toEqual({ command: 'known-remove', id: 'd37a', file: 'other.json' });
+  expect(() => parse(['known', 'dismiss', 'd37a'])).toThrow(/needs --reason/);
+  expect(() => parse(['known', 'remove', 'd37a', '--reason', 'x'])).toThrow(/unknown flag --reason/);
+  expect(() => parse(['known', 'remove'])).toThrow(/needs the id/);
 });
 
 test('the command parses known add, and refuses it without an id or an issue', () => {

@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and eighty-three tests, after a
+through, and `npm test` runs two hundred and ninety-two tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -81,7 +81,7 @@ answer, one keeps a window created already shown off the screen, and two
 remove a profile that is read-only in part or still being written into, and
 one reports an application that opens no window in its own words. Two delete
 a profile again when something recreates it, and report one that keeps
-coming back. Twelve cover known findings: signatures in either temp folder layout, the file, what a
+coming back. Twenty-one cover known findings: signatures in either temp folder layout, the file, what a
 Journey's end adds, the command, and a Route carrying on past one. Eight
 keep a Journey to its own temp folder: failing one that leaves a profile in
 it, even when another end-of-Journey check fails first, never failing on
@@ -173,7 +173,10 @@ after the trial; where that goes now is not decided.
 keeps `known-findings.json` beside its spec; a Route that meets a finding in
 it records which and carries on. A Journey adds what it found to that file,
 unfiled, when it ends, and prints each with its id, and `phileas known add
-<id> --issue <issue>` files one. A narrowing is only for what is normal for
+<id> --issue <issue>` files one. Since 2026-09-29, `phileas known dismiss
+<id> --reason <why>` marks one a false alarm, which Routes keep carrying
+past and a Journey never adds back, and `phileas known remove <id>` takes
+one out, for a bug since fixed or a finding the engine itself caused. A narrowing is only for what is normal for
 an application. `docs/GLOSSARY.md` defines the terms. The same end of a
 Journey fails the run on a profile it left in its own folder in the system
 temp folder, for every consumer whose global setup returns `finishJourney`.
@@ -188,7 +191,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Thirteen defects are open,
+**Read `docs/DEFECTS.md` before writing any of it.** Twelve defects are open,
 five of them deferred from the review of 2026-09-27 and two found tuning the
 Eighty Days demo. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.
@@ -277,7 +280,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and eighty-three tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and ninety-two tests against `testbed/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

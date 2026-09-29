@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Thirteen defects are recorded.** The launch layer landed in phase 1, so this
+**Twelve defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -253,21 +253,6 @@ such as `at Object.error (…)` names a function called `error`, so one error
 in the log became up to three findings on Positron, each with a signature
 of its own and each ending a Route until filed. Reading a frame line as part
 of the error above it, rather than as one of its own, would close it.
-
-## Positron's session ids still give a finding a new signature on every Route
-
-**Filed 2026-09-27.** Positron's console names a session by an id made fresh
-for each one, as in "Session R 4.6.0 (r-6eaf3abc)", so the same error has a
-new signature on every Route: filed as known, it never matches again, and it
-ends every Route it appears on. It fails loud. Measured on 2026-09-27: it
-ended 3 of 20 `data-explorer` Routes, each after a Hop onto Delete Session.
-
-**The engine can take such an id out since 2026-09-28,** through an
-adapter's `varyingInSignatures`, which RStudio's adapter uses for its
-terminal handles. Positron's adapter does not use it yet, which is what
-leaves this open. Adding a pattern changes the signatures of the five
-entries `trial/positron/phileas/known-findings.json` holds for these
-sessions, which would collapse into one new finding to file.
 
 ## Two things that will look like candidates, and are not
 

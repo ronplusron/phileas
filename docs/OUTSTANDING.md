@@ -528,20 +528,6 @@ nothing else is decided.
   role, so the Positron runs can say, before any number is picked, which
   roles changed the screen when drawn and how often each crowded a pool.
 
-### 1.16 A command to remove a known finding
-
-Asked for on 2026-09-28, in the words "Add a command to remove an entry".
-A Journey adds every finding it saw to `known-findings.json` when it ends,
-unfiled, and false alarms go in with the real ones: an RStudio Journey
-that day added three still-responding entries caused by Routes that quit
-the application and opened its print dialog, both gaps in the exclusions
-rather than bugs. `phileas known add` can only file an entry, so removing
-one today means editing the file by hand.
-
-Nothing else is decided: its name, whether it takes an id or a prefix of
-one as `known add` does, and whether it asks before removing an entry that
-has an issue.
-
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

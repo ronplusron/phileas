@@ -133,13 +133,13 @@ function failedText(checks) {
  * The known findings a Hop carried on past, as a suffix to its line, or
  * nothing. Printed, since a Route traveling past a bug should never read as
  * a Hop where nothing happened.
- * @param {readonly { findings?: readonly { id: string, known: boolean, issue?: string }[] }[] | undefined} checks
+ * @param {readonly { findings?: readonly { id: string, known: boolean, issue?: string, falseAlarm?: string }[] }[] | undefined} checks
  * @returns {string}
  */
 function knownText(checks) {
   const known = (checks ?? []).flatMap((check) => (check.findings ?? []).filter((finding) => finding.known));
   if (!known.length) return '';
-  return `   known: ${known.map((finding) => `${finding.id} (${finding.issue ? `issue ${finding.issue}` : 'unfiled'})`).join(', ')}`;
+  return `   known: ${known.map((finding) => `${finding.id} (${finding.issue ? `issue ${finding.issue}` : finding.falseAlarm !== undefined ? 'false alarm' : 'unfiled'})`).join(', ')}`;
 }
 
 /**
