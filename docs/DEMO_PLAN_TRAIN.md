@@ -13,7 +13,8 @@ run exactly from its seed.
 **What it cannot show yet.** Phileas judged nothing until phase 5's checks
 began arriving on 2026-09-26, and until the rest arrive a demo shows
 exploring more than finding. So the demo is built in two stages, and the
-second waits on phase 5.
+second waits on phase 5's checks: three of its bugs are caught by checks
+that exist since 2026-09-26, and the rest wait for theirs.
 
 ## Where it lives
 
@@ -34,6 +35,9 @@ demo/rail-itinerary/
   watch.mjs                          the per-hop log for a watched run
   present.mjs, PRESENTING.md         the guided demo, and its script
   explain-hop.mjs                    one Hop's choice, told from its journal line
+  plants.cjs                         the planted bugs, read by application and adapter
+  seeds.mjs                          a seed for each plant, and what it was measured to do
+  tests/                             each plant steered to, with its control
 ```
 
 Packaged like `buggy`, with the bundle id `com.drugstoresushi.railitinerary`
@@ -140,7 +144,7 @@ showing its lines match the first run's, hop for hop.
 seeded choice among controls and keys, typing and key presses, the effect of
 each Hop, a Route stranding if it reaches a dead end, and exact replay.
 
-## Stage two: finding bugs, after phase 5
+## Stage two: finding bugs, as phase 5's checks arrive
 
 Once phase 5 ships the universal checks, bugs are planted in Rail Itinerary,
 visible ones a watcher can see happen, each found by a check and reported
@@ -166,18 +170,60 @@ shown working and then broken, and so stage one stays available.
 **What stage two shows:** a finding, the Hop it happened at, the seed that
 reproduces it, and a replay that walks straight back to it.
 
+### What runs today, and how it is built
+
+Three of the ten run today, since their checks exist: the sleeper class
+throwing, removing the last leg blanking the window, and the seating chart
+with no way out, which strands. The others are planted when their checks
+land, as Eighty Days' four are. Each of the three is its own plant,
+switched on the way Eighty Days' are, and for the reasons that plan gives:
+`--plant=<name>` on the application, `RAIL_DEMO_PLANT` as a
+comma-separated list the adapter turns into those flags, one list in
+`plants.cjs` that the application and the adapter both read, and a name the
+list does not hold refused before anything launches.
+
+- **`sleeper-throw`**: choosing Sleeper in the Add a leg form's class
+  dropdown throws an uncaught error in the page.
+- **`last-leg-blank`**: removing an itinerary's last leg empties the page,
+  text and names with it, so the window shows nothing a screen reader could
+  find.
+- **`seating-trap`**: a "Choose seats" button on the itinerary screen opens
+  a native modal with nothing in it to press, which Escape does not close.
+  **The button is there only while the plant is on,** so stage one's pools
+  do not change. It has a name, since a Route cannot hop to a control
+  without one; the icon-only button with no name is a separate plant, for
+  when the named-controls check exists.
+
+**The known findings loop is shown here too**, as Eighty Days shows it: the
+spec passes `knownFindings` to `runRoute`, the global setup's returned
+function passes it to `finishJourney`, and `RAIL_DEMO_KNOWN` points the file
+at the guided demo's scratch copy, beside the journals and never committed.
+
+**Each plant is proved apart from any seed,** in
+`demo/rail-itinerary/tests/plants.spec.ts`: a chooser picks the planted
+control and the named check must fire, then the same moves with the plant
+off must pass. **Each seed is searched for, never steered,** and held in
+`demo/rail-itinerary/seeds.mjs` with what it was measured to do, from the
+Journey's own `open-alps` Fix where a seed reaches its bug within the Trip.
+A Fix of its own is added for a plant only if no seed tried reaches it, and
+it never walks onto the plant.
+
+## Settled in review
+
+Each chosen on 2026-09-28 from the options offered:
+
+- **The application's name** is Rail Itinerary.
+- **How much styling:** enough to read well on a projector, and no more. It
+  stays the short, plain first look beside Eighty Days.
+- **Stage two's bugs:** one at a time first, then several together in a last
+  section, as Eighty Days has them.
+- **The seating chart's dialog** is a native modal. An in-page overlay was
+  weighed, which would show the gap `OUTSTANDING.md` 1.10 records; the
+  native modal was chosen, so the Route strands cleanly.
+
 ## Open
 
-- **The application's name.** "Rail Itinerary" is a working name.
-- **How much styling.** Enough to read well on a projector; how much beyond
-  that is undecided.
-- **Whether stage two's bugs switch on together or one at a time.** One at a
-  time reads better in a demo; together is closer to phase 8's measure.
-- **The seating chart's dialog.** Both dialogs are native modals by design.
-  Building stage one exposed that the survey offered the controls behind the
-  ticket dialog, a flaw now fixed and recorded in `HISTORY.md`, so a native
-  modal with no way out now strands. The seating chart must be a native modal
-  too, or `OUTSTANDING.md` 1.10 applies.
+Nothing is open. New questions go here as building raises them.
 
 ## Build order for stage one
 
@@ -190,3 +236,14 @@ runs the watched run; `npm run demo:train:present` runs the guided demo, which
 3. The per-hop log.
 4. A script for presenting it, beside the application, and a command that
    runs it section by section.
+
+## Build order for stage two
+
+1. The three plants behind their flags, the known findings wiring, and the
+   plant tests, each with its control.
+2. A seed for each plant, searched for, and one for several at once.
+3. The guided demo's stage-two sections and their script in
+   `PRESENTING.md`: planted, found, stranded, replayed, filed and traveled
+   past, and several at once. What Eighty Days' `present.mjs` already does
+   for the same sections is lifted into a shared file rather than copied,
+   as the runner was.

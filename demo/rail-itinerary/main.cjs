@@ -48,7 +48,24 @@ function createWindow() {
   return win;
 }
 
+// Planted bugs, each switched on by its own flag, --plant=<name>, which may be
+// given more than once. Off by default, so the application shown working is
+// the same build as the one shown broken, and any one bug can be shown alone.
+// A name that names nothing is refused, so a misspelt one never runs the
+// application unbroken while seeming to run it broken. The adapter refuses it
+// first, in words a run prints; this is for a launch by hand. It exits rather
+// than throwing, since an uncaught error this early raises a native error box.
+const { PLANTS } = require('./plants.cjs');
+const plants = process.argv.filter((arg) => arg.startsWith('--plant=')).map((arg) => arg.slice('--plant='.length));
+for (const plant of plants) {
+  if (!PLANTS.includes(plant)) {
+    process.stderr.write(`--plant=${plant} names no planted bug. The plants are ${PLANTS.join(', ')}.\n`);
+    process.exit(2);
+  }
+}
+
 ipcMain.handle('data:all', () => data);
+ipcMain.handle('plants', () => plants);
 
 // A menu click reaches the focused window, and a watched run may have none
 // focused for a moment; the first window is the sensible fallback.

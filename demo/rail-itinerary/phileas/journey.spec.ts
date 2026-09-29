@@ -1,5 +1,3 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import {
   createTest,
   expect,
@@ -12,15 +10,15 @@ import {
 import { journey } from './journeys';
 import { fixes } from './fixes';
 import { railItinerary } from './adapter';
+import { journalsRoot, knownFindings } from './paths';
 
 const fix = fixFor(journey, fixes);
 
 /** One test per Route, and nothing else. */
 const test = createTest(railItinerary);
-const here = path.dirname(fileURLToPath(import.meta.url));
 
 for (const routeNumber of routeNumbers(journey)) {
-  test(`route ${routeNumber}`, async ({ page, app }, testInfo) => {
+  test(`route ${routeNumber}`, async ({ page, app, userDataDir }, testInfo) => {
     const journeySeed = requireSeed();
     const streams = deriveRouteStreams(journeySeed, routeNumber);
     // The Journey seed first, since that is what `phileas run --seed` takes to
@@ -39,7 +37,9 @@ for (const routeNumber of routeNumbers(journey)) {
       routeNumber,
       tripLength: journey.tripLength,
       fix,
-      journalsRoot: path.join(here, '.phileas-journals'),
+      journalsRoot,
+      knownFindings,
+      userDataDir,
     });
 
     // Only a survey was asked for, so nothing was traveled and there is no

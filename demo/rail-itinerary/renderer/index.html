@@ -37,6 +37,8 @@
         <div class="actions">
           <button id="add-leg">Add a leg</button>
           <button id="buy-tickets">Buy tickets</button>
+          <!-- Only with the seating-trap plant on, so the pools are otherwise unchanged. -->
+          <button id="choose-seats" hidden>Choose seats</button>
           <button id="back">Back to itineraries</button>
         </div>
       </section>
@@ -99,6 +101,15 @@
           <button type="button" id="cancel-purchase">Cancel</button>
         </div>
       </form>
+    </dialog>
+
+    <!--
+      The seating-trap plant: a modal with nothing in it to press, which
+      Escape does not close, so a Route that opens it has no move left.
+    -->
+    <dialog id="seating-dialog" aria-labelledby="seating-title">
+      <h2 id="seating-title">Seating chart</h2>
+      <p>The seating chart is loading.</p>
     </dialog>
 
     <script src="renderer.js"></script>

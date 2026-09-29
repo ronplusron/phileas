@@ -8,7 +8,7 @@
   "main": "main.cjs",
   "author": "Drugstore Sushi",
   "scripts": {
-    "package": "electron-packager . --overwrite --platform=darwin --arch=arm64 --app-bundle-id=com.drugstoresushi.railitinerary --app-copyright=\"Copyright (c) 2026 Ron Blum. All rights reserved.\" --out dist --prune=true --ignore=\"^/dist($|/)\" --ignore=\"^/phileas($|/)\" --ignore=\"^/node_modules($|/)\" --ignore=\"^/(watch|present|explain-hop)\\.mjs$\"",
+    "package": "electron-packager . --overwrite --platform=darwin --arch=arm64 --app-bundle-id=com.drugstoresushi.railitinerary --app-copyright=\"Copyright (c) 2026 Ron Blum. All rights reserved.\" --out dist --prune=true --ignore=\"^/dist($|/)\" --ignore=\"^/phileas($|/)\" --ignore=\"^/node_modules($|/)\" --ignore=\"^/tests($|/)\" --ignore=\"^/test-results($|/)\" --ignore=\"^/playwright\\.config\\.ts$\" --ignore=\"^/(watch|present|explain-hop|seeds)\\.mjs$\" --ignore=\"^/PRESENTING\\.md$\"",
     "demo": "node watch.mjs"
   },
   "devDependencies": {

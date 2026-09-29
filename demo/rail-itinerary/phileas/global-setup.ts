@@ -2,14 +2,16 @@ import { finishJourney, startJourney } from '@drugstoresushi/phileas';
 import { journey } from './journeys';
 import { fixes } from './fixes';
 import { railItinerary } from './adapter';
+import { journalsRoot, knownFindings } from './paths';
 
 /**
  * Settle the seed, name the run and print its settings, once, before any Route
- * starts, and return the check for a profile left behind, which runs after.
+ * starts, and return what runs after: the Journey's findings added to the
+ * known findings file, and the check for a profile left behind.
  */
 export default function globalSetup(): () => void {
   startJourney(journey, railItinerary, fixes);
   return () => {
-    finishJourney();
+    finishJourney({ journalsRoot, knownFindings });
   };
 }

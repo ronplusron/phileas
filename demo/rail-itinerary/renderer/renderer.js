@@ -5,6 +5,7 @@ const money = (n) => `$${n.toFixed(2)}`;
 let data;
 let itineraries;
 let current;
+let plants = new Set(); // the planted bugs switched on, from main.cjs
 
 const trainById = (id) => data.timetable.find((t) => t.train === id);
 const fareOf = (leg) => trainById(leg.train).standardFare * data.fares[leg.class ?? 'standard'];
@@ -51,6 +52,12 @@ function openItinerary(itinerary) {
       remove.textContent = `Remove ${t.from} to ${t.to}`;
       remove.addEventListener('click', () => {
         itinerary.legs = itinerary.legs.filter((l) => l !== leg);
+        if (plants.has('last-leg-blank') && itinerary.legs.length === 0) {
+          // Everything goes, text and names with it, so the window shows
+          // nothing a screen reader could find.
+          document.body.replaceChildren();
+          return;
+        }
         openItinerary(itinerary);
       });
       const cell = document.createElement('td');
@@ -129,6 +136,7 @@ function purchase() {
 
 async function start() {
   data = await window.rail.data();
+  plants = new Set(await window.rail.plants());
   itineraries = data.itineraries.map((i) => ({ ...i, legs: i.legs.map((l) => ({ ...l })) }));
 
   for (const button of document.querySelectorAll('nav button')) {
@@ -152,6 +160,16 @@ async function start() {
     saveLeg();
   });
   $('cancel-leg').addEventListener('click', () => openItinerary(current));
+  $('leg-class').addEventListener('change', () => {
+    if (plants.has('sleeper-throw') && $('leg-class').value === 'sleeper') {
+      throw new Error('No sleeper berths are set up for this train');
+    }
+  });
+  if (plants.has('seating-trap')) {
+    $('choose-seats').hidden = false;
+    $('choose-seats').addEventListener('click', () => $('seating-dialog').showModal());
+    $('seating-dialog').addEventListener('cancel', (event) => event.preventDefault());
+  }
   $('buy-tickets').addEventListener('click', openPurchase);
   $('ticket-count').addEventListener('change', updateTicketTotal);
   $('purchase-button').addEventListener('click', purchase);
