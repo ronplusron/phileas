@@ -920,6 +920,14 @@ RStudio's developers submitted a fix as rstudio/rstudio pull request 18983,
 finding, now pointing at 18976. Issue 61 is left as it is, on purpose: a
 comment there linking 18976 would put a reference to this repository on
 RStudio's issue, which is not wanted.
+
+**The second RStudio finding,** the same day: clicking Refresh in the Find
+in Files pane before any search has run logs a client exception, a
+TypeError setting `resultsCount` on null, with nothing on screen. Filed as
+ronplusron/phileas issue 62. It does not involve the web dialogs. RStudio's
+issue 6085, closed in 2020, reports the same TypeError from a different
+path, and is named in issue 62 as plain text, not as a link, for the reason
+above.
 Findings filed here for an application under test start their title with
 its name, asked for when this one was filed.
 

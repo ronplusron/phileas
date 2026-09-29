@@ -25,6 +25,30 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: the Find in Files finding filed, and a Client-ID kept out of history
+
+**The client exception from the last batch reproduced alone:** showing the
+Find in Files pane and clicking Refresh before any search logged `TypeError:
+Cannot set properties of null (setting 'resultsCount')` from
+`FindOutputPresenter.onRefreshFindInFiles`, on 3 of 3 launches, and nothing
+when the pane was shown without Refresh. Each click throws twice, with two
+different stacks, and RStudio writes each line twice. RStudio's tracker has
+no issue for it; its issue 6085, closed in 2020, has the same TypeError from
+another path. Filed as ronplusron/phileas issue 62, naming 6085 in plain
+text so no reference lands on it, and both of its signatures are known
+findings pointing at 62.
+
+**Those signatures had carried a Client-ID,** logged with every client
+exception's stack. It was the same on fresh profiles and homes and is not
+in RStudio's bundle, so it most likely identifies this machine or user. It
+had already gone into a commit that was not yet pushed. RStudio's adapter
+now takes it out of signatures with a second `varyingInSignatures`
+pattern, the two entries were recomputed and their new ids checked against
+the original observations through the engine's own `signatureOf`, and the
+commit was amended so the ID is in no commit on the branch. A replay could
+not check it, since the adapter's newer exclusions sent the seed elsewhere
+from hop 24.
+
 ## 2026-09-28: RStudio relaunched itself out of the engine's reach, and processes left behind are now ended
 
 **A batch of 8 Routes of 30 Hops from each start,** no Fix, `script`,
