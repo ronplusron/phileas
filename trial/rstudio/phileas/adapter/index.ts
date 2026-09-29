@@ -45,6 +45,12 @@ const TEMP_PATH_FOLDERS = new Set(fs.realpathSync(os.tmpdir()).split('/').filter
  * What a Route can type holds no `/`, `..` or `~`, so the dialog's File name
  * and Go to directory boxes cannot name a folder outside the home either; a
  * slash added to the engine's typed values would undo that.
+ *
+ * The dialog's list also has a row for the parent folder, "Folder ..", which
+ * climbs just as a link does. It was missed at first: on 2026-09-28 Routes
+ * clicked it 32 times in one batch, one climbed into the run's folder and
+ * saved there, and a report compiled from that folder opened it in Finder.
+ * It is excluded by name in the list below, since it names no folder.
  */
 function isAboveHome(name: string): boolean {
   if (name === '/' || TEMP_PATH_FOLDERS.has(name)) return true;
@@ -154,6 +160,9 @@ export const rstudio: AppUnderTest = {
       // The Global Options setting that would bring native dialogs back
       // mid-Route, undoing what beforeLaunch sets.
       'Use native file and message dialog boxes',
+      // The file dialog's row for the parent folder, which climbs out of the
+      // Route's home as the path links do; isAboveHome says what it led to.
+      'Folder ..',
     ],
     menuPaths: [
       ['&View', 'Show Pos&it Assistant'],
@@ -236,6 +245,20 @@ export const rstudio: AppUnderTest = {
       /screen reader/i.test(candidate.name.replace(/&/g, '')),
   },
 
+
+  narrowedChecks: {
+    'console-error': {
+      kind: 'narrowed',
+      reason:
+        "RStudio's page keeps asking its R session for work while R restarts or is terminated, and " +
+        'each request made while no session answers fails in the console. Measured on 2026-09-28: ' +
+        'Session -> Restart R logged ERR_EMPTY_RESPONSE and ERR_CONNECTION_REFUSED three times each ' +
+        'on two launches, and a launch that did neither logged none. These two exact messages are ' +
+        'accepted; an R session that dies on its own still shows in the session log.',
+      // Exactly the two network errors, with nothing after them.
+      accept: (message) => /^Failed to load resource: net::ERR_(EMPTY_RESPONSE|CONNECTION_REFUSED)$/.test(message),
+    },
+  },
   /**
    * The workbench window, never the splash. Without RS_NO_SPLASH, RStudio
    * opens a splash from a file in its bundle and the workbench beside it, and

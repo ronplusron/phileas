@@ -74,3 +74,23 @@ test('screen reader support is excluded, since turning it on restarts RStudio ou
   // Its neighbors in the same menu stay.
   expect(await excluded({ source: 'menu', role: 'menuitem', name: 'Accessibility &Options...', menuPath: ['&Help', '&Accessibility', 'Accessibility &Options...'] })).toBe(false);
 });
+
+test("the file dialog's parent-folder row is excluded, since it climbs out of the home as the links do", async () => {
+  // Excluded by name, which the survey applies, rather than by the predicate.
+  expect(rstudio.exclusions.names).toContain('Folder ..');
+  // A folder inside the home stays.
+  expect(rstudio.exclusions.names).not.toContain('Folder R');
+  expect(await excluded({ source: 'page', role: 'option', name: 'Folder R' })).toBe(false);
+});
+
+test("the console errors R's restart makes are accepted, and only those", () => {
+  const accept = (message: string) => {
+    const narrowed = rstudio.narrowedChecks?.['console-error'];
+    return narrowed?.kind === 'narrowed' && narrowed.accept(message);
+  };
+  expect(accept('Failed to load resource: net::ERR_EMPTY_RESPONSE')).toBe(true);
+  expect(accept('Failed to load resource: net::ERR_CONNECTION_REFUSED')).toBe(true);
+  // Any other network error, or anything after the message, still counts.
+  expect(accept('Failed to load resource: net::ERR_NAME_NOT_RESOLVED')).toBe(false);
+  expect(accept('Failed to load resource: net::ERR_EMPTY_RESPONSE and then something')).toBe(false);
+});

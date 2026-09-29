@@ -9,7 +9,7 @@ finds can be replayed exactly, and it records every step as it goes. Phases 0
 to 4 of 11 are done, and the part of phase 5 a trial on Positron needed: it
 travels through apps, replays runs exactly, records everything, and checks
 every step for errors, hangs, crashes and blank windows, with two hundred
-and eighty automated tests behind it. Pointed at Positron, it found real bugs.
+and eighty-three automated tests behind it. Pointed at Positron, it found real bugs.
 
 ---
 
@@ -77,7 +77,7 @@ phases 0 through 4 are done:
 - Any run can be replayed exactly from its seed, and that is tested.
 - A command runs it with different settings, prints each step live if asked,
   and prints any finished run for a person to read.
-- Two hundred and eighty automated tests cover the engine itself, run against a
+- Two hundred and eighty-three automated tests cover the engine itself, run against a
   small application built for the purpose, and a demo application shows it at
   work.
 - Six checks run after every step: no uncaught error, no console error, still

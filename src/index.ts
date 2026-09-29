@@ -50,7 +50,7 @@ export {
   menuEntries,
   type MenuEntry,
 } from './menu';
-export { stubOpenExternal, openedExternally, clearOpenExternal } from './external';
+export { stubOpenExternal, openedExternally, clearOpenExternal, stubOpenPaths, openedPaths } from './external';
 export { stubNativeDialogs, nativeDialogs, type NativeDialogCall } from './dialogs';
 export { endStrayProcesses, type StrayReport } from './strays';
 export {

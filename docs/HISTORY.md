@@ -25,6 +25,37 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-29: a Route climbed out of its home, and opening a file or folder is stubbed
+
+**A batch of 20 Routes of 40 Hops from each start was stopped partway,**
+after 20 Routes without a Fix and 11 with `script`, when a Finder window
+opened on the screen on the run's temp folder. The Hops around that time
+showed why it could: RStudio's in-page file dialog lists the parent folder
+as a row, "Folder ..", and Routes had clicked it 32 times. One climbed from
+its home into its profile and on into the run's folder, and saved there.
+So the answer recorded on 2026-09-28, that with the path links excluded a
+Route could save only inside its home, was wrong: the row climbs as the
+links do. Nothing was written to the real home or RStudio's real folders,
+checked by hand since the stopped Journey ran no guard, and the run's
+folder held only the `.DS_Store` that Finder leaves.
+
+**Three changes.** The adapter excludes "Folder ..", checked in the Open
+File dialog through a temporary Fix. The engine now stubs `shell.openPath`
+and `shell.showItemInFolder` beside `shell.openExternal`, answering each as
+opened and noting it: measured first, stubs on both caught RStudio's Files
+pane -> More -> Show Folder in New Window, which called `shell.openPath`
+with the Route's home, and a Fix through the engine found the call caught
+and no window opened. Which Hop opened Finder during the batch is not
+certain; the likeliest is a report compiled from the run's folder.
+
+**R's restart is narrowed out of the console check.** The two Routes that
+failed without a Fix had restarted or terminated R, after which RStudio's
+page logged `ERR_EMPTY_RESPONSE` and `ERR_CONNECTION_REFUSED`. Measured,
+Session -> Restart R logged each three times on two launches and a quiet
+launch logged neither. The adapter accepts exactly those two messages,
+with that reason, and the two entries the Journey's end had added as
+findings were removed.
+
 ## 2026-09-28: the Find in Files finding filed, and a Client-ID kept out of history
 
 **The client exception from the last batch reproduced alone:** showing the

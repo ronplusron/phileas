@@ -83,3 +83,53 @@ export async function clearOpenExternal(app: ElectronApplication): Promise<void>
     throw new Error('The outbound-link recorder is not installed, so there is nothing to clear.');
   }
 }
+
+const PATHS_RECORDER = '__phileasOpenedPaths';
+
+/**
+ * Replace `shell.openPath` and `shell.showItemInFolder` in the main process
+ * with a recorder, answering each as though it had opened.
+ *
+ * Without this, a Route can open Finder, or whatever application a file type
+ * belongs to, on the machine running the Journey. On RStudio on 2026-09-28 a
+ * Route did: a report it compiled was opened from the run's temp folder and a
+ * Finder window appeared on the screen. Measured the same day, stubs on both
+ * caught RStudio's Files pane -> More -> Show Folder in New Window, which
+ * called `shell.openPath` with the Route's home folder, and no window opened.
+ *
+ * The same limit as `stubOpenExternal`: it reaches an application only if it
+ * looks the functions up on `shell` at call time. RStudio does.
+ */
+export async function stubOpenPaths(app: ElectronApplication): Promise<void> {
+  await app.evaluate(({ shell }, key) => {
+    const calls: string[] = [];
+    (globalThis as Record<string, unknown>)[key] = calls;
+    // openPath answers with an error message, and the empty string for success.
+    shell.openPath = async (path: string) => {
+      calls.push(`openPath ${path}`);
+      return '';
+    };
+    shell.showItemInFolder = (path: string) => {
+      calls.push(`showItemInFolder ${path}`);
+    };
+  }, PATHS_RECORDER);
+}
+
+/**
+ * What the application asked to open or reveal since launch, each as the
+ * function called and its path. Throws when the recorder is absent, for the
+ * reason `openedExternally` gives.
+ */
+export async function openedPaths(app: ElectronApplication): Promise<string[]> {
+  const calls = await app.evaluate(
+    (_electron, key) => (globalThis as Record<string, unknown>)[key] as string[] | undefined,
+    PATHS_RECORDER
+  );
+  if (calls === undefined) {
+    throw new Error(
+      'The recorder for opened files and folders is not installed in this application, so ' +
+        'nothing can be said about what it opened.'
+    );
+  }
+  return calls;
+}

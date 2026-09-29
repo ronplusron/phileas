@@ -1,5 +1,5 @@
 import { test as plain } from '@playwright/test';
-import { createTest, expect, rendererVerdict, screenshotWithin } from '../src/index';
+import { createTest, expect, openedPaths, rendererVerdict, screenshotWithin } from '../src/index';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 
 /**
@@ -32,6 +32,21 @@ test('the stub is installed before the application can reach a browser', async (
   // Reaching this at all means the recorder was installed: it throws when it is
   // not, rather than answering with an empty list.
   expect(await externalUrls()).toEqual([]);
+});
+
+test('opening a file or folder is caught by the stub and opens nothing', async ({ app }) => {
+  // A fresh launch has caught nothing, and reaching this means the recorder is
+  // installed: openedPaths throws when it is not.
+  expect(await openedPaths(app)).toEqual([]);
+  // The application's own calls, as RStudio's Show Folder in New Window makes
+  // them: answered as opened, and noted instead of reaching Finder.
+  const answer = await app.evaluate(async ({ shell }) => {
+    const opened = await shell.openPath('/phileas-test/a-folder');
+    shell.showItemInFolder('/phileas-test/a-file.txt');
+    return opened;
+  });
+  expect(answer).toBe('');
+  expect(await openedPaths(app)).toEqual(['openPath /phileas-test/a-folder', 'showItemInFolder /phileas-test/a-file.txt']);
 });
 
 const thrower = { ...buggy, launchArgs: ['--buggy-plant=renderer-throw'] };
