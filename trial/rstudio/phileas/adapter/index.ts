@@ -106,7 +106,15 @@ export const rstudio: AppUnderTest = {
   // digits on all five launches that logged it on 2026-09-28, such as
   // 3968F855. Without this, closing a terminal, ronplusron/phileas issue 61,
   // had a new signature each time and could never match as known.
-  varyingInSignatures: [[/Unknown handle: "[0-9A-F]{8}"/g, 'Unknown handle: "<handle>"']],
+  //
+  // And the Client-ID a client exception logs with its stack. It was the same
+  // on fresh profiles and homes and is not in RStudio's bundle, so it most
+  // likely identifies this machine or user, measured 2026-09-28: taken out so
+  // it never reaches the committed known findings.
+  varyingInSignatures: [
+    [/Unknown handle: "[0-9A-F]{8}"/g, 'Unknown handle: "<handle>"'],
+    [/Client-ID: [0-9a-f-]{36}/g, 'Client-ID: <client>'],
+  ],
 
   async beforeLaunch(userDataDir: string): Promise<void> {
     // The library inside the home, which makes the home too. R skips an
@@ -211,12 +219,21 @@ export const rstudio: AppUnderTest = {
     // RStudio's page, failed a Route, and held the Journey until it was
     // closed by hand. Print entries appear only once a document is open, so
     // by name rather than by path; `&` is taken out so "Pr&int..." matches.
+    //
+    // And screen reader support. Turning it on asks to restart RStudio, and
+    // on 2026-09-28 a Route answered Yes: RStudio relaunched itself without
+    // the engine's arguments, so the new copy ran visibly, used the real
+    // Electron profile in Application Support, and outlived the Route. By
+    // name, since the menu entry's label changes with the setting and Global
+    // Options has its own. Clear User Prefs and Restore Default Pane and Tab
+    // Layout may ask to restart too, which is not measured.
     exclude: (candidate) =>
       (candidate.source === 'page' && / used by R session\b/.test(candidate.name)) ||
       /copilot/i.test(candidate.name.replace(/&/g, '')) ||
       (candidate.source === 'page' && candidate.role === 'option' && /\/R\.framework\//.test(candidate.name)) ||
       (candidate.source === 'page' && candidate.role === 'link' && isAboveHome(candidate.name)) ||
-      /\bprint\b/i.test(candidate.name.replace(/&/g, '')),
+      /\bprint\b/i.test(candidate.name.replace(/&/g, '')) ||
+      /screen reader/i.test(candidate.name.replace(/&/g, '')),
   },
 
   /**

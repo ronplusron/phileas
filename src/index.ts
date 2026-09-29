@@ -52,6 +52,7 @@ export {
 } from './menu';
 export { stubOpenExternal, openedExternally, clearOpenExternal } from './external';
 export { stubNativeDialogs, nativeDialogs, type NativeDialogCall } from './dialogs';
+export { endStrayProcesses, type StrayReport } from './strays';
 export {
   defineJourney,
   routeNumbers,

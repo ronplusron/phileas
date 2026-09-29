@@ -67,3 +67,10 @@ test('anything that prints is excluded, in the menu or the page, and a word mere
   expect(await excluded({ source: 'page', role: 'button', name: 'Print the current file' })).toBe(true);
   expect(await excluded({ source: 'page', role: 'button', name: 'Blueprint' })).toBe(false);
 });
+
+test('screen reader support is excluded, since turning it on restarts RStudio outside the engine', async () => {
+  expect(await excluded({ source: 'menu', role: 'menuitem', name: 'Screen Reader Support (disabled)', menuPath: ['&Help', '&Accessibility', 'Screen Reader Support (disabled)'] })).toBe(true);
+  expect(await excluded({ source: 'page', role: 'checkbox', name: 'Screen reader support' })).toBe(true);
+  // Its neighbors in the same menu stay.
+  expect(await excluded({ source: 'menu', role: 'menuitem', name: 'Accessibility &Options...', menuPath: ['&Help', '&Accessibility', 'Accessibility &Options...'] })).toBe(false);
+});

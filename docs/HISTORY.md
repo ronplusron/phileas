@@ -25,6 +25,40 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: RStudio relaunched itself out of the engine's reach, and processes left behind are now ended
+
+**A batch of 8 Routes of 30 Hops from each start,** no Fix, `script`,
+`session-data` and `r-markdown`: 29 of 32 passed. `r-markdown`'s Route 7
+met a new candidate, a client exception in the session log, `TypeError:
+Cannot set properties of null (setting 'resultsCount')`, after Refresh
+Find in Files results; it is not yet triaged. `session-data`'s Route 7
+quit when a copy of RStudio was quit by hand two seconds earlier, so it
+says nothing about RStudio.
+
+**`script`'s Route 5 turned on Help -> Accessibility -> Screen Reader
+Support and answered Yes to restarting.** RStudio relaunched itself. The
+new copy was nobody's child and carried none of the engine's arguments,
+so it was not hidden, it used the real Electron profile in Application
+Support, and it outlived the Route: it was seen on the screen, it wrote
+into that profile until it was quit by hand, and its R session could not
+start because the Route's profile, its working folder, had been deleted.
+Its settings file was rewritten on quit, with accessibility still off, and
+it left no lock files. The home guard failed that Journey on those
+writes, as it should.
+
+**Two changes.** RStudio's adapter excludes anything naming screen reader
+support. And the engine now ends what a Route leaves behind: after the
+application closes and before its profile is deleted, `endStrayProcesses`
+finds this user's processes whose working folder is inside the Route's
+profile or whose environment names it, ends each with SIGTERM and then
+SIGKILL, and prints and attaches what it ended, since a passing test's
+attachments reach no console. Tests end a process in the profile and one
+naming it in its environment, and leave one elsewhere alone; they use
+Node rather than `/bin/sleep`, since macOS does not show the environment
+of its own system programs. The suite's 280 tests reported no stray, and
+an ordinary RStudio Route afterwards reported one: its R session, still
+running after the close, which may or may not have exited by itself.
+
 ## 2026-09-28: a lost connection told apart from a closed window
 
 **Still-responding reported "the window closed" whenever Playwright's page

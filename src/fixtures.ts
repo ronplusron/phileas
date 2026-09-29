@@ -5,6 +5,7 @@ import { launchApp, closeApp, makeUserDataDir, removeProfile, type LaunchedApp }
 import { openedExternally } from './external';
 import { judgedByTheWatch, rendererObservation } from './oracles/index';
 import { answered } from './survey';
+import { endStrayProcesses } from './strays';
 
 /** How long each diagnostic at a test's end may wait on the application. */
 const DIAGNOSTIC_TIMEOUT_MS = 5_000;
@@ -113,6 +114,24 @@ export function createTest(cfg: AppUnderTest) {
         } catch (error) {
           await testInfo.attach('teardown-failure.txt', {
             body: error instanceof Error ? (error.stack ?? error.message) : String(error),
+            contentType: 'text/plain',
+          });
+        }
+
+        // Anything the application started that outlived the close, such as
+        // a copy it relaunched itself: found by this Route's profile, before
+        // the profile is deleted. Printed as well as attached, since a
+        // passing test's attachments reach no console, and a copy writing into
+        // the real profile must not go unseen. `strays.ts` has why.
+        const strays = await endStrayProcesses(userDataDir);
+        if (strays.ended.length || strays.couldNotLook) {
+          const said = strays.couldNotLook
+            ? `Stray processes were not checked for: ${strays.couldNotLook}.`
+            : `The application left ${strays.ended.length} process(es) running after it closed, and each was ended:\n\n` +
+              strays.ended.map((line) => `  ${line}`).join('\n');
+          process.stderr.write(`${testInfo.title}: ${said}\n`);
+          await testInfo.attach(strays.couldNotLook ? 'stray-processes-unchecked.txt' : 'stray-processes-ended.txt', {
+            body: said,
             contentType: 'text/plain',
           });
         }
