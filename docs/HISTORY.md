@@ -588,9 +588,9 @@ hop 17, the only one of ten seeds tried at 50 Hops; `lyon` blanked the window
 at hop 19, one of twelve; and `vienna` stranded on the trap at hop 7, one of
 four of eight seeds that did. Several at once, the two plants that make a
 finding, was harder: three Routes of 50 Hops met both with none of seven
-seeds, and five Routes of 100 with one of four, `vienna`, whose sleeper
-lands on the Trip's last Hop. `demo/rail-itinerary/seeds.mjs` records all of
-it.
+seeds, and five Routes of 100 with one of twelve, `vienna`, whose sleeper
+lands on the Trip's last Hop. It was kept over a longer section, fragile as it
+is. `demo/rail-itinerary/seeds.mjs` records all of it.
 
 **The guided demo's stage two is sections 11 to 16,** and what Eighty Days'
 `present.mjs` did for the same sections moved into `demo/journals.mjs` and
