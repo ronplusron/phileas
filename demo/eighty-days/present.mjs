@@ -383,7 +383,9 @@ function tripTail(lines, count) {
  * failed Route's reason ends in a colon and names the check and the finding on
  * the lines below. Taking the ending line alone left it ending on the colon.
  * Stack frames are left out, since each carries the bundle's whole path, and
- * the known findings summary names where the error was thrown.
+ * the known findings summary names where the error was thrown. A live run
+ * prints Playwright's own failure report next, indented the same way and
+ * headed "  1) ", so the reason ends there.
  */
 function endingLines(lines) {
   const shown = [];
@@ -391,7 +393,7 @@ function endingLines(lines) {
     if (!/^route \d+ {2}(passed|failed|stranded) /.test(line)) continue;
     shown.push(line);
     for (const next of lines.slice(i + 1)) {
-      if (!/^ {2}/.test(next)) break;
+      if (!/^ {2}/.test(next) || /^ {2}\d+\) /.test(next)) break;
       if (!/^\s+at /.test(next)) shown.push(next);
     }
   }
