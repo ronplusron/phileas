@@ -1,21 +1,20 @@
 # Phileas -- an overview
 
-*As of 2026-09-27.*
+*As of 2026-09-29.*
 
 Phileas is a testing engine for Electron desktop apps that explores an app the
 way a curious tester would, clicking and typing its way through whatever is on
 screen, instead of following a script. Every run is seeded, so any problem it
 finds can be replayed exactly, and it records every step as it goes. Phases 0
-to 4 of 11 are done, and the part of phase 5 a trial on Positron needed: it
-travels through apps, replays runs exactly, records everything, and checks
-every step for errors, hangs, crashes and blank windows, with two hundred
-and ninety-two automated tests behind it. Pointed at Positron, it found real bugs.
+to 4 of 11 are done, with part of phase 5: it travels through apps, replays
+runs exactly, records everything, and checks every step for errors, hangs,
+crashes and blank windows, with two hundred and ninety-two automated tests
+behind it. Pointed at Positron and then RStudio, two large data-science code
+editors, it found real bugs in both.
 
 ---
 
-The rest is the same in more detail. It is a summary, and summaries go stale
-first: where anything here disagrees with `../ORIENTATION.md`, that file is
-right.
+The rest is the same in more detail.
 
 ## What it is
 
@@ -46,7 +45,7 @@ Route starts from a known place, then takes a number of steps, called Hops,
 each chosen from what the screen offers at that moment. After every Hop it
 checks that the application is still healthy, and it stops at the first
 problem. Every Hop is written to disk as it happens, so even a crash leaves a
-full record of how it got there. `GLOSSARY.md` defines the terms.
+full record of how it got there.
 
 ## Why it is built this way
 
@@ -86,10 +85,17 @@ phases 0 through 4 are done:
   past rather than ending every run it appears in.
 
 **It judges some things, not all.** Two of the checks that apply to every
-application are not built yet, and the checks an application adds for itself
-are phase 6. A run against Positron found real bugs, which are filed; whether
-it finds them often enough to be worth its cost is what the Positron trial
-measures.
+application are not built yet, and most of the checks an application adds
+for itself are phase 6.
+
+**On real applications.** On Positron it found four candidate bugs, all
+written up. On RStudio Desktop it found two new bugs, each an error logged
+with nothing wrong on screen: closing a terminal, which RStudio's developers
+have since submitted a fix for, and refreshing an empty Find in Files pane.
+It also found one RStudio already knew about. Along the way, each
+application taught the engine something about surviving it: a dialog drawn
+by the operating system, an application that restarts itself, a computer
+going to sleep mid-run.
 
 ## What comes next
 
@@ -99,8 +105,8 @@ measures.
 - **Phases 6 to 8:** checks an application adds for itself, a readable report
   of each run, and proof that it works: a test application with deliberately
   planted bugs, and a run that must find every one.
-- **Phase 9:** the first real applications. Two smaller in-house applications
-  first, then two large data-science code editors, Positron and RStudio.
+- **Phase 9:** the first real applications. Two smaller in-house applications,
+  and Positron and RStudio, which work has already started on.
 - **Phase 10:** the optional description of an application mentioned above.
 
 ## Honest limits
@@ -115,10 +121,7 @@ measures.
   wrong in the same way everywhere passes checks that only compare the
   application with itself. Catching those needs an application to supply
   independently worked-out answers, which phase 6 allows for.
-
-## Reading further
-
-`PRODUCT_REQUIREMENTS.md` is what the product must do. `../ORIENTATION.md` is
-where the build stands. `PLAN.md` is the build order and its reasoning.
-`OUTSTANDING.md` is what is open, `DEFECTS.md` is what is wrong, and
-`HISTORY.md` is the record of what was done and why.
+- **Deciding what a finding means is still a person's job.** It finds a
+  problem, records exactly how it got there, and recognizes it next time, but
+  whether it is a bug, a known one, or normal for the application is decided
+  by someone reading it.
