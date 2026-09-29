@@ -25,6 +25,19 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-29: `testbed/` is now `proving-ground/`
+
+Renamed on request, as "testbed" was disliked. "Waypoint" was proposed
+first and passed over: it names a point along a route, so it would read as
+part of a Route's vocabulary beside Fix and Hop. "Test-track" was weighed
+too, and brushes against both Route and `tests/`. A proving ground is
+where a vehicle is driven to show it works, which is what phase 8's
+planted-bug applications are for. Hyphenated, as the repository's other
+multi-word folders are. Every path and mention outside this file changed
+with it, and `tests/testbed-baseline.spec.ts` is now
+`tests/proving-ground-baseline.spec.ts`; entries below keep the name they
+were written with.
+
 ## 2026-09-29: a second RStudio escaped and is now stubbed, and the command palette is set aside
 
 **The rerun of the stopped batch was itself stopped,** in its first Journey,

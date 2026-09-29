@@ -206,7 +206,7 @@ test('run --follow prints what the journal records, and show prints the same', (
   const seed = `follow-${Date.now()}`;
   const followed = spawnSync(
     process.execPath,
-    [command, 'run', 'testbed/buggy/phileas', '--routes', '1', '--trip-length', '4', '--seed', seed, '--follow'],
+    [command, 'run', 'proving-ground/buggy/phileas', '--routes', '1', '--trip-length', '4', '--seed', seed, '--follow'],
     { cwd: repo, env, encoding: 'utf8', timeout: 120_000 }
   );
   expect(followed.status, followed.stderr).toBe(0);
@@ -218,7 +218,7 @@ test('run --follow prints what the journal records, and show prints the same', (
 
   const shown = spawnSync(
     process.execPath,
-    [command, 'show', path.join('testbed', 'buggy', 'phileas', '.phileas-journals', seed)],
+    [command, 'show', path.join('proving-ground', 'buggy', 'phileas', '.phileas-journals', seed)],
     { cwd: repo, env, encoding: 'utf8' }
   );
   expect(shown.status, shown.stderr).toBe(0);
@@ -227,7 +227,7 @@ test('run --follow prints what the journal records, and show prints the same', (
   // identically, line for line.
   expect(fromShow).toEqual(printed);
 
-  fs.rmSync(path.join(repo, 'testbed', 'buggy', 'phileas', '.phileas-journals', seed), {
+  fs.rmSync(path.join(repo, 'proving-ground', 'buggy', 'phileas', '.phileas-journals', seed), {
     recursive: true,
     force: true,
   });

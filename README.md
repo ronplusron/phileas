@@ -57,7 +57,7 @@ the screen, reach its native menu and stub its outbound links, all through the
 Journey and derives each Route's seeds from them. And it now travels: a Route
 finds what the screen offers by accessibility role, draws its next move from
 its seed, acts, waits for the page to stop moving, and writes a journal entry
-per Hop. `testbed/buggy/` is a packaged application built to be traveled
+per Hop. `proving-ground/buggy/` is a packaged application built to be traveled
 through, and two hundred and ninety-eight tests run against it.
 
 Six checks run after every Hop: uncaught errors, console errors, still
@@ -75,10 +75,10 @@ npm run typecheck
 npm test
 ```
 
-`npm test` needs the testbed application packaged first:
+`npm test` needs the proving-ground application packaged first:
 
 ```
-cd testbed/buggy
+cd proving-ground/buggy
 npm install
 npm run package
 ```
@@ -87,7 +87,7 @@ Then `npm test` from the root runs Playwright against that bundle, and
 `npm run journey` runs the Journey from the application's own config. The tests
 show the launch layer and the Route behave as written, and that one seed
 retraces one Route hop for hop. **They are not evidence that the engine finds
-bugs**, and cannot be until `testbed/` holds deliberately planted defects and a
+bugs**, and cannot be until `proving-ground/` holds deliberately planted defects and a
 Journey is shown finding each one.
 
 ## Where things are
@@ -106,6 +106,6 @@ Journey is shown finding each one.
 | `src/` | The engine. Its planned file layout is in `docs/PLAN.md`. |
 | `src/oracles/` | The check runner and the implicit tier. |
 | `tests/` | This engine's own tests. |
-| `testbed/` | Applications built to be tested, each broken in one chosen way, with the adapter each needs. |
+| `proving-ground/` | Applications built to be tested, each broken in one chosen way, with the adapter each needs. |
 | `trial/` | The adapter and Journeys for a measured trial against a real application, Positron first. `docs/PLAN.md` has the trial. |
-| `demo/` | Applications built to show Phileas at work, apart from `testbed/`. `docs/DEMO_PLAN_TRAIN.md` plans the first; `npm run demo:train` runs it, and `npm run demo:train:present` presents it. `docs/DEMO_PLAN_EIGHTY_DAYS.md` plans the second; `npm run demo:eighty-days` runs it, and `npm run demo:eighty-days:present` presents it. `demo/presenting.mjs` is the runner the guided demos share, and `demo/watching.mjs` the watcher. |
+| `demo/` | Applications built to show Phileas at work, apart from `proving-ground/`. `docs/DEMO_PLAN_TRAIN.md` plans the first; `npm run demo:train` runs it, and `npm run demo:train:present` presents it. `docs/DEMO_PLAN_EIGHTY_DAYS.md` plans the second; `npm run demo:eighty-days` runs it, and `npm run demo:eighty-days:present` presents it. `demo/presenting.mjs` is the runner the guided demos share, and `demo/watching.mjs` the watcher. |

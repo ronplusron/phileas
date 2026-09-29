@@ -21,7 +21,7 @@ const repoRoot = path.join(here, '..');
 /**
  * Everywhere an unseeded draw would destroy replay, and why each one counts.
  *
- * `src/` is the engine. `testbed/buggy/phileas/` is the consumer layout, where
+ * `src/` is the engine. `proving-ground/buggy/phileas/` is the consumer layout, where
  * an adapter and a Fix live: a Fix drawing unseeded breaks replay exactly as a
  * draw in the engine would, and it was outside this scan until review. The
  * application itself is here because assumption 12 of the requirements is that
@@ -34,7 +34,7 @@ const repoRoot = path.join(here, '..');
 const ROOTS = [
   'src',
   'bin',
-  path.join('testbed', 'buggy'),
+  path.join('proving-ground', 'buggy'),
   path.join('demo', 'rail-itinerary'),
   path.join('trial', 'positron', 'phileas'),
 ];

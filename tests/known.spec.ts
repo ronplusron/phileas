@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   CheckFailure,
   RUN_VARIABLE,

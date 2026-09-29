@@ -5,13 +5,13 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 /dist/
-# Each testbed application's packaged build. Rebuilt by its own `package`
+# Each proving-ground application's packaged build. Rebuilt by its own `package`
 # script, and the staleness guard is what notices when it has gone out of date.
-/testbed/*/dist/
+/proving-ground/*/dist/
 # A Journey runs from the consuming application's own config, so its output
 # lands beside that application rather than at the repository root.
-/testbed/*/test-results/
-/testbed/*/playwright-report/
+/proving-ground/*/test-results/
+/proving-ground/*/playwright-report/
 # The same, for each demo application.
 /demo/*/dist/
 /demo/*/test-results/

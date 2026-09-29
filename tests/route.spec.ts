@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, type ElectronApplication, type Page } from '@playwright/test';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   createExclusionTally,
   createTest,
@@ -990,7 +990,7 @@ test('a prevented navigation ends the Route once, rather than timing out every h
 test('a page that changes every 200ms is not settled, though two reads agree', async ({
   page,
 }) => {
-  // The defect this closes, reproduced on the testbed. Measured on RStudio and
+  // The defect this closes, reproduced on the proving ground. Measured on RStudio and
   // Positron on 2026-09-24: a console printing a line every 200 ms read as
   // settled every time, because two reads a frame apart fall between changes.
   await page.evaluate(() => {

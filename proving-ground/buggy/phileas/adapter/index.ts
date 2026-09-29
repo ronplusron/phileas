@@ -4,7 +4,7 @@ import type { AppUnderTest } from '@drugstoresushi/phileas';
 import type { Page } from '@playwright/test';
 
 /**
- * The adapter for the testbed application.
+ * The adapter for the proving-ground application.
  *
  * This is the reference implementation of `AppUnderTest`, and the shape a
  * consuming repository copies. It says how to start the application, how to
@@ -47,7 +47,7 @@ export const buggy: AppUnderTest = {
     // The name is written by hand rather than derived from the application's
     // source. A derived list is what keeps a rail from going stale the day
     // another way out appears, and docs/DEFECTS.md carries that it is not
-    // built; tests/testbed-baseline.spec.ts at least fails when a clipboard
+    // built; tests/proving-ground-baseline.spec.ts at least fails when a clipboard
     // entry is left reachable.
     names: ['Read about the journey'],
   },

@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import { makeUserDataDir, removeProfile } from '../src/index';
 
 /**

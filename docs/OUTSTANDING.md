@@ -35,7 +35,7 @@ no navigation away, named controls, and the rest of phase 6.
 
 ### 1.2 Planted defects, and the applications still to build
 
-`testbed/buggy` exists and is structurally ordinary on purpose. **Twelve
+`proving-ground/buggy` exists and is structurally ordinary on purpose. **Twelve
 defects are planted in it**, each behind its own launch flag: eleven make the
 universal checks fire, and one makes the check `buggy`'s adapter declares
 fire. A test steers a Route straight to each, which proves the
@@ -57,7 +57,7 @@ and the right way to test a bug-finder is to point it at known bugs.
 
 ### 1.3 Wiring a consuming repository in another checkout
 
-`testbed/buggy` already consumes the engine as a `file:` dependency and
+`proving-ground/buggy` already consumes the engine as a `file:` dependency and
 imports it by package name, so the shape is proved. **What is not proved is
 the case that matters**, because that symlink lands back inside this
 repository: whether Playwright transpiles a package whose TypeScript source
@@ -83,7 +83,7 @@ in phase 4.
 
 **An application that throws on purpose, and an adapter that narrows it**, in
 phase 5. The R19 narrowing branch in `fixtures.ts` has three paths and only the
-"no narrowing" one is exercised, because nothing in the testbed throws and no
+"no narrowing" one is exercised, because nothing in the proving ground throws and no
 adapter declares a narrowing. `fixtures.ts` is reshaped in phase 5 anyway, and
 a second deliberately awkward application is the cheapest way to cover it.
 
@@ -99,18 +99,18 @@ message text and a `named-controls` observation is not. An adapter author
 writes a predicate against a string whose shape the interface never states.
 The right shape is only knowable once app-declared checks exist.
 
-### 1.5 The testbed's own contract, unchecked by anything
+### 1.5 The proving ground's own contract, unchecked by anything
 
 `tsconfig.json` compiles only TypeScript, so `main.cjs`, `preload.cjs` and
 `renderer/renderer.js` are outside every static check. Two channel names and
 two payload shapes are written out three times across those files with nothing
 relating them, and `window.buggy` is untyped in the renderer.
 
-It matters more than a testbed usually would. That directory is what a
+It matters more than a proving ground usually would. That directory is what a
 consuming repository copies, and phase 2's whole job is to be the unbroken
 version against which planted defects are measured -- a channel rename or a
 payload change is a defect nobody planted, and the engine finding its own
-testbed's accidental bugs is not the measurement anyone wants.
+proving ground's accidental bugs is not the measurement anyone wants.
 
 A `channels.d.ts` declaring the channel-to-payload map, referenced from all
 three sides, expresses it without changing any runtime shape. Left as its own
@@ -295,7 +295,7 @@ by approving a proposal made at the end of the session that recorded them:
 - **At the IDEs' turn, after phase 9 and before the engine meets either:**
   reading inside frames and webviews, decided 2026-09-24 once the probes
   showed the need. Nothing earlier is known to need it, though whether the
-  testbed's siblings or the two first consumers use frames is unmeasured.
+  proving ground's siblings or the two first consumers use frames is unmeasured.
 - **At the IDEs' turn, asked for 2026-09-24:** revisit the draw shares for
   the keys and the menu, 1.11, once a Journey has run against either IDE.
 - **In phase 5, where `PLAN.md` already has them:** native dialogs, and bugs
@@ -550,7 +550,7 @@ Proposed, not yet done: make it `"*"` and optional in `peerDependenciesMeta`,
 so npm fetches nothing and accepts whatever is there. Measure first, in a
 scratch consumer with no Electron, that npm installs none, that the
 engine's own source still type-checks strictly, and that a real Route runs;
-this repository cannot show it, since it installs Electron for its testbed.
+this repository cannot show it, since it installs Electron for its proving ground.
 A consumer wanting Electron's types could point its own TypeScript at a
 copy it already has.
 

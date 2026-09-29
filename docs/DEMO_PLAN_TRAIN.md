@@ -17,8 +17,8 @@ second waits on phase 5.
 
 ## Where it lives
 
-`demo/rail-itinerary/`, committed in this repository, beside `testbed/` and
-apart from it. The two have different jobs: `testbed/` is what the engine's own
+`demo/rail-itinerary/`, committed in this repository, beside `proving-ground/` and
+apart from it. The two have different jobs: `proving-ground/` is what the engine's own
 tests run against, and its behavior is recorded as a baseline; a demo is
 changed for an audience. Keeping them apart means a demo change can never move
 what the tests measure.

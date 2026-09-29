@@ -64,7 +64,7 @@ The install-timing measurement is done and came back negative:
 `NODE_OPTIONS=--require` does not reach a packaged Electron main process, so
 the stub cannot be installed ahead of the application's own handlers, and the
 hazard cannot be closed at its source that way. The positive control is done:
-`testbed/buggy` hops its outbound link and asserts the recorder caught it.
+`proving-ground/buggy` hops its outbound link and asserts the recorder caught it.
 **The other two are not built.** The exclusion list is hand-written rather
 than derived from source, so it goes stale silently the day an application
 adds another way out. And the independent evidence in phase 5, a check that no
@@ -279,7 +279,7 @@ answer to it is an independent test oracle rather than a fix.
 
 **A green Journey against a working application is not evidence of a defect
 being absent.** It is consistent with an engine that checks nothing at all.
-Until `testbed/buggy` holds planted defects and a Journey is demonstrably
+Until `proving-ground/buggy` holds planted defects and a Journey is demonstrably
 finding them, this file being short carries no weight. An absence check needs
 a positive control, and the entry above was filed by reading code rather
 than by any run discovering it.

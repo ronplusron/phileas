@@ -324,7 +324,7 @@ export class FixFailure extends Error {
  * navigation to finish. An application that routes external links through
  * `will-navigate` and calls `preventDefault` leaves a navigation that never
  * finishes, so the page stays alive and answers `evaluate` in milliseconds
- * while every locator call blocks: measured against the testbed on 2026-09-22,
+ * while every locator call blocks: measured against the proving ground on 2026-09-22,
  * still blocked 8.8 seconds after the click with no sign of clearing.
  *
  * So the Route is over, and the honest thing is to say so once rather than to
@@ -462,7 +462,7 @@ export interface RunRouteOptions {
  * How long a single action may take before the Hop gives up on it.
  *
  * **A Hop must not wait for navigation to finish, and this was measured rather
- * than reasoned about.** Clicking the testbed's outbound link with an ordinary
+ * than reasoned about.** Clicking the proving ground's outbound link with an ordinary
  * Playwright click hangs for the full default timeout: the link schedules a
  * navigation, the main process cancels it in `will-navigate`, and from the
  * renderer's side that navigation never resolves, so the click waits forever

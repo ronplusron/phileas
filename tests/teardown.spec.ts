@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { test, expect } from '@playwright/test';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   ApplicationStoppedAnswering,
   CheckFailure,

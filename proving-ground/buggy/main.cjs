@@ -1,4 +1,4 @@
-// The main process of the testbed application.
+// The main process of the proving-ground application.
 //
 // This application exists to be traveled through. Its surface is chosen
 // against the five ways a defect gets found in docs/PRODUCT_REQUIREMENTS.md,

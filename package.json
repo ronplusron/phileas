@@ -18,7 +18,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "tsc --noEmit && playwright test",
-    "journey": "node bin/phileas.mjs run testbed/buggy/phileas",
+    "journey": "node bin/phileas.mjs run proving-ground/buggy/phileas",
     "demo:train": "node demo/rail-itinerary/watch.mjs",
     "demo:train:present": "node demo/rail-itinerary/present.mjs",
     "demo:eighty-days": "node demo/eighty-days/watch.mjs",

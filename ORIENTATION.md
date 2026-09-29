@@ -50,7 +50,7 @@ in `docs/DEFECTS.md` stays open until the foreign-process half of no
 navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
-`testbed/buggy/` is a packaged Electron application built to be traveled
+`proving-ground/buggy/` is a packaged Electron application built to be traveled
 through, and `npm test` runs two hundred and ninety-eight tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
@@ -207,7 +207,7 @@ five of them deferred from the review of 2026-09-27 and two found tuning the
 Eighty Days demo. That file holds what is wrong, confirmed by reading the
 code, and nothing here restates it.
 
-**Two demos live in `demo/`, apart from `testbed/`.** Rail Itinerary is the
+**Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
 short first look, planned in `docs/DEMO_PLAN_TRAIN.md`: `npm run demo:train`
 watches it and `npm run demo:train:present` presents it, through the runner
 both guided demos share, `demo/presenting.mjs`. Eighty Days is the longer
@@ -245,7 +245,7 @@ own authors wrote are drawn from by default.
 **If `npm test` cannot find Electron:** `npm install` does not run Electron's
 postinstall in this environment, so the types arrive and the binary does not.
 `node node_modules/electron/install.js` fetches it, in the engine and in
-`testbed/buggy/` separately. It looks like a broken checkout and is not.
+`proving-ground/buggy/` separately. It looks like a broken checkout and is not.
 
 `docs/OUTSTANDING.md` holds what is open, and nothing in it now waits on an
 opinion. `docs/DEFECTS.md` holds what is wrong.
@@ -291,14 +291,14 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and ninety-eight tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and ninety-eight tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
 at once never see each other's folders; `PHILEAS_ALLOW_TEMP_LEFTOVERS=1`
 skips the check for one run, and the run says it did.
 `npm run journey` runs the Journey from the consumer's own config at
-`testbed/buggy/phileas/playwright.config.ts`, which registers one test per
+`proving-ground/buggy/phileas/playwright.config.ts`, which registers one test per
 Route and now travels inside them, through the `phileas` command. It prints
 every setting in force, marking those set for this run.
 
@@ -315,7 +315,7 @@ a longer Trip retraces a shorter one's Hops and then carries on, measured on
 environment variable it travels in, which is what a refusal names.
 
 Each Route writes a journal to
-`testbed/buggy/phileas/.phileas-journals/<journey seed>/<run>/`, one JSON
+`proving-ground/buggy/phileas/.phileas-journals/<journey seed>/<run>/`, one JSON
 Lines file per Route, flushed per Hop. The run is named for when it started,
 in UTC, and the run prints its name beside the seed. The layout under
 `.phileas-journals/` is the engine's; a consumer chooses only that root. So every run of a seed is
@@ -353,10 +353,10 @@ fire on a planted defect that a test steers a Route straight to, which proves
 the check and not the search. They show the launch layer, the Route and the
 checks behave as written and that a seed reproduces.
 
-The testbed application builds itself:
+The proving-ground application builds itself:
 
 ```
-cd testbed/buggy
+cd proving-ground/buggy
 npm install
 npm run package
 ```
@@ -430,7 +430,7 @@ points one seeded Journey at every planted defect and asserts each is found.
 its own tests has demonstrated nothing about whether it finds bugs. Its own
 suite can only show that its parts behave as written. The real evidence is an
 application with deliberately planted bugs, pointed at the engine, asserting
-that each one is found -- which is what `testbed/` is for and why it is not
+that each one is found -- which is what `proving-ground/` is for and why it is not
 an optional extra.
 
 A second limit is inherent rather than a gap to close. Metamorphic checks buy

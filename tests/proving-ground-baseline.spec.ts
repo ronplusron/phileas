@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect, type Page } from '@playwright/test';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   closeApp,
   makeUserDataDir,
@@ -45,7 +45,7 @@ import { launchOrRemove } from './scratch';
 const dataFile = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
-  'testbed',
+  'proving-ground',
   'buggy',
   'data',
   'items.json'

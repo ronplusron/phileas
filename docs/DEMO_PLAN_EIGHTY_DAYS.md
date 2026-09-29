@@ -650,7 +650,7 @@ to the check that catches it:
 | Plant | What happens | Caught by | Runs |
 | --- | --- | --- | --- |
 | `kiouni-throw` | The raise that brings the offer for Kiouni to £2,000 throws an uncaught error in the page | uncaught error | today |
-| `export-throw` | Game > Export the ledger throws in the main process, from a timer, as `buggy`'s `plant:main-throw` does (`testbed/buggy/main.cjs`), so no IPC handler catches it | uncaught error, main process | today |
+| `export-throw` | Game > Export the ledger throws in the main process, from a timer, as `buggy`'s `plant:main-throw` does (`proving-ground/buggy/main.cjs`), so no IPC handler catches it | uncaught error, main process | today |
 | `sail-console-error` | Hoisting the sledge's sail with the wind at its middle setting or above logs a console error. The middle is where a Trip's click sets the slider | console error | today |
 | `coal-hang` | Burning the Henrietta's woodwork busies the page for twelve seconds. A stall is found only when a call outruns the Hop timeout, 3 s, plus the responsive wait, 5 s (`DEFAULT_HOP_TIMEOUT_MS` in `src/route.ts`, `DEFAULT_RESPONSIVE_TIMEOUT_MS` and `bounded` in `src/oracles/index.ts`), so six would pass. A known hang still ends a Route, decided in the engine's review of 2026-09-27, so this plant is never the one the known-findings loop below is shown with | still responding | today |
 | `blank-club` | Arriving at the Reform Club blanks the window, so the ending never shows | window showing content | today |

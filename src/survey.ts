@@ -360,7 +360,7 @@ export interface SurveyOptions {
    * Bounded rather than left at Playwright's default, and this is not
    * housekeeping. Every locator call waits for any pending navigation to
    * finish, and a navigation that an application prevents in `will-navigate`
-   * never finishes: measured against the testbed on 2026-09-22, a snapshot was
+   * never finishes: measured against the proving ground on 2026-09-22, a snapshot was
    * still blocked 8.8 seconds after such a click, with no sign of clearing.
    * Unbounded, one hop onto an outbound link costs the rest of the Route one
    * full default timeout at a time.
@@ -626,7 +626,7 @@ interface AriaNode {
  * reports no error whatever. The Route then believes it explored a list it
  * barely touched, and the journal faithfully records the twelve. There is no
  * general way to ask a container whether it is windowed; docs/PLAN.md carries
- * it as a hazard and the testbed sibling built for it is in
+ * it as a hazard and the proving-ground sibling built for it is in
  * docs/OUTSTANDING.md.
  */
 async function surveyPage(

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   FIX_OVERRIDE_VARIABLE,
   NO_FIX,

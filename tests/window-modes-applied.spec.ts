@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { test, expect } from '@playwright/test';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import { closeApp, makeUserDataDir, WINDOW_MODE_VARIABLE, type AppUnderTest } from '../src/index';
 import { launchOrRemove } from './scratch';
 

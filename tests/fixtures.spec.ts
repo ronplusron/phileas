@@ -9,7 +9,7 @@ import {
   screenshotWithin,
   selfLaunches,
 } from '../src/index';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 
 /**
  * The fixture layer: the launch, the ready page, the stub, and the verdict it

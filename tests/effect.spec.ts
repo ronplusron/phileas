@@ -6,7 +6,7 @@ import { effectOf, headingsIn, EFFECT_HEADINGS_LISTED } from '../src/index';
  *
  * Pure functions over snapshots shaped as Playwright's accessibility snapshot
  * gives them, so no application is launched. The Route tests show the same
- * thing against the real testbed.
+ * thing against the real proving ground.
  */
 
 const heading = (name: string) => ({ role: 'heading', name });

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
-import { buggy } from '../testbed/buggy/phileas/adapter/index';
+import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   defineJourney,
   finishJourney,
@@ -59,10 +59,10 @@ function withEnvironment<T>(values: Record<string, string>, body: () => T): T {
 test('the command reads its flags, a config, and what goes to Playwright', () => {
   expect(parse(['run'])).toEqual({ command: 'run', config: 'phileas', settings: {}, passThrough: [] });
   expect(
-    parse(['run', 'testbed/buggy/phileas', '--routes', '3', '--show=front', '--', '--grep', 'route 1$'])
+    parse(['run', 'proving-ground/buggy/phileas', '--routes', '3', '--show=front', '--', '--grep', 'route 1$'])
   ).toEqual({
     command: 'run',
-    config: 'testbed/buggy/phileas',
+    config: 'proving-ground/buggy/phileas',
     settings: { PHILEAS_ROUTES: '3', PHILEAS_SHOW: 'front' },
     passThrough: ['--grep', 'route 1$'],
   });
@@ -80,7 +80,7 @@ test('the command refuses what it cannot read, by name', () => {
   expect(() => parse(['show', 'a', 'b'])).toThrow(/one thing to show/);
   expect(() => parse(['show', '--routes'])).toThrow(/show takes no flags/);
   expect(parse(['survey'])).toEqual({ command: 'survey', config: 'phileas' });
-  expect(parse(['survey', 'testbed/buggy/phileas'])).toEqual({ command: 'survey', config: 'testbed/buggy/phileas' });
+  expect(parse(['survey', 'proving-ground/buggy/phileas'])).toEqual({ command: 'survey', config: 'proving-ground/buggy/phileas' });
   expect(() => parse(['survey', '--routes', '3'])).toThrow(/survey takes one config|survey takes no flags/);
   // A flag Playwright knows is still refused here unless it comes after --, so
   // that nothing reaches Playwright by accident.
@@ -187,14 +187,14 @@ test('an adapter with no sources is printed as a staleness guard that cannot run
 });
 
 test('the command runs a Journey with its settings changed, and the file unchanged', () => {
-  const journeyFile = path.join(repo, 'testbed', 'buggy', 'phileas', 'journeys', 'exploration.ts');
+  const journeyFile = path.join(repo, 'proving-ground', 'buggy', 'phileas', 'journeys', 'exploration.ts');
   const before = fs.readFileSync(journeyFile, 'utf8');
 
   const env = { ...process.env };
   for (const name of TOUCHED) delete env[name];
   const result = spawnSync(
     process.execPath,
-    [command, 'run', 'testbed/buggy/phileas', '--routes', '1', '--trip-length', '2', '--seed', 'cmd-seed'],
+    [command, 'run', 'proving-ground/buggy/phileas', '--routes', '1', '--trip-length', '2', '--seed', 'cmd-seed'],
     { cwd: repo, env, encoding: 'utf8', timeout: 120_000 }
   );
   const output = `${result.stdout}${result.stderr}`;

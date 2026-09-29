@@ -37,14 +37,14 @@ What is known and decided:
   journal and every invariant tier are genuinely unwritten.
 - Dependencies come first, since `npm run typecheck` and `npm test` are inert
   without them and nothing later can be verified at all.
-- `testbed/`, an application with planted bugs, is the only checkpoint that
+- `proving-ground/`, an application with planted bugs, is the only checkpoint that
   shows the assembled engine does its job. `OUTSTANDING.md` says why it is not
   a late nicety.
 
 The scaffold that exists: `package.json` naming the package
 `@drugstoresushi/phileas`, with `main` and `exports` pointing at
 `src/index.ts`; a strict `tsconfig.json` that includes `src/`, `tests/` and
-`testbed/`; and empty directories.
+`proving-ground/`; and empty directories.
 
 ### The planned layout of `src/`
 
@@ -74,8 +74,8 @@ src/
     specified.ts       the shape of an independently computed answer (R21)
   report/              the Journey summary, with stranded kept apart from failed
 tests/                 the engine's own tests
-testbed/buggy/   a small Electron application, packaged, with planted defects
-testbed/buggy/phileas/  adapter/, journeys/, journey.spec.ts, global setup and
+proving-ground/buggy/   a small Electron application, packaged, with planted defects
+proving-ground/buggy/phileas/  adapter/, journeys/, journey.spec.ts, global setup and
                         a Playwright config: the whole consumer layout
 ```
 
@@ -84,7 +84,7 @@ verbs and nouns: `launch.ts` exports `launch()`, `survey.ts` exports
 `survey()`, and `route.ts` exports `runRoute()` alongside the Route's own
 shape.
 
-The testbed applications are named for the one thing each is awkward about,
+The proving-ground applications are named for the one thing each is awkward about,
 so a directory listing says what a reader is looking at. `buggy` is the
 structurally ordinary one that holds the planted defects; the siblings that
 join it are named for their pathology, and `HISTORY.md` has the shape of the
@@ -272,7 +272,7 @@ layer states which path it took, and the report names what was consequently
 not checked, through the same mechanism R19 uses for a narrowed check rather
 than a second one beside it, which is C1b. Decide here whether the fallback
 lands in this phase or waits for the first consumer that needs it; if it
-lands here, the testbed application in phase 2 needs a second variant with
+lands here, the proving-ground application in phase 2 needs a second variant with
 the fuses disabled, so the path can be verified in this repository rather
 than against somebody else's build.
 
@@ -297,9 +297,9 @@ different answer.
 Boundary: bookkeeping. The typecheck passes; nothing can run, because there is
 nothing to launch.
 
-### Phase 2: the testbed application, unbroken
+### Phase 2: the proving-ground application, unbroken
 
-A small Electron application under `testbed/`, packaged anywhere its adapter
+A small Electron application under `proving-ground/`, packaged anywhere its adapter
 points `bundleDir` at, since phase 1 removed the default layout and made that
 field required. An adapter sits beside it in the consumer layout; `journeys/`
 and `journey.spec.ts` join it in phase 3, when there is a Journey to register.
@@ -328,7 +328,7 @@ written inside, which is the whole of the hazard below. An absence check needs
 a positive control, and until this test exists an empty recorder is
 indistinguishable from a stub that never took.
 
-The testbed application has `electron` and `@electron/packager` as its own dev
+The proving-ground application has `electron` and `@electron/packager` as its own dev
 dependencies. The packager was chosen 2026-09-22 for being the smallest thing
 that produces a real bundle: one command, no configuration file, and an
 `app.asar` by default, which the guard requires because it reads the archive
@@ -391,7 +391,7 @@ candidates than a Trip can visit.
 A hop chooses a candidate, acts on it, and waits for the page to settle.
 
 **A hop must not wait for navigation to finish, and this was measured rather
-than reasoned about.** Clicking the testbed application's outbound link with
+than reasoned about.** Clicking the proving-ground application's outbound link with
 an ordinary Playwright click hangs for the full thirty-second timeout. The
 link schedules a navigation, the main process cancels it in `will-navigate`,
 and from the renderer's side that navigation never resolves, so the click
@@ -543,7 +543,7 @@ below is unchanged, and what the trial builds is the first part of it.
    - **It lives in `trial/positron/`,** in the consumer layout `buggy` uses.
      Chosen over a repository of its own, which would also test whether a
      package outside the consumer transpiles, and that is phase 9's question
-     rather than the trial's. `demo/` and `testbed/` already mean other
+     rather than the trial's. `demo/` and `proving-ground/` already mean other
      things.
    - **Which release it runs comes from `PHILEAS_APP_DIR`,** pointed at the
      `.app`, so an unset variable is refused by name and no release is run by
@@ -1234,7 +1234,7 @@ Boundary: bookkeeping.
 
 ### Phase 8: every planted defect found by one Journey
 
-One Journey over the testbed application, with a budget it can find them in,
+One Journey over the proving-ground application, with a budget it can find them in,
 and a test asserting that each planted defect is found. Then the triage flow
 from `PRODUCT_REQUIREMENTS.md`, done cold: a second session reproduces a
 finding from the report alone.
@@ -1438,7 +1438,7 @@ What each layer of verification proves, from weakest to strongest:
   is not tidiness.
 - Unit tests for `random.ts` and `journey.ts` prove the reproducibility
   mechanism: same seed, same sequence, routes independent, streams separate.
-- The engine's own tests against the testbed application prove that the parts
+- The engine's own tests against the proving-ground application prove that the parts
   behave as written: launch, refuse a stale build, travel, record, stop on a
   violation, strand.
 - The planted defects prove that the engine finds bugs. **This is the only
@@ -1452,8 +1452,8 @@ them. `PRODUCT_REQUIREMENTS.md` states it as a non-goal, `HISTORY.md` records
 the concession, and the oracle is the remedy, not more tests.
 
 Definitions that depend on real behavior, such as what counts as blank and
-what counts as settled, are tuned against the testbed application and then
-against the first real consumer, never against imagined cases. The testbed
+what counts as settled, are tuned against the proving-ground application and then
+against the first real consumer, never against imagined cases. The proving ground
 application is the real data until a consumer exists.
 
 On the machine this is developed on, the launch layer keeps windows off the
