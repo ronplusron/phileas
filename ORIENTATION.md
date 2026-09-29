@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `testbed/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and ninety-two tests, after a
+through, and `npm test` runs two hundred and ninety-eight tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -134,8 +134,11 @@ submitted a fix for, and refreshing an empty Find in Files pane. A third it
 met, opening a folder as a project from the web dialog, RStudio already
 knew of. A batch of 20 Routes of 40 Hops from each start was stopped partway
 on 2026-09-29, when a Route climbed out of its home through the file
-dialog's "Folder .." row. That row is now excluded, and rerunning the batch
-is next. The next Journey to finish re-signs the known findings under the
+dialog's "Folder .." row. Its rerun was stopped the same day, after eight
+Routes, when "Open Project in New Session..." started a second RStudio on
+the real screen that wrote into RStudio's real folder. The engine now stubs
+an application launching itself, so a new session starts nothing; the
+command palette is excluded, for now. Rerunning the batch is next. The next Journey to finish re-signs the known findings under the
 current rules, which should merge the two Find in Files entries into one.
 `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
 R script with code in it, `session-data`, code run in the console, or
@@ -288,7 +291,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and ninety-two tests against `testbed/buggy/`.
+`npm test` typechecks, then runs the engine's own two hundred and ninety-eight tests against `testbed/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

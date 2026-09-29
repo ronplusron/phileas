@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test';
 import type { Rng, RouteStreams } from './random';
+import { caughtSince, type CaughtByStubs } from './caught';
 import { effectOf, type HopEffect } from './effect';
 import { fixName } from './fixes';
 import { Journal, fixFingerprint, journalFolder, type HopAction, type JournaledCandidate, type JournaledCheck } from './journal';
@@ -422,7 +423,8 @@ export interface RunRouteOptions {
   readonly settleTimeoutMs?: number;
   /**
    * How long each process has to answer the still-responding check's round
-   * trip. See `DEFAULT_RESPONSIVE_TIMEOUT_MS`.
+   * trip, and the reading of what the stubs caught. Overrides the adapter's
+   * `responsiveTimeoutMs`. See `DEFAULT_RESPONSIVE_TIMEOUT_MS`.
    */
   readonly responsiveTimeoutMs?: number;
   /**
@@ -624,6 +626,14 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     knownFindings,
   } = options;
   const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
+  // This Route's own setting first, which the engine's tests use, then the
+  // adapter's, then the default.
+  const responsiveMs = responsiveTimeoutMs ?? cfg.responsiveTimeoutMs ?? DEFAULT_RESPONSIVE_TIMEOUT_MS;
+  // Refused rather than obeyed: zero or less would report every Hop as a hang,
+  // and a value that is not a number would never time out at all.
+  if (!Number.isInteger(responsiveMs) || responsiveMs <= 0) {
+    throw new Error(`responsiveTimeoutMs must be a whole number of milliseconds above 0, and is ${responsiveMs}.`);
+  }
   const shares = sharesFor(cfg);
   const chooser = options.chooser ?? createSeededChooser(shares);
 
@@ -693,6 +703,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     routeNumber,
     tripLength: tripLength,
     settleQuietMs,
+    responsiveTimeoutMs: responsiveMs,
     ...shares,
     allowStandardMenuRoles: (cfg.exclusions.allowStandardMenuRoles ?? []).map((role) => role.toLowerCase()),
     ...(known ? { knownFindings: { version: known.version, entries: known.entries.length } } : {}),
@@ -710,7 +721,20 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     // Started before the Fix, since the checks run after Fix steps too, and
     // inside the try, so a Route whose watching cannot start still closes its
     // journal with the reason.
-    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs, userDataDir, known });
+    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs: responsiveMs, userDataDir, known });
+
+    // Asked once here, so anything the stubs caught while the application
+    // started is not put down to the first Hop.
+    const caught = caughtSince(app, responsiveMs);
+    const atLaunch = await caught();
+    if (atLaunch) {
+      journal.write({
+        kind: 'note',
+        hop: 1,
+        note: `Caught by the engine's stubs as the application started, before any Hop: ${JSON.stringify(atLaunch)}`,
+        at: new Date().toISOString(),
+      });
+    }
 
     if (fix) {
       await runFix(fix, {
@@ -719,6 +743,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         rng: streams.fix,
         journal,
         watch,
+        caught,
         settleTimeoutMs,
         settleQuietMs,
         exclusions: cfg.exclusions,
@@ -837,6 +862,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // rather than one still changing, and before the line is written, so the
       // line carries them (R10).
       const checks = await watch.check(settling.tree);
+      const stopped = await caught();
 
       // The pool is written first, if this file has not seen it, so the Hop
       // line below never names a pool that is not already on disk.
@@ -862,6 +888,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
           'The page stopped answering while the settle wait read it, so what the Hop did could not be read.'
         ),
         checks,
+        ...(stopped ? { caught: stopped } : {}),
       });
 
       hops += 1;
@@ -969,6 +996,8 @@ async function runFix(
     journal: Pick<Journal, 'write'>;
     /** The checks, run after every step. Absent for a survey, which judges nothing. */
     watch?: Watch;
+    /** What the stubs caught since last asked. Absent for a survey, which records nothing. */
+    caught?: () => Promise<CaughtByStubs | undefined>;
     settleTimeoutMs: number;
     settleQuietMs: number;
     exclusions: AppUnderTest['exclusions'];
@@ -978,7 +1007,7 @@ async function runFix(
     hopDelayMs: number;
   }
 ): Promise<void> {
-  const { page, app, rng, journal, watch, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs, hopDelayMs } =
+  const { page, app, rng, journal, watch, caught, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs, hopDelayMs } =
     context;
   let steps = 0;
 
@@ -992,7 +1021,7 @@ async function runFix(
   // A full settle wait after each step, as after a Trip hop, rather than one
   // snapshot, which could catch the screen mid-change and record the wrong
   // effect. Decided 2026-09-24; a Fix is usually a handful of steps.
-  const effectAfter = async (): Promise<{ effect: HopEffect; checks: JournaledCheck[] }> => {
+  const effectAfter = async (): Promise<{ effect: HopEffect; checks: JournaledCheck[]; stopped?: CaughtByStubs }> => {
     const settling = watch
       ? await settledOrStalled(watch, page, settleTimeoutMs, settleQuietMs)
       : await settle(page, settleTimeoutMs, settleQuietMs);
@@ -1005,7 +1034,9 @@ async function runFix(
     // The checks run after every Fix step as after every Trip hop, decided
     // 2026-09-23: a Fix that breaks the application should be caught at the
     // step that broke it, not by whichever Trip hop meets it first.
-    return { effect, checks: watch ? await watch.check(settling.tree) : [] };
+    const checks = watch ? await watch.check(settling.tree) : [];
+    const stopped = await caught?.();
+    return { effect, checks, ...(stopped ? { stopped } : {}) };
   };
 
   const step: FixContext['step'] = async (name, action) => {
@@ -1035,12 +1066,13 @@ async function runFix(
           durationMs: Date.now() - startedAt.getTime(),
           effect,
           checks,
+          ...(after?.stopped ? { caught: after.stopped } : {}),
         });
         throw new FixFailure(name, error);
       }
       // Before the entry, as for a Trip hop, so that `durationMs` includes the
       // settle wait on both kinds of Hop.
-      const { effect, checks } = await effectAfter();
+      const { effect, checks, stopped } = await effectAfter();
       journal.write({
         kind: 'fix-hop',
         hop,
@@ -1049,6 +1081,7 @@ async function runFix(
         durationMs: Date.now() - startedAt.getTime(),
         effect,
         checks,
+        ...(stopped ? { caught: stopped } : {}),
       });
       steps += 1;
 

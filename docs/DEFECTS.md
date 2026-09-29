@@ -71,6 +71,16 @@ adds another way out. And the independent evidence in phase 5, a check that no
 foreign process appeared, does not exist, so the recorder is still both the
 prevention and the only proof of it.
 
+**The two stubs added since share the shape.** `stubOpenPaths` replaces
+`shell.openPath` and `shell.showItemInFolder`, and `stubSelfLaunch`, added on
+2026-09-29, replaces `child_process.spawn`; each reaches an application only
+through a lookup at call time. The self-launch stub is the one with evidence of
+its own. A copy that escaped it inherits the Route's environment, `HOME`
+included, so the stray sweep finds it at the Route's end, and it writes into
+the application's real folder, which RStudio's home guard watches. Both report
+after the fact rather than preventing anything, and neither is a general check
+any application gets.
+
 **Only one of those two closes this entry, decided 2026-09-22.** Deriving an
 adapter's exclusion list keeps that one application's list current as the
 application changes, which is worth doing and is scheduled in `PLAN.md`. It

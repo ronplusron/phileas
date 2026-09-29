@@ -1,6 +1,6 @@
 import type { ElectronApplication } from '@playwright/test';
 
-const RECORDER = '__phileasNativeDialogs';
+export const RECORDER = '__phileasNativeDialogs';
 
 /** One native dialog the application asked for, and how it was answered. */
 export interface NativeDialogCall {

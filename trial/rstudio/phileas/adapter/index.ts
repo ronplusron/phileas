@@ -176,12 +176,20 @@ export const rstudio: AppUnderTest = {
       ['&Help', '&Check for Posit Assistant Updates...'],
       ['&Help', 'Dia&gnostics', 'Uninsta&ll Posit Assistant...'],
       // RStudio's own Quit, apart from the standard Quit the engine already
-      // skips; and a second RStudio window, which a Route does not survey.
+      // skips. A new session is not excluded: the engine's stub catches
+      // RStudio starting a second copy of itself, and starts nothing.
       ['&Session', '&Quit Session...'],
       // The same command in the File menu, missed at first: a Route chose it
       // on 2026-09-28 and RStudio quit.
       ['&File', '&Quit Session...'],
-      ['&Session', '&New Session'],
+      // The command palette, for now. It offers nearly every command again as
+      // an option, and none of the exclusions here reach those copies: Crash
+      // RStudio Desktop, Quit, screen reader support and a new session were
+      // all in it when a Route opened it on 2026-09-29. Every command in it
+      // also has a menu item or a button a Route reaches, so little is lost.
+      // No control prints its shortcut, so no key reaches it either.
+      // docs/OUTSTANDING.md 1.17 has bringing it back.
+      ['&Tools', 'Show &Command Palette'],
       // A crash on purpose, which is RStudio's own diagnostic, not a bug.
       ['&Help', 'Dia&gnostics', 'Crash RStudio Desktop (DA&NGER)'],
       // Updates, which R by default installs into whichever library already

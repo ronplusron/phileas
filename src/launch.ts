@@ -3,7 +3,7 @@ import path from 'node:path';
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
 import type { AppUnderTest, UniversalCheck } from './app-under-test';
 import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle';
-import { stubOpenExternal, stubOpenPaths, clearOpenExternal } from './external';
+import { stubOpenExternal, stubOpenPaths, stubSelfLaunch, clearOpenExternal } from './external';
 import { stubNativeDialogs } from './dialogs';
 import { prepareFirstLine } from './first-line';
 
@@ -606,6 +606,7 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
 
     await stubOpenExternal(app);
     await stubOpenPaths(app);
+    await stubSelfLaunch(app);
     await stubNativeDialogs(app);
 
     // Which page is the application, rather than which window appeared first: an

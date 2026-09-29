@@ -143,6 +143,26 @@ function knownText(checks) {
 }
 
 /**
+ * What the engine's stubs caught on a Hop, or the empty string for a Hop where
+ * they caught nothing, so a Hop whose effect was stopped does not read like one
+ * that did nothing.
+ * @param {import('../caught').CaughtByStubs | undefined} caught
+ * @returns {string}
+ */
+export function caughtText(caught) {
+  if (!caught) return '';
+  const parts = [
+    ...(caught.selfLaunches ?? []).map(() => 'a second copy of the application'),
+    ...(caught.outbound ?? []).map((url) => `link ${url}`),
+    ...(caught.opened ?? []).map((call) => `open ${call}`),
+    ...(caught.dialogs ?? []).map((call) => `native dialog ${call.kind}${call.text ? ` "${call.text}"` : ''}`),
+    ...(caught.notInstalled ?? []).map((field) => `stub not installed: ${field}`),
+    ...(caught.unreadable ? [`stubs unreadable: ${caught.unreadable}`] : []),
+  ];
+  return parts.length ? `   (stubbed: ${parts.join('; ')})` : '';
+}
+
+/**
  * One journal entry as one line, or nothing for an entry a person has no use
  * for, which is a pool: every Hop already names what it acted on.
  *
@@ -167,6 +187,7 @@ export function renderEntry(entry, routeNumber) {
         column(`${route}  fix ${entry.hop}`, 18),
         column(shortened(entry.name, 39), 40),
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
+        caughtText(entry.caught),
         knownText(entry.checks),
         failedText(entry.checks),
       ].join('');
@@ -179,6 +200,7 @@ export function renderEntry(entry, routeNumber) {
         value ? `${value}   ` : '',
         effectText(entry.effect),
         entry.abandoned ? `   (gave up: ${entry.abandoned})` : '',
+        caughtText(entry.caught),
         knownText(entry.checks),
         failedText(entry.checks),
       ].join('');

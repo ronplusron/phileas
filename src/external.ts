@@ -1,6 +1,6 @@
 import type { ElectronApplication } from '@playwright/test';
 
-const RECORDER = '__phileasOpenExternal';
+export const RECORDER = '__phileasOpenExternal';
 
 /**
  * Replace shell.openExternal in the main process with a recorder.
@@ -84,7 +84,7 @@ export async function clearOpenExternal(app: ElectronApplication): Promise<void>
   }
 }
 
-const PATHS_RECORDER = '__phileasOpenedPaths';
+export const PATHS_RECORDER = '__phileasOpenedPaths';
 
 /**
  * Replace `shell.openPath` and `shell.showItemInFolder` in the main process
@@ -129,6 +129,95 @@ export async function openedPaths(app: ElectronApplication): Promise<string[]> {
     throw new Error(
       'The recorder for opened files and folders is not installed in this application, so ' +
         'nothing can be said about what it opened.'
+    );
+  }
+  return calls;
+}
+
+export const SELF_LAUNCH_RECORDER = '__phileasSelfLaunches';
+
+/**
+ * Replace `child_process.spawn` in the main process with one that records a
+ * launch of the application's own program and starts nothing, and passes every
+ * other command through unchanged.
+ *
+ * Without this, an application that opens a second copy of itself escapes the
+ * Route. The copy gets the environment but not the command line, so it has no
+ * `--user-data-dir` and none of the window settings, which reach only the copy
+ * Playwright launched. On RStudio on 2026-09-29, Open Project in New Session
+ * started one: it came up on the real screen and wrote into RStudio's real
+ * Application Support folder. A Route could not have traveled it either, so
+ * stubbing gives up nothing a Route could reach, only the second copy's own
+ * startup.
+ *
+ * The launch is answered with a stand-in child process that reports it
+ * started and never exits, which is what a detached copy looks like to the
+ * application that started it. RStudio only calls `unref()` on it.
+ *
+ * The same limit as `stubOpenExternal`: it reaches an application only if it
+ * looks `spawn` up on the `child_process` module at call time. RStudio's
+ * release bundle does, measured on 2026-09-29 as `(0,o.spawn)(process.execPath,
+ * ...)`. It does not reach `app.relaunch()`, `execFile` or `fork`, none of which
+ * RStudio uses to start itself.
+ */
+export async function stubSelfLaunch(app: ElectronApplication): Promise<void> {
+  await app.evaluate((_electron, key) => {
+    type Loader = (name: string) => unknown;
+    const load: Loader | undefined =
+      (process as unknown as { getBuiltinModule?: Loader }).getBuiltinModule ??
+      (process as unknown as { mainModule?: { require: Loader } }).mainModule?.require;
+    if (!load) {
+      throw new Error('Neither process.getBuiltinModule nor the main module can load child_process here.');
+    }
+    const childProcess = load('child_process') as typeof import('child_process');
+    const { EventEmitter } = load('events') as typeof import('events');
+    const path = load('path') as typeof import('path');
+
+    const calls: string[][] = [];
+    (globalThis as Record<string, unknown>)[key] = calls;
+    const spawn = childProcess.spawn;
+
+    childProcess.spawn = function (this: unknown, command: string, ...rest: unknown[]) {
+      if (typeof command !== 'string' || path.resolve(command) !== process.execPath) {
+        return (spawn as (...a: unknown[]) => unknown).call(this, command, ...rest);
+      }
+      const args = Array.isArray(rest[0]) ? (rest[0] as unknown[]).map(String) : [];
+      calls.push(args);
+      const child = Object.assign(new EventEmitter(), {
+        pid: undefined,
+        exitCode: null,
+        signalCode: null,
+        killed: false,
+        stdin: null,
+        stdout: null,
+        stderr: null,
+        stdio: [null, null, null],
+        unref() {},
+        ref() {},
+        kill() {
+          return false;
+        },
+      });
+      setImmediate(() => child.emit('spawn'));
+      return child;
+    } as typeof childProcess.spawn;
+  }, SELF_LAUNCH_RECORDER);
+}
+
+/**
+ * The arguments of each launch of the application's own program since launch,
+ * one list per launch. Throws when the recorder is absent, for the reason
+ * `openedExternally` gives.
+ */
+export async function selfLaunches(app: ElectronApplication): Promise<string[][]> {
+  const calls = await app.evaluate(
+    (_electron, key) => (globalThis as Record<string, unknown>)[key] as string[][] | undefined,
+    SELF_LAUNCH_RECORDER
+  );
+  if (calls === undefined) {
+    throw new Error(
+      'The recorder for launches of the application itself is not installed, so nothing ' +
+        'can be said about what it started.'
     );
   }
   return calls;

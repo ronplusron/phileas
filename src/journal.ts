@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { CaughtByStubs } from './caught';
 import type { HopEffect } from './effect';
 import { renderEntry } from './report/render.mjs';
 
@@ -164,6 +165,8 @@ export interface FixHopEntry {
    * `error`. Empty in journals written before 2026-09-26, and for a survey.
    */
   readonly checks: readonly JournaledCheck[];
+  /** What the engine's stubs caught during this step, where they caught anything. See `CaughtByStubs`. */
+  readonly caught?: CaughtByStubs;
 }
 
 /** What one Trip hop did, and what it could have done instead (R10). */
@@ -239,6 +242,13 @@ export interface TripHopEntry {
   readonly effect: HopEffect;
   /** Every check's result after this Hop. Empty in journals written before 2026-09-26. */
   readonly checks: readonly JournaledCheck[];
+  /**
+   * What the engine's stubs caught during this Hop, where they caught
+   * anything: a browser, a file, a native dialog or a second copy of the
+   * application asked for and suppressed. See `CaughtByStubs`. Absent in
+   * journals written before 2026-09-29.
+   */
+  readonly caught?: CaughtByStubs;
 }
 
 /** What the Route was, written before it does anything. */
@@ -251,6 +261,12 @@ export interface OpeningEntry {
   readonly tripLength: number;
   /** The quiet window the settle wait used for this Route. See `settle`. */
   readonly settleQuietMs: number;
+  /**
+   * How long each process had to answer before it counted as not answering.
+   * See `AppUnderTest.responsiveTimeoutMs`. Absent in journals written before
+   * 2026-09-29.
+   */
+  readonly responsiveTimeoutMs?: number;
   /**
    * The shares the share draw was read with, the adapter's or the defaults.
    * Absent in journals written before 2026-09-24's configurable shares.

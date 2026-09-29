@@ -83,6 +83,19 @@ test("the file dialog's parent-folder row is excluded, since it climbs out of th
   expect(await excluded({ source: 'page', role: 'option', name: 'Folder R' })).toBe(false);
 });
 
+test('every way into a new session stays reachable, since the engine stubs the second RStudio it starts', async () => {
+  expect(rstudio.exclusions.names).not.toContain('Open Project in New Session...');
+  expect(rstudio.exclusions.names).not.toContain('Open in new session');
+  expect(rstudio.exclusions.menuPaths).not.toContainEqual(['&File', 'Open Project in Ne&w Session...']);
+  expect(rstudio.exclusions.menuPaths).not.toContainEqual(['&Session', '&New Session']);
+  expect(await excluded({ source: 'page', role: 'menuitem', name: 'Open Project in New Session...' })).toBe(false);
+  expect(await excluded({ source: 'page', role: 'checkbox', name: 'Open in new session' })).toBe(false);
+});
+
+test('the command palette is excluded, since the exclusions do not reach its copies of commands', () => {
+  expect(rstudio.exclusions.menuPaths).toContainEqual(['&Tools', 'Show &Command Palette']);
+});
+
 test("the console errors R's restart makes are accepted, and only those", () => {
   const accept = (message: string) => {
     const narrowed = rstudio.narrowedChecks?.['console-error'];

@@ -25,6 +25,81 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-29: a second RStudio escaped and is now stubbed, and the command palette is set aside
+
+**The rerun of the stopped batch was itself stopped,** in its first Journey,
+the one with no Fix, after eight Routes had passed. RStudio came up on the
+real screen, showing an error for a project opened at `~`. Route 7 had
+chosen "Open Project in New Session..." from the Project button's menu,
+then Home, then Open. That starts a second RStudio, which RStudio launches
+itself, without the Route's `--user-data-dir` and without the hidden
+window. Between 05:54:58 and 05:55:17 it wrote into RStudio's real
+Application Support folder: `config.json`, `Preferences`, session storage
+and caches. No earlier copy was kept, so what it overwrote is not known.
+It was gone a second after the Route ended, which fits the stray sweep
+ending it, though that was not confirmed. The home guard watches that
+folder, so the Journey would have failed at its end, after the fact.
+
+It is ordinary RStudio behavior, not a finding. RStudio's source says how
+it happens: `launchRStudio` starts `process.execPath` with the environment
+and, in a release build, an empty command line, so `--user-data-dir` does
+not carry over, and Electron's data folder has no other setting. `HOME` did
+not redirect it. RStudio's own end-to-end sandbox has the same gap, unseen
+because no scripted test opens a new session. Playwright's
+`chromiumSandbox` was looked at too, and is Chromium's renderer security
+sandbox: it has no say over where the application writes or what it starts.
+
+**Excluding every way into a new session was the first answer, and a stub
+replaced it the same day.** An exclusion gives up the feature, and the next
+application to start a copy of itself would escape the same way. Two ways
+to contain it were weighed: start the copy with the Route's
+`--user-data-dir`, or start nothing. Starting it still puts a window on the
+real screen, since the hidden-window settings reach only the copy
+Playwright launched, and leaves two RStudios writing into one Route profile.
+A Route could not travel the second window either way. So `stubSelfLaunch`
+replaces `child_process.spawn` in the main process: a launch of the
+application's own program is recorded and answered with a stand-in that
+reports it started, and every other command runs. RStudio's release bundle
+calls `(0,o.spawn)(process.execPath, ...)`, a lookup at call time, so the
+stub reaches it. Measured against RStudio: Open Project in New Session and
+Session > New Session were each recorded once, no second RStudio started,
+the real `config.json` was untouched, and the Route's window went on
+answering. The engine's own test checks the process table for the launch,
+with a control proving the table would show it; the control caught the
+first version of that check, which could not see long command lines and
+passed while seeing nothing. The new-session exclusions are gone, Session >
+New Session's included, which had been excluded since 2026-09-28.
+
+**What the stubs catch is journaled now, on the Hop that caused it.** Found
+while building the self-launch stub: no stub's recordings reached the
+journal, outbound links, opened files and native dialogs included. A Route
+that asked for a new session showed only the click, and a reader could not
+tell a Hop that did nothing from one whose effect was stopped. After each
+Hop and each Fix step, one call into the main process reads all four
+recorders, and the line carries a `caught` field with only what is new,
+present only when something was caught. Anything caught while the
+application started goes on a note before the first Hop rather than on it.
+A recorder that is missing is named in the field, so a stub never installed
+does not read as one that caught nothing. The printed line ends
+"(stubbed: ...)". The reading is bounded by the still-responding check's
+time limit. The first version was not, and the engine's own suite caught
+it: against the planted endless hang, the Route waited on the reading until
+Playwright's timeout, and the hung test application sat at full CPU until
+teardown killed it. That time limit, 5000 ms by default, could until then be
+set only by code calling `runRoute`; an adapter now sets it as
+`responsiveTimeoutMs`, it is refused unless a whole number above 0, and the
+value used is on each journal's opening line.
+
+**The command palette was found in looking for those ways in.** It offers
+nearly every command again as an option, and exclusions written against
+menu paths and names do not reach those copies. Two Routes had opened it,
+and in it were Crash RStudio Desktop, Quit, screen reader support, a new
+session, and the setting that brings native dialogs back. Nothing bad came
+through it, by the luck of the draw. Tools > Show Command Palette is
+excluded for now. Every command in it also has a menu item or a button a
+Route reaches. No control prints its shortcut, so no key reaches it either.
+It was agreed to be revisited rather than left out for good.
+
 ## 2026-09-29: signatures that survive a new build, and a file that keeps itself current
 
 **Two ways a known finding stopped matching,** found by reading the files.

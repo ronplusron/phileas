@@ -560,6 +560,21 @@ run time, so an open range is not safe: which features it uses that 1.61
 lacks, if any, is unmeasured. Either the range widens to what is measured
 to work, or a consumer upgrades.
 
+### 1.17 Bringing the command palette back
+
+Tools > Show Command Palette is excluded for now, on 2026-09-29, and was
+agreed to be revisited rather than left out for good. The palette offers
+nearly every command again as an option, and exclusions written against
+menu paths and control names do not reach those copies. When a Route opened
+it, Crash RStudio Desktop, Quit, screen reader support, a new session and
+the setting that brings native dialogs back were all in it.
+
+Bringing it back needs the exclusions to reach its options. One way is a
+predicate matching an option to the menu command it copies, so that one list
+still covers both. The palette appends a command's shortcut to its name, as
+in "Quit the Current R Session CtrlQ", so a match on the exact name would
+not work.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -828,6 +843,25 @@ interpreter buttons print identical lines.
   an interactive survey that numbers the controls and takes a number.
 - **The text line need not go.** It is what a person reads, and what a Fix
   written by hand uses; a target could be accepted beside it.
+
+### 2.12 A change RStudio could make so its second copy stays in the sandbox
+
+Noted on 2026-09-29, when asked to "make a note" of it; whether to raise it
+with RStudio's developers, and how, is not decided. RStudio Desktop starts a
+new session by launching a second copy of itself, in `launchRStudio` in
+`src/node/desktop/src/main/application-launch.ts`. The copy is given the
+environment but an empty command line in a release build, so a
+`--user-data-dir` the first copy was started with does not reach it, and
+Electron's data folder can be set no other way. The copy then writes into the
+real `~/Library/Application Support/RStudio`.
+
+The change would be for `launchRStudio` to pass its own `--user-data-dir` on
+to the copy when it was given one. Nobody starts RStudio with that switch in
+ordinary use, so nothing changes for a user. It matters to anything that
+points RStudio elsewhere: RStudio's own end-to-end sandbox has the same gap,
+unseen only because no scripted test opens a new session. The engine does not
+need it, since `stubSelfLaunch` starts no copy at all; it would matter if
+the second session's startup were ever to be tested rather than stubbed.
 
 ## 3. Declined
 

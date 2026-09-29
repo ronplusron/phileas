@@ -33,6 +33,7 @@ import {
   type JournaledCandidate,
   type TripHopEntry,
 } from '../src/index';
+import { renderEntry } from '../src/report/render.mjs';
 import { scratch as makeScratch, removeScratch } from './scratch';
 
 /**
@@ -642,6 +643,103 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
 
   // And the Route never reached its Trip.
   expect(entries.some((entry) => entry.kind === 'trip-hop')).toBe(false);
+});
+
+test("what the stubs caught is journaled on the Hop that caused it, and printed", async ({ page, app }) => {
+  const dir = scratch();
+  const marker = `--phileas-caught-probe-${process.pid}`;
+
+  // Fix steps rather than Trip hops, so each Hop does one known thing. A Trip
+  // hop records what it caught through the same reader. Each call is made from
+  // the main process, as the application's own code makes it: buggy's real
+  // outbound link leaves the page waiting on a cancelled navigation, which
+  // launch.spec.ts covers, and would stall the survey after it.
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('caught-seed', 1),
+    journeySeed: 'caught-seed',
+    routeNumber: 1,
+    tripLength: 1,
+    journalsRoot: dir,
+    fix: async ({ step }) => {
+      await step('open the summary', async () => {
+        await page.getByRole('button', { name: 'Summary', exact: true }).click();
+      });
+      await step('open a link, a folder and a dialog', async () => {
+        await app.evaluate(async ({ shell, dialog }) => {
+          await shell.openExternal('https://example.com/buggy');
+          await shell.openPath('/phileas-test/a-folder');
+          await dialog.showMessageBox({ message: 'Save changes?', buttons: ['Save', 'Cancel'] });
+        });
+      });
+      await step('start a second copy of the application', async () => {
+        await app.evaluate((_electron, flag) => {
+          const load = (process as unknown as { getBuiltinModule: (name: string) => unknown }).getBuiltinModule;
+          const childProcess = load('child_process') as typeof import('child_process');
+          childProcess.spawn(process.execPath, [flag], { detached: true, stdio: 'ignore' }).unref();
+        }, marker);
+      });
+    },
+  });
+
+  const entries = readJournal(
+    path.join(inRun(dir), `route-001-${deriveRouteStreams('caught-seed', 1).routeSeed}.jsonl`)
+  );
+  const fixHops = entries.filter((entry) => entry.kind === 'fix-hop');
+  expect(fixHops).toHaveLength(3);
+  // A Hop that caught nothing carries nothing, so the field means something
+  // where it appears.
+  expect(fixHops[0]).not.toHaveProperty('caught');
+  expect(fixHops[1]).toMatchObject({
+    caught: {
+      outbound: ['https://example.com/buggy'],
+      opened: ['openPath /phileas-test/a-folder'],
+      dialogs: [{ kind: 'showMessageBox', text: 'Save changes?' }],
+    },
+  });
+  // Each on its own Hop only: nothing caught earlier is put down again.
+  expect(fixHops[2]).toEqual(expect.objectContaining({ caught: { selfLaunches: [[marker]] } }));
+
+  const printed = fixHops.map((entry) => renderEntry(entry, 1) ?? '');
+  expect(printed[0]).not.toContain('stubbed:');
+  expect(printed[1]).toContain(
+    '(stubbed: link https://example.com/buggy; open openPath /phileas-test/a-folder; native dialog showMessageBox "Save changes?")'
+  );
+  expect(printed[2]).toContain('(stubbed: a second copy of the application)');
+});
+
+test("the time limit for answering is the adapter's where it sets one, journaled, and refused when nonsense", async ({
+  page,
+  app,
+}) => {
+  const opening = async (cfg: AppUnderTest, seed: string, override?: number) => {
+    const dir = scratch();
+    await runRoute({
+      page,
+      app,
+      cfg,
+      streams: deriveRouteStreams(seed, 1),
+      journeySeed: seed,
+      routeNumber: 1,
+      tripLength: 1,
+      journalsRoot: dir,
+      ...(override === undefined ? {} : { responsiveTimeoutMs: override }),
+    });
+    const [first] = readJournal(path.join(inRun(dir), `route-001-${deriveRouteStreams(seed, 1).routeSeed}.jsonl`));
+    return first;
+  };
+
+  expect(await opening(buggy, 'answer-default')).toMatchObject({ kind: 'route', responsiveTimeoutMs: 5000 });
+  const patient = { ...buggy, responsiveTimeoutMs: 7500 };
+  expect(await opening(patient, 'answer-adapter')).toMatchObject({ responsiveTimeoutMs: 7500 });
+  // The Route's own setting wins, which is how the engine's tests shorten it.
+  expect(await opening(patient, 'answer-override', 1000)).toMatchObject({ responsiveTimeoutMs: 1000 });
+
+  for (const bad of [0, -1, 2.5, Number.NaN]) {
+    await expect(opening({ ...buggy, responsiveTimeoutMs: bad }, 'answer-bad')).rejects.toThrow(/responsiveTimeoutMs must be/);
+  }
 });
 
 test('every hop records what it did to the screen, Fix and Trip alike (R31)', async ({

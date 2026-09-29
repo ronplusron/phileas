@@ -453,6 +453,20 @@ export interface AppUnderTest {
   settleQuietMs?: number;
 
   /**
+   * How long the application's main process and page each have to answer the
+   * engine, in milliseconds, before it counts as not answering. Leave it out
+   * for the engine's default, `DEFAULT_RESPONSIVE_TIMEOUT_MS`, 5000.
+   *
+   * The still-responding check's round trip uses it, and so does the reading
+   * of what the stubs caught after each Hop, which gives up and says so rather
+   * than wait on an application that has stopped answering. For an application
+   * slow enough to answer that the default reports hangs it does not have. The
+   * length used is written in every journal, since it decides where a Route
+   * ends.
+   */
+  responsiveTimeoutMs?: number;
+
+  /**
    * How long to watch a Route's profile folder after deleting it, in
    * milliseconds, and delete it again if something recreated it. Leave it out
    * for the engine's default of 250 ms.

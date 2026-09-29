@@ -1,5 +1,14 @@
+import { execFileSync, spawn } from 'node:child_process';
 import { test as plain } from '@playwright/test';
-import { createTest, expect, openedPaths, rendererVerdict, screenshotWithin } from '../src/index';
+import {
+  caughtSince,
+  createTest,
+  expect,
+  openedPaths,
+  rendererVerdict,
+  screenshotWithin,
+  selfLaunches,
+} from '../src/index';
 import { buggy } from '../testbed/buggy/phileas/adapter/index';
 
 /**
@@ -47,6 +56,51 @@ test('opening a file or folder is caught by the stub and opens nothing', async (
   });
   expect(answer).toBe('');
   expect(await openedPaths(app)).toEqual(['openPath /phileas-test/a-folder', 'showItemInFolder /phileas-test/a-file.txt']);
+});
+
+test('a launch of the application itself is caught by the stub and starts nothing', async ({ app }) => {
+  expect(await selfLaunches(app)).toEqual([]);
+  // A marker no other process carries, so the process table can say on its own
+  // whether a copy started: the recorder is the stub's evidence, and must not
+  // be the only evidence that the stub worked.
+  const marker = `--phileas-self-launch-probe-${process.pid}-${Date.now()}`;
+  // Launched the way RStudio's Open Project in New Session launches itself.
+  const answer = await app.evaluate(async (_electron, flag) => {
+    const load = (process as unknown as { getBuiltinModule: (name: string) => unknown }).getBuiltinModule;
+    const childProcess = load('child_process') as typeof import('child_process');
+    const child = childProcess.spawn(process.execPath, [flag], { detached: true, stdio: 'ignore' });
+    child.unref();
+    const spawned = await new Promise<boolean>((resolve) => child.once('spawn', () => resolve(true)));
+    // Any other program still runs.
+    const other = childProcess.spawnSync('/bin/echo', ['still runs'], { encoding: 'utf8' }).stdout.trim();
+    return { spawned, pid: child.pid, other };
+  }, marker);
+  expect(answer).toEqual({ spawned: true, pid: undefined, other: 'still runs' });
+  expect(await selfLaunches(app)).toEqual([[marker]]);
+  const running = (flag: string) =>
+    execFileSync('ps', ['-axwwo', 'command'], { encoding: 'utf8' })
+      .split('\n')
+      .filter((line) => line.includes(flag) && !line.startsWith('ps '));
+  // The control: a process started with a marker of its own is found, so the
+  // empty answer below is the table's and not a search that finds nothing.
+  const control = `${marker}-control`;
+  const probe = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)', '--', control], { stdio: 'ignore' });
+  try {
+    await expect.poll(() => running(control).length).toBe(1);
+  } finally {
+    probe.kill();
+  }
+  expect(running(marker).filter((line) => !line.includes(control))).toEqual([]);
+});
+
+test('a stub whose recorder is missing is named, not read as having caught nothing', async ({ app }) => {
+  const caught = caughtSince(app, 5_000);
+  // Every recorder installed, and nothing caught at launch.
+  expect(await caught()).toBeUndefined();
+  await app.evaluate(() => {
+    delete (globalThis as Record<string, unknown>).__phileasSelfLaunches;
+  });
+  expect(await caught()).toEqual({ notInstalled: ['selfLaunches'] });
 });
 
 const thrower = { ...buggy, launchArgs: ['--buggy-plant=renderer-throw'] };
