@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
+**Thirteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -230,20 +230,6 @@ Seen again on 2026-09-28, from the native-dialog stub, on 1 Route in 6 with
 the first-line pause and 1 in 6 with its script doing nothing; whether the
 pause itself raises the rate was not measured, since 2024.11 was set aside
 in favor of the current release.
-
-## "The window closed" is reported when only Playwright's page did
-
-**Filed 2026-09-28, from two runs at the same moment.** Still-responding
-records "the window closed" when Playwright's page object fires `close`,
-in `src/oracles/index.ts`, and treats it as the application closing its
-window. When the Mac slept for about five seconds, both an RStudio Route
-and a Rail Itinerary Route failed that way. The Eighty Days demo session
-then measured, eleven minutes later, that Rail Itinerary's window was
-still open, its processes alive and its debugging port listing the page.
-So the finding was false, and it ends the Route as a real hang would.
-Checking the application's own windows from the main process before
-calling it closed would tell the two apart, and a lost connection would
-then be reported as that.
 
 ## A stop sent to the `phileas` command alone does not stop the run
 

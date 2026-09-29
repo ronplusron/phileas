@@ -25,6 +25,23 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-28: a lost connection told apart from a closed window
+
+**Still-responding reported "the window closed" whenever Playwright's page
+fired `close`.** When the Mac slept for five seconds, an RStudio Route and
+a Rail Itinerary Route both failed that way, and the Eighty Days demo
+session measured Rail Itinerary's window still open eleven minutes later.
+So the finding was false, and it ended the Route as a hang would.
+
+**Now the watch reads which of the application's windows the page is,**
+through Playwright's `browserWindow`, when a Route starts. When the page's
+close is all that went and the main process answers, it asks whether that
+window still exists; if it does, the Route ends with `PageConnectionLost`,
+saying the engine lost its connection, and no finding is recorded. A test
+fires the page's close event with the window left open, and the planted
+main-exit, where the window really goes, still fails still-responding.
+Where the window cannot be read, a close is taken at its word as before.
+
 ## 2026-09-28: a failed Route's teardown no longer waits on a screenshot forever
 
 **Three times that day a failed Route held its Journey at teardown,** with

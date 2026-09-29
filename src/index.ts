@@ -169,6 +169,7 @@ export {
   showsNothing,
   CheckFailure,
   AdapterCheckError,
+  PageConnectionLost,
   assertAppChecks,
   CHECK_ORDER,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,

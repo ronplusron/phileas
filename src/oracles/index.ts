@@ -205,6 +205,16 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   const known = new Map((options.known?.entries ?? []).map((entry) => [entry.signature, entry]));
   const responsiveTimeoutMs = options.responsiveTimeoutMs ?? DEFAULT_RESPONSIVE_TIMEOUT_MS;
 
+  // Which of the application's windows this page is, read once at the start,
+  // so that a page Playwright calls closed can be checked against the window
+  // itself. Undefined where it could not be read, and then a close is taken
+  // at its word, as it always was.
+  const pageWindow = await within(
+    app.browserWindow(page).then((window) => window.evaluate((w) => w.id)),
+    responsiveTimeoutMs
+  );
+  const pageWindowId = typeof pageWindow === 'number' ? pageWindow : undefined;
+
   const pageErrors: string[] = [];
   const stalls: string[] = [];
   const consoleErrors: string[] = [];
@@ -224,7 +234,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   // dead application passed still-responding, its other checks read "not
   // run", and a crash on the last Hop reported the Route as passed.
   page.on('crash', () => gone.push('the renderer crashed'));
-  page.on('close', () => gone.push('the window closed'));
+  page.on('close', () => gone.push(WINDOW_CLOSED));
   app.on('close', () => gone.push('the application closed'));
   app.process().on('exit', (code, signal) =>
     gone.push(`the main process exited${signal ? ` on ${signal}` : ` with code ${code}`}`)
@@ -351,6 +361,26 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     };
     judge(renderer, 'renderer');
     judge(main, 'main process');
+
+    // **A page Playwright calls closed is not always a window the application
+    // closed.** When the Mac slept for five seconds on 2026-09-28, two Routes
+    // on two applications failed here with "the window closed", and one of
+    // those windows was measured still open eleven minutes later. So where
+    // the page's close is all that went, and the main process answers, it is
+    // asked whether the page's own window still exists. If it does, the
+    // engine lost its connection, which says nothing about the application:
+    // the Route ends with that reason, and no finding is recorded against it.
+    if (gone.length === 1 && gone[0] === WINDOW_CLOSED && pageWindowId !== undefined && main !== TIMED_OUT && main.ok) {
+      const open = await within(
+        app.evaluate(({ BrowserWindow }, id) => {
+          const window = BrowserWindow.fromId(id);
+          return window !== null && !window.isDestroyed();
+        }, pageWindowId),
+        responsiveTimeoutMs,
+        'rejections-too'
+      );
+      if (open !== TIMED_OUT && open.ok && open.value) throw new PageConnectionLost();
+    }
     return [...new Set(slow)];
   };
 
@@ -427,6 +457,26 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
  * look. A check that fails silently is the worst kind, since a Route that
  * ends at the first violation would never end.
  */
+/** What still-responding records when the page's close is its evidence. */
+const WINDOW_CLOSED = 'the window closed';
+
+/**
+ * Thrown when Playwright's page closed while the application's own window for
+ * it is still open: the engine lost its connection, which is not a finding
+ * about the application. Measured on 2026-09-28 after the Mac slept, when a
+ * window reported closed was still open eleven minutes later.
+ */
+export class PageConnectionLost extends Error {
+  constructor() {
+    super(
+      "The engine lost its connection to the page, while the application's window for it is still " +
+        'open, so the Route cannot go on. This is not a finding about the application: it was ' +
+        'seen after the Mac slept.'
+    );
+    this.name = 'PageConnectionLost';
+  }
+}
+
 export class AdapterCheckError extends Error {
   constructor(
     readonly check: string,

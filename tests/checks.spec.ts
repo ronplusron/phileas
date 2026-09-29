@@ -6,6 +6,7 @@ import { buggy } from '../testbed/buggy/phileas/adapter/index';
 import {
   CHECK_ORDER,
   CheckFailure,
+  PageConnectionLost,
   FixFailure,
   RUN_VARIABLE,
   createTest,
@@ -229,6 +230,47 @@ byFolderTest('logs named from the profile folder refuse to start without it', as
 const healthy = createTest(buggy);
 healthy.afterEach(removeScratch);
 healthy.afterEach(() => fs.rmSync(LOG, { force: true }));
+
+healthy("a page Playwright calls closed while its window is still open ends the Route as a lost connection, not a finding", async ({ page, app }) => {
+  // What the Mac sleeping did on 2026-09-28: Playwright's page announced it had
+  // closed, and the application's window was measured still open. The page's
+  // own close event is fired here without closing anything. The planted
+  // main-exit, above, is the control, where the window really goes.
+  const root = scratch();
+  let hop = 0;
+  const error = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('connection-lost', 1),
+    journeySeed: 'connection-lost',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: root,
+    chooser: {
+      choose: (candidates) => {
+        if (hop++ === 0) (page as unknown as NodeJS.EventEmitter).emit('close', page);
+        const target = candidates.find((candidate) => candidate.name === 'Summary' && candidate.source === 'page');
+        if (!target) throw new Error('Summary is not on offer');
+        return { target };
+      },
+    },
+    ...SHORT,
+  }).then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+  expect(error).toBeInstanceOf(PageConnectionLost);
+  const entries = journalIn(root);
+  const closing = entries[entries.length - 1];
+  expect(closing?.kind === 'outcome' && closing.outcome).toBe('failed');
+  expect(closing?.kind === 'outcome' ? closing.reason : '').toMatch(/lost its connection to the page/);
+  // No finding: nothing about the application was shown to be wrong.
+  const findings = entries.flatMap((entry) =>
+    entry.kind === 'trip-hop' ? entry.checks.flatMap((check) => check.findings ?? []) : []
+  );
+  expect(findings).toEqual([]);
+});
 
 healthy('on the unplanted application, nothing fires, and what cannot run says why', async ({ page, app }) => {
   // The other half of every test above: the same checks against the same
