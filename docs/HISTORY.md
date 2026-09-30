@@ -25,6 +25,39 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-30: a bug no check flagged, found by reading a journal
+
+**What happened.** Route 4 of Bobolink Editor's seed `25629a759aed`, run
+`2026-09-30T07-49-16-064Z`, closed the welcome note at hop 9, which put up
+the unsaved-work question, "Save changes to welcome.md before closing?". At
+hops 15 and 16 it chose About Bobolink Editor and then Keyboard Shortcuts
+from the native menu, and each opened over the question; at hop 17 it
+clicked Done. No check fired and the Route passed. The journal held it all
+the same: the question appearing, two more dialogs appearing, and no line
+showing the question going away.
+
+**Found by reading, not by a check.** The journal was being read to explain
+the Route's timed-out clicks, and a second dialog opening over an unanswered
+question looked wrong. That was a judgment the journal does not make: it
+says what appeared and went away, not what should not have. Reproduced the
+same day in a scripted run with the window hidden, on the welcome note and
+on a new document: with the question up, About from the macOS menu opens
+over it and takes the keyboard focus, and Escape or Enter then dismisses the
+question hidden behind About, which stays open. That consequence came from
+probing after the fact; the Route pressed no key while both were open.
+
+**Why it is recorded, in the words it was asked for with:** "This is
+important for two reasons: 1) It explains a usefulness of Phileas, and 2) it
+offers up a way of checking Phileas, beyond pre-determined checks like error
+messages."
+
+The first: the combination took two unrelated actions, leaving a document
+with unsaved work and opening About from the menu bar, and neither a
+scripted suite nor a reader of the code would have had a reason to try it.
+The editor's own suite does not. Phileas reached it by drawing each move
+from the seed. The second is open, and `OUTSTANDING.md` has it under
+reading journals for what no check asks.
+
 ## 2026-09-30: covered controls leave the draw, and are recorded
 
 **Why.** The survey offered every control in the accessibility tree, and

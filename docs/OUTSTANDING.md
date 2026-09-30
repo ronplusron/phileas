@@ -1012,6 +1012,29 @@ have acted on. The journal holds that: each Hop names its pool, and each
 distinct pool is written once. So an option to print one Hop's whole pool
 needs nothing new recorded. Until then, `jq` on the journal reaches it.
 
+### 2.16 Reading journals for what no check asks
+
+Raised 2026-09-30, from the Bobolink Editor bug `HISTORY.md` records the
+same day: a Route passed, no check fired, and a person reading its journal
+saw a second dialog open over an unanswered question. Asked to be kept as
+"a way of checking Phileas, beyond pre-determined checks like error
+messages."
+
+What it would be, and what is open. A check knows in advance what to look
+for; a reading of the journal can notice what nobody wrote a check for,
+such as a sequence of dialogs, a heading that never goes away, or a control
+that stays covered. Nothing is decided: who or what reads (a person, a
+model, or a set of rules over the journal's lines), when, and how a reading
+becomes a finding someone can file and a Route can later carry past.
+
+**One constraint, an inference and not confirmed:** a reading cannot be a
+check inside a Route. `../CLAUDE.md` requires a check's verdict to be
+reproducible from the seed, since the first violation ends the Route, and a
+reading by a person or a model is not. So it would run over a Journey's
+journals after the Journey, beside the checks rather than among them. A
+pattern that a reading finds more than once could then be written up as a
+check of the adapter's own, where it can be made deterministic.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias
