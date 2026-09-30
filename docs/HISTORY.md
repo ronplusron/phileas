@@ -85,6 +85,35 @@ of its Fix depends on, and `demo/journals.mjs` and
 older run folder still counts its Fix failures rather than none, which that
 session asked for.
 
+## 2026-09-29: the RStudio batch ran in full, 79 of 80
+
+**Four Journeys of 20 Routes of 40 Hops,** one from each start, after the
+stub for an application launching itself landed: no Fix, seed
+`891515bee1eb`; `script`, `d6062ec45fa3`; `session-data`, `9e1725b3d42c`;
+and `r-markdown`, `92237931ed96`. 79 Routes passed, one failed and none
+stranded. Of 3,192 Trip hops, 270 were abandoned, about one in twelve.
+
+**The one failure was a new finding, not yet known.** `script`'s Route 11
+chose Create a new connection at hop 20, ODBC at hop 26, and Yes to
+installing the odbc package at hop 27. About five seconds later the
+session log recorded `system error 2 (No such file or directory) [path: ]`,
+logged from `ConnectionsRegistry::add` in `ConnectionsIndexer.cpp:131`, and
+the log check failed the Route at hop 32, Refresh Find in Files results.
+Replaying the seed alone the same day failed on the same line after the same
+hop. Filed as ronplusron/phileas issue 64, as known finding `6f037ab8`.
+The journal names hop 32 because of how the checks charge a finding to a
+Hop, which `DEFECTS.md` now carries.
+
+**Issue 65 was filed the same day,** for the error Open Project logs when
+nothing is chosen, "The project file did not include a Version attribute".
+It duplicates RStudio's issue 14985, the web-dialog finding already known,
+and says so in its first line, naming 14985 by number only.
+
+**Four things seen in the batch are still open,** and `OUTSTANDING.md`
+holds them: controls offered while a popup covers them, a native Open File
+dialog reached by a shortcut, R sessions left running after a close, and
+printing one Hop's whole pool.
+
 ## 2026-09-29: `testbed/` is now `proving-ground/`
 
 Renamed on request, as "testbed" was disliked. "Waypoint" was proposed

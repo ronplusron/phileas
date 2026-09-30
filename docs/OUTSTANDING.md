@@ -906,6 +906,50 @@ Fix, both versions, the application's version, and the fused copy each person
 makes; and Journeys do not gate pushes, so someone has to own triage or the
 queue only grows.
 
+### 2.14 Controls offered while something covers them
+
+Seen in the RStudio batch of 2026-09-29; nothing is decided. The survey
+offers a control that is visible and enabled, and says nothing about whether
+anything is drawn over it. When an in-page popup menu stays open, the
+controls it covers are still offered, and a Hop drawn to one times out and
+is abandoned. In the no-Fix Journey's Route 19, hop 26 opened Open recent
+files, and hops 28 to 30, three package checkboxes in the Packages pane,
+were each abandoned; the next Hop to land was hop 31. Across the batch, 270
+of 3,192 Trip hops were abandoned, and how many of those were covered
+controls is not known, since the journal keeps only the first line of
+Playwright's error, which leaves out what intercepted the click.
+
+It is the same waste as the overlay in 1.10, from a menu instead of a
+dialog. Open: whether the survey should test what is on top at a control's
+center, and whether the journal should keep the whole error.
+
+### 2.15 Two things RStudio did in the batch, not explained
+
+Seen in the RStudio batch of 2026-09-29; neither is measured.
+
+- **A native Open File dialog, with web dialogs on.** The no-Fix Journey's
+  Route 1 pressed ⌘O at hop 28, the shortcut printed in "Open an existing
+  file (⌘O)", and the native-dialog stub caught a `showOpenDialog` titled
+  Open File. The stub answered it, so nothing reached the screen. Why the
+  shortcut goes to the native dialog while the adapter keeps web dialogs on
+  is not known. It matters because a finding on that path would not be one
+  a person reaching Open File from the menu meets.
+- **R sessions left running after a close.** In 5 of one Journey's 20
+  Routes, RStudio left `rsession` and a terminal's `bash` running after it
+  closed, and the stray sweep ended them. The sweep's printout was not kept
+  and the journal does not record it, so this rests on the run's output as
+  read at the time. Whether they would have exited by themselves, as
+  `HISTORY.md`'s entry of 2026-09-28 already asked of one R session, is
+  unmeasured.
+
+### 2.16 Printing one Hop's whole pool
+
+Raised on 2026-09-29 while reading the batch's journals; nothing is decided.
+`phileas show` prints what each Hop acted on, and not what else it could
+have acted on. The journal holds that: each Hop names its pool, and each
+distinct pool is written once. So an option to print one Hop's whole pool
+needs nothing new recorded. Until then, `jq` on the journal reaches it.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias

@@ -943,6 +943,15 @@ above.
 Findings filed here for an application under test start their title with
 its name, asked for when this one was filed.
 
+**The third and fourth, 2026-09-29,** from the full batch. Installing
+the odbc package from New Connection logs an empty-path error from
+`ConnectionsRegistry::add`, filed as ronplusron/phileas issue 64. Open
+Project with nothing chosen logs a missing Version attribute, filed as
+issue 65, which duplicates RStudio's issue 14985 and says so by number
+only. Every entry in RStudio's `known-findings.json` is settled: four
+filed, and Help > Diagnostics > Import Editor Contents dismissed as a
+developer diagnostics tool.
+
 **Web dialogs stay on, decided 2026-09-28,** after a finding they led to
 turned out to be one RStudio's developers had called not a high priority:
 opening a folder as a project from the web Open Project dialog, rstudio/rstudio
@@ -970,6 +979,19 @@ the last editor tab is closed, which has no predicate yet and is not
 measured on this release. A Route that closes RStudio fails
 still-responding, so that one would fail loudly rather than go unseen.
 `DEFECTS.md` has what this turned up in the engine.
+
+### Next: charging a finding to the Hop it was seen during
+
+**Placed 2026-09-30, ahead of any further runs,** on reading that the RStudio
+batch's one failure named the wrong Hop, in the words "The new defects seems
+pretty bad and we should prioritize it." `DEFECTS.md` has the defect, under
+"A finding is charged to whichever Hop is running when it is read", and the
+proposed fix. What the rest of the RStudio work does after it, and where
+weighting the draw below now falls, was not discussed.
+
+Boundary: a planted error that arrives after its Hop has ended is reported
+as seen during the Hop it arrived in, with the Hops before it and their
+times, and nothing claims a cause.
 
 ### After the trial: weighting the draw toward new targets
 

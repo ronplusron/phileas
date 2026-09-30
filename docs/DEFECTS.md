@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Twelve defects are recorded.** The launch layer landed in phase 1, so this
+**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -278,6 +278,45 @@ the rerun overwrote the report. What is known is only that it was under a
 full suite's load, and that the change being tested, to the Fix API, is not
 on the path a Route with no Fix takes. The next failure should keep its
 report, `test-results/` and the two plays' journals, before anything reruns.
+
+## A finding is charged to whichever Hop is running when it is read
+
+**Filed 2026-09-30, measured on RStudio and confirmed by reading the code.
+Next to fix, ahead of any further runs, decided the same day.** Five checks
+read from a buffer that fills in the background: renderer errors, console
+errors, main-process errors and dialogs through `splice(0)` in
+`src/oracles/index.ts`, and the log check through `readLogs`, which reads
+what each named log gained since its last read. Each reports what it read
+against the Hop just taken, and `route.ts` words the failure as "after hop
+N, which acted on" that Hop's target. The `caught` field on each journal
+line reads the stubs' recorders the same way. So anything an application
+does after the Hop that started it has ended is charged to whatever Hop
+comes next.
+
+In the RStudio batch of 2026-09-29, `script`'s Route 11 answered Yes to
+installing the odbc package at hop 27; the install logged its error about
+five seconds later, and the Route failed "after hop 32, which acted on
+button "Refresh Find in Files results"". That button is the trigger for a
+different known RStudio bug, issue 62, so the reason pointed a reader at the
+wrong one.
+
+**Why it is a defect and not a limit.** It produces a wrong answer: the
+journal names a cause, and the cause is wrong. A person triaging from it
+starts at the wrong Hop, and a shortened replay built from the named Hop,
+which `OUTSTANDING.md` 2.9 asks for, would drop the Hop that mattered.
+Which Hop gets charged also depends on timing, so one seed can fail at two
+different Hops on two runs, and a replay that fails elsewhere reads as a
+seed that does not reproduce.
+
+**What would close it.** Nothing observed can name the cause: the log
+line's own time, 14:49:52.997, falls during hop 32, which began at
+14:49:51.922. What can be fixed is the claim. Proposed, not built: stamp
+each observation with when it arrived, from the listener's clock for the
+page and the main process and from a parser the adapter may supply for a
+log's own times; word the reason as seen during a Hop and how far into it;
+list the few Hops before with how long before the observation each began;
+and journal those times on the finding. A delayed error planted in `buggy`
+is its test.
 
 ## Two things that will look like candidates, and are not
 
