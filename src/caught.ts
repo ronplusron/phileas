@@ -29,6 +29,15 @@ export interface CaughtByStubs {
   readonly notInstalled?: readonly string[];
   /** Why the recorders could not be read at all, such as the application having gone. */
   readonly unreadable?: string;
+  /**
+   * When each call above came, as ISO times in the same order, since
+   * 2026-09-30 and absent before. **The line these are written on is the Hop
+   * that read them, which is not always the Hop that asked:** an application
+   * can open a link or a dialog seconds after the click that started it, as
+   * it can log an error. The renderer says how far into the Hop each came, or
+   * how long before it.
+   */
+  readonly at?: { readonly [F in Field]?: readonly string[] };
 }
 
 const RECORDERS = {
@@ -61,14 +70,19 @@ export function caughtSince(
   const seen: Record<Field, number> = { outbound: 0, opened: 0, dialogs: 0, selfLaunches: 0 };
 
   return async () => {
-    let read: Record<Field, unknown[] | undefined>;
+    let read: Record<Field, { calls?: unknown[]; times?: unknown[] }>;
     let timer: NodeJS.Timeout | undefined;
     try {
+      // Each recorder with the times its stub keeps beside it, under the
+      // recorder's name and `At`.
       const reading = app.evaluate((_electron, keys) => {
         const all = globalThis as Record<string, unknown>;
         return Object.fromEntries(
-          Object.entries(keys).map(([field, key]) => [field, all[key] as unknown[] | undefined])
-        ) as Record<string, unknown[] | undefined>;
+          Object.entries(keys).map(([field, key]) => [
+            field,
+            { calls: all[key] as unknown[] | undefined, times: all[`${key}At`] as unknown[] | undefined },
+          ])
+        ) as Record<string, { calls?: unknown[]; times?: unknown[] }>;
       }, RECORDERS);
       // A reading given up on must not surface later as an unhandled rejection.
       reading.catch(() => undefined);
@@ -86,17 +100,26 @@ export function caughtSince(
     }
 
     const caught: Record<string, unknown> = {};
+    const at: Partial<Record<Field, string[]>> = {};
     const notInstalled: string[] = [];
     for (const field of Object.keys(RECORDERS) as Field[]) {
-      const calls = read[field];
+      const { calls, times } = read[field] ?? {};
       if (!Array.isArray(calls)) {
         notInstalled.push(field);
         continue;
       }
       const from = calls.length < seen[field] ? 0 : seen[field];
       seen[field] = calls.length;
-      if (calls.length > from) caught[field] = calls.slice(from);
+      if (calls.length > from) {
+        caught[field] = calls.slice(from);
+        // Only where every call has its time, so a time is never paired with
+        // the wrong call. A stub from before the times were kept has none.
+        if (Array.isArray(times) && times.length === calls.length) {
+          at[field] = times.slice(from).map((time) => new Date(Number(time)).toISOString());
+        }
+      }
     }
+    if (Object.keys(at).length) caught.at = at;
     if (notInstalled.length) caught.notInstalled = notInstalled;
     return Object.keys(caught).length ? (caught as CaughtByStubs) : undefined;
   };

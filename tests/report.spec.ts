@@ -12,6 +12,7 @@ import {
   FOLLOW_VARIABLE,
   runTempFolder,
   type JournalEntry,
+  type TripHopEntry,
 } from '../src/index';
 import { journalsFor } from '../bin/phileas.mjs';
 
@@ -231,4 +232,79 @@ test('run --follow prints what the journal records, and show prints the same', (
     recursive: true,
     force: true,
   });
+});
+
+/**
+ * When a finding or a stubbed call arrived, on the line of the step that read
+ * it. The step a check runs after is not always the one that caused what it
+ * read, so a line naming only its own step would say so by omission. The times
+ * are the RStudio Route of 2026-09-29 whose install error arrived during hop 32.
+ */
+const hop32 = (checks: TripHopEntry['checks'], caught?: TripHopEntry['caught']): TripHopEntry => ({
+  kind: 'trip-hop',
+  hop: 32,
+  target: { source: 'page', role: 'button', name: 'Refresh Find in Files results' },
+  action: 'click',
+  pool: 'p1',
+  startedAt: '2026-09-29T14:49:51.922Z',
+  durationMs: 3500,
+  settled: true,
+  settleMs: 400,
+  effect: effect([], []),
+  checks,
+  ...(caught ? { caught } : {}),
+});
+const logError = (finding: Record<string, string>) => ({
+  check: 'log-error',
+  result: 'failed' as const,
+  observation: 'rsession-ann.log: ERROR system error 2',
+  findings: [
+    { id: '6f037ab8', signature: 's', known: false, ...finding },
+    { id: '6f037ab8', signature: 's', known: false, ...finding },
+  ],
+});
+
+test("a failed check's line says when its finding arrived, against that line's own step", () => {
+  const byLog = renderEntry(
+    hop32([
+      logError({
+        seenAfter: '2026-09-29T14:49:51.890Z',
+        seenBefore: '2026-09-29T14:49:55.400Z',
+        loggedAt: '2026-09-29T14:49:52.997Z',
+      }),
+    ]),
+    11
+  );
+  // Named once though seen twice, and placed by the log's own time.
+  expect(byLog).toContain('CHECK FAILED: log-error: rsession-ann.log: ERROR system error 2 (finding 6f037ab8, arrived 1.1 s into hop 32)');
+
+  // No time of its own: the reads around it, one before the step began.
+  const between = renderEntry(
+    hop32([logError({ seenAfter: '2026-09-29T14:49:51.890Z', seenBefore: '2026-09-29T14:49:55.400Z' })]),
+    11
+  );
+  expect(between).toContain('(finding 6f037ab8, arrived between 0.0 s before hop 32 started and 3.5 s into hop 32)');
+
+  // Seen by the engine before the step started, as in the survey between two.
+  const before = renderEntry(hop32([logError({ seenAt: '2026-09-29T14:49:51.600Z' })]), 11);
+  expect(before).toContain('(finding 6f037ab8, arrived 0.3 s before hop 32 started)');
+});
+
+test('a line from a journal with no times says only the finding, as before', () => {
+  expect(renderEntry(hop32([logError({})]), 11)).toContain('ERROR system error 2 (finding 6f037ab8)');
+});
+
+test("what the stubs caught says when each came, against the line's own step", () => {
+  const line = renderEntry(
+    hop32([], {
+      outbound: ['https://example.com/a', 'https://example.com/b'],
+      at: { outbound: ['2026-09-29T14:49:52.022Z', '2026-09-29T14:49:51.022Z'] },
+    }),
+    11
+  );
+  expect(line).toContain(
+    '(stubbed: link https://example.com/a (0.1 s into hop 32); link https://example.com/b (0.9 s before hop 32 started))'
+  );
+  // Without times, as a journal from before 2026-09-30 has, nothing is added.
+  expect(renderEntry(hop32([], { outbound: ['https://example.com/a'] }), 11)).toContain('(stubbed: link https://example.com/a)');
 });

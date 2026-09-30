@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and twenty-five tests, after a
+through, and `npm test` runs three hundred and twenty-eight tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -115,7 +115,9 @@ as a native modal is, and one with no way out stranding the Route.
 Fifteen place a finding by when it arrived rather than by the Hop the
 checks ran after: ten on the placement and the failure's text, without
 launching anything, four with errors planted in `buggy` to arrive late or at
-once, and one on RStudio's reader of its session log's times.
+once, and one on RStudio's reader of its session log's times. Three more
+say on each Hop's own line when its finding arrived and when each stubbed
+call came.
 Six came with covered controls: one left out and recorded with what covers
 it, a cover that lets clicks through and controls scrolled out of sight
 kept, a covered text box left out while its neighbor's shortcut stays, what
@@ -227,8 +229,8 @@ Hop for it to fill.
 **Read `docs/DEFECTS.md` before writing any of it.** Fourteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
-reason not yet known, and one what the stubs caught written on the wrong
-Hop. That file holds what is wrong, confirmed by reading the
+reason not yet known, and one the Hop a Route ends on depending on when a
+late finding arrives. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
@@ -318,7 +320,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own three hundred and twenty-five tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and twenty-eight tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

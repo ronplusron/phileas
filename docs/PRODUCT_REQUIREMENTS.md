@@ -262,8 +262,23 @@ and the runner runs all of them after every hop.
   found while traveling. Ten routes failing on one broken precondition is one
   problem, not ten, and the fix is fixed, so a failure in it says nothing
   about the route that was about to be traveled.
-- **R12 (Should)** Someone who did not run the journey can reproduce a finding
-  from the report alone, without asking whoever ran it.
+- **R12 (Must)** Someone who did not run the journey can reproduce a finding
+  from the report alone, without asking whoever ran it. That holds on another
+  machine, where what the application depends on may differ, such as another
+  version of R under the same release of RStudio, and on a later build of the
+  application, such as one carrying a fix for the finding. Whether it is done
+  from a seed is not part of the requirement. Where it is not, the seed stays
+  for replaying while one setup is being tested, and is deprecated as the way
+  a finding is reproduced: a report, a filed bug and anything kept for the
+  long run rely on something else. R8's seed replays only an unchanged build,
+  so as it stands this is met by replaying from the journal, which is not
+  built; `OUTSTANDING.md` 1.18 has the proposal. Raised from Should on
+  2026-09-30, in the words "Make R12 a requirement. Doesn't matter if it
+  relies on a seed or not. Though if it's not a seed, then seeds should be
+  deprecated." Asked whether deprecated meant the seed as the way a finding
+  is reproduced rather than as what decides where a Route goes, the answer
+  was yes: "I could see it being useful while actively testing one setup,
+  but not for the long haul, or filing bug reports, etc."
 - **R30 (Should)** A person can read the record of a single route without
   special tools: each hop's position, what it acted on and how, what else it
   could have acted on, and the result of every check, in the order they

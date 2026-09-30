@@ -32,7 +32,10 @@ export interface NativeDialogCall {
 export async function stubNativeDialogs(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ dialog }, key) => {
     const calls: { kind: string; text?: string }[] = [];
+    // When each call came, beside it: `caught.ts` has why.
+    const times: number[] = [];
     (globalThis as Record<string, unknown>)[key] = calls;
+    (globalThis as Record<string, unknown>)[`${key}At`] = times;
 
     // The options are the last argument: a window may come first.
     type Options = { title?: string; message?: string; buttons?: string[]; cancelId?: number };
@@ -44,6 +47,7 @@ export async function stubNativeDialogs(app: ElectronApplication): Promise<void>
       const { title, message } = options(args);
       const text = title ?? message;
       calls.push(text ? { kind, text } : { kind });
+      times.push(Date.now());
     };
     // Electron's own rule for a message box's cancel: `cancelId` if given,
     // else the first button labeled Cancel or No, else 0.
@@ -66,6 +70,7 @@ export async function stubNativeDialogs(app: ElectronApplication): Promise<void>
     stub.showErrorBox = (...args) => {
       const [title, content] = args as [string?, string?];
       calls.push({ kind: 'showErrorBox', text: [title, content].filter(Boolean).join(': ') });
+      times.push(Date.now());
     };
     stub.showCertificateTrustDialog = async (...args) => {
       record('showCertificateTrustDialog', args);

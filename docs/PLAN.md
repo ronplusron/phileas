@@ -1204,7 +1204,9 @@ in-memory state: routes run, passed, failed and stranded (apart), hops traveled,
 checks run and which were narrowed, and the seed. The nothing-found case
 reports what it traveled through, so a green result can be told from a run
 that did nothing. Every failure names its route and seed (R7), and the summary
-is enough to reproduce from (R12).
+is enough to reproduce from (R12), on another machine and on a later build
+as well, since R12 became a Must on 2026-09-30; `OUTSTANDING.md` 1.18 has
+how that might be met.
 
 **The report also renders a single Route for a person to read (R30)**, from
 its journal alone, including one cut off mid-write. It is the same renderer

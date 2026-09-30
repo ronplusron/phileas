@@ -279,29 +279,21 @@ full suite's load, and that the change being tested, to the Fix API, is not
 on the path a Route with no Fix takes. The next failure should keep its
 report, `test-results/` and the two plays' journals, before anything reruns.
 
-## What the stubs caught, and where a Route ends, still follow when a check reads
+## The Hop a Route ends on depends on when a late finding arrives
 
-**Filed 2026-09-30; what is left of a larger defect fixed the same day.**
-A finding used to be charged to whichever Hop was running when a check read
-it; it now records when it arrived, and the failure places it among the
-steps, which `HISTORY.md` has. Two parts of the same shape remain.
+**Filed 2026-09-30; what is left of a larger defect fixed the same day.** A
+finding used to be charged to whichever Hop was running when a check read
+it, and what the stubs caught to whichever Hop read their recorders. Both
+now record when they arrived, and both the failure and each Hop's line say
+so, which `HISTORY.md` has.
 
-**What the stubs caught is written on the Hop that reads it.** The `caught`
-field on each journal line is read from the stubs' recorders after the
-checks, as what they gained since the last read, with no time of its own. A
-link or a dialog an application asks for after a delay lands on a later
-Hop's line, and a reader takes that Hop for the one that asked. It fails no
-Route, which is why it was left: stamping it means changing the recorders
-inside the stubs, in `external.ts` and `dialogs.ts`, and adding a field to
-the journal.
-
-**The Hop a Route ends on still depends on timing.** A Route ends at the
-first check that reads a finding, and a finding that arrives late is read on
-whichever Hop is running then. So one seed can end at hop 32 on one run and
-hop 33 on the next, with the same finding, while every draw is the same. The
-failure now says when the finding arrived and lists the steps before it, so
-a reader can see the two runs agree; nothing yet compares them, and R13
-would read the second as a seed that no longer reproduces.
+**What remains:** a Route ends at the first check that reads a finding, and
+a finding that arrives late is read on whichever Hop is running then. So one
+seed can end at hop 32 on one run and hop 33 on the next, with the same
+finding, while every draw is the same. The failure says when the finding
+arrived and lists the steps before it, so a reader can see the two runs
+agree; nothing yet compares them, and R13 would read the second as a seed
+that no longer reproduces.
 
 ## Two things that will look like candidates, and are not
 

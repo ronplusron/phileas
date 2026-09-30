@@ -585,7 +585,9 @@ two machines with the RStudio adapter, close to how it was put: "We want
 this to reproduce. Most likely users will have different versions of R,
 etc. even if they use the same version of RStudio. Also, if a product
 change is made, like a bug fix, we'd want to reproduce the steps." The
-want is stated; how is not decided.
+same day it became a requirement, `PRODUCT_REQUIREMENTS.md` R12, a Must,
+which also records that the seed is deprecated as the way a finding is
+reproduced if something else does it. How is not decided.
 
 **A seed cannot do it, and `PRODUCT_REQUIREMENTS.md` R8 says so:** a seed
 is only meaningful against the build it was recorded on, and the journal is

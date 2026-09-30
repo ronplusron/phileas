@@ -15,6 +15,7 @@
 // written as comments that the compiler checks (tsconfig's checkJs), and it
 // imports only plain JavaScript, `../legacy.mjs`, so it loads from anywhere.
 
+import { arrivalAgainst, arrivalOf } from '../arrival.mjs';
 import { currentEntry } from '../legacy.mjs';
 
 /** @typedef {import('../effect').HopEffect} HopEffect */
@@ -116,21 +117,36 @@ function valueText(value) {
  * the one Hop that matters, and the journal keeps every result, not-run
  * included, for anyone who wants them.
  * A failed check gives the id of what it found, which is what
- * `phileas known add` takes to file it.
- * @param {readonly { check: string, result?: string, observation?: string, findings?: readonly { id: string, known: boolean }[] }[] | undefined} checks
+ * `phileas known add` takes to file it, and when it arrived against this
+ * step: the step a check runs after is not always the one that caused what it
+ * read, and a line that named only its own step would say so by omission.
+ * @param {readonly { check: string, result?: string, observation?: string, findings?: readonly { id: string, known: boolean, seenAt?: string, seenAfter?: string, seenBefore?: string, loggedAt?: string }[] }[] | undefined} checks
+ * @param {Step} step
  * @returns {string}
  */
-function failedText(checks) {
+function failedText(checks, step) {
   const failed = (checks ?? []).filter((check) => check.result === 'failed');
   if (!failed.length) return '';
   return `   CHECK FAILED: ${failed
     .map((check) => {
-      // One id per finding, however many times the Hop saw it.
-      const ids = [...new Set((check.findings ?? []).filter((finding) => !finding.known).map((finding) => finding.id))];
-      return `${check.check}: ${(check.observation ?? '').split('\n')[0]}${ids.length ? ` (finding ${ids.join(', ')})` : ''}`;
+      const unknown = (check.findings ?? []).filter((finding) => !finding.known);
+      // One id per finding, however many times the Hop saw it, with when the
+      // first of them arrived. A journal from before 2026-09-30 has no times.
+      const ids = unknown
+        .filter((finding, index) => unknown.findIndex((other) => other.id === finding.id) === index)
+        .map((finding) => {
+          const arrived = arrivalAgainst(arrivalOf(finding), step.name, step.startedAt);
+          return arrived ? `finding ${finding.id}, arrived ${arrived}` : `finding ${finding.id}`;
+        });
+      return `${check.check}: ${(check.observation ?? '').split('\n')[0]}${ids.length ? ` (${ids.join('; ')})` : ''}`;
     })
     .join('; ')}`;
 }
+
+/**
+ * The step a line is for, as its arrivals are said against it.
+ * @typedef {{ name: string, startedAt: number }} Step
+ */
 
 /**
  * The known findings a Hop carried on past, as a suffix to its line, or
@@ -161,17 +177,31 @@ export function underText(interceptedBy) {
 /**
  * What the engine's stubs caught on a Hop, or the empty string for a Hop where
  * they caught nothing, so a Hop whose effect was stopped does not read like one
- * that did nothing.
+ * that did nothing. Each with when it came against this step, where the
+ * journal has it: a call that came after a delay is read on a later step, as
+ * a late error is.
  * @param {import('../caught').CaughtByStubs | undefined} caught
+ * @param {Step} [step]
  * @returns {string}
  */
-export function caughtText(caught) {
+export function caughtText(caught, step) {
   if (!caught) return '';
+  /**
+   * @param {'selfLaunches' | 'outbound' | 'opened' | 'dialogs'} field
+   * @param {number} index
+   */
+  const when = (field, index) => {
+    const at = caught.at?.[field]?.[index];
+    const arrived = at === undefined || !step ? undefined : arrivalAgainst(arrivalOf({ seenAt: at }), step.name, step.startedAt);
+    return arrived ? ` (${arrived})` : '';
+  };
   const parts = [
-    ...(caught.selfLaunches ?? []).map(() => 'a second copy of the application'),
-    ...(caught.outbound ?? []).map((url) => `link ${url}`),
-    ...(caught.opened ?? []).map((call) => `open ${call}`),
-    ...(caught.dialogs ?? []).map((call) => `native dialog ${call.kind}${call.text ? ` "${call.text}"` : ''}`),
+    ...(caught.selfLaunches ?? []).map((_, i) => `a second copy of the application${when('selfLaunches', i)}`),
+    ...(caught.outbound ?? []).map((url, i) => `link ${url}${when('outbound', i)}`),
+    ...(caught.opened ?? []).map((call, i) => `open ${call}${when('opened', i)}`),
+    ...(caught.dialogs ?? []).map(
+      (call, i) => `native dialog ${call.kind}${call.text ? ` "${call.text}"` : ''}${when('dialogs', i)}`
+    ),
     ...(caught.notInstalled ?? []).map((field) => `stub not installed: ${field}`),
     ...(caught.unreadable ? [`stubs unreadable: ${caught.unreadable}`] : []),
   ];
@@ -198,16 +228,19 @@ export function renderEntry(entry, routeNumber) {
       );
     case 'pool':
       return undefined;
-    case 'fix-step':
+    case 'fix-step': {
+      const step = { name: `Fix step ${entry.step}`, startedAt: Date.parse(entry.startedAt) };
       return [
         column(`${route}  fix ${entry.step}`, 18),
         column(shortened(entry.label, 39), 40),
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
-        caughtText(entry.caught),
+        caughtText(entry.caught, step),
         knownText(entry.checks),
-        failedText(entry.checks),
+        failedText(entry.checks, step),
       ].join('');
+    }
     case 'trip-hop': {
+      const step = { name: `hop ${entry.hop}`, startedAt: Date.parse(entry.startedAt) };
       const value = entry.action === 'type' || entry.action === 'fill' ? valueText(entry.value) : '';
       return [
         column(`${route}  hop ${entry.hop}`, 18),
@@ -216,9 +249,9 @@ export function renderEntry(entry, routeNumber) {
         value ? `${value}   ` : '',
         effectText(entry.effect),
         entry.abandoned ? `   (gave up: ${entry.abandoned}${underText(entry.interceptedBy)})` : '',
-        caughtText(entry.caught),
+        caughtText(entry.caught, step),
         knownText(entry.checks),
-        failedText(entry.checks),
+        failedText(entry.checks, step),
       ].join('');
     }
     case 'note':

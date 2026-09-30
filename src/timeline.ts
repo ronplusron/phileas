@@ -15,20 +15,13 @@
  * launching anything.
  */
 
-/** When one observation arrived, in milliseconds since the epoch. */
-export interface Arrival {
-  /** When the engine saw it arrive: a listener on arrival, or the check when it ran. */
-  readonly at?: number;
-  /**
-   * For a log line: the read before the one that found it, and that read. It
-   * was written between them, and when exactly is not known unless the log
-   * says.
-   */
-  readonly after?: number;
-  readonly before?: number;
-  /** A log line's own time, as the adapter's `timeOf` read it. */
-  readonly loggedAt?: number;
-}
+import { arrivalOf, clock, LOG_TIME_SLACK_MS, placeArrival, seconds } from './arrival.mjs';
+import type { Arrival, Placed } from './arrival.mjs';
+
+// Placing an arrival lives in plain JavaScript, since `phileas show` needs it
+// too and loads no TypeScript; these are the same functions.
+export { arrivalOf, clock, LOG_TIME_SLACK_MS, placeArrival, seconds };
+export type { Arrival, Placed };
 
 /** An observation and when it arrived. */
 export interface Observed {
@@ -50,46 +43,11 @@ export interface StepSpan {
 }
 
 /**
- * How far a log's own time may fall outside the reads around it and still be
- * trusted, in milliseconds. A log that stamps whole seconds writes a time up
- * to a second before the moment itself.
- */
-export const LOG_TIME_SLACK_MS = 1_000;
-
-/**
  * How many steps a failure lists before its finding arrived. Ten covered the
  * measured case with room: the cause was five steps back. The journal keeps
  * every step, so this changes only what is printed.
  */
 export const STEPS_LISTED = 10;
-
-/** Where an arrival falls: a moment, or only a span of time. */
-export type Placed =
-  | { readonly kind: 'moment'; readonly at: number; readonly by: 'engine' | 'log' }
-  | { readonly kind: 'span'; readonly from: number; readonly to: number; readonly untrustedLogTime?: number };
-
-/**
- * Pin an arrival to a moment where it can be, and to the span it could lie in
- * where it cannot.
- *
- * **A log's own time is trusted only inside the reads around it.** A log can
- * stamp in another zone, whole seconds, or a time of the application's own
- * making, and a time outside the span the line could have been written in
- * says the log's clock is not this one. Then the span stands, and the log's
- * time is kept to be printed beside it. The same rule every time, so the
- * same journal always places a finding the same way.
- */
-export function placeArrival(arrival: Arrival): Placed | undefined {
-  const { at, after, before, loggedAt } = arrival;
-  if (after !== undefined && before !== undefined) {
-    if (loggedAt !== undefined && loggedAt >= after - LOG_TIME_SLACK_MS && loggedAt <= before + LOG_TIME_SLACK_MS) {
-      return { kind: 'moment', at: loggedAt, by: 'log' };
-    }
-    return { kind: 'span', from: after, to: before, ...(loggedAt !== undefined ? { untrustedLogTime: loggedAt } : {}) };
-  }
-  if (at !== undefined) return { kind: 'moment', at, by: 'engine' };
-  return undefined;
-}
 
 /**
  * Where a moment falls among the Route's steps: during one, between two,
@@ -146,16 +104,6 @@ export function stepsBefore(at: number, steps: readonly StepSpan[], count = STEP
   );
 }
 
-/** Milliseconds as seconds to a tenth, the precision a reader compares steps at. */
-export function seconds(ms: number): string {
-  return `${(ms / 1000).toFixed(1)} s`;
-}
-
-/** A moment as its time of day in UTC, to the millisecond, as the journal writes times. */
-export function clock(ms: number): string {
-  return `${new Date(ms).toISOString().slice(11, 23)}Z`;
-}
-
 /** An arrival as the journal records it on a finding: times as ISO strings, absent where unknown. */
 export function arrivalFields(arrival: Arrival): {
   seenAt?: string;
@@ -171,22 +119,4 @@ export function arrivalFields(arrival: Arrival): {
     loggedAt: iso(arrival.loggedAt),
   };
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
-}
-
-/** A finding's recorded times back into an arrival. */
-export function arrivalOf(fields: {
-  readonly seenAt?: string;
-  readonly seenAfter?: string;
-  readonly seenBefore?: string;
-  readonly loggedAt?: string;
-}): Arrival {
-  const ms = (iso: string | undefined) => (iso === undefined ? undefined : Date.parse(iso));
-  return Object.fromEntries(
-    Object.entries({
-      at: ms(fields.seenAt),
-      after: ms(fields.seenAfter),
-      before: ms(fields.seenBefore),
-      loggedAt: ms(fields.loggedAt),
-    }).filter(([, value]) => value !== undefined && Number.isFinite(value))
-  );
 }

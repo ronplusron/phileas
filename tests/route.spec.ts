@@ -30,6 +30,7 @@ import {
   type AppUnderTest,
   type Candidate,
   type Chooser,
+  type FixStepEntry,
   type JournaledCandidate,
   type TripHopEntry,
 } from '../src/index';
@@ -701,14 +702,32 @@ test("what the stubs caught is journaled on the Hop that caused it, and printed"
           }, marker);
         },
       });
+      // A link the application opens 1,500 ms after the step that asked for
+      // it, as a late error arrives: read on whichever step runs then.
+      await step({
+        kind: 'code',
+        label: 'open a link after a delay',
+        action: async () => {
+          await app.evaluate(({ shell }) => {
+            setTimeout(() => void shell.openExternal('https://example.com/late'), 1_500);
+          });
+        },
+      });
+      await step({
+        kind: 'code',
+        label: 'wait for it',
+        action: async () => {
+          await page.waitForTimeout(2_500);
+        },
+      });
     },
   });
 
   const entries = readJournal(
     path.join(inRun(dir), `route-001-${deriveRouteStreams('caught-seed', 1).routeSeed}.jsonl`)
   );
-  const fixSteps = entries.filter((entry) => entry.kind === 'fix-step');
-  expect(fixSteps).toHaveLength(3);
+  const fixSteps = entries.filter((entry): entry is FixStepEntry => entry.kind === 'fix-step');
+  expect(fixSteps).toHaveLength(5);
   // A Hop that caught nothing carries nothing, so the field means something
   // where it appears.
   expect(fixSteps[0]).not.toHaveProperty('caught');
@@ -720,14 +739,34 @@ test("what the stubs caught is journaled on the Hop that caused it, and printed"
     },
   });
   // Each on its own Hop only: nothing caught earlier is put down again.
-  expect(fixSteps[2]).toEqual(expect.objectContaining({ caught: { selfLaunches: [[marker]] } }));
+  expect(fixSteps[2]).toEqual(
+    expect.objectContaining({ caught: { selfLaunches: [[marker]], at: { selfLaunches: [expect.any(String)] } } })
+  );
+  // Each call's time is beside it, inside the step that made it.
+  const during = (entry: FixStepEntry, at: string | undefined) =>
+    Date.parse(at ?? '') >= Date.parse(entry.startedAt) &&
+    Date.parse(at ?? '') <= Date.parse(entry.startedAt) + (entry.durationMs ?? 0);
+  const second = fixSteps[1] as FixStepEntry;
+  expect(during(second, second.caught?.at?.outbound?.[0])).toBe(true);
+  expect(during(second, second.caught?.at?.dialogs?.[0])).toBe(true);
 
   const printed = fixSteps.map((entry) => renderEntry(entry, 1) ?? '');
   expect(printed[0]).not.toContain('stubbed:');
-  expect(printed[1]).toContain(
-    '(stubbed: link https://example.com/buggy; open openPath /phileas-test/a-folder; native dialog showMessageBox "Save changes?")'
+  expect(printed[1]).toMatch(
+    /\(stubbed: link https:\/\/example\.com\/buggy \([\d.]+ s into Fix step 2\); open openPath \/phileas-test\/a-folder \([\d.]+ s into Fix step 2\); native dialog showMessageBox "Save changes\?" \([\d.]+ s into Fix step 2\)\)/
   );
-  expect(printed[2]).toContain('(stubbed: a second copy of the application)');
+  expect(printed[2]).toMatch(/\(stubbed: a second copy of the application \([\d.]+ s into Fix step 3\)\)/);
+
+  // The late link: on whichever step read it, with its time after the delay
+  // began, and printed as that far into the reading step.
+  const asked = fixSteps[3] as FixStepEntry;
+  const reading = fixSteps.findIndex((entry) => entry.caught?.outbound?.includes('https://example.com/late'));
+  expect(reading, 'the late link should have been caught on a later step').toBeGreaterThan(2);
+  const late = fixSteps[reading] as FixStepEntry;
+  const lateAt = late.caught?.at?.outbound?.[0];
+  expect(Date.parse(lateAt ?? '')).toBeGreaterThanOrEqual(Date.parse(asked.startedAt) + 1_500);
+  const into = ((Date.parse(lateAt ?? '') - Date.parse(late.startedAt)) / 1000).toFixed(1);
+  expect(printed[reading]).toContain(`link https://example.com/late (${into} s into Fix step ${reading + 1})`);
 });
 
 test("the time limit for answering is the adapter's where it sets one, journaled, and refused when nonsense", async ({

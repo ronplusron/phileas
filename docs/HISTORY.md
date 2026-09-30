@@ -25,6 +25,39 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-30: each Hop's line says when things arrived, and R12 is a Must
+
+**Why.** The failure's reason had learned to say when its finding arrived,
+and each Hop's own line had not: `phileas show` and `phileas run --follow`
+still printed the finding on the Hop the checks ran after, with nothing to
+say it came from earlier. What the stubs caught had the same fault, left
+open in `DEFECTS.md` that morning: a link or a dialog asked for after a
+delay was written on whichever Hop read the recorders. Both were asked for
+the same day, the first as "Add it" and the second as "Fix".
+
+**What landed.** A failed check's part of a Hop line now reads `(finding
+6f037ab8, arrived 1.1 s into hop 32)`, or how long before the Hop started,
+or between two such points for a log line with no time of its own. Each
+stub keeps a time beside every call it records, under its recorder's name
+and `At`, and `caught` carries them as `at`, ISO times in the same order,
+only where every call has one. The line prints each call's time the same
+way. A journal from before either change prints as it did. Placing an
+arrival moved to `src/arrival.mjs`, since `phileas show` loads no
+TypeScript; `timeline.ts` re-exports it.
+
+**Tests.** Three render hand-built lines: a finding placed by the log's own
+time, by the reads around it and before its Hop began, and one with no
+times; and stubbed calls with and without times. The Route test of what the
+stubs caught now also opens a link 1,500 ms after its step, and requires
+the link on the step that read it, its time after the delay began, and the
+line to print how far into that step it came.
+
+**R12 became a Must.** A finding has to reproduce from the report on
+another machine and on a later build, and the seed is deprecated as the way
+a finding is reproduced if something else does it. `PRODUCT_REQUIREMENTS.md`
+has the words it was asked for in; `OUTSTANDING.md` 1.18 has how it might be
+met, which is not built.
+
 ## 2026-09-30: a bug no check flagged, found by reading a journal
 
 **What happened.** Route 4 of Bobolink Editor's seed `25629a759aed`, run

@@ -23,9 +23,13 @@ export const RECORDER = '__phileasOpenExternal';
 export async function stubOpenExternal(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ shell }, key) => {
     const calls: string[] = [];
+    // When each call came, beside it: `caught.ts` has why.
+    const times: number[] = [];
     (globalThis as Record<string, unknown>)[key] = calls;
+    (globalThis as Record<string, unknown>)[`${key}At`] = times;
     shell.openExternal = async (url: string) => {
       calls.push(url);
+      times.push(Date.now());
     };
   }, RECORDER);
 }
@@ -76,6 +80,9 @@ export async function clearOpenExternal(app: ElectronApplication): Promise<void>
     const calls = (globalThis as Record<string, unknown>)[key] as string[] | undefined;
     if (!calls) return false;
     calls.length = 0;
+    // The times beside the calls, so the two stay the same length.
+    const times = (globalThis as Record<string, unknown>)[`${key}At`] as number[] | undefined;
+    if (times) times.length = 0;
     return true;
   }, RECORDER);
 
@@ -103,14 +110,18 @@ export const PATHS_RECORDER = '__phileasOpenedPaths';
 export async function stubOpenPaths(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ shell }, key) => {
     const calls: string[] = [];
+    const times: number[] = [];
     (globalThis as Record<string, unknown>)[key] = calls;
+    (globalThis as Record<string, unknown>)[`${key}At`] = times;
     // openPath answers with an error message, and the empty string for success.
     shell.openPath = async (path: string) => {
       calls.push(`openPath ${path}`);
+      times.push(Date.now());
       return '';
     };
     shell.showItemInFolder = (path: string) => {
       calls.push(`showItemInFolder ${path}`);
+      times.push(Date.now());
     };
   }, PATHS_RECORDER);
 }
@@ -174,7 +185,9 @@ export async function stubSelfLaunch(app: ElectronApplication): Promise<void> {
     const path = load('path') as typeof import('path');
 
     const calls: string[][] = [];
+    const times: number[] = [];
     (globalThis as Record<string, unknown>)[key] = calls;
+    (globalThis as Record<string, unknown>)[`${key}At`] = times;
     const spawn = childProcess.spawn;
 
     childProcess.spawn = function (this: unknown, command: string, ...rest: unknown[]) {
@@ -183,6 +196,7 @@ export async function stubSelfLaunch(app: ElectronApplication): Promise<void> {
       }
       const args = Array.isArray(rest[0]) ? (rest[0] as unknown[]).map(String) : [];
       calls.push(args);
+      times.push(Date.now());
       const child = Object.assign(new EventEmitter(), {
         pid: undefined,
         exitCode: null,
