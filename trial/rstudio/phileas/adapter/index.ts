@@ -82,6 +82,11 @@ export const rstudio: AppUnderTest = {
     // in RStudio's own console on 2026-09-28, and the Install Packages dialog
     // then defaulted to this library. r-library-guard.ts checks it held.
     R_LIBS_USER: libraryIn(userDataDir),
+    // ODBC's own settings files, in the Route's home. HOME does not move
+    // them: on 2026-09-29 a Route that installed odbc from New Connection
+    // left an empty .odbc.ini in the real home folder.
+    ODBCINI: path.join(homeIn(userDataDir), '.odbc.ini'),
+    ODBCINSTINI: path.join(homeIn(userDataDir), '.odbcinst.ini'),
   }),
 
   /**

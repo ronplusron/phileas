@@ -25,6 +25,25 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-30: ODBC's settings files stay in the Route's home
+
+**Why.** On 2026-09-29 a Route on RStudio chose New Connection, then ODBC,
+and answered Yes to installing the odbc package. It installed into the
+Route's own library, and an empty `.odbc.ini` appeared in the real home
+folder at the same moment, which the home guard reported at the Journey's
+end. `HOME` pointed at the Route's home, so whatever wrote it finds the home
+another way.
+
+**What landed.** The RStudio adapter sets `ODBCINI` and `ODBCINSTINI` to
+files in the Route's home, beside `R_LIBS_USER`, rather than excluding the
+ODBC button, which would have given up the path that found RStudio's empty-
+path error in the connections registry. Measured the same way that Route
+went, with the real home holding no `.odbc.ini` beforehand: `.odbc.ini`
+appeared in the Route's home, nothing appeared in the real home's
+`.odbc.ini`, `.odbcinst.ini` or `Library/ODBC`, and the home guard found
+nothing written. The empty-path error was logged as before, since it is
+RStudio's own. A test holds the two settings in place.
+
 ## 2026-09-29: a Fix is a script of steps, and a Hop is a Trip's jump
 
 **Why.** A Fix was handed two functions, `hop(target, value?)` and

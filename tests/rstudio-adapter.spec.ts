@@ -61,6 +61,16 @@ test('before launch, native dialogs are switched off and the package library exi
   expect(fs.statSync(path.join(profile, 'home', 'R', 'library')).isDirectory()).toBe(true);
 });
 
+test("ODBC's settings files are in the Route's home, since HOME does not move them", () => {
+  // Measured 2026-09-29: without these, installing odbc from New Connection
+  // left an empty .odbc.ini in the real home folder.
+  const env = typeof rstudio.env === 'function' ? rstudio.env(profile) : rstudio.env ?? {};
+  expect(env).toMatchObject({
+    ODBCINI: path.join(profile, 'home', '.odbc.ini'),
+    ODBCINSTINI: path.join(profile, 'home', '.odbcinst.ini'),
+  });
+});
+
 test('anything that prints is excluded, in the menu or the page, and a word merely containing print is not', async () => {
   // File -> Print... opened macOS's print dialog, which the stub does not reach.
   expect(await excluded({ source: 'menu', role: 'menuitem', name: 'Pr&int...', menuPath: ['&File', 'Pr&int...'] })).toBe(true);

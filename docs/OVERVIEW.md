@@ -8,7 +8,7 @@ screen, instead of following a script. Every run is seeded, so any problem it
 finds can be replayed exactly, and it records every step as it goes. Phases 0
 to 4 of 11 are done, with part of phase 5: it travels through apps, replays
 runs exactly, records everything, and checks every step for errors, hangs,
-crashes and blank windows, with three hundred and one automated tests
+crashes and blank windows, with three hundred and two automated tests
 behind it. Pointed at Positron and then RStudio, two large data-science code
 editors, it found real bugs in both.
 
@@ -76,7 +76,7 @@ phases 0 through 4 are done:
 - Any run can be replayed exactly from its seed, and that is tested.
 - A command runs it with different settings, prints each step live if asked,
   and prints any finished run for a person to read.
-- Three hundred and one automated tests cover the engine itself, run against a
+- Three hundred and two automated tests cover the engine itself, run against a
   small application built for the purpose, and a demo application shows it at
   work.
 - Six checks run after every step: no uncaught error, no console error, still
