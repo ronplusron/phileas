@@ -997,7 +997,13 @@ Seen in the RStudio batch of 2026-09-29; neither is measured.
   Open File. The stub answered it, so nothing reached the screen. Why the
   shortcut goes to the native dialog while the adapter keeps web dialogs on
   is not known. It matters because a finding on that path would not be one
-  a person reaching Open File from the menu meets.
+  a person reaching Open File from the menu meets. **It does not happen
+  every time:** on 2026-09-30, seed `5ffa0a79c44c`, Route 1 pressed the
+  same printed ⌘O at hop 43 and got the web Open dialog. The stub caught
+  nothing, and hops 44 to 49 acted inside it, its File name box, folders,
+  Open and Cancel all in their pools. What differed between the two
+  presses is not known; which control had focus is one candidate, and
+  unmeasured.
 - **R sessions left running after a close.** In 5 of one Journey's 20
   Routes, RStudio left `rsession` and a terminal's `bash` running after it
   closed, and the stray sweep ended them. The sweep's printout was not kept
@@ -1088,6 +1094,28 @@ dialog open at a time, which would have caught the dialog opened over an
 unanswered question; the Table of Contents listing the same headings as
 the document; and a window's own frame buttons never covered by the page's
 own furniture, such as the notice line over a collapsed window.
+
+### 2.20 RStudio runs menu commands behind its own in-page dialog
+
+Seen on 2026-09-30, seed `5ffa0a79c44c`, one RStudio Route of 100 Hops with
+no Fix; nothing is decided. Three times, a Hop chose a native menu command
+while RStudio's in-page Save or Open dialog was open: hop 49, Help >
+Accessibility > Focus > Move Focus to Terminal, and hops 80 and 99, Help >
+Diagnostics > Write Diagnostics Report. The dialog was open each time, since its File name box,
+folders and Save or Open and Cancel buttons were in that Hop's pool. At
+least one command really ran: hop 80's report opened its folder, which the
+stub caught 0.6 s after hop 80's line was written, on hop 81's.
+
+**A reading, not confirmed:** RStudio executes native menu commands while
+one of its own modal dialogs is up. A person can do the same, since the
+native menu stays usable, so it may be intended; if it is not, commands
+acting behind a dialog are a class of RStudio bug the engine reaches and
+has no check for. The engine cannot tell which. Nothing stops the menu
+source being drawn while a dialog is open either, which 1.10 covers for the
+page and which is the same question for the menu. Open: whether the menu
+should be withheld while an in-page modal is up, as the survey reads only a
+native modal dialog, and whether RStudio's behavior is worth asking its
+developers about.
 
 ## 3. Declined
 
