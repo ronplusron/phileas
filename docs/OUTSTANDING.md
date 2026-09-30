@@ -981,9 +981,21 @@ of 3,192 Trip hops were abandoned, and how many of those were covered
 controls is not known, since the journal keeps only the first line of
 Playwright's error, which leaves out what intercepted the click.
 
-It is the same waste as the overlay in 1.10, from a menu instead of a
-dialog. Open: whether the survey should test what is on top at a control's
-center, and whether the journal should keep the whole error.
+**Measured on Bobolink Editor on 2026-09-30, where every one was a covered
+control.** Five Routes of forty Hops with the `new-document` Fix abandoned
+16, and a replay of the seed with Playwright's trace on read what
+intercepted each click: 12 were under another of the editor's document
+windows, which overlap, often a maximized one, and 4 under an open File or
+Edit menu. In one, a press on a resize edge closed the File menu but, being
+cancelled, left focus on its title, and the next Hop's Enter reopened it.
+
+It is the same waste as the overlay in 1.10, from a menu or a window
+instead of a dialog. Three ways on, none chosen: the survey tests what is
+on top at a control's click point and leaves covered ones out of the draw,
+which changes what seeds draw wherever controls overlap; the journal keeps
+what intercepted the click, so an abandoned Hop says why, and each still
+costs the click timeout; or neither, since it wastes time and hides
+nothing.
 
 ### 2.15 Two things RStudio did in the batch, not explained
 

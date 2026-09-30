@@ -41,12 +41,14 @@ abandoned 87, in 2.7 minutes where they had taken 6.1. Every Route passed
 both times, and the draws differ after the change, since what is on offer
 decides them.
 
-**The 16 are not behind a dialog, and what blocked them is not known.**
-Each is a click on a document window's frame, Collapse, Maximize, Close or a
-resize edge, that timed out with no dialog up, and every one came with two
-documents open. The journal keeps only that the click timed out, not what
-Playwright found in the way, so an overlapping window is a guess and not
-yet a reading.
+**The 16 are not behind a dialog; each is a covered control.** Each is a
+click on a document window's frame, Collapse, Maximize, Close or a resize
+edge, that timed out with no dialog up. The journal keeps only that the
+click timed out, so the seed was replayed with Playwright's trace on, which
+records what intercepted it: another of the editor's overlapping document
+windows for 12, and an open File or Edit menu for 4. `OUTSTANDING.md` has
+it with the same waste seen on RStudio, under controls offered while
+something covers them.
 
 **Trusting the attribute has a cost, and `OUTSTANDING.md` carries it:** a
 dialog marked modal whose background still takes clicks is a bug a Route

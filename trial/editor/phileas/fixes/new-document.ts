@@ -48,22 +48,33 @@ const MARKDOWN = [
  * documents to move between and one with something in it for each menu.
  *
  * Written one step at a time from `phileas survey`, on 2026-09-30. The text
- * goes in with `insertText` rather than typed key by key: the editor
- * continues a list on Enter, so typing the lists would double their markers.
- * A new document does not take the focus from the menu that made it, measured
- * that day, so a step clicks into it first: named by its window, since both
- * documents' editors are a textbox called "Source", and the welcome note is
- * the first, so this one is always Untitled 2. The last step waits for the
- * first heading to be drawn, which also shows that the text landed.
+ * goes in with `insertText` in a `code` step rather than typed key by key:
+ * the editor continues a list on Enter, so typing the lists would double
+ * their markers. A new document does not take the focus from the menu that
+ * made it, measured that day, so a step clicks into it first, also as `code`:
+ * named by its window, since both documents' editors are a textbox called
+ * "Source", and an `act` step naming it would reach whichever comes first.
+ * The welcome note is the first document, so this one is always Untitled 2.
+ * The last step waits for the first heading to be drawn, which also shows
+ * that the text landed.
  */
-export const newDocument: Fix = async ({ page, hop, step }) => {
-  await hop('menuitem "File"');
-  await hop('menuitem "New"');
-  await step('click into the new document', () =>
-    page.getByRole('group', { name: 'Untitled 2' }).getByRole('textbox', { name: 'Source' }).click()
-  );
-  await step('put the markdown into the new document', () => page.keyboard.insertText(MARKDOWN));
-  await step('wait for the text to be drawn in the source', () =>
-    page.locator('.cm-content').getByText('# Weekend plans').first().waitFor({ timeout: 10_000 })
-  );
+export const newDocument: Fix = async ({ page, step }) => {
+  await step({ kind: 'act', target: 'menuitem "File"' });
+  await step({ kind: 'act', target: 'menuitem "New"' });
+  await step({
+    kind: 'code',
+    label: 'click into the new document',
+    action: () =>
+      page.getByRole('group', { name: 'Untitled 2' }).getByRole('textbox', { name: 'Source' }).click(),
+  });
+  await step({
+    kind: 'code',
+    label: 'put the markdown into the new document',
+    action: () => page.keyboard.insertText(MARKDOWN),
+  });
+  await step({
+    kind: 'code',
+    label: 'wait for the text to be drawn in the source',
+    action: () => page.locator('.cm-content').getByText('# Weekend plans').first().waitFor({ timeout: 10_000 }),
+  });
 };
