@@ -1037,6 +1037,58 @@ journals after the Journey, beside the checks rather than among them. A
 pattern that a reading finds more than once could then be written up as a
 check of the adapter's own, where it can be made deterministic.
 
+### 2.17 Typing into a document editor empties the whole document
+
+Seen 2026-09-30 on Bobolink Editor, in a 100-Hop Route. A `type` Hop empties
+its field and then presses one key per character, and in a document editor
+the field is the whole document: at hop 15 the welcome note's entire text
+was replaced by `2`, and every Hop after it explored an almost empty page.
+A person can do the same, by selecting all and typing, so it is not wrong;
+it is a costly move to make at random, and it happens every time a Route
+types into the editor. Nothing is decided. Ways on: typing at the caret
+without emptying, in a large text area or always; or an adapter saying
+which fields to type into without emptying.
+
+### 2.18 Routes reach the real clipboard
+
+Seen 2026-09-30 on Bobolink Editor, in a 100-Hop Route: at hop 22 it chose
+Export's Copy, which writes the document to the system clipboard from the
+editor's main process. The engine skips the menu bar's standard Cut, Copy
+and Paste, and nothing else: any control an application wires to the
+clipboard itself reaches the clipboard of whoever runs the Journey, in
+every window mode. Bobolink Editor's own Edit menu, drawn in the page, has
+Cut, Copy and Paste that do. Copy and Cut overwrite what that person
+copied, and Paste puts it into the application, which is state from outside
+the seed that a replay cannot reproduce.
+
+**To be solved in the engine, not per application,** in the words it was
+settled with: "don't create a one-off Editor version of this." An exclusion
+list in each adapter would need every application's names in advance and
+would give up exploring copying and pasting at all.
+
+The shape proposed, not decided: a clipboard of each Route's own, put in
+place the way outbound links and native dialogs already are, so copying
+and pasting are still explored, the real clipboard is never touched, and a
+Paste only ever returns what that Route copied, which keeps replay exact.
+That reaches the main process's `clipboard` module, which is what Bobolink
+Editor uses. The page's own ways to the clipboard, `navigator.clipboard`
+and the editing commands, are separate and not measured.
+
+### 2.19 Checks of Bobolink Editor's own
+
+Raised 2026-09-30. The editor's adapter declares no checks, so a Route
+there fails only on what the built-in checks see: an uncaught error, a
+console error, a hang, a window showing nothing, or an unexpected native
+dialog. Every Route so far has passed, and the defects found in it came
+from reading journals (2.16) and one trace.
+
+Candidates, none chosen, each from the application agreeing with itself
+rather than from its code, as `AppCheck` requires: at most one modal
+dialog open at a time, which would have caught the dialog opened over an
+unanswered question; the Table of Contents listing the same headings as
+the document; and a window's own frame buttons never covered by the page's
+own furniture, such as the notice line over a collapsed window.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias

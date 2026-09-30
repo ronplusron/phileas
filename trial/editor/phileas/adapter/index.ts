@@ -56,11 +56,15 @@ export const editor: AppUnderTest = {
   }),
 
   exclusions: {
-    // Nothing yet. Quit, Hide and the clipboard are standard entries the
-    // engine skips by default, and the app's own File, Edit, Format, View,
-    // Document and Help menus are drawn in the page with nothing in them
-    // that leaves the application. Open, Save As and Export go through
-    // native dialogs, which the engine answers as cancelled.
+    // Nothing yet. Quit, Hide and the menu bar's clipboard entries are
+    // standard entries the engine skips by default. Open, Save As and
+    // Export's files go through native dialogs, which the engine answers as
+    // cancelled.
+    //
+    // The app's own menus, drawn in the page, are not all safe: the Edit
+    // menu's Cut, Copy and Paste, and Export's Copy, reach the real system
+    // clipboard. Deliberately not excluded here, since it is to be solved in
+    // the engine for every application; docs/OUTSTANDING.md 2.18 has it.
   },
 
   /**

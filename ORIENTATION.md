@@ -138,12 +138,16 @@ verification points rather than bookkeeping.
 pointed at a built and packaged checkout of `editor`: for example
 `PHILEAS_APP_DIR="<editor checkout>" phileas run trial/editor/phileas`.
 `phileas run --fix new-document` opens a second document with markdown in
-it; with no Fix a Route starts at the welcome note. Twenty Routes of forty
-Hops have passed and found nothing. Over a third of the first ten's Hops
-were abandoned behind the editor's dialogs, marked `aria-modal`, which the
-survey now honors; `docs/HISTORY.md` has the before and after. Close any
-running copy of the editor first, or the home guard cannot tell its writes
-from the run's.
+it; with no Fix a Route starts at the welcome note. Every Route so far has
+passed with no check firing, and the adapter declares no checks of its own
+yet; four defects in the editor turned up all the same, from reading the
+journals and one trace, recorded in the editor's own `docs/DEFECTS.md`, and
+`docs/HISTORY.md` has how the first was found. Over a third of the first ten Routes' Hops were abandoned behind the
+editor's dialogs, marked `aria-modal`, which the survey now honors. Close
+any running copy of the editor first, or the home guard cannot tell its
+writes from the run's. **In a fresh checkout, run `npm install` in
+`trial/editor/` first,** as for each trial: without it the engine's package
+is missing there and the run cannot start.
 
 **RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
