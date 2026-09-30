@@ -121,6 +121,16 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: eleven phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
+**Bobolink Editor has an adapter since 2026-09-30,** in `trial/editor/`,
+pointed at a built and packaged checkout of `editor`: for example
+`PHILEAS_APP_DIR="<editor checkout>" phileas run trial/editor/phileas`.
+`phileas run --fix new-document` opens a second document with markdown in
+it; with no Fix a Route starts at the welcome note. Ten Routes of forty
+Hops passed and found nothing, and over a third of their Hops were
+abandoned behind the editor's dialogs, which `docs/OUTSTANDING.md` has
+under dialogs that are not native modals. Close any running copy of the
+editor first, or the home guard cannot tell its writes from the run's.
+
 **RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
 The adapter is in `trial/rstudio/`, pointed at a copy of the installed

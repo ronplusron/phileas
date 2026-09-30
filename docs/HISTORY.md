@@ -25,6 +25,53 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-30: Bobolink Editor gets an adapter, in `trial/editor/`
+
+The first of the two confirmed consumers, `editor`, which packages as
+Bobolink Editor. **It lives in this repository, not in the editor's,** chosen
+the same day from two options offered with a recommendation. Phase 9 had
+pictured a directory in the consumer's own repository, but the editor's CI
+runs `npm ci`, which cannot reach a private sibling, and the second
+deployment shape was already the default. `PHILEAS_APP_DIR` names the
+checkout, the bundle is found inside it at `dist/mac-arm64`, and the
+staleness guard runs, comparing `out/` and `package.json` with `app.asar`.
+It cannot see whether `out/` was rebuilt from `src/`, which the adapter says.
+
+**Everything the editor is told at launch it already reads for its own
+suite**, in its `tests/e2e/harness.ts`: `EDITOR_HEADLESS`, `EDITOR_USER_DATA`,
+`EDITOR_SEARCH_HOME`, and `EDITOR_SHOW_WINDOW` when a run is watched, since
+the headless switch otherwise stops the app ever calling `show()`. Its
+settings folder is set by `app.setPath`, over the engine's
+`--user-data-dir`, so it has to be named twice. Measured, not read: a launch
+with the adapter's variables reported the profile as its `userData` and
+wrote `session.json` and every cache there, and a Route's helper processes
+all carried the profile. Its shutdown sets the flag its own suite sets, so a
+Route that typed does not wait on the unsaved-work question.
+
+**No exclusions were needed.** Quit, Hide and the clipboard are standard
+entries the engine skips; the File, Edit, Format, View, Document and Help
+menus are drawn in the page, and nothing in them leaves the application.
+Open, Save As and Export go through native dialogs, answered as cancelled.
+One Fix, `new-document`, opens a second document beside the welcome note a
+first run shows and fills it with markdown.
+
+**Ten Routes of forty Hops passed**, five with no Fix and five with it, and
+found nothing. The home guard fired on the first batch, on writes into the
+real settings folder, and named an installed copy running outside the run;
+the helper processes above are what showed the writes were that copy's. The
+second batch ran with it still open and came back clean.
+
+**149 of those 400 Hops were abandoned**, each after a three-second click
+timeout. 136 came while the Hops' own lines showed About, Settings, Keyboard
+Shortcuts or the unsaved-work question open. Most of the rest followed a
+dialog opened from the native menu over that question and then closed, with
+the question still up beneath it, which the count loses track of.
+The editor's dialogs are `role="dialog"` with `aria-modal`, over a backdrop
+that catches clicks, not `showModal()`, so the survey offers the whole page
+behind them. It is the first real application measured in the overlay case
+`OUTSTANDING.md` describes for dialogs that are not native modals, and it is
+what makes a Route here take over a minute.
+
 ## 2026-09-30: ODBC's settings files stay in the Route's home
 
 **Why.** On 2026-09-29 a Route on RStudio chose New Connection, then ODBC,

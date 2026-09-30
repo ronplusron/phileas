@@ -381,7 +381,11 @@ With only an overlay that catches clicks, the background stays in the tree:
 every Hop drawn to it times out and is journaled as abandoned, and a dialog
 with no way out cannot strand, which is the waste the native-modal fix
 removed. Recognizing an overlay without reading the application's code is
-undecided.
+undecided. **Measured on a real application on 2026-09-30:** Bobolink
+Editor's dialogs are this case, `aria-modal` over a backdrop, and 149 of 400
+Hops were abandoned, most of them behind one. `HISTORY.md` has the count.
+`aria-modal` itself may be the signal, since it is the application saying
+the background is out of reach; whether to trust it is undecided too.
 
 **When things behind the dialog are also reachable, and should not be.** The
 survey offers them and a Hop really clicks them, recorded as an ordinary

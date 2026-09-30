@@ -1272,6 +1272,15 @@ A `file:` dependency, an adapter, journeys, a spec and a project entry in that
 repository's Playwright configuration, following `buggy`'s consumer layout
 exactly. This phase repeats a shape phase 2 already proved.
 
+**Changed for `editor` on 2026-09-30:** its adapter is in `trial/editor/`,
+in this repository, pointed at its checkout through `PHILEAS_APP_DIR`,
+chosen from two options offered with a recommendation. The editor's CI runs
+`npm ci`, which cannot reach this private repository, so a `file:`
+dependency there would break it, and the second deployment shape was
+already the default. So whether a package outside the consumer transpiles
+is still unanswered. `HISTORY.md` has what the adapter needed and what its
+first Routes measured.
+
 The repository is the confirmed consumer that already has an interface to
 travel through; the second follows once its own migration gives it one.
 `HISTORY.md` names both, and records the deployment shape settled for them.
