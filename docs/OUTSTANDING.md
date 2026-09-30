@@ -575,6 +575,65 @@ still covers both. The palette appends a command's shortcut to its name, as
 in "Quit the Current R Session CtrlQ", so a match on the exact name would
 not work.
 
+### 1.18 A finding that reproduces on another machine, and after a change
+
+Asked on 2026-09-30, after asking whether one seed takes the same Hops on
+two machines with the RStudio adapter, close to how it was put: "We want
+this to reproduce. Most likely users will have different versions of R,
+etc. even if they use the same version of RStudio. Also, if a product
+change is made, like a bug fix, we'd want to reproduce the steps." The
+want is stated; how is not decided.
+
+**A seed cannot do it, and `PRODUCT_REQUIREMENTS.md` R8 says so:** a seed
+is only meaningful against the build it was recorded on, and the journal is
+the durable record. A Hop's draw picks a position in the pool, so anything
+that changes the pool sends it to a different control, and every Hop after
+diverges. On RStudio, what can differ between two machines running the same
+release:
+
+- **R and its packages.** The Packages pane lists the machine's R library,
+  and its checkboxes are in the pools: the batch of 2026-09-29 drew
+  `yaml`, `stringr` and `splines` among others. The Route's own library,
+  `R_LIBS_USER`, adds to the machine's rather than replacing it.
+- **The fused copy,** which each person makes from their own install.
+- **The engine, the adapter and the Fix,** any of which changes what is
+  offered; the journal records the Fix's fingerprint and 1.13 lists
+  recording the versions.
+- **Timing.** Whether an action lands or is abandoned depends on the
+  machine's speed, and so does which Hop a background error is charged to,
+  which `DEFECTS.md` carries.
+
+On one machine replay has held: a replay of `68b1f1210035` retraced its
+Route to hop 18, and one of `d6062ec45fa3` failed on the same line at the
+same Hop. Across two machines it has never been measured.
+
+**Notes, a reading and not a decision:**
+
+- **Replaying from the journal is the proposed answer to both cases.** Each
+  Hop's line records its target as role, name and `nth`, a menu path or a
+  key, with the value typed. A replay could act on those by name, the way a
+  Fix's `act` step does, instead of drawing, so a different pool no longer
+  sends it elsewhere as long as the control is there. Where a control is
+  missing, renamed or disabled, the replay stops and names the Hop, which is
+  R14's comparison of what was recorded with what is on screen now.
+- **After a fix, it is how the fix is checked.** Replaying the failing
+  Route's journal on the fixed build runs the same checks on the same steps;
+  the finding gone, with every Hop landing, says the fix holds on that path.
+  A Hop that did not land says the replay proves nothing, and must say so
+  rather than read as a pass, which is R13.
+- **2.9 needs the same thing,** since a shortened Route cannot come from the
+  seed either, and the language-model mode `PRODUCT_REQUIREMENTS.md`
+  section 4 describes would replay this way too.
+- **What it inherits:** `nth` shifts when a matching control appears earlier
+  on the page, and a name can change while a Route runs, both noted in
+  1.14; a background error charged to the wrong Hop replays onto the wrong
+  one.
+- **The seed can still be made to travel further,** separately: giving each
+  Route an R library of fixed contents in place of the machine's, and
+  recording R's and the packages' versions on the opening line, would make
+  more of a seed's pools match. Whether RStudio can be pointed at such a
+  library is unmeasured.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
