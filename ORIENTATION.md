@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and two tests, after a
+through, and `npm test` runs three hundred and four tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -110,6 +110,8 @@ given up on, a lost connection told apart from a closed window, a
 stray process a Route left behind found and ended, screen reader
 support excluded, a file dialog's parent-folder row excluded, R's restart
 narrowed out of the console check, and opening a file or folder stubbed.
+Two came with Bobolink Editor: a dialog marked `aria-modal` surveyed alone,
+as a native modal is, and one with no way out stranding the Route.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -125,11 +127,12 @@ verification points rather than bookkeeping.
 pointed at a built and packaged checkout of `editor`: for example
 `PHILEAS_APP_DIR="<editor checkout>" phileas run trial/editor/phileas`.
 `phileas run --fix new-document` opens a second document with markdown in
-it; with no Fix a Route starts at the welcome note. Ten Routes of forty
-Hops passed and found nothing, and over a third of their Hops were
-abandoned behind the editor's dialogs, which `docs/OUTSTANDING.md` has
-under dialogs that are not native modals. Close any running copy of the
-editor first, or the home guard cannot tell its writes from the run's.
+it; with no Fix a Route starts at the welcome note. Twenty Routes of forty
+Hops have passed and found nothing. Over a third of the first ten's Hops
+were abandoned behind the editor's dialogs, marked `aria-modal`, which the
+survey now honors; `docs/HISTORY.md` has the before and after. Close any
+running copy of the editor first, or the home guard cannot tell its writes
+from the run's.
 
 **RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
@@ -306,7 +309,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own three hundred and two tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and four tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

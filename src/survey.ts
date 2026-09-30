@@ -644,12 +644,31 @@ async function surveyPage(
   // way out could never strand. The candidates' locators are scoped to the
   // dialog too, so a "Cancel" behind it is never mistaken for the dialog's own.
   //
-  // Native modal dialogs only. A dialog built from ordinary elements with
-  // aria-modal is not recognized here, and is unmeasured.
-  const modal = page.locator('dialog:modal');
+  // **A dialog marked aria-modal counts too,** since 2026-09-30: the page
+  // telling a screen reader that nothing behind the dialog is reachable.
+  // Measured on Bobolink Editor, whose dialogs are a role="dialog" with
+  // aria-modal over a backdrop that catches clicks: 149 of 400 Hops were
+  // abandoned, most of them behind one. Only a visible one counts, so a
+  // dialog kept in the page hidden takes nothing out of the draw, and the
+  // last in document order is taken as the one on top, as the newest.
+  // A native modal wins over one, since the browser always draws it above.
+  //
+  // Trusting the attribute has a cost. An application that marks a dialog
+  // modal and leaves the page behind it reachable has a bug a Route will now
+  // never walk into. A dialog blocked only by an overlay, with no aria-modal,
+  // is still surveyed with the whole page; docs/OUTSTANDING.md has both.
+  const native = page.locator('dialog:modal');
+  const marked = page
+    .locator(':is([role="dialog"], [role="alertdialog"], dialog)[aria-modal="true"]')
+    .filter({ visible: true });
   // Bounded by hand: a count takes no timeout of its own.
-  const modalOpen = (await answered('the page, asked for an open dialog,', modal.count(), timeoutMs)) > 0;
-  const root = modalOpen ? modal.last() : page.locator('body');
+  const [nativeOpen, markedOpen] = await answered(
+    'the page, asked for an open dialog,',
+    Promise.all([native.count(), marked.count()]),
+    timeoutMs
+  );
+  const modalOpen = nativeOpen > 0 || markedOpen > 0;
+  const root = nativeOpen > 0 ? native.last() : markedOpen > 0 ? marked.last() : page.locator('body');
   const snapshot = (await root.ariaSnapshotJSON(bounded)) as AriaNode | AriaNode[];
 
   // The whole page is still what a Hop's effect is read from (R31), since the

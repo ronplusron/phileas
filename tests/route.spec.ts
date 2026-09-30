@@ -1329,6 +1329,83 @@ test('while a modal dialog is open, only the dialog is surveyed', async ({ page,
   ).toBe('probe-dialog');
 });
 
+test('a dialog marked aria-modal is surveyed alone, as a native modal is', async ({ page, app }) => {
+  // Measured on Bobolink Editor: a role="dialog" with aria-modal over a
+  // backdrop, and most abandoned Hops were behind one.
+  await page.evaluate(() => {
+    const behind = document.createElement('button');
+    behind.textContent = 'Cancel';
+    document.body.append(behind);
+    const make = (id: string, buttons: string[], modal: boolean) => {
+      const dialog = document.createElement('div');
+      dialog.id = id;
+      dialog.setAttribute('role', 'dialog');
+      if (modal) dialog.setAttribute('aria-modal', 'true');
+      dialog.hidden = true;
+      for (const label of buttons) {
+        const button = document.createElement('button');
+        button.textContent = label;
+        dialog.append(button);
+      }
+      document.body.append(dialog);
+    };
+    make('marked', ['Keep going', 'Cancel'], true);
+    make('unmarked', ['Find next'], false);
+    make('second', ['Done'], true);
+  });
+  const show = (id: string, shown: boolean) =>
+    page.evaluate(([id, shown]) => void ((document.getElementById(id) as HTMLElement).hidden = !shown), [
+      id,
+      shown,
+    ] as const);
+  const surveyed = () => survey({ page, app, exclusions: {}, hopIndex: 0, tally: createExclusionTally({}) });
+  const offered = async () =>
+    (await surveyed()).candidates.filter((c) => c.source === 'page').map((c) => c.name);
+
+  // The positive control: every dialog in the page but hidden, so nothing is
+  // taken out of the draw, and the page's own controls are offered.
+  expect(await offered()).toContain('Summary');
+
+  // A dialog without aria-modal, such as a find bar, leaves the page reachable.
+  await show('unmarked', true);
+  expect(await offered()).toEqual(expect.arrayContaining(['Summary', 'Find next']));
+  await show('unmarked', false);
+
+  await show('marked', true);
+  expect(await offered()).toEqual(['Keep going', 'Cancel']);
+  // The dialog's Cancel, not the one behind it, is what a Hop would act on.
+  const cancel = (await surveyed()).candidates.find((c) => c.source === 'page' && c.name === 'Cancel');
+  expect(
+    cancel?.source === 'page' ? await cancel.locator.evaluate((el) => el.closest('[role="dialog"]')?.id) : undefined
+  ).toBe('marked');
+
+  // One opened over another: the later is taken as the one on top.
+  await show('second', true);
+  expect(await offered()).toEqual(['Done']);
+});
+
+test('a dialog marked aria-modal with no way out strands the Route', async ({ page, app }) => {
+  await page.evaluate(() => {
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'alertdialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-label', 'Trap');
+    dialog.innerHTML = '<p>There is no way out of this dialog.</p>';
+    document.body.append(dialog);
+  });
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('marked-trap-seed', 1),
+    journeySeed: 'marked-trap-seed',
+    routeNumber: 1,
+    tripLength: 5,
+    journalsRoot: scratch(),
+  });
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
+});
+
 test('a modal dialog with no way out strands the Route', async ({ page, app }) => {
   // The planted defect phase 5 needs: before the survey honored modals, the
   // controls behind this dialog kept every Route going.

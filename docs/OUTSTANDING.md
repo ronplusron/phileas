@@ -366,35 +366,34 @@ R or a driver (phase 6).
 
 ### 1.10 Dialogs that are not native modals
 
-Raised 2026-09-24. A native modal dialog, opened with `showModal()`, is now
-handled: the survey reads only the dialog, and `HISTORY.md` has the
-measurement and the fix. A dialog built any other way is still surveyed as
+Raised 2026-09-24. A native modal dialog, opened with `showModal()`, is
+handled: the survey reads only the dialog. So, since 2026-09-30, is a
+visible dialog marked `aria-modal`, measured on Bobolink Editor.
+`HISTORY.md` has both. A dialog built any other way is still surveyed as
 part of the whole page, and two gaps remain, both recorded and not yet
 scheduled.
 
 **When nothing behind the dialog is reachable, but the tree still lists it.**
-An application can block the background in three ways. With `aria-hidden`,
-the background leaves the accessibility tree and the survey offers only the
-dialog, which is correct. With `inert`, it should leave the tree the same way
-in Chromium, but whether Playwright's snapshot leaves it out is unmeasured.
-With only an overlay that catches clicks, the background stays in the tree:
-every Hop drawn to it times out and is journaled as abandoned, and a dialog
-with no way out cannot strand, which is the waste the native-modal fix
-removed. Recognizing an overlay without reading the application's code is
-undecided. **Measured on a real application on 2026-09-30:** Bobolink
-Editor's dialogs are this case, `aria-modal` over a backdrop, and 149 of 400
-Hops were abandoned, most of them behind one. `HISTORY.md` has the count.
-`aria-modal` itself may be the signal, since it is the application saying
-the background is out of reach; whether to trust it is undecided too.
+An application can block the background in three ways besides marking the
+dialog. With `aria-hidden`, the background leaves the accessibility tree and
+the survey offers only the dialog, which is correct. With `inert`, it should
+leave the tree the same way in Chromium, but whether Playwright's snapshot
+leaves it out is unmeasured. With only an overlay that catches clicks, the
+background stays in the tree: every Hop drawn to it times out and is
+journaled as abandoned, and a dialog with no way out cannot strand, which is
+the waste the modal fixes removed. Recognizing an overlay without reading the
+application's code is undecided.
 
 **When things behind the dialog are also reachable, and should not be.** The
 survey offers them and a Hop really clicks them, recorded as an ordinary
 click. If the dialog was meant to block the background, that is a real bug
 Phileas walks into and cannot recognize, since no check says what should be
-unreachable. Two ways a check could, both undecided: an adapter declaring
-that nothing behind a named dialog may be reached, which is a structural
-check (R18, phase 6); or a pattern of abandoned Hops whose clicks were
-intercepted, as evidence of an overlay.
+unreachable. **Trusting `aria-modal` made this wider:** a dialog marked
+modal whose background still takes clicks is now never clicked behind, so
+that bug is never met. Two ways a check could catch it, both undecided: an
+adapter declaring that nothing behind a named dialog may be reached, which is
+a structural check (R18, phase 6); or a pattern of abandoned Hops whose
+clicks were intercepted, as evidence of an overlay.
 
 ### 1.11 The draw shares for the keys and the menu, provisional
 

@@ -25,6 +25,36 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-30: a dialog marked `aria-modal` is surveyed alone
+
+The survey read only a native modal, one opened with `showModal()`. It now
+reads only a visible `role="dialog"`, `alertdialog` or `<dialog>` carrying
+`aria-modal="true"` too, the last in document order where there are several,
+and a native modal where there is one of each. Asked for on the day, from
+the option offered first after Bobolink Editor's first Routes abandoned 149
+of 400 Hops, most of them behind a dialog of that kind.
+
+**Measured on the same two seeds, before and after.** Without a Fix, the
+five Routes abandoned no Hop, where they had abandoned 62, and took 1.8
+minutes where they had taken 4.7. With `new-document`, 16, where they had
+abandoned 87, in 2.7 minutes where they had taken 6.1. Every Route passed
+both times, and the draws differ after the change, since what is on offer
+decides them.
+
+**The 16 are not behind a dialog, and what blocked them is not known.**
+Each is a click on a document window's frame, Collapse, Maximize, Close or a
+resize edge, that timed out with no dialog up, and every one came with two
+documents open. The journal keeps only that the click timed out, not what
+Playwright found in the way, so an overlapping window is a guess and not
+yet a reading.
+
+**Trusting the attribute has a cost, and `OUTSTANDING.md` carries it:** a
+dialog marked modal whose background still takes clicks is a bug a Route
+now never walks into. Two tests pin the new case beside the native one's,
+and both fail with the selector disabled: the dialog alone offered, with
+one lacking `aria-modal` and one hidden taking nothing away, and a marked
+dialog with no way out stranding the Route.
+
 ## 2026-09-30: Bobolink Editor gets an adapter, in `trial/editor/`
 
 The first of the two confirmed consumers, `editor`, which packages as
