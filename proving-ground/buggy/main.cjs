@@ -99,6 +99,8 @@ const PLANTS = [
   'full-screen',
   'native-dialog',
   'second-window',
+  'late-log-error',
+  'late-renderer-throw',
 ];
 const plants = process.argv
   .filter((arg) => arg.startsWith('--buggy-plant='))
@@ -177,6 +179,18 @@ ipcMain.handle('plant:log-error', () => {
   // file in its adapter's logPaths.
   const log = process.env.BUGGY_LOG;
   if (log) fs.appendFileSync(log, `${new Date().toISOString()} ERROR the logbook page is torn\n`);
+});
+
+// How long a late plant waits before it goes wrong: past the Hop that set it
+// off and its checks, so the error arrives while a later Hop runs, as an
+// install's error did on RStudio five Hops after the click that started it.
+const LATE_MS = 1500;
+
+ipcMain.handle('plant:late-log-error', () => {
+  const log = process.env.BUGGY_LOG;
+  setTimeout(() => {
+    if (log) fs.appendFileSync(log, `${new Date().toISOString()} ERROR the telegram never arrived\n`);
+  }, LATE_MS);
 });
 
 // A deliberate fault-injection switch. It exists so that a test can drive a

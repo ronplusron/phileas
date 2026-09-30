@@ -282,8 +282,21 @@ export type AppCheckVerdict = readonly string[] | { readonly notRun: string };
  * Marked, such a log counts as clean until it appears, and is read from its
  * start when it does. Mark only a log measured to appear this way; an
  * unmarked one keeps a mistyped path loud.
+ *
+ * `timeOf` reads a line's own time, in milliseconds since the epoch, or
+ * returns undefined for a line with none. Without it, a line is known only to
+ * have been written between two reads, which can be several Hops apart. The
+ * zone is the adapter's to supply: a time written with none, parsed as if
+ * local, lands hours off. A time outside the reads around the line is not
+ * trusted, and the failure says so.
  */
-export type LogPath = string | { readonly path: string; readonly createdOnFirstWrite: true };
+export type LogPath =
+  | string
+  | {
+      readonly path: string;
+      readonly createdOnFirstWrite?: true;
+      readonly timeOf?: (line: string) => number | undefined;
+    };
 
 export interface AppUnderTest {
   /**

@@ -25,6 +25,59 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-30: a failure says when its finding arrived, not which Hop caused it
+
+**Why.** Five checks read what piled up since they last ran: renderer
+errors, console errors, main-process errors, dialogs and the log check. Each
+charged what it read to the Hop just taken, and the failure said "after hop
+N, which acted on" that Hop's target. In the RStudio batch of 2026-09-29, a
+Route answered Yes to installing the odbc package at hop 27, the install
+logged its error 5.6 s later, during hop 32, and the Route failed "after hop
+32, which acted on button "Refresh Find in Files results"": the trigger for
+a different known bug, issue 62. Placed ahead of any further runs the same
+day, in the words "The new defects seems pretty bad and we should
+prioritize it."
+
+**A plan was written, reviewed by a second model and rewritten before any
+code.** The review found the first plan's "seen during hop 32" was still an
+accusation, since a Hop's span starts after its survey and an observation
+can land between two Hops; that a log line with no time of its own is known
+only to lie between two reads; that a log's own clock can disagree with the
+machine's; that Fix steps were left out; and that a window of ten seconds
+would always be cut by a cap of ten steps, since 13 Hops started within ten
+seconds of that error. All of it was taken.
+
+**What landed.** Every buffered observation is stamped when it arrives: by
+its listener for renderer errors, console errors, dialogs and a closed or
+crashed application, inside the main process for its errors, and at the
+start of the call for a stall. A log line records the read before and the
+read that found it, and its own time where the adapter's new `timeOf` reads
+one; a time outside the reads around the line, plus a second of slack for
+logs that stamp whole seconds, is kept but not trusted. The times go on each
+finding as `seenAt`, `seenAfter`, `seenBefore` and `loggedAt`, beside the
+signature and never in it, so a late finding keeps its id. `timeline.ts`
+places each finding in the step whose span holds it, or between two, and
+the failure lists the ten steps before it, Fix steps included, latest first,
+a Hop that gave up marked. It no longer names what the last Hop acted on.
+RStudio's adapter reads its session log's UTC times; `rdesktop.log` recorded
+no error in any Route, so its format is unmeasured and it gets no reader.
+
+**The same failure also named one finding twice,** "finding 6f037ab8,
+6f037ab8", since RStudio logged the line twice. The failure and `phileas
+show`'s lines now give each id once.
+
+**Tests.** Ten check the placement and the failure's text without launching
+anything, on that Route's own step times. Four run `buggy`: two new plants,
+`late-log-error` and `late-renderer-throw`, go wrong 1,500 ms after their
+click while later Hops press Escape. Which Hop the error lands in depends on
+timing, so the tests require the placement the journal's own times give,
+and hop 1's click among the steps listed. The positive control is an error
+that arrives at once, placed during hop 1. One more checks RStudio's time
+reader, and that a time with no zone is not read.
+
+**What was left, on purpose.** What the stubs caught is still written on
+the Hop that reads it; `DEFECTS.md` carries it. The number of steps listed
+is fixed at ten, and the journal keeps every step.
 ## 2026-09-30: a dialog marked `aria-modal` is surveyed alone
 
 The survey read only a native modal, one opened with `showModal()`. It now

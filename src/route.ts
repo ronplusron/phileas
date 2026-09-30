@@ -10,6 +10,7 @@ import { clickMenuItem } from './menu';
 import { renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
 import { CheckFailure, DEFAULT_RESPONSIVE_TIMEOUT_MS, failedChecks, startWatching, STALLED, type Watch } from './oracles/index';
+import type { StepSpan } from './timeline';
 import {
   answered,
   ApplicationStoppedAnswering,
@@ -752,6 +753,10 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       });
     }
 
+    // Every step so far, Fix and Trip, with when each ran, so a failure can
+    // say which step was running when what it found arrived.
+    const timeline: StepSpan[] = [];
+
     if (fix) {
       await runFix(fix, {
         page,
@@ -760,6 +765,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         journal,
         watch,
         caught,
+        timeline,
         settleTimeoutMs,
         settleQuietMs,
         exclusions: cfg.exclusions,
@@ -833,6 +839,12 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       }
       lastTarget = `${target.role} "${target.name}"`;
       const action = await actionFor(target, hopTimeoutMs);
+      const span: StepSpan = {
+        name: `hop ${hops + 1}`,
+        what: `${action} ${targetText(journaled(target))}`,
+        startedAt: startedAt.getTime(),
+      };
+      timeline.push(span);
 
       // Drawn whether or not it is used, so that the stream advances the same
       // way regardless of which control was the target. A value drawn only for a
@@ -884,6 +896,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // line below never names a pool that is not already on disk.
       const pool = journal.pool(found.candidates.map(journaled));
 
+      span.endedAt = Date.now();
+      if (abandoned !== undefined) span.abandoned = true;
       journal.write({
         kind: 'trip-hop',
         hop: hops + 1,
@@ -895,7 +909,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         ...(action === 'type' ? { value } : {}),
         ...(abandoned === undefined ? {} : { abandoned }),
         startedAt: startedAt.toISOString(),
-        durationMs: Date.now() - startedAt.getTime(),
+        durationMs: span.endedAt - startedAt.getTime(),
         settled: settling.settled,
         settleMs: settling.ms,
         effect: effectOf(
@@ -913,7 +927,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // record what a known-broken state does next, and bury the Hop that
       // mattered.
       const failed = failedChecks(checks);
-      if (failed.length) throw new CheckFailure(`hop ${hops}, which acted on ${lastTarget}`, failed);
+      // Where the checks ran, not what caused it: the timeline says when each
+      // finding arrived and lists the steps before it.
+      if (failed.length) throw new CheckFailure(`hop ${hops}`, failed, timeline);
 
       // After the entry is written, not before, so that `durationMs` stays the
       // Hop's own cost and a watched journal is comparable with an unwatched
@@ -1014,6 +1030,8 @@ async function runFix(
     watch?: Watch;
     /** What the stubs caught since last asked. Absent for a survey, which records nothing. */
     caught?: () => Promise<CaughtByStubs | undefined>;
+    /** The Route's steps, which each Fix step joins. Absent for a survey, which judges nothing. */
+    timeline?: StepSpan[];
     settleTimeoutMs: number;
     settleQuietMs: number;
     exclusions: AppUnderTest['exclusions'];
@@ -1023,8 +1041,21 @@ async function runFix(
     hopDelayMs: number;
   }
 ): Promise<void> {
-  const { page, app, rng, journal, watch, caught, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs, hopDelayMs } =
-    context;
+  const {
+    page,
+    app,
+    rng,
+    journal,
+    watch,
+    caught,
+    timeline,
+    settleTimeoutMs,
+    settleQuietMs,
+    exclusions,
+    tally,
+    hopTimeoutMs,
+    hopDelayMs,
+  } = context;
   let steps = 0;
 
   // The "before" of the first step. Every later step's "before" is the reading
@@ -1072,6 +1103,8 @@ async function runFix(
     running = label;
     const startedAt = new Date();
     const number = steps + 1;
+    const span: StepSpan = { name: `Fix step ${number}`, what: label, startedAt: startedAt.getTime() };
+    timeline?.push(span);
     try {
       await action();
     } catch (error) {
@@ -1088,13 +1121,14 @@ async function runFix(
         reason: 'The checks after this step failed, so what it did could not be read.',
       };
       const checks = after?.checks ?? [];
+      span.endedAt = Date.now();
       journal.write({
         kind: 'fix-step',
         step: number,
         label,
         error: error instanceof Error ? error.message.split('\n')[0] : String(error),
         startedAt: startedAt.toISOString(),
-        durationMs: Date.now() - startedAt.getTime(),
+        durationMs: span.endedAt - startedAt.getTime(),
         effect,
         checks,
         ...(after?.stopped ? { caught: after.stopped } : {}),
@@ -1105,12 +1139,13 @@ async function runFix(
     // Before the entry, as for a Trip hop, so that `durationMs` includes the
     // settle wait on both.
     const { effect, checks, stopped } = await effectAfter();
+    span.endedAt = Date.now();
     journal.write({
       kind: 'fix-step',
       step: number,
       label,
       startedAt: startedAt.toISOString(),
-      durationMs: Date.now() - startedAt.getTime(),
+      durationMs: span.endedAt - startedAt.getTime(),
       effect,
       checks,
       ...(stopped ? { caught: stopped } : {}),
@@ -1120,7 +1155,7 @@ async function runFix(
     // A check failing after a Fix step is a Fix failure, not a failed Route
     // (R11): ten Routes failing on one broken step is one problem.
     const failed = failedChecks(checks);
-    if (failed.length) throw new FixFailure(label, new CheckFailure(`Fix step ${number}, "${label}"`, failed));
+    if (failed.length) throw new FixFailure(label, new CheckFailure(`Fix step ${number}, "${label}"`, failed, timeline));
     // After the entry, as on a Trip hop, so the pause never reads as the
     // step's own cost.
     await pauseToWatch(hopDelayMs);

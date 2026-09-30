@@ -27,6 +27,7 @@ import {
   type TripHopEntry,
 } from '../src/index';
 import { scratch as makeScratch, removeScratch } from './scratch';
+import { arrivalOf, stepAt, type StepSpan } from '../src/timeline';
 
 /**
  * The checks, each made to fire on a planted defect.
@@ -678,6 +679,184 @@ own("an adapter check's violation is matched against known findings like a built
   expect(outcome.kind).toBe('passed');
   const hop = journalIn(root).find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
   expect(result(hop?.checks ?? [], 'ledger-balances')?.findings).toEqual([
-    { id: findingId(signature), signature, known: true },
+    // When it arrived is recorded beside the signature, never in it.
+    { id: findingId(signature), signature, known: true, seenAt: expect.any(String) },
   ]);
+});
+
+/**
+ * A finding that arrives after the Hop that caused it, placed by when it
+ * arrived rather than charged to the Hop the checks ran after.
+ *
+ * **Measured on RStudio on 2026-09-29:** an install's error logged 5.6 s after
+ * the click that started it was charged to a later Hop that triggers a
+ * different bug. `buggy`'s late plants go wrong 1,500 ms after their click,
+ * and every later Hop presses Escape, which `buggy` does nothing with, so the
+ * error arrives while some later Hop runs. Which one depends on timing, so
+ * the test does not name it: it reads the journal, and requires the failure
+ * to name the step whose span holds the finding's recorded time, and to list
+ * hop 1's click among the steps before it.
+ */
+const telegramIn = (userDataDir: string) => path.join(userDataDir, 'telegrams.log');
+const isoAtStart = (line: string) => {
+  const stamp = /^(\S+Z) /.exec(line)?.[1];
+  return stamp === undefined ? undefined : Date.parse(stamp);
+};
+
+/** Acts on this control at hop 1, then presses Escape on every Hop after. */
+function thenEscape(name: string): Chooser {
+  let hop = 0;
+  return {
+    choose: (candidates) => {
+      hop += 1;
+      const target =
+        hop === 1
+          ? candidates.find((candidate) => candidate.name === name)
+          : candidates.find((candidate) => candidate.source === 'key' && candidate.name === 'Escape');
+      if (!target) throw new Error(`hop ${hop}'s target is not on offer`);
+      return { target };
+    },
+  };
+}
+
+function arrivesLate(
+  title: string,
+  plant: string,
+  control: string,
+  check: string,
+  extra: Partial<AppUnderTest>,
+  expectations: (message: string, finding: NonNullable<JournaledCheck['findings']>[number]) => void
+) {
+  const cfg = planted(plant, extra);
+  const lateTest = createTest(cfg);
+  lateTest.afterEach(removeScratch);
+
+  lateTest(title, async ({ page, app, userDataDir }) => {
+    const root = scratch();
+    const error = await runRoute({
+      page,
+      app,
+      cfg,
+      streams: deriveRouteStreams(`late-${plant}`, 1),
+      journeySeed: `late-${plant}`,
+      routeNumber: 1,
+      tripLength: 12,
+      journalsRoot: root,
+      chooser: thenEscape(control),
+      userDataDir,
+      ...SHORT,
+    }).then(
+      () => undefined,
+      (thrown: unknown) => thrown
+    );
+    expect(error, 'the Route should have ended on a failed check').toBeInstanceOf(CheckFailure);
+    const message = (error as CheckFailure).message;
+
+    const hops = journalIn(root).filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+    const first = hops[0];
+    const last = hops.at(-1);
+    // The precondition, without which this run shows nothing: the error
+    // outlasted the Hop that set it off.
+    expect(hops.length, 'the plant went wrong before hop 1 ended, so nothing arrived late').toBeGreaterThan(1);
+    const finding = (result(last?.checks ?? [], check)?.findings ?? [])[0];
+    expect(finding, `the last Hop's ${check} should have recorded the finding`).toBeDefined();
+    if (!finding || !first) return;
+
+    // When it arrived, recorded on the finding, is after the delay began.
+    const arrival = arrivalOf(finding);
+    const moment = arrival.loggedAt ?? arrival.at ?? arrival.before ?? 0;
+    expect(moment).toBeGreaterThanOrEqual(Date.parse(first.startedAt) + 1_500);
+
+    // Hop 1, which set it off, is among the steps listed before it.
+    expect(message).toMatch(new RegExp(`hop 1 +started +[\\d.]+ s before +click button "${control}"`));
+    expect(message).not.toContain('which acted on');
+    // And the placement is the journal's own: the step whose span holds the moment.
+    const spans: StepSpan[] = hops.map((hop) => ({
+      name: `hop ${hop.hop}`,
+      what: '',
+      startedAt: Date.parse(hop.startedAt),
+      endedAt: Date.parse(hop.startedAt) + (hop.durationMs ?? 0),
+    }));
+    if (arrival.after === undefined || arrival.loggedAt !== undefined) {
+      expect(message).toContain(`arrived ${stepAt(moment, spans)}`);
+    }
+    expectations(message, finding);
+  });
+}
+
+arrivesLate(
+  'a late log error is placed by the log\'s own time, and hop 1 is listed before it',
+  'late-log-error',
+  'Send a telegram',
+  'log-error',
+  {
+    env: (userDataDir) => ({ BUGGY_LOG: telegramIn(userDataDir) }),
+    logPaths: (userDataDir) => [{ path: telegramIn(userDataDir), createdOnFirstWrite: true, timeOf: isoAtStart }],
+  },
+  (message, finding) => {
+    expect(finding.loggedAt).toBeDefined();
+    expect(message).toContain("by the log's own time");
+  }
+);
+
+arrivesLate(
+  'a late log error with no time of its own is placed between the reads around it',
+  'late-log-error',
+  'Send a telegram',
+  'log-error',
+  {
+    env: (userDataDir) => ({ BUGGY_LOG: telegramIn(userDataDir) }),
+    logPaths: (userDataDir) => [{ path: telegramIn(userDataDir), createdOnFirstWrite: true }],
+  },
+  (message, finding) => {
+    expect(finding.loggedAt).toBeUndefined();
+    expect(finding.seenAfter && finding.seenBefore).toBeTruthy();
+    expect(message).toMatch(/arrived between \S+Z and \S+Z, .*the log gave no time the engine could read/);
+  }
+);
+
+arrivesLate(
+  'a late renderer error is placed by when the engine saw it arrive',
+  'late-renderer-throw',
+  'Set the alarm',
+  'uncaught-error',
+  {},
+  (message, finding) => {
+    expect(finding.seenAt).toBeDefined();
+    expect(message).toMatch(/alarm rang too late/);
+  }
+);
+
+// The positive control for all three: an error that arrives at once is placed
+// during hop 1, the Hop that caused it, so a placement that always said
+// "later" would fail here.
+const atOnce = planted('log-error', {
+  env: (userDataDir) => ({ BUGGY_LOG: logbookIn(userDataDir) }),
+  logPaths: (userDataDir) => [{ path: logbookIn(userDataDir), timeOf: isoAtStart }],
+});
+const atOnceTest = createTest(atOnce);
+atOnceTest.afterEach(removeScratch);
+
+atOnceTest('an error that arrives at once is placed during the Hop that caused it', async ({ page, app, userDataDir }) => {
+  const root = scratch();
+  const error = await runRoute({
+    page,
+    app,
+    cfg: atOnce,
+    streams: deriveRouteStreams('at-once', 1),
+    journeySeed: 'at-once',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: root,
+    chooser: always('Write in the logbook'),
+    userDataDir,
+    ...SHORT,
+  }).then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+  expect(error).toBeInstanceOf(CheckFailure);
+  const message = (error as CheckFailure).message;
+  expect(message).toMatch(/arrived during hop 1, [\d.]+ s after it started \(by the log's own time/);
+  expect(message).toMatch(/hop 1 +started +[\d.]+ s before +click button "Write in the logbook"/);
 });

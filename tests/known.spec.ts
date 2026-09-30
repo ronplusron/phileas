@@ -390,7 +390,17 @@ route('a Route meeting a known finding records it and carries on', async ({ page
   const hops = journal.filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
   const logCheck = hops[0]?.checks.find((check) => check.check === 'log-error');
   expect(logCheck?.result).toBe('passed');
-  expect(logCheck?.findings).toEqual([{ id: findingId(LOGBOOK), signature: LOGBOOK, known: true, issue: 'ronplusron/phileas#99' }]);
+  expect(logCheck?.findings).toEqual([
+    {
+      id: findingId(LOGBOOK),
+      signature: LOGBOOK,
+      known: true,
+      issue: 'ronplusron/phileas#99',
+      // A log line is known only to have been written between two reads.
+      seenAfter: expect.any(String),
+      seenBefore: expect.any(String),
+    },
+  ]);
   const opening = journal.find((entry) => entry.kind === 'route');
   expect(opening).toMatchObject({ knownFindings: { entries: 1 } });
 });

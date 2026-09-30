@@ -77,6 +77,17 @@ export interface JournaledCheck {
     readonly issue?: string;
     /** The reason, where the finding is known as a false alarm rather than a bug. */
     readonly falseAlarm?: string;
+    /**
+     * When it arrived, since 2026-09-30, and absent before: `seenAt` when the
+     * engine saw it arrive, or for a log line `seenAfter` and `seenBefore`,
+     * the reads it was written between, with `loggedAt`, the log's own time,
+     * where the adapter reads one. The Hop a check runs after is not always
+     * the Hop that caused what it read; `timeline.ts` says why.
+     */
+    readonly seenAt?: string;
+    readonly seenAfter?: string;
+    readonly seenBefore?: string;
+    readonly loggedAt?: string;
   }[];
 }
 

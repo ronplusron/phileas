@@ -59,6 +59,17 @@ function isAboveHome(name: string): boolean {
   return name === path.basename(run) || fs.readdirSync(run).includes(name);
 }
 
+/**
+ * A session log line's own time: the UTC time it starts with, or undefined
+ * for a line that does not start with one, such as a stack continuing on
+ * the next line. Only a time marked `Z` is read, so a line in some other
+ * zone is never read as local and placed hours off.
+ */
+export function sessionLogTime(line: string): number | undefined {
+  const stamp = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z)\s/.exec(line)?.[1];
+  return stamp === undefined ? undefined : Date.parse(stamp);
+}
+
 export const rstudio: AppUnderTest = {
   productName: 'RStudio',
   bundleDir,
@@ -104,12 +115,23 @@ export const rstudio: AppUnderTest = {
    * none, so a backup mid-Route needs the log to grow that far within one
    * Route, and the lines written between the last read and the backup would
    * then go unread. The engine reads a log that shrank from its start.
+   *
+   * The session log's lines start with their own time in UTC, such as
+   * `2026-09-29T14:49:52.997170Z`, on every line the batch of 2026-09-29
+   * recorded, so the engine can say which step was running when one was
+   * written: an install's error there arrived five Hops after the Hop that
+   * started it. `rdesktop.log` recorded no error in any Route, so its format
+   * is unmeasured and it gets no reader.
    */
   logPaths: (userDataDir) => {
     const logs = path.join(homeIn(userDataDir), '.local', 'share', 'rstudio', 'log');
     return [
       path.join(logs, 'rdesktop.log'),
-      { path: path.join(logs, `rsession-${os.userInfo().username}.log`), createdOnFirstWrite: true },
+      {
+        path: path.join(logs, `rsession-${os.userInfo().username}.log`),
+        createdOnFirstWrite: true,
+        timeOf: sessionLogTime,
+      },
     ];
   },
 

@@ -980,19 +980,6 @@ measured on this release. A Route that closes RStudio fails
 still-responding, so that one would fail loudly rather than go unseen.
 `DEFECTS.md` has what this turned up in the engine.
 
-### Next: charging a finding to the Hop it was seen during
-
-**Placed 2026-09-30, ahead of any further runs,** on reading that the RStudio
-batch's one failure named the wrong Hop, in the words "The new defects seems
-pretty bad and we should prioritize it." `DEFECTS.md` has the defect, under
-"A finding is charged to whichever Hop is running when it is read", and the
-proposed fix. What the rest of the RStudio work does after it, and where
-weighting the draw below now falls, was not discussed.
-
-Boundary: a planted error that arrives after its Hop has ended is reported
-as seen during the Hop it arrived in, with the Hops before it and their
-times, and nothing claims a cause.
-
 ### After the trial: weighting the draw toward new targets
 
 **Placed 2026-09-27,** asked for in the words "Let's do it sooner", and

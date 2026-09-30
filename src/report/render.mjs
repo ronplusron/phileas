@@ -125,7 +125,8 @@ function failedText(checks) {
   if (!failed.length) return '';
   return `   CHECK FAILED: ${failed
     .map((check) => {
-      const ids = (check.findings ?? []).filter((finding) => !finding.known).map((finding) => finding.id);
+      // One id per finding, however many times the Hop saw it.
+      const ids = [...new Set((check.findings ?? []).filter((finding) => !finding.known).map((finding) => finding.id))];
       return `${check.check}: ${(check.observation ?? '').split('\n')[0]}${ids.length ? ` (finding ${ids.join(', ')})` : ''}`;
     })
     .join('; ')}`;
@@ -139,7 +140,8 @@ function failedText(checks) {
  * @returns {string}
  */
 function knownText(checks) {
-  const known = (checks ?? []).flatMap((check) => (check.findings ?? []).filter((finding) => finding.known));
+  const every = (checks ?? []).flatMap((check) => (check.findings ?? []).filter((finding) => finding.known));
+  const known = every.filter((finding, index) => every.findIndex((other) => other.id === finding.id) === index);
   if (!known.length) return '';
   return `   known: ${known.map((finding) => `${finding.id} (${finding.issue ? `issue ${finding.issue}` : finding.falseAlarm !== undefined ? 'false alarm' : 'unfiled'})`).join(', ')}`;
 }

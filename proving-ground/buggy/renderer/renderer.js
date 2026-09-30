@@ -97,6 +97,13 @@ const PLANTED = {
   'full-screen': ['Unfold the big map', () => window.buggy.plant('full-screen')],
   'native-dialog': ['Open the map case', () => window.buggy.plant('native-dialog')],
   'second-window': ['Open a second window', () => window.buggy.plant('second-window')],
+  'late-log-error': ['Send a telegram', () => window.buggy.plant('late-log-error')],
+  // The same wait as the main process's late plant, LATE_MS in main.cjs.
+  'late-renderer-throw': ['Set the alarm', () => {
+    setTimeout(() => {
+      throw new Error('the alarm rang too late');
+    }, 1500);
+  }],
   miscount: ['Count the luggage', () => {
     miscount = true;
     render();

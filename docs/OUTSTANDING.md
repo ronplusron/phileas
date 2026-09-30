@@ -35,9 +35,10 @@ no navigation away, named controls, and the rest of phase 6.
 
 ### 1.2 Planted defects, and the applications still to build
 
-`proving-ground/buggy` exists and is structurally ordinary on purpose. **Twelve
-defects are planted in it**, each behind its own launch flag: eleven make the
-universal checks fire, and one makes the check `buggy`'s adapter declares
+`proving-ground/buggy` exists and is structurally ordinary on purpose. **Fourteen
+defects are planted in it**, each behind its own launch flag: thirteen make the
+universal checks fire, two of them 1,500 ms after their click so the error
+arrives during a later Hop, and one makes the check `buggy`'s adapter declares
 fire. A test steers a Route straight to each, which proves the
 check and not the search, so nothing here yet shows a Journey finds anything.
 `PLAN.md` plants the rest across phases 5, 6 and 8, and phase 8 is where one
@@ -629,8 +630,10 @@ same Hop. Across two machines it has never been measured.
   section 4 describes would replay this way too.
 - **What it inherits:** `nth` shifts when a matching control appears earlier
   on the page, and a name can change while a Route runs, both noted in
-  1.14; a background error charged to the wrong Hop replays onto the wrong
-  one.
+  1.14. A finding that arrived late is no longer charged to the Hop the
+  checks ran after, since 2026-09-30: the failure lists the steps before
+  it, and those, not the Hop the Route ended on, are what a replay or a
+  shortening has to cover.
 - **The seed can still be made to travel further,** separately: giving each
   Route an R library of fixed contents in place of the machine's, and
   recording R's and the packages' versions on the opening line, would make
@@ -830,6 +833,11 @@ Two things were asked for, in the words they were put:
   whole Route; a shortened one has to act from the recorded targets instead,
   which the journal already holds, the way 2.1 says a run that cannot replay
   from its seed would.
+- **The last Hop is not always where the cause is.** Since 2026-09-30 a
+  failure says when its finding arrived and lists the steps before it: the
+  measured case arrived five Hops after the click that caused it. The last
+  few Hops before the arrival, not before the Route's end, are the ones to
+  keep.
 - **The model sits after the run, which is the safe place for one.** 2.1
   lists summarizing a finding from a journal as the first of the four places
   a model could go, since it changes nothing about detection. Shortening

@@ -137,3 +137,19 @@ test("a client exception keeps its message and first frame, without the build's 
   // The next release: the frame moved and the versions changed, and it is the same finding.
   expect(logged(541, '2026.12.0+50')).toBe(logged(537, '2026.09.1+183'));
 });
+
+test("the session log's lines are read for their own time, in UTC only", () => {
+  const logs = typeof rstudio.logPaths === 'function' ? rstudio.logPaths(profile) : [];
+  const session = logs.find((log) => typeof log !== 'string' && log.path.includes('rsession-'));
+  const timeOf = typeof session === 'object' ? session.timeOf : undefined;
+  expect(timeOf, 'the session log should carry a time reader').toBeDefined();
+  // The form every line in the batch of 2026-09-29 had, microseconds and all.
+  expect(timeOf?.('2026-09-29T14:49:52.997170Z [rsession-ann] ERROR system error 2')).toBe(
+    Date.parse('2026-09-29T14:49:52.997Z')
+  );
+  // No zone, or no time at all, is no time: never read as local and placed hours off.
+  expect(timeOf?.('2026-09-29T14:49:52.997170 [rsession-ann] ERROR system error 2')).toBeUndefined();
+  expect(timeOf?.('    at a continued stack line')).toBeUndefined();
+  // rdesktop.log's format is unmeasured, so it gets no reader.
+  expect(logs.find((log) => typeof log === 'string' && log.endsWith('rdesktop.log'))).toBeDefined();
+});

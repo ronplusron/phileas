@@ -279,44 +279,29 @@ full suite's load, and that the change being tested, to the Fix API, is not
 on the path a Route with no Fix takes. The next failure should keep its
 report, `test-results/` and the two plays' journals, before anything reruns.
 
-## A finding is charged to whichever Hop is running when it is read
+## What the stubs caught, and where a Route ends, still follow when a check reads
 
-**Filed 2026-09-30, measured on RStudio and confirmed by reading the code.
-Next to fix, ahead of any further runs, decided the same day.** Five checks
-read from a buffer that fills in the background: renderer errors, console
-errors, main-process errors and dialogs through `splice(0)` in
-`src/oracles/index.ts`, and the log check through `readLogs`, which reads
-what each named log gained since its last read. Each reports what it read
-against the Hop just taken, and `route.ts` words the failure as "after hop
-N, which acted on" that Hop's target. The `caught` field on each journal
-line reads the stubs' recorders the same way. So anything an application
-does after the Hop that started it has ended is charged to whatever Hop
-comes next.
+**Filed 2026-09-30; what is left of a larger defect fixed the same day.**
+A finding used to be charged to whichever Hop was running when a check read
+it; it now records when it arrived, and the failure places it among the
+steps, which `HISTORY.md` has. Two parts of the same shape remain.
 
-In the RStudio batch of 2026-09-29, `script`'s Route 11 answered Yes to
-installing the odbc package at hop 27; the install logged its error about
-five seconds later, and the Route failed "after hop 32, which acted on
-button "Refresh Find in Files results"". That button is the trigger for a
-different known RStudio bug, issue 62, so the reason pointed a reader at the
-wrong one.
+**What the stubs caught is written on the Hop that reads it.** The `caught`
+field on each journal line is read from the stubs' recorders after the
+checks, as what they gained since the last read, with no time of its own. A
+link or a dialog an application asks for after a delay lands on a later
+Hop's line, and a reader takes that Hop for the one that asked. It fails no
+Route, which is why it was left: stamping it means changing the recorders
+inside the stubs, in `external.ts` and `dialogs.ts`, and adding a field to
+the journal.
 
-**Why it is a defect and not a limit.** It produces a wrong answer: the
-journal names a cause, and the cause is wrong. A person triaging from it
-starts at the wrong Hop, and a shortened replay built from the named Hop,
-which `OUTSTANDING.md` 2.9 asks for, would drop the Hop that mattered.
-Which Hop gets charged also depends on timing, so one seed can fail at two
-different Hops on two runs, and a replay that fails elsewhere reads as a
-seed that does not reproduce.
-
-**What would close it.** Nothing observed can name the cause: the log
-line's own time, 14:49:52.997, falls during hop 32, which began at
-14:49:51.922. What can be fixed is the claim. Proposed, not built: stamp
-each observation with when it arrived, from the listener's clock for the
-page and the main process and from a parser the adapter may supply for a
-log's own times; word the reason as seen during a Hop and how far into it;
-list the few Hops before with how long before the observation each began;
-and journal those times on the finding. A delayed error planted in `buggy`
-is its test.
+**The Hop a Route ends on still depends on timing.** A Route ends at the
+first check that reads a finding, and a finding that arrives late is read on
+whichever Hop is running then. So one seed can end at hop 32 on one run and
+hop 33 on the next, with the same finding, while every draw is the same. The
+failure now says when the finding arrived and lists the steps before it, so
+a reader can see the two runs agree; nothing yet compares them, and R13
+would read the second as a seed that no longer reproduces.
 
 ## Two things that will look like candidates, and are not
 

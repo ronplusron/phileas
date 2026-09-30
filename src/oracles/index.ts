@@ -11,6 +11,16 @@ import {
 } from '../app-under-test';
 import type { JournaledCheck } from '../journal';
 import { currentSignature, findingId, refuseUnfitVarying, signatureOf, type KnownFindings } from '../known.mjs';
+import {
+  arrivalFields,
+  arrivalOf,
+  describePlaced,
+  placeArrival,
+  stepsBefore,
+  type Arrival,
+  type Observed,
+  type StepSpan,
+} from '../timeline';
 
 /**
  * The checks, run after every Hop, Fix steps included (R15).
@@ -107,19 +117,69 @@ const NOT_BUILT = 'not built yet (docs/PLAN.md)';
 export class CheckFailure extends Error {
   constructor(
     readonly where: string,
-    readonly failed: readonly JournaledCheck[]
+    readonly failed: readonly JournaledCheck[],
+    /**
+     * The Route's steps so far, Fix steps and Trip hops, so the failure can
+     * say when each finding arrived and list the steps before it. Without
+     * them it says only where the checks ran.
+     */
+    readonly steps?: readonly StepSpan[]
   ) {
-    super(
-      `${failed.length === 1 ? 'A check' : `${failed.length} checks`} failed after ${where}:\n\n` +
-        failed
-          .map((check) => {
-            const ids = (check.findings ?? []).filter((finding) => !finding.known).map((finding) => finding.id);
-            return `  ${check.check}: ${check.observation ?? ''}${ids.length ? `\n  finding ${ids.join(', ')}` : ''}`;
-          })
-          .join('\n')
-    );
+    super(failureMessage(where, failed, steps));
     this.name = 'CheckFailure';
   }
+}
+
+/**
+ * The failure's text. **Where the checks ran is not named as the cause.**
+ * `timeline.ts` has the measured case: an error logged five Hops after the
+ * Hop that caused it was charged to a button that triggers a different bug.
+ */
+function failureMessage(where: string, failed: readonly JournaledCheck[], steps: readonly StepSpan[] | undefined): string {
+  // What failed each check: the unknown findings, or every one for
+  // still-responding, which a known finding still fails.
+  const failing = (check: JournaledCheck) =>
+    (check.findings ?? []).filter((finding) => check.check === 'still-responding' || !finding.known);
+  const blocks = failed.map((check) => {
+    // One id per finding, however many times it was seen: a line logged
+    // twice was listed as "finding 6f037ab8, 6f037ab8" until 2026-09-30.
+    const ids = [...new Set(failing(check).map((finding) => finding.id))];
+    const arrivals = steps
+      ? [
+          ...new Set(
+            failing(check).flatMap((finding) => {
+              const placed = placeArrival(arrivalOf(finding));
+              return placed ? [`arrived ${describePlaced(placed, steps)}`] : [];
+            })
+          ),
+        ]
+      : [];
+    return [
+      `  ${check.check}: ${check.observation ?? ''}`,
+      ...(ids.length ? [`  finding ${ids.join(', ')}`] : []),
+      ...arrivals.map((arrival) => `  ${arrival}`),
+    ].join('\n');
+  });
+  const count = failed.length === 1 ? 'A check' : `${failed.length} checks`;
+  if (!steps?.length) return `${count} failed after ${where}:\n\n${blocks.join('\n')}`;
+
+  // The steps before the earliest arrival, the first sign of what went wrong.
+  // A span counts from its end, so no step that could have caused it is left
+  // out; a finding with no time counts from now.
+  const references = failed.flatMap((check) =>
+    failing(check).flatMap((finding) => {
+      const placed = placeArrival(arrivalOf(finding));
+      return placed ? [placed.kind === 'moment' ? placed.at : placed.to] : [];
+    })
+  );
+  const reference = references.length ? Math.min(...references) : Date.now();
+  return (
+    `${count} failed after ${where}, which is when the checks read it. The cause may be an earlier ` +
+    `step: when it arrived, and the steps before it, are below.\n\n${blocks.join('\n')}\n\n` +
+    `  Steps before it, latest first:\n${stepsBefore(reference, steps)
+      .map((line) => `    ${line}`)
+      .join('\n')}`
+  );
 }
 
 /** What the checks read, gathered from the moment the Route starts. */
@@ -218,49 +278,57 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   );
   const pageWindowId = typeof pageWindow === 'number' ? pageWindow : undefined;
 
-  const pageErrors: string[] = [];
-  const stalls: string[] = [];
-  const consoleErrors: string[] = [];
-  const dialogs: string[] = [];
+  // **Each stamped when it arrives, not when a check reads it.** A check reads
+  // what piled up since the last Hop, and the Hop it runs after is not always
+  // the one that caused it; `timeline.ts` has the measured case.
+  const pageErrors: Observed[] = [];
+  const stalls: Observed[] = [];
+  const consoleErrors: Observed[] = [];
+  const dialogs: Observed[] = [];
   // Kept rather than drained: an application that has gone stays gone, and
   // the Route ends on the first Hop that reads it.
-  const gone: string[] = [];
+  const gone: Observed[] = [];
+  const arrived = (text: string): Observed => ({ text, arrival: { at: Date.now() } });
 
   const seen = watched.get(page) ?? new Set<Error>();
   watched.set(page, seen);
   page.on('pageerror', (error) => {
     seen.add(error);
-    pageErrors.push(rendererObservation(error));
+    pageErrors.push(arrived(rendererObservation(error)));
   });
   // **An application that stops is a failure, never an answer.** A crashed or
   // closed target rejects at once rather than hanging, so without these a
   // dead application passed still-responding, its other checks read "not
   // run", and a crash on the last Hop reported the Route as passed.
-  page.on('crash', () => gone.push('the renderer crashed'));
-  page.on('close', () => gone.push(WINDOW_CLOSED));
-  app.on('close', () => gone.push('the application closed'));
+  page.on('crash', () => gone.push(arrived('the renderer crashed')));
+  page.on('close', () => gone.push(arrived(WINDOW_CLOSED)));
+  app.on('close', () => gone.push(arrived('the application closed')));
   app.process().on('exit', (code, signal) =>
-    gone.push(`the main process exited${signal ? ` on ${signal}` : ` with code ${code}`}`)
+    gone.push(arrived(`the main process exited${signal ? ` on ${signal}` : ` with code ${code}`}`))
   );
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(message.text());
+    if (message.type() === 'error') consoleErrors.push(arrived(message.text()));
   });
   // A listener means Playwright no longer dismisses dialogs by itself, so this
   // one has to, or the page waits on a dialog nobody will answer.
   page.on('dialog', (dialog) => {
-    dialogs.push(`${dialog.type()}: ${dialog.message()}`);
+    dialogs.push(arrived(`${dialog.type()}: ${dialog.message()}`));
     dialog.dismiss().catch(() => undefined);
   });
 
   let mainWatched: string | undefined;
   try {
     await app.evaluate((_electron, key) => {
-      const errors: string[] = [];
+      // Stamped in the main process, on the machine's one clock, so an error
+      // there is placed by when it was thrown rather than when it was read.
+      const errors: { text: string; at: number }[] = [];
       (globalThis as Record<string, unknown>)[key] = errors;
       const text = (value: unknown) =>
         value instanceof Error ? (value.stack ?? value.message) : String(value);
-      process.on('uncaughtException', (error) => errors.push(text(error)));
-      process.on('unhandledRejection', (reason) => errors.push(`unhandled rejection: ${text(reason)}`));
+      process.on('uncaughtException', (error) => errors.push({ text: text(error), at: Date.now() }));
+      process.on('unhandledRejection', (reason) =>
+        errors.push({ text: `unhandled rejection: ${text(reason)}`, at: Date.now() })
+      );
     }, MAIN_ERRORS);
   } catch (error) {
     mainWatched = error instanceof Error ? error.message.split('\n')[0] : String(error);
@@ -272,27 +340,49 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   // Logs the adapter marked as created on their first write, whose absence is
   // not a reason to say the check did not run.
   const createdOnFirstWrite = new Set<string>();
+  // Each log's own reader of a line's time, where the adapter gives one.
+  const timeOf = new Map<string, (line: string) => number | undefined>();
+  // Since when each log's unread bytes may date: the last read that left
+  // nothing behind. A line split across two reads started before the second.
+  const unreadSince = new Map<string, number>();
+  const watchedFrom = Date.now();
   for (const log of resolveLogPaths(cfg, options.userDataDir)) {
     const file = typeof log === 'string' ? log : log.path;
     if (typeof log !== 'string' && log.createdOnFirstWrite) createdOnFirstWrite.add(file);
+    if (typeof log !== 'string' && log.timeOf) timeOf.set(file, log.timeOf);
     logOffsets.set(file, sizeOf(file) ?? 0);
+    unreadSince.set(file, watchedFrom);
   }
 
-  const readMain = async (): Promise<string[] | string> => {
+  const readMain = async (): Promise<Observed[] | string> => {
     if (mainWatched !== undefined) return `the main process could not be watched: ${mainWatched}`;
     const read = app.evaluate(
-      (_electron, key) => ((globalThis as Record<string, unknown>)[key] as string[]).splice(0),
+      (_electron, key) => ((globalThis as Record<string, unknown>)[key] as { text: string; at: number }[]).splice(0),
       MAIN_ERRORS
     );
     const answer = await within(read, responsiveTimeoutMs);
     if (answer === TIMED_OUT) return 'the main process did not answer, so its errors could not be read';
     if (!Array.isArray(answer)) return 'the main process could not be read, so its errors are unknown';
-    return answer.map(firstLines);
+    return answer.map((error) => ({ text: firstLines(error.text), arrival: { at: error.at } }));
+  };
+
+  /** A log line's own time, where the adapter reads one. A reader that throws is the adapter's fault, and says so. */
+  const loggedAt = (file: string, line: string): number | undefined => {
+    const read = timeOf.get(file);
+    if (!read) return undefined;
+    let at: number | undefined;
+    try {
+      at = read(line);
+    } catch (error) {
+      throw new Error(`The adapter's timeOf for ${file} threw on a line, which is a fault in the adapter: ${firstLine(error)}`);
+    }
+    return at !== undefined && Number.isFinite(at) ? at : undefined;
   };
 
   const readLogs = (): Verdict => {
-    const found: string[] = [];
+    const found: Observed[] = [];
     const missing: string[] = [];
+    const readAt = Date.now();
     for (const [file, offset] of logOffsets) {
       const size = sizeOf(file);
       // **A named log that does not exist is not a clean log.** Read as
@@ -315,14 +405,22 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
           // Hops, so neither half matched. What follows the last newline is
           // left for the next read.
           const end = buffer.lastIndexOf(0x0a) + 1;
+          const since = unreadSince.get(file) ?? watchedFrom;
           for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
-            if (/\berror\b/i.test(line)) found.push(`${file}: ${line.trim()}`);
+            if (!/\berror\b/i.test(line)) continue;
+            const logged = loggedAt(file, line);
+            const arrival: Arrival = { after: since, before: readAt, ...(logged === undefined ? {} : { loggedAt: logged }) };
+            found.push({ text: `${file}: ${line.trim()}`, arrival });
           }
           logOffsets.set(file, from + end);
+          if (end === buffer.length) unreadSince.set(file, readAt);
         } finally {
           fs.closeSync(handle);
         }
-      } else logOffsets.set(file, size);
+      } else {
+        logOffsets.set(file, size);
+        unreadSince.set(file, readAt);
+      }
     }
     if (found.length === 0 && missing.length) {
       return { notRun: `${missing.join(', ')} does not exist, so it could not be read` };
@@ -334,32 +432,39 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     const startedAt = Date.now();
     const answer = await within(call, boundMs + responsiveTimeoutMs, 'rejections-too');
     const tookMs = Date.now() - startedAt;
+    // Stamped with when the call began, since that is when the application
+    // stopped answering it.
     if (answer === TIMED_OUT) {
-      stalls.push(
-        `${what} was bounded to ${boundMs} ms and had not returned after ${tookMs} ms: the application stopped answering`
-      );
+      stalls.push({
+        text: `${what} was bounded to ${boundMs} ms and had not returned after ${tookMs} ms: the application stopped answering`,
+        arrival: { at: startedAt },
+      });
       return STALLED;
     }
     if (tookMs > boundMs + responsiveTimeoutMs) {
-      stalls.push(
-        `${what} was bounded to ${boundMs} ms and returned after ${tookMs} ms: the application did not answer for about ${Math.round((tookMs - boundMs) / 1000)} s`
-      );
+      stalls.push({
+        text: `${what} was bounded to ${boundMs} ms and returned after ${tookMs} ms: the application did not answer for about ${Math.round((tookMs - boundMs) / 1000)} s`,
+        arrival: { at: startedAt },
+      });
     }
     return answer.ok ? answer.value : Promise.reject(answer.error);
   };
 
-  const roundTrips = async (): Promise<string[]> => {
+  const roundTrips = async (): Promise<Observed[]> => {
+    const sentAt = Date.now();
     const [renderer, main] = await Promise.all([
       within(page.evaluate(() => true), responsiveTimeoutMs, 'rejections-too'),
       within(app.evaluate(() => true), responsiveTimeoutMs, 'rejections-too'),
     ]);
-    const slow: string[] = [...gone, ...stalls.splice(0)];
+    const slow: Observed[] = [...gone, ...stalls.splice(0)];
     const judge = (answer: typeof renderer, who: string) => {
-      if (answer === TIMED_OUT) slow.push(`the ${who} did not answer within ${responsiveTimeoutMs} ms`);
+      if (answer === TIMED_OUT) {
+        slow.push({ text: `the ${who} did not answer within ${responsiveTimeoutMs} ms`, arrival: { at: sentAt } });
+      }
       // Any other rejection has answered, just badly: a reload destroying the
       // context mid-call is one, and the process is there to reject.
       else if (!answer.ok && GONE.test(firstLine(answer.error))) {
-        slow.push(`the ${who} could not be reached: ${firstLine(answer.error)}`);
+        slow.push({ text: `the ${who} could not be reached: ${firstLine(answer.error)}`, arrival: { at: sentAt } });
       }
     };
     judge(renderer, 'renderer');
@@ -373,7 +478,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     // asked whether the page's own window still exists. If it does, the
     // engine lost its connection, which says nothing about the application:
     // the Route ends with that reason, and no finding is recorded against it.
-    if (gone.length === 1 && gone[0] === WINDOW_CLOSED && pageWindowId !== undefined && main !== TIMED_OUT && main.ok) {
+    if (gone.length === 1 && gone[0]?.text === WINDOW_CLOSED && pageWindowId !== undefined && main !== TIMED_OUT && main.ok) {
       const open = await within(
         app.evaluate(({ BrowserWindow }, id) => {
           const window = BrowserWindow.fromId(id);
@@ -384,7 +489,8 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
       );
       if (open !== TIMED_OUT && open.ok && open.value) throw new PageConnectionLost();
     }
-    return [...new Set(slow)];
+    // One of each, the earliest kept, as the set of texts this replaced did.
+    return slow.filter((observed, index) => slow.findIndex((other) => other.text === observed.text) === index);
   };
 
   return {
@@ -409,7 +515,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
                   // would claim something the unread main process cannot back.
                   return renderer.length ? renderer : { notRun: main };
                 }
-                return [...renderer, ...main.map((error) => `main process: ${error}`)];
+                return [...renderer, ...main.map((error) => ({ ...error, text: `main process: ${error.text}` }))];
               });
             case 'console-error':
               return judge(check, () => consoleErrors.splice(0));
@@ -540,8 +646,12 @@ async function runAppCheck(check: AppCheck, context: AppCheckContext, responsive
   return 'notRun' in verdict ? { notRun: verdict.notRun } : [...verdict];
 }
 
-/** What a check found: its violations, or why it could not look. */
-type Verdict = string[] | { notRun: string };
+/**
+ * What a check found: its violations, or why it could not look. A violation
+ * is stamped with when it arrived where the check knows; a bare string was
+ * seen when the check ran.
+ */
+type Verdict = (string | Observed)[] | { notRun: string };
 
 /**
  * One check's verdict, with the adapter's narrowing applied (R19).
@@ -562,15 +672,19 @@ async function judged(
 
   const verdict = await run();
   if (!Array.isArray(verdict)) return { check, result: 'not-run', observation: verdict.notRun };
+  const checkedAt = Date.now();
+  const observed = verdict.map((entry): Observed => (typeof entry === 'string' ? { text: entry, arrival: { at: checkedAt } } : entry));
 
   const reason = narrowing ? { narrowed: narrowing.reason } : {};
-  const accepted = narrowing ? verdict.filter((observation) => narrowing.accept(observation)) : [];
-  const violations = verdict.filter((observation) => !accepted.includes(observation));
+  const accepted = narrowing ? observed.filter((entry) => narrowing.accept(entry.text)).map((entry) => entry.text) : [];
+  const violations = observed.filter((entry) => !accepted.includes(entry.text));
 
   // Each violation by its signature. A known one is recorded and does not fail
   // the check, so the Route carries on past a bug already found; any other
-  // violation on the same check still fails it.
-  const findings = violations.map((violation) => {
+  // violation on the same check still fails it. When it arrived goes on the
+  // record beside the signature and never into it, so a finding that arrives
+  // late keeps its id.
+  const findings = violations.map(({ text: violation, arrival }) => {
     const signature = signatureOf(check, violation, undefined, varying);
     const entry = known.get(signature);
     return {
@@ -581,6 +695,7 @@ async function judged(
         known: entry !== undefined,
         ...(entry?.issue ? { issue: entry.issue } : {}),
         ...(entry?.falseAlarm !== undefined ? { falseAlarm: entry.falseAlarm } : {}),
+        ...arrivalFields(arrival),
       },
     };
   });
