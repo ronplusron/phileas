@@ -998,12 +998,34 @@ Edit menu. In one, a press on a resize edge closed the File menu but, being
 cancelled, left focus on its title, and the next Hop's Enter reopened it.
 
 It is the same waste as the overlay in 1.10, from a menu or a window
-instead of a dialog. Three ways on, none chosen: the survey tests what is
-on top at a control's click point and leaves covered ones out of the draw,
-which changes what seeds draw wherever controls overlap; the journal keeps
-what intercepted the click, so an abandoned Hop says why, and each still
-costs the click timeout; or neither, since it wastes time and hides
-nothing.
+instead of a dialog.
+
+**Decided 2026-09-30, and being built:** a change to the engine, not an
+adapter, with the evidence kept. The survey tests what is on top at each
+control's click point and leaves covered ones out of the draw; each
+covered control and what covered it is recorded; a Hop that still times
+out keeps what intercepted its click; and a screen where everything is
+covered strands, naming what covers it. A control out of view is kept,
+since the click scrolls it in, and one the test cannot answer for is kept
+too, so a broken test hides nothing. Forcing the click, closing what
+covers a control first, and testing only at click time were weighed and
+set aside: the first acts on something other than what is journaled, the
+second is a move the seed never drew, and the third leaves the waste.
+Four smaller questions, each settled from a recommendation:
+
+- **Typed fields are tested too.** Typing reaches a field without a click,
+  so a field under an overlay with no `aria-modal` would be typed into
+  where no pointer, and perhaps no keyboard, could reach it. Raised as
+  "What if the typed field is hiding behind a dialog?", which reversed the
+  first recommendation of leaving typed fields out.
+- **No trial click before the real one, for now.** It would cut the
+  timeout on a click that still lands on a cover, at a round trip on every
+  click. Revisit if the re-measurement shows enough of those to matter.
+- **Covered controls are recorded in the pool line**, once per screen,
+  since what is covered is a fact about the screen, as the pool is.
+- **Seeds may move.** Bobolink Editor's `3307314d3853` will draw
+  differently, and nothing depends on it. The demos' seeds are to be
+  checked after the change and searched for again if one moved.
 
 ### 2.15 Two things RStudio did in the batch, not explained
 

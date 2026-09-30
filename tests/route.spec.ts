@@ -1406,6 +1406,84 @@ test('a dialog marked aria-modal with no way out strands the Route', async ({ pa
   expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
 });
 
+/** Put an element, `#probe-cover`, over a control, or in the top corner when `over` is null. */
+async function coverWith(page: Page, over: string | null, style = ''): Promise<void> {
+  await page.evaluate(
+    ([selector, extra]) => {
+      const cover = document.createElement('div');
+      cover.id = 'probe-cover';
+      cover.textContent = 'In the way';
+      const target = selector ? document.querySelector(selector) : null;
+      const rect = target?.getBoundingClientRect() ?? { x: 0, y: 0, width: 10, height: 10 };
+      cover.style.cssText =
+        `position: fixed; left: ${rect.x - 4}px; top: ${rect.y - 4}px; ` +
+        `width: ${rect.width + 8}px; height: ${rect.height + 8}px; background: white; z-index: 99; ${extra}`;
+      document.body.append(cover);
+    },
+    [over, style] as const
+  );
+}
+
+const surveyed = (page: Page, app: ElectronApplication) =>
+  survey({ page, app, exclusions: {}, hopIndex: 0, tally: createExclusionTally({}) });
+
+test('a covered control leaves the draw, and is recorded with what covers it', async ({ page, app }) => {
+  // Measured on Bobolink Editor: controls under another window or an open
+  // menu were offered, and each Hop drawn to one timed out.
+  const names = (found: Awaited<ReturnType<typeof surveyed>>) =>
+    found.candidates.filter((c) => c.source === 'page').map((c) => c.name);
+
+  // The positive control: uncovered, it is offered and nothing is covered.
+  const before = await surveyed(page, app);
+  expect(names(before)).toContain('Summary');
+  expect(before.covered).toEqual([]);
+
+  await coverWith(page, '#view-summary');
+  const during = await surveyed(page, app);
+  expect(names(during)).not.toContain('Summary');
+  expect(during.covered.map((entry) => entry.candidate.name)).toEqual(['Summary']);
+  expect(during.covered[0]?.by).toMatch(/^<div id="probe-cover".*>In the way/);
+  // The rest of the page is still offered.
+  expect(names(during)).toContain('Inventory');
+
+  await page.evaluate(() => document.getElementById('probe-cover')?.remove());
+  expect(names(await surveyed(page, app))).toContain('Summary');
+});
+
+test('a cover that lets clicks through, and a control out of view, are not covered', async ({ page, app }) => {
+  await coverWith(page, '#view-summary', 'pointer-events: none;');
+  await page.evaluate(() => {
+    const far = document.createElement('button');
+    far.textContent = 'Far below';
+    far.style.cssText = 'position: absolute; top: 5000px; left: 10px;';
+    document.body.append(far);
+  });
+  const found = await surveyed(page, app);
+  const names = found.candidates.filter((c) => c.source === 'page').map((c) => c.name);
+  expect(names).toEqual(expect.arrayContaining(['Summary', 'Far below']));
+  expect(found.covered).toEqual([]);
+});
+
+test('a covered text box leaves the draw, and a covered control\'s shortcut does not', async ({ page, app }) => {
+  // Typing needs no click, but a field no pointer can reach is not typed into:
+  // decided on 2026-09-30. A key press needs no clear spot, so the shortcut a
+  // covered control prints stays on offer.
+  await page.evaluate(() => {
+    const save = document.createElement('button');
+    save.id = 'probe-save';
+    save.textContent = 'Save (⌘S)';
+    document.body.prepend(save);
+  });
+  await coverWith(page, '#search');
+  await coverWith(page, '#probe-save');
+  const found = await surveyed(page, app);
+  const covered = found.covered.map((entry) => `${entry.candidate.role} ${entry.candidate.name}`);
+  expect(covered).toEqual(expect.arrayContaining(['button Save (⌘S)']));
+  expect(covered.some((entry) => entry.startsWith('searchbox'))).toBe(true);
+  expect(found.candidates.filter((c) => c.source === 'page' && c.role === 'searchbox')).toEqual([]);
+  expect(found.candidates.some((c) => c.source === 'key' && c.name === '⌘S')).toBe(true);
+});
+
 test('a modal dialog with no way out strands the Route', async ({ page, app }) => {
   // The planted defect phase 5 needs: before the survey honored modals, the
   // controls behind this dialog kept every Route going.
@@ -1452,17 +1530,34 @@ const firstButton: Chooser = {
   },
 };
 
-/** Run three Hops of clicks, with or without an overlay over the whole page. */
+/**
+ * Run a one-Hop Trip of a click, with or without an overlay over the whole
+ * page.
+ *
+ * The overlay goes down after the survey and before the click, from inside
+ * the chooser. Laid down before the survey, it is seen and every button is
+ * left out as covered; this is the case a survey cannot see, something that
+ * arrives between the survey and the click. One Hop, because the next
+ * survey would see it too.
+ */
 async function clicksUnder(page: Page, app: ElectronApplication, overlaid: boolean) {
-  if (overlaid) {
-    // Transparent and on top of everything: the tree still offers every
-    // button, and every click lands on this instead and times out.
-    await page.evaluate(() => {
-      const cover = document.createElement('div');
-      cover.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:transparent';
-      document.body.append(cover);
-    });
-  }
+  const chooser: Chooser = overlaid
+    ? {
+        async choose(candidates, rng) {
+          const choice = await firstButton.choose(candidates, rng);
+          // Transparent and on top of everything: every click lands on this
+          // instead and times out.
+          await page.evaluate(() => {
+            if (document.getElementById('probe-overlay')) return;
+            const cover = document.createElement('div');
+            cover.id = 'probe-overlay';
+            cover.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:transparent';
+            document.body.append(cover);
+          });
+          return choice;
+        },
+      }
+    : firstButton;
   return runRoute({
     page,
     app,
@@ -1470,9 +1565,9 @@ async function clicksUnder(page: Page, app: ElectronApplication, overlaid: boole
     streams: deriveRouteStreams('overlay', 1),
     journeySeed: 'overlay',
     routeNumber: 1,
-    tripLength: 3,
+    tripLength: 1,
     journalsRoot: scratch(),
-    chooser: firstButton,
+    chooser,
     hopTimeoutMs: 500,
     settleTimeoutMs: 1_000,
   });
@@ -1480,12 +1575,12 @@ async function clicksUnder(page: Page, app: ElectronApplication, overlaid: boole
 
 test('a Route whose every Hop was abandoned strands, rather than passing', async ({ page, app }) => {
   const outcome = await clicksUnder(page, app, true);
-  expect(outcome).toMatchObject({ kind: 'stranded', hops: 3 });
-  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/Every one of the 3 Hops was abandoned/);
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 1 });
+  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/Every one of the 1 Hops was abandoned/);
 });
 
-test('the same clicks with nothing over them pass, which is the control', async ({ page, app }) => {
-  expect(await clicksUnder(page, app, false)).toMatchObject({ kind: 'passed', hops: 3 });
+test('the same click with nothing over it passes, which is the control', async ({ page, app }) => {
+  expect(await clicksUnder(page, app, false)).toMatchObject({ kind: 'passed', hops: 1 });
 });
 
 test('a chooser that returns something the survey did not offer is refused', async ({ page, app }) => {

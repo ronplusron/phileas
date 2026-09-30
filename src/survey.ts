@@ -89,6 +89,8 @@ export interface PageCandidate {
    * Hop. Not reported anywhere yet.
    */
   readonly disabled: boolean;
+  /** Where it was drawn when surveyed, for the test for a covered control. */
+  readonly box?: Box;
   readonly locator: Locator;
 }
 
@@ -246,6 +248,20 @@ export interface ExcludedCandidate {
 }
 
 /**
+ * A page control left out of the draw because something else is drawn over
+ * it, and what that is.
+ *
+ * Recorded rather than dropped quietly: a control that stays covered, under a
+ * menu that will not close, is itself worth seeing, and before this the only
+ * sign of one was a Hop abandoned on its click.
+ */
+export interface CoveredCandidate {
+  readonly candidate: PageCandidate;
+  /** What is on top at its click point, described as Playwright describes an element. */
+  readonly by: string;
+}
+
+/**
  * Whether menu entries were offered, and why not when they were not.
  *
  * A verdict rather than an absence, in the shape UNAVAILABLE_UNDER already uses
@@ -265,6 +281,8 @@ export interface SurveyResult {
   /** What may be hopped to, after exclusions. The draw is over exactly this. */
   readonly candidates: readonly SurveyedCandidate[];
   readonly excluded: readonly ExcludedCandidate[];
+  /** Page controls left out because something covers them; see `coveredAmong`. */
+  readonly covered: readonly CoveredCandidate[];
   readonly unnamed: readonly UnnamedElement[];
   readonly menuSource: MenuSourceVerdict;
   /**
@@ -466,9 +484,25 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
     } else candidates.push(candidate);
   }
 
+  // After the exclusions, so a control both excluded and covered is reported
+  // by the rail that names it, and only what would otherwise be drawn is
+  // tested. Before the draw, for the reason this function's comment gives.
+  // Shortcuts were built from every control, covered or not: a key press
+  // needs no clear spot to land on.
+  const covered = await coveredAmong(
+    page,
+    candidates.filter((c): c is PageCandidate => c.source === 'page'),
+    timeoutMs
+  );
+  if (covered.length) {
+    const out = new Set<SurveyedCandidate>(covered.map((entry) => entry.candidate));
+    candidates.splice(0, candidates.length, ...candidates.filter((c) => !out.has(c)));
+  }
+
   return {
     candidates,
     excluded,
+    covered,
     unnamed,
     // Counted after exclusions rather than before, because the number that
     // matters is how many menu entries the draw could actually reach. Reporting
@@ -479,6 +513,122 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
       : menuSource,
     tree,
   };
+}
+
+/**
+ * The controls something else is drawn over, at the point a click would land.
+ *
+ * **Why.** The accessibility tree lists a control under another window or an
+ * open menu as readily as one in plain view. A Hop drawn to one was refused by
+ * Playwright, which found something else would take the click, and abandoned
+ * after the click timeout. Measured on 2026-09-30: all 16 abandoned Hops in
+ * five of Bobolink Editor's Routes were this, 12 under another of its
+ * overlapping document windows and 4 under an open menu, and RStudio's batch
+ * abandoned 270 of 3,192 Trip Hops, some under a popup menu.
+ *
+ * **What counts as covered** is what Playwright's click checks: the element on
+ * top at the center of the control's box, inside the viewport, is neither the
+ * control nor inside it, nor inside a label for it. Typed fields are tested
+ * too, though typing needs no click: a field no pointer can reach should not
+ * be typed into, or a finding could come from somewhere no person gets to.
+ * Decided on 2026-09-30, docs/OUTSTANDING.md.
+ *
+ * **What is kept untested:** a control with no box, one wholly out of view,
+ * since the click scrolls it in first, and one the test cannot answer for.
+ * Each errs toward offering the control, which at worst costs a timeout and a
+ * journaled reason, never a silently missing control.
+ *
+ * Two passes. One call tests every control by its box, which cannot know the
+ * element, so it asks whether an element around the one on top has the
+ * control's box. Only those it finds covered are then tested again against
+ * the element itself, one call each; that pass decides. So the common case,
+ * nothing covered, costs one call per survey.
+ */
+async function coveredAmong(
+  page: Page,
+  controls: readonly PageCandidate[],
+  timeoutMs: number | undefined
+): Promise<CoveredCandidate[]> {
+  const tested = controls.filter((control) => control.box !== undefined);
+  if (!tested.length) return [];
+
+  const suspects = await answered(
+    'the page, asked what is on top of each control,',
+    page.evaluate((boxes) => {
+      const describe = (element: Element): string => {
+        const attributes = ['role', 'aria-label', 'id', 'class']
+          .map((name) => [name, element.getAttribute(name)] as const)
+          .filter(([, value]) => value)
+          .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
+          .join('');
+        const text = (element.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+        return `<${element.tagName.toLowerCase()}${attributes}>${text}`;
+      };
+      return boxes.map((box) => {
+        const x0 = Math.max(0, box.x);
+        const y0 = Math.max(0, box.y);
+        const x1 = Math.min(window.innerWidth, box.x + box.width);
+        const y1 = Math.min(window.innerHeight, box.y + box.height);
+        if (x1 - x0 < 1 || y1 - y0 < 1) return null;
+        const x = (x0 + x1) / 2;
+        const y = (y0 + y1) / 2;
+        let top = document.elementFromPoint(x, y);
+        while (top?.shadowRoot) {
+          const inner = top.shadowRoot.elementFromPoint(x, y);
+          if (!inner || inner === top) break;
+          top = inner;
+        }
+        if (!top) return null;
+        for (let node: Element | null = top; node; ) {
+          const rect = node.getBoundingClientRect();
+          if (
+            Math.abs(rect.x - box.x) < 1 &&
+            Math.abs(rect.y - box.y) < 1 &&
+            Math.abs(rect.width - box.width) < 1 &&
+            Math.abs(rect.height - box.height) < 1
+          ) {
+            return null;
+          }
+          const root = node.getRootNode();
+          node = node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+        }
+        return { x, y, by: describe(top) };
+      });
+    }, tested.map((control) => control.box as Box)),
+    timeoutMs
+  );
+
+  const covered: CoveredCandidate[] = [];
+  for (const [index, suspect] of suspects.entries()) {
+    const control = tested[index];
+    if (!suspect || !control) continue;
+    // Tested against the element itself. A control this cannot reach, or a
+    // page that does not answer in time, stays in the draw.
+    const by = await control.locator
+      .evaluate(
+        (element, point) => {
+          let top = document.elementFromPoint(point.x, point.y);
+          while (top?.shadowRoot) {
+            const inner = top.shadowRoot.elementFromPoint(point.x, point.y);
+            if (!inner || inner === top) break;
+            top = inner;
+          }
+          if (!top) return null;
+          for (let node: Element | null = top; node; ) {
+            if (node === element) return null;
+            if (node instanceof HTMLLabelElement && node.control === element) return null;
+            const root = node.getRootNode();
+            node = node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+          }
+          return point.by;
+        },
+        suspect,
+        timeoutMs === undefined ? {} : { timeout: timeoutMs }
+      )
+      .catch(() => null);
+    if (by !== null) covered.push({ candidate: control, by });
+  }
+  return covered;
 }
 
 /**
@@ -607,7 +757,32 @@ interface AriaNode {
   name?: string;
   text?: string;
   disabled?: boolean;
+  /** Where the element is drawn, asked for with `boxes`. */
+  box?: Box;
   children?: (AriaNode | string)[];
+}
+
+/** An element's bounding box, in the page's own pixels. */
+export interface Box {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * The tree without the boxes, for the Hop's effect and an adapter's checks.
+ *
+ * A Hop's effect compares two trees as text (src/effect.ts), and a box moves
+ * whenever anything scrolls or resizes, so leaving them in would report every
+ * Hop as a change. The checks were handed a tree without them before boxes
+ * were read, and still are.
+ */
+function withoutBoxes(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(withoutBoxes);
+  if (node === null || typeof node !== 'object') return node;
+  const { box: _box, children, ...rest } = node as AriaNode;
+  return children === undefined ? rest : { ...rest, children: children.map(withoutBoxes) };
 }
 
 /**
@@ -669,13 +844,15 @@ async function surveyPage(
   );
   const modalOpen = nativeOpen > 0 || markedOpen > 0;
   const root = nativeOpen > 0 ? native.last() : markedOpen > 0 ? marked.last() : page.locator('body');
-  const snapshot = (await root.ariaSnapshotJSON(bounded)) as AriaNode | AriaNode[];
+  // With each element's box, which is where the test for a covered control
+  // looks; see `coveredAmong`. Read in the same call, so it costs nothing extra.
+  const snapshot = (await root.ariaSnapshotJSON({ ...bounded, boxes: true })) as AriaNode | AriaNode[];
 
   // The whole page is still what a Hop's effect is read from (R31), since the
   // settle wait that reads "after" reads the whole page too. So with a modal
   // open, the page is read once more.
   const tree =
-    modalOpen ? await page.locator('body').ariaSnapshotJSON(bounded) : snapshot;
+    modalOpen ? await page.locator('body').ariaSnapshotJSON(bounded) : withoutBoxes(snapshot);
 
   const candidates: PageCandidate[] = [];
   const unnamed: UnnamedElement[] = [];
@@ -701,6 +878,7 @@ async function surveyPage(
           name: node.name,
           nth,
           disabled: node.disabled === true,
+          ...(node.box ? { box: node.box } : {}),
           locator: root.getByRole(node.role as Parameters<Page['getByRole']>[0], {
             name: node.name,
             exact: true,
