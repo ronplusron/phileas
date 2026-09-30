@@ -572,6 +572,7 @@ export function surveyLines(found: SurveyResult): string[] {
   return [
     ...found.candidates.filter((c) => !isCommonKey(c)).map((c) => targetText(journaled(c))),
     ...found.excluded.map((entry) => `${targetText(entry.candidate)}   (excluded: ${entry.rule})`),
+    ...found.covered.map((entry) => `${targetText(journaled(entry.candidate))}   (covered by ${entry.by})`),
     ...(keys.length ? [`and the common keys: ${keys.join(', ')}`] : []),
   ];
 }
@@ -866,6 +867,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // stopped answering holds back even the action's own timeout, and how
       // long it held it back is what the still-responding check reads.
       let abandoned: string | undefined;
+      let interceptedBy: string | undefined;
       try {
         const acted = await watch.bounded(
           `hop ${hops + 1}'s ${action} on ${lastTarget}`,
@@ -881,6 +883,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         // itself rather than being journaled as a Hop that did nothing.
         if (!isAbandonment(error)) throw error;
         abandoned = error instanceof Error ? error.message.split('\n')[0] : String(error);
+        interceptedBy = error instanceof Error ? interceptorIn(error.message) : undefined;
       }
       if (abandoned !== undefined) abandonedHops += 1;
 
@@ -894,7 +897,10 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
       // The pool is written first, if this file has not seen it, so the Hop
       // line below never names a pool that is not already on disk.
-      const pool = journal.pool(found.candidates.map(journaled));
+      const pool = journal.pool(
+        found.candidates.map(journaled),
+        found.covered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by }))
+      );
 
       span.endedAt = Date.now();
       if (abandoned !== undefined) span.abandoned = true;
@@ -908,6 +914,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         ...(shareDraw === undefined ? {} : { shareDraw }),
         ...(action === 'type' ? { value } : {}),
         ...(abandoned === undefined ? {} : { abandoned }),
+        ...(interceptedBy === undefined ? {} : { interceptedBy }),
         startedAt: startedAt.toISOString(),
         durationMs: span.endedAt - startedAt.getTime(),
         settled: settling.settled,
@@ -973,8 +980,32 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   }
 }
 
+/**
+ * What took a click instead, from the error Playwright gave up with: the last
+ * line of its call log saying an element intercepts pointer events, without
+ * its colors. Undefined where the click gave up for another reason.
+ */
+export function interceptorIn(message: string): string | undefined {
+  const lines = message
+    .replace(/\u001b\[\d+m/g, '')
+    .split('\n')
+    .map((line) => line.trim().replace(/^- /, ''))
+    .filter((line) => line.endsWith('intercepts pointer events'));
+  return lines.at(-1);
+}
+
 /** Why the Route had nowhere left to go, in terms a reader can act on. */
 function strandedReason(found: SurveyResult): string {
+  // Everything left on the page is under something: a screen a pointer cannot
+  // get into, such as an overlay with no way out. Named first, with what
+  // covers each control, since that is what a reader would go and look at.
+  if (found.covered.length) {
+    return (
+      `No candidate was available on the page. ${found.covered.length} control(s) were found under ` +
+      `something else, so a click could not reach them: ` +
+      `${found.covered.map((entry) => `${targetText(journaled(entry.candidate))} under ${entry.by}`).join('; ')}.`
+    );
+  }
   // Menu exclusions fire on every hop, so they say nothing about this page.
   const excluded = found.excluded.filter((entry) => entry.candidate.source !== 'menu');
   if (excluded.length) {
@@ -1179,9 +1210,14 @@ async function runFix(
     }
     if (!match) {
       const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
+      // Waited for like a target not yet drawn, since a cover can go away;
+      // named if it never did.
+      const under = found.covered.find((entry) => targetText(journaled(entry.candidate)) === target);
       throw new Error(
         refused
           ? `${target} is on screen but excluded (${refused.rule}), so a Fix cannot act on it either.`
+          : under
+          ? `${target} is on screen but covered by ${under.by} after ${hopTimeoutMs} ms, so a click cannot reach it.`
           : `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${found.candidates
               .filter((candidate) => !isCommonKey(candidate))
               .map((candidate) => targetText(journaled(candidate)))

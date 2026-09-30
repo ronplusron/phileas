@@ -369,21 +369,19 @@ R or a driver (phase 6).
 
 Raised 2026-09-24. A native modal dialog, opened with `showModal()`, is
 handled: the survey reads only the dialog. So, since 2026-09-30, is a
-visible dialog marked `aria-modal`, measured on Bobolink Editor.
-`HISTORY.md` has both. A dialog built any other way is still surveyed as
-part of the whole page, and two gaps remain, both recorded and not yet
-scheduled.
+visible dialog marked `aria-modal`, measured on Bobolink Editor, and the
+same day an overlay that catches clicks stopped mattering too: the controls
+behind it are covered, so the survey leaves them out, and a dialog with no
+way out strands, naming the overlay. `HISTORY.md` has all three. One gap is
+left on each side, both recorded and not yet scheduled.
 
-**When nothing behind the dialog is reachable, but the tree still lists it.**
-An application can block the background in three ways besides marking the
-dialog. With `aria-hidden`, the background leaves the accessibility tree and
-the survey offers only the dialog, which is correct. With `inert`, it should
-leave the tree the same way in Chromium, but whether Playwright's snapshot
-leaves it out is unmeasured. With only an overlay that catches clicks, the
-background stays in the tree: every Hop drawn to it times out and is
-journaled as abandoned, and a dialog with no way out cannot strand, which is
-the waste the modal fixes removed. Recognizing an overlay without reading the
-application's code is undecided.
+**Whether `inert` takes the background out of the tree.** With
+`aria-hidden`, the background leaves the accessibility tree and the survey
+offers only the dialog, which is correct. With `inert`, it should leave the
+tree the same way in Chromium, but whether Playwright's snapshot leaves it
+out is unmeasured. An inert background under an overlay is covered either
+way; one under nothing is unmeasured too, and a click there may do nothing
+and be journaled as a Hop that did.
 
 **When things behind the dialog are also reachable, and should not be.** The
 survey offers them and a Hop really clicks them, recorded as an ordinary
@@ -393,8 +391,9 @@ unreachable. **Trusting `aria-modal` made this wider:** a dialog marked
 modal whose background still takes clicks is now never clicked behind, so
 that bug is never met. Two ways a check could catch it, both undecided: an
 adapter declaring that nothing behind a named dialog may be reached, which is
-a structural check (R18, phase 6); or a pattern of abandoned Hops whose
-clicks were intercepted, as evidence of an overlay.
+a structural check (R18, phase 6); or the same cover recorded over many
+Hops, from the pools' covered controls, as evidence of a dialog that will
+not go away.
 
 ### 1.11 The draw shares for the keys and the menu, provisional
 
@@ -639,6 +638,16 @@ same Hop. Across two machines it has never been measured.
   recording R's and the packages' versions on the opening line, would make
   more of a seed's pools match. Whether RStudio can be pointed at such a
   library is unmeasured.
+
+### 1.19 Checking the demos' seeds after covered controls
+
+Agreed 2026-09-30, when covered controls left the draw, and stopped partway
+the same day to keep to the engine's own tests. A seed moves only where a
+screen had a covered control, so the check is to run each seed saved in
+`demo/*/seeds.mjs` hidden and read its pools for a `covered` entry. Rail
+Itinerary's three planted-bug seeds were run and had none; its
+several-at-once seed and all of Eighty Days' were not. Any seed with a
+covered control is searched for again. `HISTORY.md` has the change.
 
 ## 2. Undecided
 
@@ -976,58 +985,7 @@ Fix, both versions, the application's version, and the fused copy each person
 makes; and Journeys do not gate pushes, so someone has to own triage or the
 queue only grows.
 
-### 2.14 Controls offered while something covers them
-
-Seen in the RStudio batch of 2026-09-29; nothing is decided. The survey
-offers a control that is visible and enabled, and says nothing about whether
-anything is drawn over it. When an in-page popup menu stays open, the
-controls it covers are still offered, and a Hop drawn to one times out and
-is abandoned. In the no-Fix Journey's Route 19, hop 26 opened Open recent
-files, and hops 28 to 30, three package checkboxes in the Packages pane,
-were each abandoned; the next Hop to land was hop 31. Across the batch, 270
-of 3,192 Trip hops were abandoned, and how many of those were covered
-controls is not known, since the journal keeps only the first line of
-Playwright's error, which leaves out what intercepted the click.
-
-**Measured on Bobolink Editor on 2026-09-30, where every one was a covered
-control.** Five Routes of forty Hops with the `new-document` Fix abandoned
-16, and a replay of the seed with Playwright's trace on read what
-intercepted each click: 12 were under another of the editor's document
-windows, which overlap, often a maximized one, and 4 under an open File or
-Edit menu. In one, a press on a resize edge closed the File menu but, being
-cancelled, left focus on its title, and the next Hop's Enter reopened it.
-
-It is the same waste as the overlay in 1.10, from a menu or a window
-instead of a dialog.
-
-**Decided 2026-09-30, and being built:** a change to the engine, not an
-adapter, with the evidence kept. The survey tests what is on top at each
-control's click point and leaves covered ones out of the draw; each
-covered control and what covered it is recorded; a Hop that still times
-out keeps what intercepted its click; and a screen where everything is
-covered strands, naming what covers it. A control out of view is kept,
-since the click scrolls it in, and one the test cannot answer for is kept
-too, so a broken test hides nothing. Forcing the click, closing what
-covers a control first, and testing only at click time were weighed and
-set aside: the first acts on something other than what is journaled, the
-second is a move the seed never drew, and the third leaves the waste.
-Four smaller questions, each settled from a recommendation:
-
-- **Typed fields are tested too.** Typing reaches a field without a click,
-  so a field under an overlay with no `aria-modal` would be typed into
-  where no pointer, and perhaps no keyboard, could reach it. Raised as
-  "What if the typed field is hiding behind a dialog?", which reversed the
-  first recommendation of leaving typed fields out.
-- **No trial click before the real one, for now.** It would cut the
-  timeout on a click that still lands on a cover, at a round trip on every
-  click. Revisit if the re-measurement shows enough of those to matter.
-- **Covered controls are recorded in the pool line**, once per screen,
-  since what is covered is a fact about the screen, as the pool is.
-- **Seeds may move.** Bobolink Editor's `3307314d3853` will draw
-  differently, and nothing depends on it. The demos' seeds are to be
-  checked after the change and searched for again if one moved.
-
-### 2.15 Two things RStudio did in the batch, not explained
+### 2.14 Two things RStudio did in the batch, not explained
 
 Seen in the RStudio batch of 2026-09-29; neither is measured.
 
@@ -1046,7 +1004,7 @@ Seen in the RStudio batch of 2026-09-29; neither is measured.
   `HISTORY.md`'s entry of 2026-09-28 already asked of one R session, is
   unmeasured.
 
-### 2.16 Printing one Hop's whole pool
+### 2.15 Printing one Hop's whole pool
 
 Raised on 2026-09-29 while reading the batch's journals; nothing is decided.
 `phileas show` prints what each Hop acted on, and not what else it could

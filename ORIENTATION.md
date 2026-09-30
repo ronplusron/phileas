@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and nineteen tests, after a
+through, and `npm test` runs three hundred and twenty-five tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -116,6 +116,11 @@ Fifteen place a finding by when it arrived rather than by the Hop the
 checks ran after: ten on the placement and the failure's text, without
 launching anything, four with errors planted in `buggy` to arrive late or at
 once, and one on RStudio's reader of its session log's times.
+Six came with covered controls: one left out and recorded with what covers
+it, a cover that lets clicks through and controls scrolled out of sight
+kept, a covered text box left out while its neighbor's shortcut stays, what
+took an abandoned click journaled, a page all covered stranding, and a seed
+retracing its Route with a control covered.
 
 The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
 before first publication.
@@ -313,7 +318,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own three hundred and nineteen tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and twenty-five tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

@@ -147,6 +147,18 @@ function knownText(checks) {
 }
 
 /**
+ * What took an abandoned Hop's click, as `; under <element>`, or the empty
+ * string where the journal does not say. Shortened, since Playwright names
+ * the element with its attributes and the element around it.
+ * @param {string | undefined} interceptedBy
+ * @returns {string}
+ */
+export function underText(interceptedBy) {
+  if (!interceptedBy) return '';
+  return `; under ${shortened(interceptedBy.replace(/ intercepts pointer events$/, ''), 80)}`;
+}
+
+/**
  * What the engine's stubs caught on a Hop, or the empty string for a Hop where
  * they caught nothing, so a Hop whose effect was stopped does not read like one
  * that did nothing.
@@ -203,7 +215,7 @@ export function renderEntry(entry, routeNumber) {
         column(shortened(targetText(entry.target), 43), 44),
         value ? `${value}   ` : '',
         effectText(entry.effect),
-        entry.abandoned ? `   (gave up: ${entry.abandoned})` : '',
+        entry.abandoned ? `   (gave up: ${entry.abandoned}${underText(entry.interceptedBy)})` : '',
         caughtText(entry.caught),
         knownText(entry.checks),
         failedText(entry.checks),

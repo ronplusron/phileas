@@ -91,6 +91,12 @@ export interface PageCandidate {
   readonly disabled: boolean;
   /** Where it was drawn when surveyed, for the test for a covered control. */
   readonly box?: Box;
+  /**
+   * The nearest candidate it sits inside in the tree, such as the dropdown an
+   * option belongs to. A control with no box of its own, as an option in a
+   * closed native dropdown has none, is covered when this one is.
+   */
+  readonly within?: PageCandidate;
   readonly locator: Locator;
 }
 
@@ -533,10 +539,12 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
  * be typed into, or a finding could come from somewhere no person gets to.
  * Decided on 2026-09-30, docs/OUTSTANDING.md.
  *
- * **What is kept untested:** a control with no box, one wholly out of view,
- * since the click scrolls it in first, and one the test cannot answer for.
- * Each errs toward offering the control, which at worst costs a timeout and a
- * journaled reason, never a silently missing control.
+ * **What is kept untested:** a control with no box, unless it sits inside a
+ * covered one, one wholly out of view, or out of sight inside a container
+ * that scrolls, since the click scrolls it in first, and one the test cannot
+ * answer for. Each errs toward offering the control,
+ * which at worst costs a timeout and a journaled reason, never a silently
+ * missing control.
  *
  * Two passes. One call tests every control by its box, which cannot know the
  * element, so it asks whether an element around the one on top has the
@@ -592,7 +600,7 @@ async function coveredAmong(
           const root = node.getRootNode();
           node = node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
         }
-        return { x, y, by: describe(top) };
+        return describe(top);
       });
     }, tested.map((control) => control.box as Box)),
     timeoutMs
@@ -602,33 +610,83 @@ async function coveredAmong(
   for (const [index, suspect] of suspects.entries()) {
     const control = tested[index];
     if (!suspect || !control) continue;
-    // Tested against the element itself. A control this cannot reach, or a
-    // page that does not answer in time, stays in the draw.
+    // Tested against the element itself, and at the center of the part of it
+    // that shows: inside the window and inside every container that clips
+    // it. None showing means it is scrolled out of sight inside one of them,
+    // not covered, since the click scrolls it into view first; measured on
+    // Bobolink Editor on 2026-09-30, where a link in a preview pane read as
+    // covered by whatever was drawn where it would have been. A control this
+    // cannot reach, or a page that does not answer in time, stays in the draw.
     const by = await control.locator
       .evaluate(
-        (element, point) => {
-          let top = document.elementFromPoint(point.x, point.y);
+        (element) => {
+          const up = (node: Element): Element | null => {
+            const root = node.getRootNode();
+            return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+          };
+          const own = element.getBoundingClientRect();
+          let [x0, y0, x1, y1] = [
+            Math.max(0, own.left),
+            Math.max(0, own.top),
+            Math.min(window.innerWidth, own.right),
+            Math.min(window.innerHeight, own.bottom),
+          ];
+          for (let node = up(element); node; node = up(node)) {
+            const style = getComputedStyle(node);
+            if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
+            const clip = node.getBoundingClientRect();
+            [x0, y0, x1, y1] = [Math.max(x0, clip.left), Math.max(y0, clip.top), Math.min(x1, clip.right), Math.min(y1, clip.bottom)];
+          }
+          if (x1 - x0 < 1 || y1 - y0 < 1) return null;
+          const [x, y] = [(x0 + x1) / 2, (y0 + y1) / 2];
+
+          let top = document.elementFromPoint(x, y);
           while (top?.shadowRoot) {
-            const inner = top.shadowRoot.elementFromPoint(point.x, point.y);
+            const inner = top.shadowRoot.elementFromPoint(x, y);
             if (!inner || inner === top) break;
             top = inner;
           }
           if (!top) return null;
-          for (let node: Element | null = top; node; ) {
+          for (let node: Element | null = top; node; node = up(node)) {
             if (node === element) return null;
             if (node instanceof HTMLLabelElement && node.control === element) return null;
-            const root = node.getRootNode();
-            node = node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
           }
-          return point.by;
+          const attributes = ['role', 'aria-label', 'id', 'class']
+            .map((name) => [name, top.getAttribute(name)] as const)
+            .filter(([, value]) => value)
+            .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
+            .join('');
+          const text = (top.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+          return `<${top.tagName.toLowerCase()}${attributes}>${text}`;
         },
-        suspect,
+        undefined,
         timeoutMs === undefined ? {} : { timeout: timeoutMs }
       )
       .catch(() => null);
     if (by !== null) covered.push({ candidate: control, by });
   }
+
+  // A control with no box cannot be tested itself, and is kept, except inside
+  // one that is covered: an option in a closed native dropdown has no box,
+  // and choosing it needs no click, so it would otherwise reach a dropdown no
+  // pointer can. Measured on buggy's Category dropdown on 2026-09-30.
+  const coveredBy = new Map<PageCandidate, string>(covered.map((entry) => [entry.candidate, entry.by]));
+  for (const control of controls) {
+    if (control.box !== undefined && hasArea(control.box)) continue;
+    for (let outer = control.within; outer; outer = outer.within) {
+      const by = coveredBy.get(outer);
+      if (by !== undefined) {
+        covered.push({ candidate: control, by });
+        break;
+      }
+    }
+  }
   return covered;
+}
+
+/** Whether a box has any area at all, before it is placed against the viewport. */
+function hasArea(box: Box): boolean {
+  return box.width >= 1 && box.height >= 1;
 }
 
 /**
@@ -864,35 +922,38 @@ async function surveyPage(
   // and nowhere else.
   const seen = new Map<string, number>();
 
-  const walk = (node: AriaNode | string): void => {
+  const walk = (node: AriaNode | string, within: PageCandidate | undefined): void => {
     if (typeof node === 'string') return;
 
+    let self: PageCandidate | undefined;
     if (node.role && hoppable.has(node.role)) {
       if (node.name) {
         const key = `${node.role}\u0000${node.name}`;
         const nth = (seen.get(key) ?? 0) + 1;
         seen.set(key, nth);
-        candidates.push({
+        self = {
           source: 'page',
           role: node.role,
           name: node.name,
           nth,
           disabled: node.disabled === true,
           ...(node.box ? { box: node.box } : {}),
+          ...(within ? { within } : {}),
           locator: root.getByRole(node.role as Parameters<Page['getByRole']>[0], {
             name: node.name,
             exact: true,
           }).nth(nth - 1),
-        });
+        };
+        candidates.push(self);
       } else {
         unnamed.push(node.text ? { role: node.role, text: node.text } : { role: node.role });
       }
     }
 
-    for (const child of node.children ?? []) walk(child);
+    for (const child of node.children ?? []) walk(child, self ?? within);
   };
 
-  for (const node of Array.isArray(snapshot) ? snapshot : [snapshot]) walk(node);
+  for (const node of Array.isArray(snapshot) ? snapshot : [snapshot]) walk(node, undefined);
 
   // Disabled controls are found and then dropped from the draw. Hopping to one
   // does nothing, which would be journaled as a Hop that happened. Nothing

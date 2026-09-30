@@ -1457,11 +1457,20 @@ test('a cover that lets clicks through, and a control out of view, are not cover
     far.textContent = 'Far below';
     far.style.cssText = 'position: absolute; top: 5000px; left: 10px;';
     document.body.append(far);
+    // Out of sight inside a pane that scrolls, while its box is in the
+    // window: the pane is on top at its center, and the click would scroll
+    // it into view. Measured on Bobolink Editor's preview pane.
+    const pane = document.createElement('div');
+    pane.style.cssText = 'position: fixed; bottom: 10px; left: 10px; width: 120px; height: 40px; overflow: auto;';
+    pane.innerHTML = '<div style="height: 60px"></div><button>Scrolled away</button>';
+    document.body.append(pane);
   });
   const found = await surveyed(page, app);
   const names = found.candidates.filter((c) => c.source === 'page').map((c) => c.name);
-  expect(names).toEqual(expect.arrayContaining(['Summary', 'Far below']));
-  expect(found.covered).toEqual([]);
+  expect(names).toEqual(expect.arrayContaining(['Summary', 'Far below', 'Scrolled away']));
+  for (const name of ['Summary', 'Far below', 'Scrolled away']) {
+    expect(found.covered.some((entry) => entry.candidate.name === name), name).toBe(false);
+  }
 });
 
 test('a covered text box leaves the draw, and a covered control\'s shortcut does not', async ({ page, app }) => {
@@ -1540,7 +1549,7 @@ const firstButton: Chooser = {
  * arrives between the survey and the click. One Hop, because the next
  * survey would see it too.
  */
-async function clicksUnder(page: Page, app: ElectronApplication, overlaid: boolean) {
+async function clicksUnder(page: Page, app: ElectronApplication, overlaid: boolean, journalsRoot = scratch()) {
   const chooser: Chooser = overlaid
     ? {
         async choose(candidates, rng) {
@@ -1566,7 +1575,7 @@ async function clicksUnder(page: Page, app: ElectronApplication, overlaid: boole
     journeySeed: 'overlay',
     routeNumber: 1,
     tripLength: 1,
-    journalsRoot: scratch(),
+    journalsRoot,
     chooser,
     hopTimeoutMs: 500,
     settleTimeoutMs: 1_000,
@@ -1581,6 +1590,88 @@ test('a Route whose every Hop was abandoned strands, rather than passing', async
 
 test('the same click with nothing over it passes, which is the control', async ({ page, app }) => {
   expect(await clicksUnder(page, app, false)).toMatchObject({ kind: 'passed', hops: 1 });
+});
+
+test('a click something arrived over keeps what took it in the journal', async ({ page, app }) => {
+  // Playwright's first line says only that the click timed out; the line
+  // naming what took it is what a reader needs.
+  const dir = scratch();
+  await clicksUnder(page, app, true, dir);
+  const hop = readJournal(
+    path.join(inRun(dir), `route-001-${deriveRouteStreams('overlay', 1).routeSeed}.jsonl`)
+  ).find((entry) => entry.kind === 'trip-hop');
+  if (hop?.kind !== 'trip-hop') throw new Error('no Trip hop was journaled');
+  expect(hop.abandoned).toMatch(/Timeout/);
+  expect(hop.interceptedBy).toMatch(/^<div id="probe-overlay".*intercepts pointer events$/);
+  expect(renderEntry(hop, 1)).toMatch(/; under <div id="probe-overlay"/);
+});
+
+test('a page with every control covered strands, naming what covers them', async ({ page, app }) => {
+  await page.evaluate(() => {
+    const cover = document.createElement('div');
+    cover.id = 'probe-cover';
+    cover.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:transparent';
+    document.body.append(cover);
+  });
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('covered-seed', 1),
+    journeySeed: 'covered-seed',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: scratch(),
+  });
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
+  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/under <div id="probe-cover"/);
+});
+
+test('a covered control is recorded on the pool, and a seed still retraces its Route', async ({ page, app }) => {
+  const run = async () => {
+    await page.reload();
+    await buggy.waitForReady(page);
+    await coverWith(page, '#view-summary');
+    const dir = scratch();
+    const streams = deriveRouteStreams('covered-replay', 1);
+    await runRoute({
+      page,
+      app,
+      cfg: buggy,
+      streams,
+      journeySeed: 'covered-replay',
+      routeNumber: 1,
+      tripLength: 8,
+      journalsRoot: dir,
+    });
+    return readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`));
+  };
+
+  const first = await run();
+  const coveredPools = new Set<string>();
+  const coveredNames: string[] = [];
+  for (const entry of first) {
+    if (entry.kind !== 'pool' || !entry.covered) continue;
+    coveredPools.add(entry.id);
+    for (const covered of entry.covered) {
+      coveredNames.push(covered.candidate.name);
+      expect(covered.by).toMatch(/^<div id="probe-cover"/);
+    }
+  }
+  expect(coveredNames).toContain('Summary');
+  // Never drawn from a screen where it was covered.
+  for (const entry of first) {
+    if (entry.kind === 'trip-hop' && coveredPools.has(entry.pool)) expect(entry.target.name).not.toBe('Summary');
+  }
+
+  const hops = (entries: typeof first) =>
+    entries.flatMap((entry) =>
+      entry.kind === 'trip-hop'
+        ? [`${entry.target.name}/${entry.pool}/${String(entry.shareDraw)}/${String(entry.draw)}`]
+        : []
+    );
+  expect(hops(first)).toHaveLength(8);
+  expect(hops(await run())).toEqual(hops(first));
 });
 
 test('a chooser that returns something the survey did not offer is refused', async ({ page, app }) => {

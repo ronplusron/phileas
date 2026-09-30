@@ -25,6 +25,68 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-30: covered controls leave the draw, and are recorded
+
+**Why.** The survey offered every control in the accessibility tree, and
+the tree lists a control under another window or an open menu as readily as
+one in plain view. A Hop drawn to one was refused by Playwright, which found
+something else would take the click, and abandoned after the click timeout.
+On Bobolink Editor, five Routes of forty Hops with `new-document`, seed
+`3307314d3853`, abandoned 16, and a replay with Playwright's trace on showed
+every one was this: 12 under another of the editor's overlapping document
+windows, 4 under an open menu. RStudio's batch of 2026-09-29 abandoned 270 of
+3,192 Trip Hops, some under a popup menu. The journal kept only the first
+line of Playwright's error, so what took the click was lost.
+
+**Decided the same day,** after a planning pass weighed forcing the click,
+closing what covers a control first, and testing only at click time, and set
+each aside: the first acts on something other than what is journaled, the
+second is a move the seed never drew, and the third leaves the waste. A
+change to the engine, not an adapter, keeping the evidence. Four smaller
+questions were settled from recommendations: text boxes are tested too,
+reversed from the first recommendation after "What if the typed field is
+hiding behind a dialog?"; no trial click before the real one for now;
+covered controls recorded on the pool, once per screen; and seeds may move.
+
+**What landed.** The survey reads each control's box in the snapshot it
+already takes, then asks the page what is on top at each one's center, in
+one call. Those that fail are tested again against the element itself, at
+the center of the part of it that shows inside the window and inside every
+container that clips it, and that pass decides. A covered control leaves
+the pool and is written on the pool line with what covers it, as
+Playwright describes an element. Kept untested, erring toward offering: a
+control out of view or scrolled out of sight inside a pane, since the click
+scrolls it in; one with no box, unless it sits inside a covered one, which
+takes an option in a closed native dropdown out with its dropdown; and one
+the test cannot answer for. A printed shortcut stays on offer when its
+control is covered, since a key press needs no clear spot. A Hop that still
+times out keeps Playwright's line naming what took the click, as
+`interceptedBy`, and `phileas show` prints it. A page with every control
+covered strands, naming the covers, and a Fix step whose target is covered
+says so.
+
+**Measured.** The same seed afterwards: 200 Hops, none abandoned, every
+Route passing, in 1.9 minutes where it took 2.7, and 51 of its pools
+recording covered controls. The first version marked a link in the preview
+pane as covered by the workspace around it, 30 times in that run, since the
+link was scrolled out of sight in its pane; testing only the part that
+shows took that to none. The draws differ from the run before, as agreed.
+
+**Not finished: the demos' seeds.** A seed can only move where a screen had
+a covered control. Three of the fourteen saved in `demo/*/seeds.mjs` were
+run hidden, Rail Itinerary's three planted-bug seeds, and none had one, so
+those are unchanged; the other eleven were not run, stopped to keep to the
+engine's own tests. Until they are, a demo seed that no longer reaches its
+bug may be this change.
+
+Seven tests came with it, six new: a covered control left out and recorded,
+a cover letting clicks through and controls out of sight kept, a covered
+text box left out while its neighbor's shortcut stays, what took an
+abandoned click journaled, a page all covered stranding, and a seed
+retracing its Route with a control covered. The seventh, a Route whose
+every Hop is abandoned, now lays its overlay down after the survey, from
+the chooser, since before the survey it is seen and covers everything.
+
 ## 2026-09-30: a failure says when its finding arrived, not which Hop caused it
 
 **Why.** Five checks read what piled up since they last ran: renderer

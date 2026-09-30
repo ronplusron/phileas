@@ -30,15 +30,16 @@ phases are marked by number.
 |---|---|
 | Page | The contents of the application's window, which Electron draws as a web page. The native menu is not part of it. |
 | Control | Something in the page a person can operate, such as a button, text box, tab, checkbox or link, known by its accessibility role and name, as in `button "New File"`. It exists whether or not the engine is looking. A native menu entry and a key are not controls, though either can be a candidate. |
-| Survey | Finding what the page offers right now by reading its controls' accessibility roles and names, plus the native menu. Nobody lists an application's controls for it. While a native modal dialog is open, only the dialog is read. |
+| Survey | Finding what the page offers right now by reading its controls' accessibility roles and names, plus the native menu. Nobody lists an application's controls for it. While a modal dialog is open, native or marked `aria-modal`, only the dialog is read. Covered controls are left out. |
 | Candidate | One thing a Hop could act on: a visible, enabled control with an accessible name, a menu entry, or a key. |
+| Covered | A control something else is drawn over at the point a click would land, such as another window or an open menu. Left out of the pool, since a click on it would land on what covers it, and recorded on the pool with what covers it. Text boxes count too. A control scrolled out of sight, in the window or inside a pane, is not covered, since the click scrolls it into view. |
 | Common keys | Enter, Escape, Tab and the four arrows, offered on every Hop and pressed on whatever has focus. Together they get an eighth of the draw whenever anything else is on offer, or what the adapter sets as `keyShare`, and they never keep a Route from stranding. They are withheld while an excluded control has focus. |
 | Printed shortcut | A shortcut shown in a control's accessible name, such as ⌘S in "Save current document (⌘S)", offered as a key to press and drawn with the controls. Excluded whenever its control is. Native menu accelerators are not offered, since a key sent through Playwright never reaches one. |
 | Exclusion list | What a Route must never touch, such as Quit or outbound links, supplied by the adapter. A safety rail, not a map. |
 | Standard menu entry | A menu entry Electron builds from a role, such as Quit, Undo, Zoom In or Bring All to Front, as opposed to one the application's own authors wrote. Skipped by default; an adapter allows a role back with `allowStandardMenuRoles`. |
 | Map | What someone who knows the application can hand the engine about it, full or partial. Never required; discovery covers whatever it leaves out (R29). *Planned, phase 10*; what an entry does is still open. |
 | Menu source | The entries of the menu bar as candidates, offered in every window mode, standard entries skipped by default. A menu hop hands its handler the Route's window, as a person's click would. Together they get an eighth of the draw, or what the adapter sets as `menuShare`, and they never keep a Route from stranding, since the menu bar is on offer on every screen. An in-app menu built in the page is page controls, and native popup menus are not reached. |
-| Pool | The candidates at one moment, after exclusions. The draw is made over it, and the journal writes each distinct pool once. |
+| Pool | The candidates at one moment, after exclusions and covered controls are left out. The draw is made over it, and the journal writes each distinct pool once, with the covered controls where there were any. |
 | Chooser | The named seam that picks a target from the pool. Today it's always the seeded draw. |
 | Draw | The number from the seeded stream that picked the target, recorded as a raw 32-bit integer. Each Hop takes two: a share draw deciding between the common keys, the menu bar and the page, then the draw picking within that side. |
 | Target | What a Hop acted on, or tried to: one candidate, chosen by the draw on a Trip hop or by name in a Fix's `act` step. So a target can be a control, a menu entry or a key, and a control is a target only in the action that picked it. An `act` step takes a target as the survey prints it. |
@@ -62,7 +63,7 @@ phases are marked by number.
 | Journal | One file per Route, at `<root>/<journey seed>/<run>/`, where only the root is the consumer's, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. Made for the engine and for replay; a person reads it through `phileas run --follow` or `phileas show`, one line per Hop (R30). |
 | Line kinds | `route` (the opening line), `pool`, `fix-step` (written `fix-hop` before 2026-09-29, and read as `fix-step`), `trip-hop`, `note` (such as the menu being unavailable, which only a launch path with no main process would cause), `outcome` (the closing line, absent if the Route died). |
 | Effect | What a Hop did to the screen: whether anything changed, and which headings appeared and went away (R31), recorded on every Fix step and Trip hop. An effect that could not be read says so rather than claiming nothing changed. |
-| Abandoned | A trip hop whose action timed out. It's still recorded, and the Route continues. |
+| Abandoned | A trip hop whose action timed out. It's still recorded, and the Route continues. Where a click timed out because something was drawn over its target, the journal names what took it, as `interceptedBy`. |
 
 ## Checking (phase 5 onward)
 

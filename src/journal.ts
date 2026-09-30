@@ -142,6 +142,22 @@ export interface PoolEntry {
   /** Derived from the contents, so the same list always has the same id. */
   readonly id: string;
   readonly candidates: readonly JournaledCandidate[];
+  /**
+   * Page controls the survey left out because something is drawn over them,
+   * each with what that is. Absent where none were, and before 2026-09-30.
+   *
+   * On the pool rather than on each Hop, since what is covered is a fact
+   * about the screen, as the list is: decided that day. Part of the id where
+   * present, so two screens differing only in what is covered each get a line.
+   */
+  readonly covered?: readonly JournaledCovered[];
+}
+
+/** A covered control, as the journal records it. */
+export interface JournaledCovered {
+  readonly candidate: JournaledCandidate;
+  /** What is on top at its click point, described as Playwright describes an element. */
+  readonly by: string;
 }
 
 /**
@@ -240,6 +256,16 @@ export interface TripHopEntry {
    * it for no visible reason.
    */
   readonly abandoned?: string;
+  /**
+   * What took the click instead, where the Hop was abandoned because
+   * something was drawn over its target: Playwright's own line naming it.
+   *
+   * The survey leaves covered controls out, so this is what arrived between
+   * the survey and the click, or a control scrolled into view under a cover.
+   * `abandoned` keeps only the first line of Playwright's error, which says
+   * the click timed out and not why; this is the why.
+   */
+  readonly interceptedBy?: string;
   readonly startedAt: string;
   readonly durationMs: number;
   /**
@@ -503,10 +529,13 @@ export class Journal {
    * replay compares: a list that merely reordered sends the same draw to a
    * different position.
    */
-  pool(candidates: readonly JournaledCandidate[]): string {
-    const id = createHash('sha256').update(JSON.stringify(candidates)).digest('hex').slice(0, 12);
+  pool(candidates: readonly JournaledCandidate[], covered: readonly JournaledCovered[] = []): string {
+    // A screen with nothing covered hashes as it did before covered controls
+    // were recorded, so its id is unchanged.
+    const hashed = covered.length ? { candidates, covered } : candidates;
+    const id = createHash('sha256').update(JSON.stringify(hashed)).digest('hex').slice(0, 12);
     if (!this.pools.has(id)) {
-      this.write({ kind: 'pool', id, candidates });
+      this.write({ kind: 'pool', id, candidates, ...(covered.length ? { covered } : {}) });
       this.pools.add(id);
     }
     return id;
