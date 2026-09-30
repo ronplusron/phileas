@@ -14,6 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { currentEntry } from '../../src/legacy.mjs';
 
 const WAYS_ON = /^Ways on from (.+)$/;
 
@@ -25,9 +26,9 @@ const WAYS_ON = /^Ways on from (.+)$/;
 export function fates(folder) {
   const routes = [];
   for (const file of fs.readdirSync(folder).filter((f) => f.endsWith('.jsonl')).sort()) {
-    const entries = fs.readFileSync(path.join(folder, file), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+    const entries = fs.readFileSync(path.join(folder, file), 'utf8').split('\n').filter(Boolean).map((l) => currentEntry(JSON.parse(l)));
     const pools = new Map(entries.filter((e) => e.kind === 'pool').map((e) => [e.id, e.candidates]));
-    const hops = entries.filter((e) => e.kind === 'trip-hop' || e.kind === 'fix-hop');
+    const hops = entries.filter((e) => e.kind === 'trip-hop' || e.kind === 'fix-step');
     const places = [];
     let ending = 'still going';
     let endedAt;

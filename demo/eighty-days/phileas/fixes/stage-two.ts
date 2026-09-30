@@ -25,67 +25,67 @@ import { toHongKong } from './hong-kong';
  */
 
 /** London to Kholby by the book, and the offer for Kiouni raised to £1,800. */
-export const toKholby: Fix = async ({ hop }) => {
-  await hop('button "Accept the wager"');
-  await hop('button "Take the mail train to Brindisi"');
-  await hop('button "Book (⌘B)"');
-  await hop('button "Sail on the Mongolia for Suez"');
-  await hop('button "Book (⌘B)"');
-  await hop('tab "Consulate"');
-  await hop('button "Send Passepartout with the passport"');
-  await hop('button "Rejoin the Mongolia for Aden"');
-  await hop('button "Rejoin the Mongolia for Bombay"');
-  await hop('tab "Malabar Hill"');
-  await hop('button "Let Passepartout visit Malabar Hill"');
-  await hop('button "Take the eight o\'clock train for Calcutta"');
-  await hop('button "Book (⌘B)"');
-  await hop('button "Raise the offer"');
-  await hop('button "Raise the offer"');
-  await hop('button "Raise the offer"');
+export const toKholby: Fix = async ({ step }) => {
+  await step({ kind: 'act', target: 'button "Accept the wager"' });
+  await step({ kind: 'act', target: 'button "Take the mail train to Brindisi"' });
+  await step({ kind: 'act', target: 'button "Book (⌘B)"' });
+  await step({ kind: 'act', target: 'button "Sail on the Mongolia for Suez"' });
+  await step({ kind: 'act', target: 'button "Book (⌘B)"' });
+  await step({ kind: 'act', target: 'tab "Consulate"' });
+  await step({ kind: 'act', target: 'button "Send Passepartout with the passport"' });
+  await step({ kind: 'act', target: 'button "Rejoin the Mongolia for Aden"' });
+  await step({ kind: 'act', target: 'button "Rejoin the Mongolia for Bombay"' });
+  await step({ kind: 'act', target: 'tab "Malabar Hill"' });
+  await step({ kind: 'act', target: 'button "Let Passepartout visit Malabar Hill"' });
+  await step({ kind: 'act', target: 'button "Take the eight o\'clock train for Calcutta"' });
+  await step({ kind: 'act', target: 'button "Book (⌘B)"' });
+  await step({ kind: 'act', target: 'button "Raise the offer"' });
+  await step({ kind: 'act', target: 'button "Raise the offer"' });
+  await step({ kind: 'act', target: 'button "Raise the offer"' });
 };
 
 /** Hong Kong to Fort Kearney by the book's own way after the Carnatic is missed. */
 const onToFortKearney: Fix = async (steps) => {
-  const { hop } = steps;
+  const { step } = steps;
   await toHongKong(steps);
-  await hop('button "Charter the Tankadere to Shanghai"');
-  await hop('button "Board the American steamer for Yokohama"');
-  await hop('button "Book (⌘B)"');
-  await hop('button "Sail on the General Grant for San Francisco"');
-  await hop('button "Book (⌘B)"');
-  await hop('button "Take the Pacific Railroad for New York"');
-  await hop('button "Book (⌘B)"');
-  await hop('button "Rejoin the train eastward"');
+  await step({ kind: 'act', target: 'button "Charter the Tankadere to Shanghai"' });
+  await step({ kind: 'act', target: 'button "Board the American steamer for Yokohama"' });
+  await step({ kind: 'act', target: 'button "Book (⌘B)"' });
+  await step({ kind: 'act', target: 'button "Sail on the General Grant for San Francisco"' });
+  await step({ kind: 'act', target: 'button "Book (⌘B)"' });
+  await step({ kind: 'act', target: 'button "Take the Pacific Railroad for New York"' });
+  await step({ kind: 'act', target: 'button "Book (⌘B)"' });
+  await step({ kind: 'act', target: 'button "Rejoin the train eastward"' });
 };
 
 /** On the prairie at Fort Kearney, with the sledge's own tab open. */
 export const toFortKearney: Fix = async (steps) => {
   await onToFortKearney(steps);
-  await steps.hop('tab "Sledge"');
+  await steps.step({ kind: 'act', target: 'tab "Sledge"' });
 };
 
 /** On to New York by the sledge with its sail down, and the train. */
 export const toNewYork: Fix = async (steps) => {
-  const { hop } = steps;
+  const { step } = steps;
   await onToFortKearney(steps);
-  await hop('button "Sail by sledge to Omaha"');
-  await hop('button "Take the train for Chicago and New York"');
-  await hop('button "Book (⌘B)"');
+  await step({ kind: 'act', target: 'button "Sail by sledge to Omaha"' });
+  await step({ kind: 'act', target: 'button "Take the train for Chicago and New York"' });
+  await step({ kind: 'act', target: 'button "Book (⌘B)"' });
 };
 
 /** On to London by the Henrietta, with coal taken, and the special from Liverpool. */
 export const toLondon: Fix = async (steps) => {
-  const { hop } = steps;
+  const { step } = steps;
   await toNewYork(steps);
-  await hop('button "Take passage on the Henrietta"');
-  await hop('checkbox "Take coal (£600)"');
-  await hop('button "Book (⌘B)"');
-  await hop('button "Take the mail train and the boat to Liverpool"');
-  await hop('button "Take a special train to London"');
+  await step({ kind: 'act', target: 'button "Take passage on the Henrietta"' });
+  await step({ kind: 'act', target: 'checkbox "Take coal (£600)"' });
+  await step({ kind: 'act', target: 'button "Book (⌘B)"' });
+  await step({ kind: 'act', target: 'button "Take the mail train and the boat to Liverpool"' });
+  await step({ kind: 'act', target: 'button "Take a special train to London"' });
 };
 
 /** Into the Reform Club, and the wager won. */
 export const toReformClub: Fix = async (steps) => {
   await toLondon(steps);
-  await steps.hop('button "Go to the Reform Club"');
+  await steps.step({ kind: 'act', target: 'button "Go to the Reform Club"' });
 };

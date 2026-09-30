@@ -4,8 +4,14 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { currentEntry } from '../src/legacy.mjs';
 
-/** Every line of one Route's journal, parsed. `route` counts from 1. */
+/**
+ * Every line of one Route's journal, parsed, in today's shape. `route` counts
+ * from 1. A Fix step written before 2026-09-29 as `fix-hop` is read as
+ * `fix-step`, the engine's own conversion, so an older run folder still counts
+ * its Fix failures.
+ */
 export function entriesOf(folder, route) {
   const file = fs.readdirSync(folder).find((f) => f.startsWith(`route-${String(route).padStart(3, '0')}-`));
   if (!file) throw new Error(`No journal for Route ${route} in ${folder}.`);
@@ -13,7 +19,7 @@ export function entriesOf(folder, route) {
     .readFileSync(path.join(folder, file), 'utf8')
     .split('\n')
     .filter(Boolean)
-    .map((line) => JSON.parse(line));
+    .map((line) => currentEntry(JSON.parse(line)));
 }
 
 /**
@@ -26,8 +32,9 @@ export function metIn(folder, route = 1) {
   const entries = entriesOf(folder, route);
   const failedOn = (kind) =>
     entries.find((e) => e.kind === kind && (e.checks ?? []).some((c) => c.result === 'failed'));
-  const inFix = failedOn('fix-hop');
-  if (inFix) return { where: 'fix', hop: inFix.hop };
+  const inFix = failedOn('fix-step');
+  // Keyed `hop` still, which the presenters read: the Fix step's number.
+  if (inFix) return { where: 'fix', hop: inFix.step };
   const trip = failedOn('trip-hop');
   if (trip) {
     const failed = trip.checks.filter((c) => c.result === 'failed');
@@ -60,7 +67,7 @@ export function checkTally(folder) {
   for (const file of fs.readdirSync(folder).filter((f) => f.endsWith('.jsonl'))) {
     const route = Number(file.match(/^route-(\d+)-/)?.[1]);
     for (const entry of entriesOf(folder, route)) {
-      if (entry.kind !== 'trip-hop' && entry.kind !== 'fix-hop') continue;
+      if (entry.kind !== 'trip-hop' && entry.kind !== 'fix-step') continue;
       for (const { check, result, observation } of entry.checks ?? []) {
         const t = tally.get(check) ?? { check, passed: 0, failed: 0, notRun: 0, reasons: new Set() };
         if (result === 'passed') t.passed++;

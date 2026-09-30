@@ -83,9 +83,9 @@ engine's terms from the application's, so the application uses none of them,
 in its screens, its data or its code. It plans itineraries made of legs, and
 names a leg by its end stations. The Fix is left alone as well.
 
-**The demo's Fix opens "Alps by rail"**, one `hop()` line copied from `phileas
-survey`, so the demo shows a Fix and shows one being written without reading
-the application's code. It was proposed to make the demo livelier and
+**The demo's Fix opens "Alps by rail"**, one `act` step whose target is copied
+from `phileas survey`, so the demo shows a Fix and shows one being written
+without reading the application's code. It was proposed to make the demo livelier and
 measured not to: `HISTORY.md` has the numbers.
 
 **A second Journey has a Fix of nine steps**, added 2026-09-25 so the demo

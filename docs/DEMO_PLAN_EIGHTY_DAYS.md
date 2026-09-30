@@ -571,8 +571,8 @@ run the default Fix unawares.
   offered and not yet taken, so a Route with no Fix may wander the club's
   screen for a while before it accepts. That is the unanchored mode Loki
   was, and it is the first look.
-- **`accept`**: a Fix of one step, `hop('button "Accept the wager"')`,
-  copied from `phileas survey`. Every Route starts on the road.
+- **`accept`**: a Fix of one step, `step({ kind: 'act', target: 'button
+  "Accept the wager"' })`, its target copied from `phileas survey`. Every Route starts on the road.
 - **`hong-kong`** (the default): a Fix that plays the book's own choices
   from London to Hong Kong, a step at a time from the survey, so every
   Route's Trip starts where the book's Fogg stood on the quay. It is the Fix

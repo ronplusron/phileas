@@ -15,4 +15,4 @@ import type { Fix } from '@drugstoresushi/phileas';
  * change nothing are on the timetable screen, which offers three ways to reach
  * itself. It runs fresh at the start of every Route.
  */
-export const openAlps: Fix = ({ hop }) => hop('button "Open Alps by rail"');
+export const openAlps: Fix = ({ step }) => step({ kind: 'act', target: 'button "Open Alps by rail"' });

@@ -575,30 +575,6 @@ still covers both. The palette appends a command's shortcut to its name, as
 in "Quit the Current R Session CtrlQ", so a match on the exact name would
 not work.
 
-### 1.18 The demos, on the Fix step API
-
-Agreed 2026-09-29, with the change from `hop()` to a tagged `step()`, and
-held until the Eighty Days session's two branches have merged, since removing
-`hop()` breaks any Fix still using it. Until then the type-check fails on the
-demo Fixes, so this branch cannot merge. That session listed what it touches:
-
-- **Fixes to convert:** `demo/eighty-days/phileas/fixes/` (`accept.ts`,
-  `hong-kong.ts`, `stage-two.ts`) and `demo/rail-itinerary/phileas/fixes/`
-  (`add-leg-then-buy.ts`, `open-alps.ts`). Their export names and shapes
-  stay: each guided demo prints a Fix's source by matching
-  `export const openAlps[^\n]*`, `export const addLegThenBuy[\s\S]*?\n\};` and
-  `export const toHongKong[\s\S]*?\n\};`.
-- **Journal reader:** `demo/journals.mjs`, whose `metIn` and `checkTally`
-  match `fix-hop`; after that session's merge both demos' `present.mjs` import
-  `metIn` from there. They must read both kinds, not swap one for the other,
-  or a Fix failure in an older journal counts as none: read each line through
-  `currentEntry` in `src/legacy.mjs`, as the engine does, and match
-  `fix-step`. `demo/eighty-days/measure.mjs` too, if it still matches.
-- **Printed lines:** `demo/presenting.mjs` matches `^route \d+  fix `, which
-  the change keeps.
-- **Docs quoting `hop()`:** `demo/rail-itinerary/PRESENTING.md`,
-  `docs/DEMO_PLAN_EIGHTY_DAYS.md` and `docs/DEMO_PLAN_TRAIN.md`.
-
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -886,6 +862,49 @@ points RStudio elsewhere: RStudio's own end-to-end sandbox has the same gap,
 unseen only because no scripted test opens a new session. The engine does not
 need it, since `stubSelfLaunch` starts no copy at all; it would matter if
 the second session's startup were ever to be tested rather than stubbed.
+
+### 2.13 Working in a repository shared with other people
+
+Asked on 2026-09-30: "What to do if the RStudio adapter and Phileas are in a
+shared repo with other people. How would we coordinate things like known
+findings and new Fixes?" Recorded as open on request; nothing is decided, and
+what follows is a proposal made in answer, not agreed.
+
+**Known findings rewrite a committed file by themselves.** Every Journey's end
+adds its new findings to `known-findings.json` as unfiled and re-signs the
+entries already there. With one person that is bookkeeping; seen on
+2026-09-29, every run from the main checkout changed the committed copy. With
+several, every local run is a diff, and two people's diffs to one JSON array
+conflict. Proposed, in this order:
+
+- **A Journey writes only to a local, ignored pending file.** The committed
+  file changes only through `phileas known add`, `dismiss` and `remove`, in a
+  change someone reviews. The queue of unfiled findings could then live in
+  the issue tracker, which reviews by design. This is the one to build first.
+- **One file per finding**, such as `known-findings/<id>.json`, so two people
+  recording different findings never conflict.
+- **Re-signing that merges two entries is reviewed,** since signatures strip
+  what differs between machines, `<user>`, `<profile>` and ids among it, and a
+  merge is only right when the two were the same finding.
+
+**Editing a Fix moves everyone's seeds.** A seed replays only against the Fix
+it ran with; the journal records a fingerprint of the Fix's source, so an edit
+shows, but a recorded failing seed someone else relies on stops reproducing.
+The adapter's exclusions do the same, since they change what is on offer.
+Proposed:
+
+- **Treat a Fix as a public function:** add a new named Fix rather than edit
+  one that has pinned seeds, and review Fix changes as code.
+- **Pin the seeds that matter as tests,** as the guided demos check theirs, so
+  an edit that moves one fails instead of passing quietly.
+- **Record the engine's and the adapter's version on each journal's opening
+  line,** which 1.13 already lists as toolchain versions; shared, it stops
+  being optional.
+
+**Around both:** a finding needs everything that reproduces it, the seed, the
+Fix, both versions, the application's version, and the fused copy each person
+makes; and Journeys do not gate pushes, so someone has to own triage or the
+queue only grows.
 
 ## 3. Declined
 

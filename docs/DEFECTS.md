@@ -264,6 +264,21 @@ in the log became up to three findings on Positron, each with a signature
 of its own and each ending a Route until filed. Reading a frame line as part
 of the error above it, rather than as one of its own, would close it.
 
+## A determinism test failed once, and why is not known
+
+**Filed 2026-09-30, observed rather than confirmed.** In a full run of the
+Eighty Days demo's suite, `answers the same moves the same way in two
+launches` in `demo/eighty-days/tests/determinism.spec.ts` failed after 24
+seconds, where it usually takes about 55. It then passed alone, and again in
+the next full run, 25 of 25. The test plays one seed twice with no Fix and
+asserts the two plays match, so a real failure would mean a seed does not
+replay, which is the guarantee the engine rests on; a failure of the test
+itself would mean it cannot be trusted to say so. Which it was is not known:
+the rerun overwrote the report. What is known is only that it was under a
+full suite's load, and that the change being tested, to the Fix API, is not
+on the path a Route with no Fix takes. The next failure should keep its
+report, `test-results/` and the two plays' journals, before anything reruns.
+
 ## Two things that will look like candidates, and are not
 
 Both are worth stating now, because each is more likely to be filed here

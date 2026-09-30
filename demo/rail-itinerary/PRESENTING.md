@@ -141,7 +141,7 @@ PHILEAS_FIX=open-alps PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas surve
 Show the Fix, in `fixes/open-alps.ts`:
 
 ```ts
-export const openAlps: Fix = ({ hop }) => hop('button "Open Alps by rail"');
+export const openAlps: Fix = ({ step }) => step({ kind: 'act', target: 'button "Open Alps by rail"' });
 ```
 
 It is one line copied from the survey in section 3. Nobody read the

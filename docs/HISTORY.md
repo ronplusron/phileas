@@ -58,9 +58,13 @@ in `label`; `src/legacy.mjs` reads a `fix-hop` line as one, for
 read. The glossary's Hop now means only a Trip's jump, with Fix step defined
 beside it, and Control is defined for the first time, since control and
 target had been used interchangeably. RStudio's three Fixes ran in full on
-RStudio through `phileas survey` after the change. The demos' Fixes and
-journal scripts change with the Eighty Days session's branches, once they
-have merged.
+RStudio through `phileas survey` after the change. The demos followed on
+2026-09-30, after the Eighty Days session's branches merged: their five
+Fixes keep their export names and shapes, which each guided demo's excerpt
+of its Fix depends on, and `demo/journals.mjs` and
+`demo/eighty-days/measure.mjs` read each line through `currentEntry`, so an
+older run folder still counts its Fix failures rather than none, which that
+session asked for.
 
 ## 2026-09-29: `testbed/` is now `proving-ground/`
 
