@@ -6,8 +6,8 @@ import type { Fix } from '@drugstoresushi/phileas';
  *
  * Written one step at a time from `phileas survey`.
  */
-export const quarto: Fix = async ({ hop }) => {
-  await hop('button "New"');
-  await hop('menuitem "New File... ⌃⌥⌘N"');
-  await hop('option "Quarto Document, Quarto, Quarto"');
+export const quarto: Fix = async ({ step }) => {
+  await step({ kind: 'act', target: 'button "New"' });
+  await step({ kind: 'act', target: 'menuitem "New File... ⌃⌥⌘N"' });
+  await step({ kind: 'act', target: 'option "Quarto Document, Quarto, Quarto"' });
 };

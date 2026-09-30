@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { CaughtByStubs } from './caught';
 import type { HopEffect } from './effect';
+import { currentEntry } from './legacy.mjs';
 import { renderEntry } from './report/render.mjs';
 
 /**
@@ -137,16 +138,23 @@ export interface PoolEntry {
  *
  * Its own shape rather than a Trip hop's with fields bent to fit. A Fix is
  * fixed: nothing is drawn, there is no list it was drawn from, and the step is
- * a piece of the Journey author's code rather than something discovered on the
- * screen, so it has no role. Every field below is true of a Fix step, which is
- * the test the earlier shape failed on three counts.
+ * a piece of the Journey author's script rather than something discovered on
+ * the screen, so it has no role. Every field below is true of a Fix step, which
+ * is the test the earlier shape failed on three counts.
+ *
+ * Written as `fix-hop`, numbered in `hop` and labeled in `name`, until
+ * 2026-09-29, when a Fix became a script of steps and a Hop a Trip's jump only.
+ * `readJournal` reads those lines as this shape.
  */
-export interface FixHopEntry {
-  readonly kind: 'fix-hop';
+export interface FixStepEntry {
+  readonly kind: 'fix-step';
   /** Position within the Fix, counting from 1. */
-  readonly hop: number;
-  /** The label the Journey's author gave this step, not an accessible name. */
-  readonly name: string;
+  readonly step: number;
+  /**
+   * What the step is called: an `act` step's target as the survey prints it,
+   * with the value typed if any, or the label a `code` step was given.
+   */
+  readonly label: string;
   /**
    * Why the step failed, on the step that did.
    *
@@ -304,7 +312,7 @@ export interface OpeningEntry {
    * a changed application or a changed outcome (R14). The fingerprint is of the
    * Fix function's own source, so it catches an edit to that function and not
    * one to a function it calls, such as a Fix that begins by running another;
-   * the `fix-hop` lines, which name every step in order, cover that case.
+   * the `fix-step` lines, which name every step in order, cover that case.
    * Absent for a Route with no Fix, and in journals written before 2026-09-28.
    */
   readonly fix?: { readonly name?: string; readonly fingerprint: string };
@@ -356,7 +364,7 @@ export interface ClosingEntry {
 export type JournalEntry =
   | OpeningEntry
   | PoolEntry
-  | FixHopEntry
+  | FixStepEntry
   | TripHopEntry
   | NoteEntry
   | ClosingEntry;
@@ -531,7 +539,7 @@ export function readJournal(file: string): JournalEntry[] {
   for (const [index, line] of lines.entries()) {
     if (line.trim() === '') continue;
     try {
-      entries.push(JSON.parse(line) as JournalEntry);
+      entries.push(currentEntry(JSON.parse(line)));
     } catch {
       // Only the last line may be partial. Anything earlier means the file was
       // corrupted rather than truncated, and silently skipping it would hide

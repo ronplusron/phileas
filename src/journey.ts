@@ -35,7 +35,7 @@ export interface JourneyTerms {
   /**
    * How many Hops each Route's Trip takes, counted in hops, not time.
    *
-   * The Trip only: Fix hops come first and do not count toward it, so a Route
+   * The Trip only: Fix steps come first and do not count toward it, so a Route
    * with a three-step Fix and a Trip length of 20 takes 23 hops. A Route that
    * completes its Trip has finished. One that runs out of moves first is
    * stranded, which is why this is a length the Route is meant to reach rather

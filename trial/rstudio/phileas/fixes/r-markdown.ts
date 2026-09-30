@@ -10,7 +10,7 @@ import type { Fix } from '@drugstoresushi/phileas';
  * knitr and tinytex are installed in the machine's R, so the dialog does not
  * stop to install them first.
  */
-export const rMarkdown: Fix = async ({ hop }) => {
-  await hop('button "New File"');
-  await hop('menuitem "R Markdown..."');
+export const rMarkdown: Fix = async ({ step }) => {
+  await step({ kind: 'act', target: 'button "New File"' });
+  await step({ kind: 'act', target: 'menuitem "R Markdown..."' });
 };

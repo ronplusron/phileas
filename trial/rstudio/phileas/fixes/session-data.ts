@@ -20,15 +20,22 @@ const CODE = [
  * step waits for the Environment pane to describe the data frame, which is
  * also how it shows that the lines ran.
  */
-export const sessionData: Fix = async ({ page, hop, step }) => {
-  await hop('menu &View > Move Focus to &Console');
+export const sessionData: Fix = async ({ page, step }) => {
+  await step({ kind: 'act', target: 'menu &View > Move Focus to &Console' });
   for (const line of CODE) {
-    await step(`run ${line.split(' <- ')[0]}`, async () => {
-      await page.keyboard.type(line);
-      await page.keyboard.press('Enter');
+    await step({
+      kind: 'code',
+      label: `run ${line.split(' <- ')[0]}`,
+      action: async () => {
+        await page.keyboard.type(line);
+        await page.keyboard.press('Enter');
+      },
     });
   }
-  await step('wait for the Environment pane to list the data frame', () =>
-    page.getByText('5 obs. of 3 variables').first().waitFor({ timeout: 15_000 })
-  );
+  await step({
+    kind: 'code',
+    label: 'wait for the Environment pane to list the data frame',
+    action: () =>
+      page.getByText('5 obs. of 3 variables').first().waitFor({ timeout: 15_000 }),
+  });
 };

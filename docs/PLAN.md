@@ -993,13 +993,13 @@ about what the engine finds until a measurement does.
 The journal already exists from phase 4; this phase fills in its check-results
 field and nothing else about it changes.
 
-**The checks run after every Fix hop as well as every Trip hop**, decided
+**The checks run after every Fix step as well as every Trip hop**, decided
 2026-09-23. Skipping them would save almost nothing, since a Fix is usually a
 handful of steps against a Trip of tens, and it would leave a Fix that breaks
 the application to be noticed by whichever Trip hop happens to hit it first. And
-**a check that fails after a Fix hop is reported as a Fix failure**, not as a
+**a check that fails after a Fix step is reported as a Fix failure**, not as a
 failed Route, for R11's reason: ten Routes failing on one broken step is one
-problem, and the Fix hop's own line is where it belongs.
+problem, and the Fix step's own line is where it belongs.
 
 `oracles/implicit/` is R17, one check per item, each with its evidence:
 
@@ -1138,7 +1138,7 @@ after phase 5 is done."
 - **A `phileas record` command.** It launches the application with its window
   shown and the person uses it. After each click or typed entry it surveys,
   matches what was acted on to a candidate, and prints that candidate's line;
-  on stopping it writes the Fix as ordinary `hop()` lines, so replay is
+  on stopping it writes the Fix as ordinary `act` steps, so replay is
   unchanged. A click on a control with no accessible name cannot become a
   line, and it says so.
 - **An interactive survey.** It shows the window, numbers the controls, takes

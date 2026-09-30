@@ -11,20 +11,26 @@ import { EARLY_R_BINARY, positronFamily, positronVersion } from '../adapter';
  * starts a session its own way, and a release with no family is refused by
  * name rather than guessed at.
  */
-export const session: Fix = async ({ page, hop, step }) => {
+export const session: Fix = async ({ page, step }) => {
   if (positronFamily === 'current') {
-    await hop('button "Start New Console Session"');
+    await step({ kind: 'act', target: 'button "Start New Console Session"' });
     // Not a copied line: the list names each interpreter with this machine's
     // version and path, and its order changed between two launches on
     // 2026-09-27, so the step names R by pattern instead.
-    await step('choose R in the interpreter list', () =>
-      page.getByRole('option', { name: /^R \d/ }).first().click()
-    );
+    await step({
+      kind: 'code',
+      label: 'choose R in the interpreter list',
+      action: () =>
+        page.getByRole('option', { name: /^R \d/ }).first().click(),
+    });
     // The console announces the session when it is up; a Trip starting sooner
     // would land on a session still starting.
-    await step('wait for R to start', () =>
-      page.getByText(/R \d+\.\d+\.\d+ started\./).first().waitFor({ timeout: 30_000 })
-    );
+    await step({
+      kind: 'code',
+      label: 'wait for R to start',
+      action: () =>
+        page.getByText(/R \d+\.\d+\.\d+ started\./).first().waitFor({ timeout: 30_000 }),
+    });
     return;
   }
 
@@ -34,18 +40,27 @@ export const session: Fix = async ({ page, hop, step }) => {
     if (!fs.existsSync(EARLY_R_BINARY)) {
       throw new Error(`The early releases need R 4.4.3 at ${EARLY_R_BINARY}, and it is not there. Install it with: rig add 4.4.3`);
     }
-    await hop('button "Start Interpreter"');
+    await step({ kind: 'act', target: 'button "Start Interpreter"' });
     // The dialog shows one interpreter per language, the machine's current
     // R; the row's first button expands it to the others.
-    await step('show the other R versions', () =>
-      page.getByRole('dialog').getByRole('button', { name: /^R \d/ }).first().getByRole('button').first().click()
-    );
-    await step('choose R 4.4.3', () =>
-      page.getByRole('dialog').getByRole('button', { name: /^4\.4\.3 / }).first().click()
-    );
-    await step('wait for R to start', () =>
-      page.getByText(/R 4\.4\.3 started\./).first().waitFor({ timeout: 30_000 })
-    );
+    await step({
+      kind: 'code',
+      label: 'show the other R versions',
+      action: () =>
+        page.getByRole('dialog').getByRole('button', { name: /^R \d/ }).first().getByRole('button').first().click(),
+    });
+    await step({
+      kind: 'code',
+      label: 'choose R 4.4.3',
+      action: () =>
+        page.getByRole('dialog').getByRole('button', { name: /^4\.4\.3 / }).first().click(),
+    });
+    await step({
+      kind: 'code',
+      label: 'wait for R to start',
+      action: () =>
+        page.getByText(/R 4\.4\.3 started\./).first().waitFor({ timeout: 30_000 }),
+    });
     return;
   }
 

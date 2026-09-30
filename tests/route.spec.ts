@@ -614,11 +614,19 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
     tripLength: 5,
     journalsRoot: dir,
     fix: async ({ step }) => {
-      await step('open the summary', async () => {
-        await page.getByRole('button', { name: 'Summary', exact: true }).click();
+      await step({
+        kind: 'code',
+        label: 'open the summary',
+        action: async () => {
+          await page.getByRole('button', { name: 'Summary', exact: true }).click();
+        },
       });
-      await step('reach a control that is not there', async () => {
-        await page.getByRole('button', { name: 'Nonexistent' }).click({ timeout: 500 });
+      await step({
+        kind: 'code',
+        label: 'reach a control that is not there',
+        action: async () => {
+          await page.getByRole('button', { name: 'Nonexistent' }).click({ timeout: 500 });
+        },
       });
     },
   });
@@ -626,7 +634,7 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
   await expect(failing).rejects.toThrow(FixFailure);
   await expect(failing).rejects.toThrow(/reach a control that is not there/);
 
-  // Both steps are in the record as Fix hops, numbered from 1: the one that
+  // Both steps are in the record as Fix steps, numbered from 1: the one that
   // succeeded, so a reader can see how far the known start got, and the one
   // that failed, with its error on its own line. R11 wants a broken Fix told
   // apart from a failed Route, which means saying which step broke rather than
@@ -634,12 +642,12 @@ test('a failure in the Fix is a distinct finding from a failed Route', async ({ 
   const entries = readJournal(
     path.join(inRun(dir), `route-001-${deriveRouteStreams('fix-seed', 1).routeSeed}.jsonl`)
   );
-  const fixHops = entries.filter((entry) => entry.kind === 'fix-hop');
-  expect(fixHops.map((entry) => (entry.kind === 'fix-hop' ? entry.hop : 0))).toEqual([1, 2]);
-  expect(fixHops[0]).toMatchObject({ name: 'open the summary' });
-  expect(fixHops[0]).not.toHaveProperty('error');
-  expect(fixHops[1]).toMatchObject({ name: 'reach a control that is not there' });
-  expect(fixHops[1]?.kind === 'fix-hop' ? fixHops[1].error : undefined).toBeTruthy();
+  const fixSteps = entries.filter((entry) => entry.kind === 'fix-step');
+  expect(fixSteps.map((entry) => (entry.kind === 'fix-step' ? entry.step : 0))).toEqual([1, 2]);
+  expect(fixSteps[0]).toMatchObject({ label: 'open the summary' });
+  expect(fixSteps[0]).not.toHaveProperty('error');
+  expect(fixSteps[1]).toMatchObject({ label: 'reach a control that is not there' });
+  expect(fixSteps[1]?.kind === 'fix-step' ? fixSteps[1].error : undefined).toBeTruthy();
 
   // And the Route never reached its Trip.
   expect(entries.some((entry) => entry.kind === 'trip-hop')).toBe(false);
@@ -664,22 +672,34 @@ test("what the stubs caught is journaled on the Hop that caused it, and printed"
     tripLength: 1,
     journalsRoot: dir,
     fix: async ({ step }) => {
-      await step('open the summary', async () => {
-        await page.getByRole('button', { name: 'Summary', exact: true }).click();
+      await step({
+        kind: 'code',
+        label: 'open the summary',
+        action: async () => {
+          await page.getByRole('button', { name: 'Summary', exact: true }).click();
+        },
       });
-      await step('open a link, a folder and a dialog', async () => {
-        await app.evaluate(async ({ shell, dialog }) => {
-          await shell.openExternal('https://example.com/buggy');
-          await shell.openPath('/phileas-test/a-folder');
-          await dialog.showMessageBox({ message: 'Save changes?', buttons: ['Save', 'Cancel'] });
-        });
+      await step({
+        kind: 'code',
+        label: 'open a link, a folder and a dialog',
+        action: async () => {
+          await app.evaluate(async ({ shell, dialog }) => {
+            await shell.openExternal('https://example.com/buggy');
+            await shell.openPath('/phileas-test/a-folder');
+            await dialog.showMessageBox({ message: 'Save changes?', buttons: ['Save', 'Cancel'] });
+          });
+        },
       });
-      await step('start a second copy of the application', async () => {
-        await app.evaluate((_electron, flag) => {
-          const load = (process as unknown as { getBuiltinModule: (name: string) => unknown }).getBuiltinModule;
-          const childProcess = load('child_process') as typeof import('child_process');
-          childProcess.spawn(process.execPath, [flag], { detached: true, stdio: 'ignore' }).unref();
-        }, marker);
+      await step({
+        kind: 'code',
+        label: 'start a second copy of the application',
+        action: async () => {
+          await app.evaluate((_electron, flag) => {
+            const load = (process as unknown as { getBuiltinModule: (name: string) => unknown }).getBuiltinModule;
+            const childProcess = load('child_process') as typeof import('child_process');
+            childProcess.spawn(process.execPath, [flag], { detached: true, stdio: 'ignore' }).unref();
+          }, marker);
+        },
       });
     },
   });
@@ -687,12 +707,12 @@ test("what the stubs caught is journaled on the Hop that caused it, and printed"
   const entries = readJournal(
     path.join(inRun(dir), `route-001-${deriveRouteStreams('caught-seed', 1).routeSeed}.jsonl`)
   );
-  const fixHops = entries.filter((entry) => entry.kind === 'fix-hop');
-  expect(fixHops).toHaveLength(3);
+  const fixSteps = entries.filter((entry) => entry.kind === 'fix-step');
+  expect(fixSteps).toHaveLength(3);
   // A Hop that caught nothing carries nothing, so the field means something
   // where it appears.
-  expect(fixHops[0]).not.toHaveProperty('caught');
-  expect(fixHops[1]).toMatchObject({
+  expect(fixSteps[0]).not.toHaveProperty('caught');
+  expect(fixSteps[1]).toMatchObject({
     caught: {
       outbound: ['https://example.com/buggy'],
       opened: ['openPath /phileas-test/a-folder'],
@@ -700,9 +720,9 @@ test("what the stubs caught is journaled on the Hop that caused it, and printed"
     },
   });
   // Each on its own Hop only: nothing caught earlier is put down again.
-  expect(fixHops[2]).toEqual(expect.objectContaining({ caught: { selfLaunches: [[marker]] } }));
+  expect(fixSteps[2]).toEqual(expect.objectContaining({ caught: { selfLaunches: [[marker]] } }));
 
-  const printed = fixHops.map((entry) => renderEntry(entry, 1) ?? '');
+  const printed = fixSteps.map((entry) => renderEntry(entry, 1) ?? '');
   expect(printed[0]).not.toContain('stubbed:');
   expect(printed[1]).toContain(
     '(stubbed: link https://example.com/buggy; open openPath /phileas-test/a-folder; native dialog showMessageBox "Save changes?")'
@@ -759,20 +779,28 @@ test('every hop records what it did to the screen, Fix and Trip alike (R31)', as
     tripLength: 5,
     journalsRoot: dir,
     fix: async ({ step }) => {
-      await step('open the summary', async () => {
-        await page.getByRole('button', { name: 'Summary', exact: true }).click();
+      await step({
+        kind: 'code',
+        label: 'open the summary',
+        action: async () => {
+          await page.getByRole('button', { name: 'Summary', exact: true }).click();
+        },
       });
-      await step('do nothing', async () => {});
+      await step({
+        kind: 'code',
+        label: 'do nothing',
+        action: async () => {},
+      });
     },
   });
 
   const entries = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`));
-  const [opened, idle] = entries.filter((entry) => entry.kind === 'fix-hop');
+  const [opened, idle] = entries.filter((entry) => entry.kind === 'fix-step');
 
   // Opening the summary brings its heading onto the screen. Read from the real
   // application rather than a fabricated tree, so this fails if the headings
   // the survey reads stop being the ones a person sees.
-  expect(opened?.kind === 'fix-hop' ? opened.effect : undefined).toMatchObject({
+  expect(opened?.kind === 'fix-step' ? opened.effect : undefined).toMatchObject({
     readable: true,
     changed: true,
     appeared: expect.arrayContaining(['Total weight']),
@@ -781,7 +809,7 @@ test('every hop records what it did to the screen, Fix and Trip alike (R31)', as
   // The positive control for "changed": a step that does nothing reads as
   // unchanged. Without it, a comparison that always said "changed" would pass
   // the assertion above.
-  expect(idle?.kind === 'fix-hop' ? idle.effect : undefined).toMatchObject({
+  expect(idle?.kind === 'fix-step' ? idle.effect : undefined).toMatchObject({
     readable: true,
     changed: false,
   });

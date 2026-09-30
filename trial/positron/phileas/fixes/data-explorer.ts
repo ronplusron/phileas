@@ -12,10 +12,14 @@ import { session } from './session';
 export const dataExplorer: Fix = async (context) => {
   await session(context);
   const { page, step } = context;
-  await step('show mtcars in the data explorer', async () => {
-    await page.getByRole('tabpanel').getByRole('textbox').visible().last().focus();
-    await page.keyboard.type('View(mtcars)');
-    await page.keyboard.press('Enter');
-    await page.getByRole('tab', { name: /mtcars/ }).first().waitFor({ timeout: 30_000 });
+  await step({
+    kind: 'code',
+    label: 'show mtcars in the data explorer',
+    action: async () => {
+      await page.getByRole('tabpanel').getByRole('textbox').visible().last().focus();
+      await page.keyboard.type('View(mtcars)');
+      await page.keyboard.press('Enter');
+      await page.getByRole('tab', { name: /mtcars/ }).first().waitFor({ timeout: 30_000 });
+    },
   });
 };

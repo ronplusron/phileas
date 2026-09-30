@@ -575,6 +575,30 @@ still covers both. The palette appends a command's shortcut to its name, as
 in "Quit the Current R Session CtrlQ", so a match on the exact name would
 not work.
 
+### 1.18 The demos, on the Fix step API
+
+Agreed 2026-09-29, with the change from `hop()` to a tagged `step()`, and
+held until the Eighty Days session's two branches have merged, since removing
+`hop()` breaks any Fix still using it. Until then the type-check fails on the
+demo Fixes, so this branch cannot merge. That session listed what it touches:
+
+- **Fixes to convert:** `demo/eighty-days/phileas/fixes/` (`accept.ts`,
+  `hong-kong.ts`, `stage-two.ts`) and `demo/rail-itinerary/phileas/fixes/`
+  (`add-leg-then-buy.ts`, `open-alps.ts`). Their export names and shapes
+  stay: each guided demo prints a Fix's source by matching
+  `export const openAlps[^\n]*`, `export const addLegThenBuy[\s\S]*?\n\};` and
+  `export const toHongKong[\s\S]*?\n\};`.
+- **Journal reader:** `demo/journals.mjs`, whose `metIn` and `checkTally`
+  match `fix-hop`; after that session's merge both demos' `present.mjs` import
+  `metIn` from there. They must read both kinds, not swap one for the other,
+  or a Fix failure in an older journal counts as none: read each line through
+  `currentEntry` in `src/legacy.mjs`, as the engine does, and match
+  `fix-step`. `demo/eighty-days/measure.mjs` too, if it still matches.
+- **Printed lines:** `demo/presenting.mjs` matches `^route \d+  fix `, which
+  the change keeps.
+- **Docs quoting `hop()`:** `demo/rail-itinerary/PRESENTING.md`,
+  `docs/DEMO_PLAN_EIGHTY_DAYS.md` and `docs/DEMO_PLAN_TRAIN.md`.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -703,8 +727,8 @@ plumbing a person should reach only through the command.
 
 ### 2.7 A Fix step naming a control that two controls share
 
-Noticed 2026-09-24 and recorded unraised; nothing is decided. A Fix's
-`hop('button "X"')` acts on the first control whose survey line matches, in
+Noticed 2026-09-24 and recorded unraised; nothing is decided. A Fix's `act`
+step on `button "X"` acts on the first control whose survey line matches, in
 survey order, and says nothing when a second one matches too. `phileas survey`
 prints one identical line for each, so the person writing the Fix cannot tell
 from the listing which one a step will reach, and there is no way to name the
@@ -814,7 +838,7 @@ rather than noticed by chance.
 
 ### 2.11 A Fix step written from the survey's data rather than its text
 
-Raised 2026-09-27; nothing is decided. A Fix's `hop()` takes a line as
+Raised 2026-09-27; nothing is decided. A Fix's `act` step takes a line as
 `phileas survey` printed it and matches it against how each control on the
 page would print. The text is a rendering of a target the journal already
 records exactly, as `{ source, role, name, nth }`. Asked, in the words it was

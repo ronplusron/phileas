@@ -107,8 +107,12 @@ const FIX_SEED = 'fix-stream';
 /** A Fix of one harmless step that draws `draws` times from the stream it is handed. */
 function drawingFix(draws: number): Fix {
   return async ({ rng, step }) => {
-    await step('draw and do nothing', async () => {
-      for (let i = 0; i < draws; i += 1) rng.next();
+    await step({
+      kind: 'code',
+      label: 'draw and do nothing',
+      action: async () => {
+        for (let i = 0; i < draws; i += 1) rng.next();
+      },
     });
   };
 }

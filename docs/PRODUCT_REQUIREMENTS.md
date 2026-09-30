@@ -439,6 +439,21 @@ Stated as what must be true for someone using it.
   exploring apart from circling the same corner. It would be the first thing
   here that needs the application's source rather than just its running
   process.
+- **Is the engine useful enough on a real application to be worth its cost?**
+  Raised on 2026-09-29, after the RStudio trial, in these words: "I'm less
+  concerned about the issue being narrowed now as I am about the usefulness
+  of the tool." What prompted it: a draft report called ODBC vanishing from
+  RStudio's New Connection dialog a bug, and it is intended. Neither the
+  engine nor the agent writing the report knew that; the person reviewing it
+  did. The engine's own checks judged nothing that needed intent, only errors
+  in a log, and about two hundred Routes found four such silent errors, one
+  fixed upstream within days. But most of the trial's effort went into
+  keeping RStudio from escaping the Route rather than into finding bugs, and
+  every finding needed a person to judge it. Three measures would answer it,
+  none taken yet: whether the containment work levels off as an adapter
+  matures; how much of a person's time each real bug costs, judging it
+  included; and whether checks that know what an application should do, the
+  specified checks of R21, are cheap enough for its team to write.
 
 ## 12. Assumptions
 

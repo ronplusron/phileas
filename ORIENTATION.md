@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs two hundred and ninety-eight tests, after a
+through, and `npm test` runs three hundred and one tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -294,7 +294,7 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own two hundred and ninety-eight tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and one tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
@@ -340,11 +340,12 @@ and prints what the engine sees at the start, one control per line in the
 engine's own form: `button "Open Alps by rail"`, `menu View > Show Timetable`.
 Where a Fix exists it then runs it, printing each step, and prints what the
 engine sees after it, so a Fix of several steps is written one at a time.
-A Fix step takes a line as it is: `({ hop }) => hop('button "Open Alps by
-rail"')`, with a second argument for text to type. A step waits up to the hop
-timeout for its target to appear; a name still not on screen then fails the
-Fix and lists what is, and the exclusion list applies to a Fix too.
-`step()` with Playwright code stays available for anything else.
+An `act` step takes a line as it is: `({ step }) => step({ kind: 'act',
+target: 'button "Open Alps by rail"' })`, with a `value` for text to type. It
+waits up to the hop timeout for its target to appear; a target still not on
+screen then fails the Fix and lists what is, and the exclusion list applies to
+a Fix too. A `code` step, `{ kind: 'code', label, action }`, runs Playwright
+code for anything else.
 
 **A replay used to need the same window mode as the run it retraces,** because
 a shown run offered menu entries a hidden one withheld. Since 2026-09-24 every

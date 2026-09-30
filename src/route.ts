@@ -248,6 +248,31 @@ export const seededValues: ValueGenerator = {
 };
 
 /**
+ * One step of a Fix, which names its kind.
+ *
+ * `act` acts on a target by the name the engine gives it, exactly as `phileas
+ * survey` and `phileas show` print it: `button "Open Alps by rail"`, `menu
+ * View > Show Timetable`, `key Enter`. It is acted on the way a Trip hop would
+ * act on it, and `value` is what to type into a text field. So a Fix can be
+ * written by copying a line from `phileas survey`, with no reading of the
+ * application's code. A target that is not on screen fails the Fix and lists
+ * what is, so a wrong one says what the right one is. The first candidate
+ * printed that way is used, and the exclusion list still applies.
+ *
+ * `code` runs any code the Fix's author writes, such as typing into one of
+ * two text boxes that share a name, or waiting for proof that earlier steps
+ * worked. `label` names it in the journal.
+ *
+ * One function with the kind named, rather than a `hop()` beside a `step()`,
+ * decided 2026-09-29: a Fix is a script of steps, and a Hop is a Trip's jump.
+ * A tag rather than two signatures, because a `code` step missing its action
+ * must fail to compile, not be read as a target and fail mid-Journey.
+ */
+export type FixStep =
+  | { readonly kind: 'act'; readonly target: string; readonly value?: string }
+  | { readonly kind: 'code'; readonly label: string; readonly action: () => Promise<void> };
+
+/**
  * What the Fix is handed.
  *
  * `step` is how a Fix reaches the journal. A Fix that ran as one opaque call
@@ -259,24 +284,15 @@ export interface FixContext {
   readonly app: ElectronApplication;
   /** Draws made while following the Fix. Never the Trip's stream. */
   readonly rng: Rng;
-  /** Record one step of the Fix, and run it. */
-  step(name: string, action: () => Promise<void>): Promise<void>;
   /**
-   * One step that acts on a control by the name the engine gives it, exactly
-   * as `phileas survey` and `phileas show` print it: `button "Open Alps by
-   * rail"`, `menu View > Show Timetable`, `key Enter`. It is acted on the way a
-   * Trip hop would act on it, and `value` is what to type into a text field.
-   *
-   * So a Fix can be written by copying a line from `phileas survey`, with no
-   * reading of the application's code. A name that is not on screen fails the
-   * Fix and lists what is, so a wrong name says what the right one is. The
-   * first control with that name is used, and the exclusion list still applies.
+   * Run one step of the Fix, then settle, run the checks, and record it as one
+   * `fix-step` line. A step cannot be taken inside another step's `code`.
    */
-  hop(target: string, value?: string): Promise<void>;
+  step(what: FixStep): Promise<void>;
 }
 
 /**
- * A fixed sequence of Hops that anchors the start of every Route.
+ * A fixed sequence of steps that anchors the start of every Route.
  *
  * It runs fresh at the start of every Route and is never cached. Running it
  * fresh IS the independence guarantee rather than merely a way of getting a
@@ -544,7 +560,7 @@ export function surveyFromEnvironment(): boolean {
 }
 
 /**
- * What a survey found, as lines a person can copy into a Fix's `hop()`.
+ * What a survey found, as lines a person can copy into a Fix's `act` step.
  *
  * The common keys are on one line rather than seven, since they are on offer
  * everywhere. An excluded control is listed with its rule, because a Fix that
@@ -1039,105 +1055,140 @@ async function runFix(
     return { effect, checks, ...(stopped ? { stopped } : {}) };
   };
 
-  const step: FixContext['step'] = async (name, action) => {
-      const startedAt = new Date();
-      const hop = steps + 1;
-      try {
-        await action();
-      } catch (error) {
-        // The failed step gets its own line, with the error on it, before the
-        // failure is thrown. R11 wants a broken Fix told apart from a failed
-        // Route, and that means saying which step broke rather than leaving it
-        // as a sentence inside the outcome's reason.
-        // Guarded: a check that throws here must not take the step's own
-        // error, and the line that names it, with it.
-        const after = await effectAfter().catch(() => undefined);
-        const effect: HopEffect = after?.effect ?? {
-          readable: false,
-          reason: 'The checks after this step failed, so what it did could not be read.',
-        };
-        const checks = after?.checks ?? [];
-        journal.write({
-          kind: 'fix-hop',
-          hop,
-          name,
-          error: error instanceof Error ? error.message.split('\n')[0] : String(error),
-          startedAt: startedAt.toISOString(),
-          durationMs: Date.now() - startedAt.getTime(),
-          effect,
-          checks,
-          ...(after?.stopped ? { caught: after.stopped } : {}),
-        });
-        throw new FixFailure(name, error);
-      }
-      // Before the entry, as for a Trip hop, so that `durationMs` includes the
-      // settle wait on both kinds of Hop.
-      const { effect, checks, stopped } = await effectAfter();
+  // The label of the step running now, so a step taken inside another step's
+  // `code` is refused. Both would take the same number, the inner one would be
+  // written first, and the settle and checks would run twice: a journal no
+  // longer readable on its own.
+  let running: string | undefined;
+
+  /** Record one step: run it, settle, check, and write its line. */
+  const record = async (label: string, action: () => Promise<void>): Promise<void> => {
+    if (running !== undefined) {
+      throw new Error(
+        `The Fix step "${label}" was taken inside the step "${running}". A step cannot hold another ` +
+          'step: take them one after the other.'
+      );
+    }
+    running = label;
+    const startedAt = new Date();
+    const number = steps + 1;
+    try {
+      await action();
+    } catch (error) {
+      running = undefined;
+      // The failed step gets its own line, with the error on it, before the
+      // failure is thrown. R11 wants a broken Fix told apart from a failed
+      // Route, and that means saying which step broke rather than leaving it
+      // as a sentence inside the outcome's reason.
+      // Guarded: a check that throws here must not take the step's own
+      // error, and the line that names it, with it.
+      const after = await effectAfter().catch(() => undefined);
+      const effect: HopEffect = after?.effect ?? {
+        readable: false,
+        reason: 'The checks after this step failed, so what it did could not be read.',
+      };
+      const checks = after?.checks ?? [];
       journal.write({
-        kind: 'fix-hop',
-        hop,
-        name,
+        kind: 'fix-step',
+        step: number,
+        label,
+        error: error instanceof Error ? error.message.split('\n')[0] : String(error),
         startedAt: startedAt.toISOString(),
         durationMs: Date.now() - startedAt.getTime(),
         effect,
         checks,
-        ...(stopped ? { caught: stopped } : {}),
+        ...(after?.stopped ? { caught: after.stopped } : {}),
       });
-      steps += 1;
+      throw error instanceof FixFailure ? error : new FixFailure(label, error);
+    }
+    running = undefined;
+    // Before the entry, as for a Trip hop, so that `durationMs` includes the
+    // settle wait on both.
+    const { effect, checks, stopped } = await effectAfter();
+    journal.write({
+      kind: 'fix-step',
+      step: number,
+      label,
+      startedAt: startedAt.toISOString(),
+      durationMs: Date.now() - startedAt.getTime(),
+      effect,
+      checks,
+      ...(stopped ? { caught: stopped } : {}),
+    });
+    steps += 1;
 
-      // A check failing after a Fix step is a Fix failure, not a failed Route
-      // (R11): ten Routes failing on one broken step is one problem.
-      const failed = failedChecks(checks);
-      if (failed.length) throw new FixFailure(name, new CheckFailure(`Fix step ${hop}, "${name}"`, failed));
-      // After the entry, as on a Trip hop, so the pause never reads as the
-      // step's own cost.
-      await pauseToWatch(hopDelayMs);
+    // A check failing after a Fix step is a Fix failure, not a failed Route
+    // (R11): ten Routes failing on one broken step is one problem.
+    const failed = failedChecks(checks);
+    if (failed.length) throw new FixFailure(label, new CheckFailure(`Fix step ${number}, "${label}"`, failed));
+    // After the entry, as on a Trip hop, so the pause never reads as the
+    // step's own cost.
+    await pauseToWatch(hopDelayMs);
   };
 
-  const hop: FixContext['hop'] = (target, value) =>
-    step(value === undefined ? target : `${target}, typing ${JSON.stringify(value)}`, async () => {
-      // Surveyed again until the target appears, within the hop timeout, since
-      // a list can fill in after the step that opened it has settled: Positron's
-      // New File list, measured 2026-09-27, lost 1 of 7 `quarto` Routes to a
-      // single survey. A survey takes no draw, so waiting changes nothing a
-      // replay depends on. An excluded target fails at once: waiting cannot
-      // change a rule.
-      const deadline = Date.now() + hopTimeoutMs;
-      let found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
-      let match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
-      while (!match && !found.excluded.some((entry) => targetText(entry.candidate) === target) && Date.now() < deadline) {
-        await new Promise((resolve) => setTimeout(resolve, FIX_TARGET_POLL_MS));
-        found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
-        match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+  /** An `act` step's action: find the target on screen and act on it as a Trip hop would. */
+  const actOn = (target: string, value: string | undefined) => async () => {
+    // Surveyed again until the target appears, within the hop timeout, since
+    // a list can fill in after the step that opened it has settled: Positron's
+    // New File list, measured 2026-09-27, lost 1 of 7 `quarto` Routes to a
+    // single survey. A survey takes no draw, so waiting changes nothing a
+    // replay depends on. An excluded target fails at once: waiting cannot
+    // change a rule.
+    const deadline = Date.now() + hopTimeoutMs;
+    let found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
+    let match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+    while (!match && !found.excluded.some((entry) => targetText(entry.candidate) === target) && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, FIX_TARGET_POLL_MS));
+      found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
+      match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+    }
+    if (!match) {
+      const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
+      throw new Error(
+        refused
+          ? `${target} is on screen but excluded (${refused.rule}), so a Fix cannot act on it either.`
+          : `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${found.candidates
+              .filter((candidate) => !isCommonKey(candidate))
+              .map((candidate) => targetText(journaled(candidate)))
+              .join('; ')}.`
+      );
+    }
+    const action = await actionFor(match, hopTimeoutMs);
+    if (action === 'type' && value === undefined) {
+      throw new Error(`${target} takes typing, so give the value to type: { kind: 'act', target, value }.`);
+    }
+    // Bounded like a Trip hop's action. A menu click takes no timeout of its
+    // own, and a Fix step onto a menu entry whose handler blocks the main
+    // process, as one of Positron's did, would otherwise hang the Journey.
+    const what = `Fix step ${steps + 1}'s ${action} on ${target}`;
+    const acting = act(app, page, match, action, value ?? '', hopTimeoutMs);
+    if (watch) {
+      if ((await watch.bounded(what, acting, hopTimeoutMs)) === STALLED) {
+        throw new ApplicationStoppedAnswering(what, hopTimeoutMs);
       }
-      if (!match) {
-        const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
-        throw new Error(
-          refused
-            ? `${target} is on screen but excluded (${refused.rule}), so a Fix cannot act on it either.`
-            : `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${found.candidates
-                .filter((candidate) => !isCommonKey(candidate))
-                .map((candidate) => targetText(journaled(candidate)))
-                .join('; ')}.`
-        );
-      }
-      const action = await actionFor(match, hopTimeoutMs);
-      if (action === 'type' && value === undefined) {
-        throw new Error(`${target} takes typing, so give the value to type: hop(target, value).`);
-      }
-      // Bounded like a Trip hop's action. A menu click takes no timeout of its
-      // own, and a Fix step onto a menu entry whose handler blocks the main
-      // process, as one of Positron's did, would otherwise hang the Journey.
-      const what = `Fix step ${steps + 1}'s ${action} on ${target}`;
-      const acting = act(app, page, match, action, value ?? '', hopTimeoutMs);
-      if (watch) {
-        if ((await watch.bounded(what, acting, hopTimeoutMs)) === STALLED) {
-          throw new ApplicationStoppedAnswering(what, hopTimeoutMs);
-        }
-      } else await answered(what, acting, hopTimeoutMs + DEFAULT_RESPONSIVE_TIMEOUT_MS);
-    });
+    } else await answered(what, acting, hopTimeoutMs + DEFAULT_RESPONSIVE_TIMEOUT_MS);
+  };
 
-  await fix({ page, app, rng, step, hop });
+  const step: FixContext['step'] = (what) => {
+    // Checked at run time too, for a Fix the compiler did not see.
+    if (what?.kind === 'act' && typeof what.target === 'string') {
+      const label = what.value === undefined ? what.target : `${what.target}, typing ${JSON.stringify(what.value)}`;
+      return record(label, actOn(what.target, what.value));
+    }
+    if (what?.kind === 'code' && typeof what.label === 'string' && typeof what.action === 'function') {
+      return record(what.label, what.action);
+    }
+    return Promise.reject(
+      new FixFailure(
+        String((what as { label?: unknown; target?: unknown })?.label ?? (what as { target?: unknown })?.target ?? 'a step'),
+        new Error(
+          `A Fix step must be { kind: 'act', target, value? } or { kind: 'code', label, action }, and was ${JSON.stringify(what)}.`
+        )
+      )
+    );
+  };
+
+  await fix({ page, app, rng, step });
 }
 
 /** The plain-data form of a candidate, for the record. */
@@ -1221,7 +1272,7 @@ async function nativeDropdownPart(
  *
  * Page and key actions are bounded by `timeoutMs`. **A menu click is not:** it
  * goes through the main process, which takes no timeout, so every caller wraps
- * this in a bound of its own, as the Trip and a Fix's `hop()` both do. The
+ * this in a bound of its own, as the Trip and a Fix's `act` step both do. The
  * caller is also what decides that a timeout ends the Hop rather than the
  * Route. This function only acts and reports what happened.
  */

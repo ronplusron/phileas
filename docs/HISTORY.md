@@ -25,6 +25,43 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-09-29: a Fix is a script of steps, and a Hop is a Trip's jump
+
+**Why.** A Fix was handed two functions, `hop(target, value?)` and
+`step(name, action)`, and its journal lines were `fix-hop`. So "hop" meant a
+Trip's random jump and also a scripted Fix action, while the function named
+`step` made the lines named hops and the function named `hop` was itself a
+`step` with its action written for it. Untangling that took a long
+conversation, which is the measure of how misleading it was. The model
+settled on: a Fix is a script leading to the random jumping, made of steps,
+some of which act on a target the way a Trip hop does. Some steps are not
+interactions at all, such as the wait for proof that earlier steps worked.
+
+**Three designs were weighed.** Keeping `hop()` changed nothing and left
+"hop" meaning two things. Overloading `step()`, one name with two parameter
+lists, kept lines short but turned a `code` step missing its action,
+`step('run df')`, from a compile error into a target search that fails
+mid-Journey. A tagged union names the kind in every call. Counting the calls
+decided between them: across the repository 82 of 93 were `hop()`, which
+favored brevity, but that count is mostly the demos; RStudio's three Fixes,
+the one real application, run 5 act steps and 6 code steps per Route, so
+neither kind is the common case there, and a line that says which it is
+earns its length.
+
+**What landed.** One `step()`, taking `{ kind: 'act', target, value? }` or
+`{ kind: 'code', label, action }`; `hop()` is gone. It is checked at run time
+too, for a Fix the compiler did not see. A step taken inside another step's
+`code` is refused, since both would take one number and the inner line would
+be written first. Journal lines are `fix-step`, numbered in `step` and named
+in `label`; `src/legacy.mjs` reads a `fix-hop` line as one, for
+`readJournal` and the renderer alike, so journals already written still
+read. The glossary's Hop now means only a Trip's jump, with Fix step defined
+beside it, and Control is defined for the first time, since control and
+target had been used interchangeably. RStudio's three Fixes ran in full on
+RStudio through `phileas survey` after the change. The demos' Fixes and
+journal scripts change with the Eighty Days session's branches, once they
+have merged.
+
 ## 2026-09-29: `testbed/` is now `proving-ground/`
 
 Renamed on request, as "testbed" was disliked. "Waypoint" was proposed

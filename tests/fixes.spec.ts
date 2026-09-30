@@ -17,8 +17,8 @@ import {
  * terms, or for one run with `--fix`, which travels as PHILEAS_FIX.
  */
 
-const opens: Fix = async ({ hop }) => hop('button "Summary"');
-const types: Fix = async ({ hop }) => hop('textbox "Search"', 'trunk');
+const opens: Fix = async ({ step }) => step({ kind: 'act', target: 'button "Summary"' });
+const types: Fix = async ({ step }) => step({ kind: 'act', target: 'textbox "Search"', value: 'trunk' });
 const fixes = defineFixes({ opens, 'types-a-word': types });
 
 const callersFix = process.env[FIX_OVERRIDE_VARIABLE];

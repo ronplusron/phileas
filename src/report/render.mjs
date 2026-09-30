@@ -13,7 +13,9 @@
 // to for any file that sits inside node_modules, which is where a consumer that
 // installs a copy of the engine keeps it. So this is JavaScript, with its types
 // written as comments that the compiler checks (tsconfig's checkJs), and it
-// imports nothing, so it loads from anywhere.
+// imports only plain JavaScript, `../legacy.mjs`, so it loads from anywhere.
+
+import { currentEntry } from '../legacy.mjs';
 
 /** @typedef {import('../effect').HopEffect} HopEffect */
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
@@ -182,10 +184,10 @@ export function renderEntry(entry, routeNumber) {
       );
     case 'pool':
       return undefined;
-    case 'fix-hop':
+    case 'fix-step':
       return [
-        column(`${route}  fix ${entry.hop}`, 18),
-        column(shortened(entry.name, 39), 40),
+        column(`${route}  fix ${entry.step}`, 18),
+        column(shortened(entry.label, 39), 40),
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
         caughtText(entry.caught),
         knownText(entry.checks),
@@ -235,7 +237,7 @@ export function renderJournal(text) {
     /** @type {JournalEntry} */
     let entry;
     try {
-      entry = JSON.parse(raw);
+      entry = currentEntry(JSON.parse(raw));
     } catch {
       const last = lines.slice(index + 1).every((rest) => rest.trim() === '');
       out.push(

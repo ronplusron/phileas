@@ -135,7 +135,7 @@ export {
   type JournalEntry,
   type OpeningEntry,
   type PoolEntry,
-  type FixHopEntry,
+  type FixStepEntry,
   type TripHopEntry,
   type HopAction,
   type NoteEntry,
@@ -174,6 +174,7 @@ export {
   type ValueGenerator,
   type Fix,
   type FixContext,
+  type FixStep,
   type RouteOutcome,
   type RunRouteOptions,
 } from './route';

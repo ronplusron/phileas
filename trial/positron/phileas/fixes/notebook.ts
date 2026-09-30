@@ -5,8 +5,8 @@ import type { Fix } from '@drugstoresushi/phileas';
  *
  * Written one step at a time from `phileas survey`.
  */
-export const notebook: Fix = async ({ hop }) => {
-  await hop('button "New"');
-  await hop('menuitem "New File... ⌃⌥⌘N"');
-  await hop('option "Jupyter Notebook, Classic .ipynb Support, Notebook"');
+export const notebook: Fix = async ({ step }) => {
+  await step({ kind: 'act', target: 'button "New"' });
+  await step({ kind: 'act', target: 'menuitem "New File... ⌃⌥⌘N"' });
+  await step({ kind: 'act', target: 'option "Jupyter Notebook, Classic .ipynb Support, Notebook"' });
 };

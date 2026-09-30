@@ -22,7 +22,7 @@ import {
   type AppCheck,
   type AppUnderTest,
   type Chooser,
-  type FixHopEntry,
+  type FixStepEntry,
   type JournaledCheck,
   type TripHopEntry,
 } from '../src/index';
@@ -477,8 +477,8 @@ fixTest('a check failing after a Fix step is a Fix failure, not a failed Route (
     routeNumber: 1,
     tripLength: 3,
     journalsRoot: root,
-    fix: async ({ hop }) => {
-      await hop('button "Weigh the trunk"');
+    fix: async ({ step }) => {
+      await step({ kind: 'act', target: 'button "Weigh the trunk"' });
     },
   }).then(
     () => undefined,
@@ -489,7 +489,7 @@ fixTest('a check failing after a Fix step is a Fix failure, not a failed Route (
   expect((error as FixFailure).cause).toBeInstanceOf(CheckFailure);
 
   const entries = journalIn(root);
-  const step = entries.find((entry): entry is FixHopEntry => entry.kind === 'fix-hop');
+  const step = entries.find((entry): entry is FixStepEntry => entry.kind === 'fix-step');
   expect(result(step?.checks ?? [], 'uncaught-error')?.result).toBe('failed');
   // The Trip never started.
   expect(entries.some((entry) => entry.kind === 'trip-hop')).toBe(false);

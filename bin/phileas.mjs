@@ -19,7 +19,7 @@
 //
 // `survey` launches the application and prints what the engine sees at the
 // start, then runs the Fix and prints what it sees after it, in the form a
-// Fix's hop() takes, so a Fix is written by copying lines rather than by
+// Fix's act step takes, so a Fix is written by copying lines rather than by
 // reading the application's code.
 //
 // `known add` marks a finding filed with its issue. A Journey adds what it found
@@ -95,7 +95,7 @@ show: print a finished run, one line per Hop.
             Defaults to the latest run under ${DEFAULT_JOURNALS}/.
 
 survey: print what the engine sees when the application starts, one line per
-  control, each in the form a Fix's hop() takes. Then, if there is a Fix, run
+  candidate, each in the form a Fix's act step takes. Then, if there is a Fix, run
   it, printing each step, and print what the engine sees after it, where the
   Trip would begin. Nothing travels and no journal is written.
   config    As for run. Defaults to ${DEFAULT_CONFIG}/.
