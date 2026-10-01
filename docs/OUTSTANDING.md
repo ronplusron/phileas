@@ -531,31 +531,12 @@ nothing else is decided.
   role, so the Positron runs can say, before any number is picked, which
   roles changed the screen when drawn and how often each crowded a pool.
 
-### 1.16 What the engine asks of a consumer's Electron and Playwright
+### 1.16 What the engine asks of a consumer's Playwright
 
-Asked on 2026-09-29 to be followed up, both together, after reading what
-RStudio's end-to-end test package would meet if it took the engine.
-
-**Electron.** The engine's `package.json` asks for `electron` at `>=43 <45`
-as a peer. The engine never loads it at run time: it launches the
-application's own program, and the one `require('electron')` in
-`src/launch.ts` runs inside the application, against its Electron. It is
-used only for type-checking. So a consumer whose application brings its own
-Electron gains nothing from it and pays for it: npm installs a missing peer
-by itself, which for Electron 44.4.3 is a 130 MB download on this Mac, and
-refuses to install at all where another version is already listed. RStudio's
-test package lists no Electron, and RStudio shipped 42.11.6 in 2026.09.1
-while its own source had moved to 43.7.5. A copy of Electron elsewhere in a
-repository is not seen, since npm looks only in the package's own folders
-and those above it.
-
-Proposed, not yet done: make it `"*"` and optional in `peerDependenciesMeta`,
-so npm fetches nothing and accepts whatever is there. Measure first, in a
-scratch consumer with no Electron, that npm installs none, that the
-engine's own source still type-checks strictly, and that a real Route runs;
-this repository cannot show it, since it installs Electron for its proving ground.
-A consumer wanting Electron's types could point its own TypeScript at a
-copy it already has.
+Asked on 2026-09-29 to be followed up, together with the same question for
+Electron, after reading what RStudio's end-to-end test package would meet if
+it took the engine. Electron's half closed on 2026-10-01, when the peer was
+removed; `HISTORY.md` has it.
 
 **Playwright.** The engine asks for `@playwright/test` at `~1.63.0`, and
 RStudio's test package pins `1.61.1`. The engine calls Playwright's API at

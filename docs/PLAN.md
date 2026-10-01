@@ -1282,7 +1282,11 @@ the same day, and `HISTORY.md` has it. The order for what is left:
    and imports the editor's own `tests/e2e/harness.ts` rather than
    repeating its launch settings. An install through git was measured
    working from a scratch consumer, which `HISTORY.md` has; this is the
-   first real one.
+   first real one. It approves the engine's `prepare` in `allowScripts`,
+   and the install is measured with and without that approval, since npm's
+   documentation and the scratch consumer disagree on whether it is needed.
+   A real Route here is also the first to run with no Electron package
+   installed beside the engine.
 2. **The same seed before and after the move**, with and without the
    `new-document` Fix, taking the same Hops. Any difference is the move's.
 3. **`trial/editor/` removed**, and `../ORIENTATION.md` pointed at the

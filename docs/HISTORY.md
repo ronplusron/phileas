@@ -79,11 +79,27 @@ build.
 `@playwright/test` beside it, on npm 11.19. npm cloned the branch, ran
 `prepare`, and installed `dist/`; the lockfile names the exact commit; the
 same spec passed. It took 10 seconds and 40 MB. Electron 44.5.1 arrived as
-well, without its binary, because npm installs a missing peer by itself,
-which is the cost the open question about the Electron peer already
-describes. npm also printed a warning listing the engine's `prepare` among
-scripts to review, ran it anyway, and `npm install-scripts ls` then listed
-nothing waiting; whether a later npm stops running it is not known.
+well, without its binary, because npm installs a missing peer by itself;
+the next paragraph is what came of that. npm also printed a warning listing
+the engine's `prepare` among scripts to review, ran it anyway, and
+`npm install-scripts ls` then listed nothing waiting. npm's own
+documentation for `npm install-scripts` says the opposite should happen:
+dependency install scripts, `prepare` from a git source among them, "are
+blocked by default" unless the consumer's `package.json` approves them in an
+`allowScripts` field. Which one holds is not known, so a consumer approves
+the engine by name, with
+`npm install-scripts approve @drugstoresushi/phileas --no-allow-scripts-pin`,
+and the editor's adapter measures the install with and without it.
+
+**The Electron peer is gone.** It was declared on 2026-09-22 "because the
+consumer supplies the Electron binary", and a peer does the opposite: npm
+installs a missing one by itself, so it made npm supply Electron to every
+consumer, and refuse to install where a consumer listed another version. The
+engine imports nothing from the package; the compiled declarations do not
+name it either, checked against `dist/`. Asked the same day: "Remove the
+Electron peer." It stays a dev dependency, for the engine's own tests. A
+scratch consumer installing the packed engine then got no Electron, and 26
+MB of `node_modules` where the git install above had 40.
 
 ## 2026-10-01: the editor's adapter is to move to the editor's repository
 

@@ -409,10 +409,11 @@ produces. Edit the application without repackaging and the staleness guard
 refuses to run, naming the file that differs, which is the behavior rather
 than a fault.
 
-`@electron/asar` is a dependency; `@playwright/test` and `electron` are peer
-dependencies with dev dependencies alongside. The peers are deliberate: a
-consumer supplies the Electron binary, and a second copy of Playwright in the
-tree would hand that consumer fixtures from the wrong instance.
+`@electron/asar` is a dependency; `@playwright/test` is a peer dependency with
+a dev dependency alongside, because a second copy of Playwright in the tree
+would hand a consumer fixtures from the wrong instance. `electron` is a dev
+dependency only: the engine launches the application's own Electron and
+imports nothing from the package, so a consumer is never asked for one.
 
 Playwright's downloaded browsers are not needed and installing did not fetch
 any. The engine drives an Electron binary through Playwright's own Electron
