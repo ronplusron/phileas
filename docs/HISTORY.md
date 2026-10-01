@@ -25,6 +25,28 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-01: preparing RStudio's copy is a script
+
+**Why.** The RStudio trial was to run on another machine, where the copy of
+the application with two fuses switched back on did not exist and could not
+be copied over. The script that made the first copy on 2026-09-28 was never
+committed; only the description under that date was.
+
+**What landed.** `trial/rstudio/prepare-app.mjs` copies the installed
+application with `ditto`, switches RunAsNode and the inspector arguments on
+in every fuse wire of the copy, signs it ad hoc and verifies the signature.
+It refuses a copy that already exists, a binary with no wire or more than
+two, and any wire not reading `000000011`, the only reading it was tried on,
+unless `--any-wire` is given. The fuse layout and sentinel were read from
+Electron's own `@electron/fuses` 2.1.3 rather than recalled.
+
+**Measured** against RStudio 2026.09.1+183, the release the first copy came
+from. The new copy's wires read `100100011` in both architectures, the same
+as the copy in use since 2026-09-28, and the installed application's still
+read `000000011`. One Route of two Hops then passed through it, with the
+home folder guard and the R library guard both clean, and running the
+script again over the same copy was refused.
+
 ## 2026-10-01: the home folder guard is the engine's
 
 **Why.** The editor's new adapter is to live in the editor's repository,

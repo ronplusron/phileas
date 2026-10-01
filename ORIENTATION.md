@@ -157,6 +157,9 @@ The adapter is in `trial/rstudio/`, pointed at a copy of the installed
 release with two fuses switched back on, since the installed release refuses
 the ordinary launch: for example
 `PHILEAS_APP_DIR=~/Applications/RStudio-2026.09.1-fuses.app phileas run trial/rstudio/phileas`.
+**On a machine without that copy,** `node trial/rstudio/prepare-app.mjs`
+makes one from `/Applications/RStudio.app` and prints where it put it; the
+machine needs R, with `Rscript` on the PATH, for the trial's R library guard.
 More than a hundred Routes have run through it, one Route at a time, and
 two new RStudio bugs came from them, each an error logged with nothing
 wrong on screen: closing a terminal, which RStudio's developers have since
