@@ -25,6 +25,59 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-01: the engine is compiled, and loads from another repository
+
+**Why.** Installed anywhere but this repository, the engine could not load.
+It shipped its TypeScript source, and inside a consumer's `node_modules`
+neither Node nor Playwright compiles it: a scratch consumer installing it as
+a git dependency stopped on "Stripping types is currently unsupported for
+files under node_modules". A `file:` link from another repository compiled
+but brought two copies of Playwright, which Playwright refuses. Every
+consumer so far sat inside this repository, which is the only reason nothing
+had failed. The fix, a build step and a guard against running a stale build,
+was offered with a recommendation the same day and agreed.
+
+**What landed.** `tsconfig.build.json` compiles `src/` into `dist/`, with
+declarations, and the package's `main`, `types` and `exports` point there.
+It ships `dist/`, `bin/` and the `.mjs` files in `src/`, which the `phileas`
+command imports as they are, so it still runs without a build. A `prepare`
+script builds on install, which npm's documentation says it also runs when
+installing from git, and `npm test`, `npm run journey` and the demo scripts
+build first.
+
+**Imports name their files.** Compiled JavaScript has to, and 61 relative
+imports in 11 files did not, because nothing had ever been compiled to a
+file: `tsconfig.json` is `noEmit`, and Playwright compiled each file as it
+loaded it and found a file with no extension the way a bundler does. Each
+now ends in `.js`, which the type-checker and Playwright both read as the
+`.ts` beside it. Bundling with esbuild was the alternative and was not
+taken: it adds a dependency, and would put a second copy of the `.mjs`
+modules inside the bundle.
+
+**A stale build refuses to load.** The proving ground, the demos and the
+trials import the engine by name, so they now run the last build, and an
+edit to `src/` without one would have them test the old engine and pass.
+`src/fresh-build.ts` runs first when the compiled engine loads, and throws,
+naming the newer files, when any `.ts` or `.mjs` in `src/` is newer than
+`dist/index.js`. It checks only in a source checkout, so an installed copy,
+which ships no TypeScript, is never checked. `PHILEAS_ALLOW_STALE_BUILD=1`
+loads it anyway for one run, and says so. It goes by modification time,
+which a copy that keeps old times would get past.
+
+**Measured.** TypeScript 7.0.2 compiles it with declarations and no errors.
+`tests/installed.spec.ts` packs the engine as npm does, unpacks it into a
+consumer's `node_modules` outside this repository, checks that no TypeScript
+source was shipped, and runs a spec importing it: it passes. **The control:**
+the same steps against the packaging on `main` failed with the error above,
+so the test can tell the two apart. `tests/fresh-build.spec.ts` covers the
+guard, five cases. The suite went from 328 passed to 334, building first. `buggy`'s adapter imports only a type from the engine, so
+the tests, which import `src/`, never load a second copy of it alongside the
+build.
+
+**Not yet measured:** an install through git, where npm installs the
+engine's own development dependencies to build it, Electron among them. The
+editor's adapter is the first, and `PLAN.md` phase 9 measures it there.
+
 ## 2026-10-01: the editor's adapter is to move to the editor's repository
 
 **Decided, not yet done.** Asked where an adapter should live, the same

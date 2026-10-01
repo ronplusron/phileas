@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -294,43 +294,6 @@ finding, while every draw is the same. The failure says when the finding
 arrived and lists the steps before it, so a reader can see the two runs
 agree; nothing yet compares them, and R13 would read the second as a seed
 that no longer reproduces.
-
-## No repository but this one can load the engine
-
-**Filed 2026-10-01, measured in a scratch consumer outside this
-repository.** The package ships its TypeScript source: `main` and `exports`
-name `src/index.ts`. Installed as a git dependency, `github:ronplusron/phileas`
-at `6c94101`, the engine lands in the consumer's `node_modules`, and a spec
-importing it stopped before running: "Stripping types is currently
-unsupported for files under node_modules". `bin/phileas.mjs` already says
-Node will not erase types there, and Playwright's own compiling does not
-reach there either.
-
-**A `file:` link from another repository fails another way.** The link
-resolves into this checkout, outside any `node_modules`, so the source
-compiles. But the engine then finds `@playwright/test` in this repository's
-`node_modules` while the consumer's spec finds the consumer's own, and
-Playwright refuses to run with two copies. `OUTSTANDING.md` 1.3 predicted
-that one. Every consumer so far avoids both because it sits inside this
-repository and finds the one copy here by walking up the folders.
-
-**The control.** The same spec passed with the engine linked from outside
-`node_modules` and the consumer's `@playwright/test` a link to this
-repository's copy. So the spec could pass, and each failure is the way the
-engine was installed, not the spec.
-
-**Why it is a defect and not a limit.** The engine is a package consumed
-from `node_modules`, which is the stack's reason for being one, and no
-repository but this one can consume it. Nothing has failed only because no
-adapter has yet lived in its application's own repository; the first one
-to try cannot start.
-
-**What closes it, decided 2026-10-01.** A build step. The engine compiles to
-JavaScript, `main`, `exports` and `bin` point at what it compiles to, and a
-`prepare` script runs the build, which npm's own documentation says it runs
-when installing a git dependency. `@playwright/test` stays a peer only, so a
-consumer's copy is the one copy. The same spec passing when installed as a
-git dependency is what shows it closed. `PLAN.md` phase 9 has the order.
 
 ## Two things that will look like candidates, and are not
 

@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
-import type { AppUnderTest, UniversalCheck } from './app-under-test';
-import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle';
-import { stubOpenExternal, stubOpenPaths, stubSelfLaunch, clearOpenExternal } from './external';
-import { stubNativeDialogs } from './dialogs';
-import { prepareFirstLine } from './first-line';
+import type { AppUnderTest, UniversalCheck } from './app-under-test.js';
+import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle.js';
+import { stubOpenExternal, stubOpenPaths, stubSelfLaunch, clearOpenExternal } from './external.js';
+import { stubNativeDialogs } from './dialogs.js';
+import { prepareFirstLine } from './first-line.js';
 
 /**
  * How the engine got into the application.

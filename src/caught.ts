@@ -1,7 +1,7 @@
 import type { ElectronApplication } from '@playwright/test';
-import { RECORDER as DIALOGS } from './dialogs';
-import type { NativeDialogCall } from './dialogs';
-import { PATHS_RECORDER, RECORDER as OUTBOUND, SELF_LAUNCH_RECORDER } from './external';
+import { RECORDER as DIALOGS } from './dialogs.js';
+import type { NativeDialogCall } from './dialogs.js';
+import { PATHS_RECORDER, RECORDER as OUTBOUND, SELF_LAUNCH_RECORDER } from './external.js';
 
 /**
  * What the engine's stubs caught during one Hop: the calls the application

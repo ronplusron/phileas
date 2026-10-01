@@ -8,8 +8,8 @@ import {
   type LogPath,
   type Narrowing,
   type UniversalCheck,
-} from '../app-under-test';
-import type { JournaledCheck } from '../journal';
+} from '../app-under-test.js';
+import type { JournaledCheck } from '../journal.js';
 import { currentSignature, findingId, refuseUnfitVarying, signatureOf, type KnownFindings } from '../known.mjs';
 import {
   arrivalFields,
@@ -20,7 +20,7 @@ import {
   type Arrival,
   type Observed,
   type StepSpan,
-} from '../timeline';
+} from '../timeline.js';
 
 /**
  * The checks, run after every Hop, Fix steps included (R15).

@@ -1,14 +1,14 @@
-import { overriddenTerms, requireRun, requireSeed, resolveRun, resolveSeed, SEED_VARIABLE, type Journey } from './journey';
+import { overriddenTerms, requireRun, requireSeed, resolveRun, resolveSeed, SEED_VARIABLE, type Journey } from './journey.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { journalFolder } from './journal';
+import { journalFolder } from './journal.js';
 import { recordJourneyFindings, renderJourneyFindings, type JourneyFindings } from './known.mjs';
-import { folderName, TEMP_FOLDER_VARIABLE, windowMode } from './launch';
-import type { AppUnderTest } from './app-under-test';
-import { fixFor, type Fixes } from './fixes';
-import { allowStaleFromEnvironment } from './bundle';
-import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route';
+import { folderName, TEMP_FOLDER_VARIABLE, windowMode } from './launch.js';
+import type { AppUnderTest } from './app-under-test.js';
+import { fixFor, type Fixes } from './fixes.js';
+import { allowStaleFromEnvironment } from './bundle.js';
+import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route.js';
 
 /**
  * Settle the seed, name the run, check the run's settings and print them. The

@@ -1,16 +1,16 @@
 import type { ElectronApplication, Page } from '@playwright/test';
-import type { AppUnderTest } from './app-under-test';
-import type { Rng, RouteStreams } from './random';
-import { caughtSince, type CaughtByStubs } from './caught';
-import { effectOf, type HopEffect } from './effect';
-import { fixName } from './fixes';
-import { Journal, fixFingerprint, journalFolder, type HopAction, type JournaledCandidate, type JournaledCheck } from './journal';
-import { requireRun } from './journey';
-import { clickMenuItem } from './menu';
+import type { AppUnderTest } from './app-under-test.js';
+import type { Rng, RouteStreams } from './random.js';
+import { caughtSince, type CaughtByStubs } from './caught.js';
+import { effectOf, type HopEffect } from './effect.js';
+import { fixName } from './fixes.js';
+import { Journal, fixFingerprint, journalFolder, type HopAction, type JournaledCandidate, type JournaledCheck } from './journal.js';
+import { requireRun } from './journey.js';
+import { clickMenuItem } from './menu.js';
 import { renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
-import { CheckFailure, DEFAULT_RESPONSIVE_TIMEOUT_MS, failedChecks, startWatching, STALLED, type Watch } from './oracles/index';
-import type { StepSpan } from './timeline';
+import { CheckFailure, DEFAULT_RESPONSIVE_TIMEOUT_MS, failedChecks, startWatching, STALLED, type Watch } from './oracles/index.js';
+import type { StepSpan } from './timeline.js';
 import {
   answered,
   ApplicationStoppedAnswering,
@@ -22,7 +22,7 @@ import {
   type SurveyedCandidate,
   type SurveyResult,
   type ExclusionTally,
-} from './survey';
+} from './survey.js';
 
 /**
  * One Route: the Fix, then hops until the Trip is complete or there is nowhere

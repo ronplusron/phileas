@@ -1,3 +1,7 @@
+// First, so a compiled engine older than its source refuses before anything
+// else of it runs. fresh-build.ts says why.
+import './fresh-build.js';
+
 export type {
   AppUnderTest,
   Candidate,
@@ -9,8 +13,8 @@ export type {
   AppCheckContext,
   AppCheckVerdict,
   LogPath,
-} from './app-under-test';
-export { UNIVERSAL_CHECKS } from './app-under-test';
+} from './app-under-test.js';
+export { UNIVERSAL_CHECKS } from './app-under-test.js';
 export {
   resolveBundle,
   assertBundleFresh,
@@ -18,7 +22,7 @@ export {
   ALLOW_STALE_VARIABLE,
   type ResolvedBundle,
   type GuardVerdict,
-} from './bundle';
+} from './bundle.js';
 export {
   launchApp,
   closeApp,
@@ -42,14 +46,14 @@ export {
   UNAVAILABLE_UNDER,
   type LaunchedApp,
   type LaunchPath,
-} from './launch';
-export { createTest, expect, rendererVerdict, screenshotWithin, type PhileasFixtures } from './fixtures';
+} from './launch.js';
+export { createTest, expect, rendererVerdict, screenshotWithin, type PhileasFixtures } from './fixtures.js';
 export {
   clickMenuItem,
   menuLabels,
   menuEntries,
   type MenuEntry,
-} from './menu';
+} from './menu.js';
 export {
   stubOpenExternal,
   openedExternally,
@@ -58,10 +62,10 @@ export {
   openedPaths,
   stubSelfLaunch,
   selfLaunches,
-} from './external';
-export { caughtSince, type CaughtByStubs } from './caught';
-export { stubNativeDialogs, nativeDialogs, type NativeDialogCall } from './dialogs';
-export { endStrayProcesses, type StrayReport } from './strays';
+} from './external.js';
+export { caughtSince, type CaughtByStubs } from './caught.js';
+export { stubNativeDialogs, nativeDialogs, type NativeDialogCall } from './dialogs.js';
+export { endStrayProcesses, type StrayReport } from './strays.js';
 export {
   defineJourney,
   routeNumbers,
@@ -79,9 +83,10 @@ export {
   RUN_VARIABLE,
   type Journey,
   type JourneyTerms,
-} from './journey';
-export { startJourney, finishJourney, runEveryCheck, startTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start';
-export { defineFixes, fixFor, fixName, NO_FIX, type Fixes } from './fixes';
+} from './journey.js';
+export { startJourney, finishJourney, runEveryCheck, startTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start.js';
+export { staleSources, requireFreshBuild, ALLOW_STALE_BUILD_VARIABLE } from './fresh-build.js';
+export { defineFixes, fixFor, fixName, NO_FIX, type Fixes } from './fixes.js';
 export {
   signatureOf,
   refuseUnfitVarying,
@@ -105,7 +110,7 @@ export {
   deriveRouteStreams,
   type Rng,
   type RouteStreams,
-} from './random';
+} from './random.js';
 export {
   survey,
   takesTypedValue,
@@ -126,7 +131,7 @@ export {
   type UnnamedElement,
   type ExcludedCandidate,
   type ExclusionTally,
-} from './survey';
+} from './survey.js';
 export {
   Journal,
   readJournal,
@@ -142,8 +147,8 @@ export {
   type ClosingEntry,
   type JournaledCandidate,
   type JournaledCheck,
-} from './journal';
-export { effectOf, headingsIn, EFFECT_HEADINGS_LISTED, type HopEffect } from './effect';
+} from './journal.js';
+export { effectOf, headingsIn, EFFECT_HEADINGS_LISTED, type HopEffect } from './effect.js';
 export {
   runRoute,
   settle,
@@ -177,7 +182,7 @@ export {
   type FixStep,
   type RouteOutcome,
   type RunRouteOptions,
-} from './route';
+} from './route.js';
 export {
   startWatching,
   failedChecks,
@@ -193,5 +198,5 @@ export {
   rendererObservation,
   type Watch,
   type WatchOptions,
-} from './oracles/index';
+} from './oracles/index.js';
 export { renderEntry, renderJournal, effectText, targetText, shortened } from './report/render.mjs';

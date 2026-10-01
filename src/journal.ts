@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { CaughtByStubs } from './caught';
-import type { HopEffect } from './effect';
+import type { CaughtByStubs } from './caught.js';
+import type { HopEffect } from './effect.js';
 import { currentEntry } from './legacy.mjs';
 import { renderEntry } from './report/render.mjs';
 

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { extractFile, listPackage, statFile } from '@electron/asar';
-import type { AppUnderTest } from './app-under-test';
+import type { AppUnderTest } from './app-under-test.js';
 
 export interface ResolvedBundle {
   appDir: string;

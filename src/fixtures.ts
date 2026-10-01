@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import { test as base, expect, type ElectronApplication, type Page } from '@playwright/test';
-import type { AppUnderTest } from './app-under-test';
-import { launchApp, closeApp, makeUserDataDir, removeProfile, type LaunchedApp } from './launch';
-import { openedExternally } from './external';
-import { judgedByTheWatch, rendererObservation } from './oracles/index';
-import { answered } from './survey';
-import { endStrayProcesses } from './strays';
+import type { AppUnderTest } from './app-under-test.js';
+import { launchApp, closeApp, makeUserDataDir, removeProfile, type LaunchedApp } from './launch.js';
+import { openedExternally } from './external.js';
+import { judgedByTheWatch, rendererObservation } from './oracles/index.js';
+import { answered } from './survey.js';
+import { endStrayProcesses } from './strays.js';
 
 /** How long each diagnostic at a test's end may wait on the application. */
 const DIAGNOSTIC_TIMEOUT_MS = 5_000;

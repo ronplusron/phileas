@@ -1,5 +1,5 @@
-import { FIX_OVERRIDE_VARIABLE, overriddenTerms, type Journey } from './journey';
-import type { Fix } from './route';
+import { FIX_OVERRIDE_VARIABLE, overriddenTerms, type Journey } from './journey.js';
+import type { Fix } from './route.js';
 
 /**
  * A consumer's Fixes, each under the name a Journey and `phileas run --fix`

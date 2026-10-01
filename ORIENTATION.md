@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and twenty-eight tests, after a
+through, and `npm test` runs three hundred and thirty-four tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -149,8 +149,7 @@ any running copy of the editor first, or the home guard cannot tell its
 writes from the run's. **In a fresh checkout, run `npm install` in
 `trial/editor/` first,** as for each trial: without it the engine's package
 is missing there and the run cannot start. **It is moving to the editor's
-own repository,** decided 2026-10-01, after a build step the engine needs
-first; `docs/PLAN.md` phase 9 has the order.
+own repository,** decided 2026-10-01; `docs/PLAN.md` phase 9 has the order.
 
 **RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
@@ -327,7 +326,14 @@ npm test
 npm run journey
 ```
 
-`npm test` typechecks, then runs the engine's own three hundred and twenty-eight tests against `proving-ground/buggy/`.
+**The engine is compiled, and runs from `dist/`.** `npm install` builds it,
+and `npm test`, `npm run journey` and the demo scripts build it again first.
+Anything else that loads the engine by name, such as a trial run through the
+`phileas` command, runs the last build: after editing `src/`, run
+`npm run build`, or the compiled engine refuses to load and names the newer
+files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
+
+`npm test` typechecks, then runs the engine's own three hundred and thirty-four tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
@@ -443,7 +449,10 @@ it refuses by name when the variable is unset or is not a folder. `buggy`
 does not use it, since its adapter sits inside its repository and finds it
 from there.
 
-`tsconfig.json` is `noEmit` with `strict` and `noUncheckedIndexedAccess` on.
+`tsconfig.json` is `noEmit` with `strict` and `noUncheckedIndexedAccess` on;
+`tsconfig.build.json` extends it to compile `src/` into `dist/`, which is
+what the package points at. A relative import names its file with `.js`, the
+name it has once compiled.
 `noUncheckedIndexedAccess` is not tidiness: an engine that travels indexes into
 arrays of discovered elements constantly, and that flag is what forces the
 empty-survey case to be handled rather than crashing on a route that found

@@ -1,6 +1,6 @@
 import type { ElectronApplication, Locator, Page } from '@playwright/test';
-import type { Candidate, Exclusions } from './app-under-test';
-import { menuEntries } from './menu';
+import type { Candidate, Exclusions } from './app-under-test.js';
+import { menuEntries } from './menu.js';
 
 /**
  * What a Route could act on next, found from the running application.

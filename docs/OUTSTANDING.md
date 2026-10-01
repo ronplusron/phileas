@@ -60,11 +60,11 @@ and the right way to test a bug-finder is to point it at known bugs.
 
 `proving-ground/buggy` already consumes the engine as a `file:` dependency and
 imports it by package name, but that symlink lands back inside this
-repository. **The case that matters was measured on 2026-10-01 and fails:**
-installed in another repository, the engine's TypeScript is not compiled.
-So the engine must be built before it can be consumed. `DEFECTS.md` has the
-measurement, and `PLAN.md` phase 9 the order: the build step, then the
-editor's adapter moving to the editor's own repository.
+repository. **The engine is compiled since 2026-10-01**, and loads from a
+consumer's `node_modules` outside this repository, which
+`tests/installed.spec.ts` checks; `HISTORY.md` has how. What is left is the
+first real consumer in a checkout of its own, the editor's adapter moving to
+the editor's repository, in `PLAN.md` phase 9.
 
 **The consumers here do not declare `@playwright/test`, on purpose.** The
 review of 2026-09-27 asked for it, since each imports Playwright directly and

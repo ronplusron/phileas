@@ -1,28 +1,35 @@
 {
   "name": "@drugstoresushi/phileas",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "An exploratory testing engine for Electron apps: unscripted travel with continuous invariant checking.",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "bin": {
     "phileas": "./bin/phileas.mjs"
   },
   "files": [
-    "src",
-    "bin"
+    "dist",
+    "bin",
+    "src/**/*.mjs"
   ],
   "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "typecheck": "tsc --noEmit",
-    "test": "tsc --noEmit && playwright test",
-    "journey": "node bin/phileas.mjs run proving-ground/buggy/phileas",
-    "demo:train": "node demo/rail-itinerary/watch.mjs",
-    "demo:train:present": "node demo/rail-itinerary/present.mjs",
-    "demo:eighty-days": "node demo/eighty-days/watch.mjs",
-    "demo:eighty-days:present": "node demo/eighty-days/present.mjs"
+    "test": "npm run build && tsc --noEmit && playwright test",
+    "journey": "npm run build && node bin/phileas.mjs run proving-ground/buggy/phileas",
+    "demo:train": "npm run build && node demo/rail-itinerary/watch.mjs",
+    "demo:train:present": "npm run build && node demo/rail-itinerary/present.mjs",
+    "demo:eighty-days": "npm run build && node demo/eighty-days/watch.mjs",
+    "demo:eighty-days:present": "npm run build && node demo/eighty-days/present.mjs"
   },
   "engines": {
     "node": ">=24"

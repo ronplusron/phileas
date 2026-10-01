@@ -31,10 +31,10 @@
 // docs/HISTORY.md has the reasoning for each.
 //
 // Plain JavaScript on purpose, with its types in comments that the compiler
-// checks. The engine is TypeScript imported without file extensions, which
-// Node cannot load, and Node will not erase types from a file inside
-// node_modules either, so this imports only the renderer and known.mjs,
-// both plain JavaScript for that reason. It checks that each flag is known and has a
+// checks. The engine is TypeScript, which Node runs only once it is compiled
+// into dist/, so this imports only the renderer and known.mjs, both plain
+// JavaScript and shipped as source, and runs whether or not anything has been
+// built. It checks that each flag is known and has a
 // value; whether the value is good is checked by the engine, in defineJourney
 // and startJourney, before anything launches, so the rules live in one place.
 import { spawn } from 'node:child_process';
