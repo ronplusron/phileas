@@ -1270,6 +1270,28 @@ already the default. So whether a package outside the consumer transpiles
 is still unanswered. `HISTORY.md` has what the adapter needed and what its
 first Routes measured.
 
+**Changed again on 2026-10-01: the editor's adapter moves to the editor's
+own repository.** The reason above did not hold, and this repository is
+public, not private; `HISTORY.md` has both. Measured the same day, a package
+outside the consumer is not compiled, which `DEFECTS.md` carries. The order:
+
+1. **A build step**, closing that defect. The engine compiles to
+   JavaScript, run by a `prepare` script, and stays a peer of
+   `@playwright/test`. The scratch consumer that failed is rerun installing
+   by git dependency, and passes.
+2. **`editor/phileas/`**, with a `package.json` of its own, so the editor's
+   root install never reaches it. It installs the engine with
+   `npm install github:ronplusron/phileas`, declares `@playwright/test`,
+   and imports the editor's own `tests/e2e/harness.ts` rather than
+   repeating its launch settings.
+3. **The same seed before and after the move**, with and without the
+   `new-document` Fix, taking the same Hops. Any difference is the move's.
+4. **`trial/editor/` removed**, and `../ORIENTATION.md` pointed at the
+   editor's repository.
+
+What happens to this repository's history of the editor is
+`OUTSTANDING.md` 2.21.
+
 The repository is the confirmed consumer that already has an interface to
 travel through; the second follows once its own migration gives it one.
 `HISTORY.md` names both, and records the deployment shape settled for them.

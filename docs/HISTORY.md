@@ -25,6 +25,52 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-01: the editor's adapter is to move to the editor's repository
+
+**Decided, not yet done.** Asked where an adapter should live, the same
+comparison was put to the editor's, as if `trial/editor/` did not exist
+yet. Said: "I want option 2 for Editor": the adapter in `editor/phileas/`,
+installing the engine as a git dependency. `PLAN.md` phase 9 has the order,
+and `DEFECTS.md` the defect that has to close first.
+
+**The reason recorded on 2026-09-30 did not hold.** It was that the editor's
+CI runs `npm ci`, which could not reach the engine. A `phileas/` folder with
+its own `package.json` is never installed by that, and checked the same day,
+the editor's type-check covers only `src`, `tests`, `scripts` and its config
+files, and its Playwright run only `tests/e2e`. Nothing in CI reaches it.
+
+**What decided it.** The adapter can import the editor's own
+`tests/e2e/harness.ts`, so its launch settings cannot drift from the
+editor's suite, where a copy here falls behind silently. And this repository
+is public while the editor's is private, so `trial/editor/` publishes a
+private application's controls, launch settings and defects. That second
+reason is temporary. Said the same day: "It's public temporarily, it'll be
+back to private soon."
+
+**The three shapes compared**, each keeping the adapter in the editor's
+repository:
+
+- **A git dependency**, chosen. One line in `package.json`, the commit
+  pinned in the lockfile. An engine change reaches the editor only once it
+  is pushed and the editor installs again.
+- **This repository as a git submodule of the editor's**, linked by
+  `file:`. It would work without a build step, but each clone needs an
+  extra step, and an `npm install` inside the submodule brings back two
+  copies of Playwright.
+- **This repository as a subfolder of an unrelated one**, pulled in the
+  same way. It adds nothing over the second, and rules out the first for
+  good: npm's documentation, read for npm 11.19, gives a git dependency no
+  way to name a subfolder. Every clone fetches the whole host repository
+  unless sparse checkout is set up in it by hand, and that setting is not
+  recorded anywhere a fresh clone would pick up.
+
+**Also read in npm's documentation:** npm runs `prepare`, among other
+scripts, when it installs a git dependency, and installs the default branch
+when none is named, so `npm install github:ronplusron/phileas` is the whole
+command. A seed replays only against the engine it ran on, so moving the
+pin is a change a recorded finding has to be rerun across, which is the
+open question of reproducing a finding after a change, in general.
+
 ## 2026-09-30: each Hop's line says when things arrived, and R12 is a Must
 
 **Why.** The failure's reason had learned to say when its finding arrived,

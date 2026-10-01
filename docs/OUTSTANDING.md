@@ -59,21 +59,21 @@ and the right way to test a bug-finder is to point it at known bugs.
 ### 1.3 Wiring a consuming repository in another checkout
 
 `proving-ground/buggy` already consumes the engine as a `file:` dependency and
-imports it by package name, so the shape is proved. **What is not proved is
-the case that matters**, because that symlink lands back inside this
-repository: whether Playwright transpiles a package whose TypeScript source
-sits outside the consumer's own tree. Phase 9 is where that is found out, and
-the answer decides whether the engine must be built before it can be
-consumed.
+imports it by package name, but that symlink lands back inside this
+repository. **The case that matters was measured on 2026-10-01 and fails:**
+installed in another repository, the engine's TypeScript is not compiled.
+So the engine must be built before it can be consumed. `DEFECTS.md` has the
+measurement, and `PLAN.md` phase 9 the order: the build step, then the
+editor's adapter moving to the editor's own repository.
 
 **The consumers here do not declare `@playwright/test`, on purpose.** The
 review of 2026-09-27 asked for it, since each imports Playwright directly and
 finds it only through this repository's own `node_modules`. Declared, each
 would install a second copy beside the one the engine resolves through its
 symlink, and two copies hand a consumer fixtures from the wrong instance. A
-consumer in its own checkout, installing the engine from a registry, should
-declare it, and the peer range dedupes it to one copy. Phase 9 is where that
-layout exists to check.
+consumer in its own checkout, installing the engine from a registry or by
+git dependency, should declare it, and the peer range dedupes it to one
+copy. The editor's move is where that layout exists to check.
 
 ### 1.4 Three things the review scheduled rather than fixed
 
@@ -736,6 +736,20 @@ nobody has asked yet, rather than of a date.
 `@drugstoresushi/phileas` and versioned, so the decision is about whether to
 publish rather than about how the package would be identified.
 
+**The trigger to revisit fired on 2026-10-01**, when the editor's adapter was
+decided to move into the editor's own repository, installing the engine as
+a git dependency rather than by `file:`. A reading, not confirmed: it does
+not force publishing, because a git dependency reaches the engine from any
+repository under the same ownership, so what this rests on becomes that
+every consumer can reach this repository by git.
+
+**The repository itself is public, which is separate from publishing the
+package.** GitHub reports it public, and its event log puts the change at
+the second it was created, 2026-09-21. Said on 2026-10-01: "It's public
+temporarily, it'll be back to private soon." A git dependency still
+installs once it is private, over the machine's own GitHub access; the
+measurement on 2026-10-01 already went through SSH.
+
 ### 2.3 Wager, as a name for the terms of a Journey
 
 Proposed, then parked rather than rejected, on an explicit request to hold on
@@ -1116,6 +1130,25 @@ page and which is the same question for the menu. Open: whether the menu
 should be withheld while an in-page modal is up, as the survey reads only a
 native modal dialog, and whether RStudio's behavior is worth asking its
 developers about.
+
+### 2.21 This repository's history keeps the editor's adapter and findings
+
+Raised 2026-10-01, when the editor's adapter was decided to move into the
+editor's own repository. Moving the folder leaves everything already
+committed here in this repository's history: the adapter, and the defects
+found in the editor, which `HISTORY.md` and `../ORIENTATION.md` describe.
+The editor's repository is private, and this one is public for now.
+
+**A rewrite would not finish the job.** Pull requests 72 and 77 changed
+files in `trial/editor/`, and almost every pull request since 2026-09-30
+touches `HISTORY.md` or `../ORIENTATION.md`. GitHub keeps each pull
+request's commits under references a force-push does not touch, so the old
+commits stay visible through those pull requests until GitHub Support
+removes them. Measured the same day: no forks, and 238 clones from 103
+sources in the previous 14 days, whose owners GitHub does not say.
+
+Said on 2026-10-01: "let's not worry about this cleanup for now." Whether
+to clean it up later is open.
 
 ## 3. Declined
 

@@ -124,8 +124,9 @@ kept, a covered text box left out while its neighbor's shortcut stays, what
 took an abandoned click journaled, a page all covered stranding, and a seed
 retracing its Route with a control covered.
 
-The remote is `ronplusron/phileas`, private, created 2026-09-21 and scanned
-before first publication.
+The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
+first publication. It is public for now and will be private again;
+`docs/OUTSTANDING.md` 2.2 has the measurement and the words.
 
 `docs/PRODUCT_REQUIREMENTS.md` is written. The product is scoped to Electron
 applications, with the seam kept capable of other targets that render to a
@@ -147,7 +148,9 @@ editor's dialogs, marked `aria-modal`, which the survey now honors. Close
 any running copy of the editor first, or the home guard cannot tell its
 writes from the run's. **In a fresh checkout, run `npm install` in
 `trial/editor/` first,** as for each trial: without it the engine's package
-is missing there and the run cannot start.
+is missing there and the run cannot start. **It is moving to the editor's
+own repository,** decided 2026-10-01, after a build step the engine needs
+first; `docs/PLAN.md` phase 9 has the order.
 
 **RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
