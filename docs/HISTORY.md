@@ -74,9 +74,16 @@ guard, five cases. The suite went from 328 passed to 334, building first. `buggy
 the tests, which import `src/`, never load a second copy of it alongside the
 build.
 
-**Not yet measured:** an install through git, where npm installs the
-engine's own development dependencies to build it, Electron among them. The
-editor's adapter is the first, and `PLAN.md` phase 9 measures it there.
+**Then through git, once the branch was pushed.** A scratch consumer ran
+`npm install github:ronplusron/phileas#engine-build-step` with
+`@playwright/test` beside it, on npm 11.19. npm cloned the branch, ran
+`prepare`, and installed `dist/`; the lockfile names the exact commit; the
+same spec passed. It took 10 seconds and 40 MB. Electron 44.5.1 arrived as
+well, without its binary, because npm installs a missing peer by itself,
+which is the cost the open question about the Electron peer already
+describes. npm also printed a warning listing the engine's `prepare` among
+scripts to review, ran it anyway, and `npm install-scripts ls` then listed
+nothing waiting; whether a later npm stops running it is not known.
 
 ## 2026-10-01: the editor's adapter is to move to the editor's repository
 

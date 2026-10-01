@@ -1280,9 +1280,9 @@ the same day, and `HISTORY.md` has it. The order for what is left:
    root install never reaches it. It installs the engine with
    `npm install github:ronplusron/phileas`, declares `@playwright/test`,
    and imports the editor's own `tests/e2e/harness.ts` rather than
-   repeating its launch settings. This is the first install through git,
-   where npm installs the engine's own development dependencies in order to
-   build it, so what that install costs is measured here.
+   repeating its launch settings. An install through git was measured
+   working from a scratch consumer, which `HISTORY.md` has; this is the
+   first real one.
 2. **The same seed before and after the move**, with and without the
    `new-document` Fix, taking the same Hops. Any difference is the move's.
 3. **`trial/editor/` removed**, and `../ORIENTATION.md` pointed at the
