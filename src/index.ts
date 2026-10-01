@@ -86,6 +86,18 @@ export {
 } from './journey.js';
 export { startJourney, finishJourney, runEveryCheck, startTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start.js';
 export { staleSources, requireFreshBuild, ALLOW_STALE_BUILD_VARIABLE } from './fresh-build.js';
+export {
+  guardHome,
+  snapshotHome,
+  readHome,
+  writesSince,
+  outsideCopies,
+  ALLOW_HOME_WRITES_VARIABLE,
+  type GuardedApplication,
+  type HomeSnapshot,
+  type HomeReading,
+  type JourneyFolder,
+} from './home-guard.js';
 export { defineFixes, fixFor, fixName, NO_FIX, type Fixes } from './fixes.js';
 export {
   signatureOf,

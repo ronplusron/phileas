@@ -631,7 +631,8 @@ below is unchanged, and what the trial builds is the first part of it.
      global setup and run as teardown: it fails the run on any file written
      under those folders, or any new entry at the top of the home folder or
      Application Support, and it reads the real folder rather than trusting
-     HOME. `PHILEAS_TRIAL_ALLOW_HOME_WRITES=1` skips it and says so.
+     HOME. `PHILEAS_ALLOW_HOME_WRITES=1` skips it and says so; it was
+     `PHILEAS_TRIAL_ALLOW_HOME_WRITES` until the guard moved into the engine.
    - **A keychain prompt froze Positron at every launch.** Its secret storage
      reads a key from the macOS keychain in each fresh profile, and the
      prompt blocked the main process until someone answered it: both
@@ -1270,25 +1271,32 @@ already the default. So whether a package outside the consumer transpiles
 is still unanswered. `HISTORY.md` has what the adapter needed and what its
 first Routes measured.
 
-**Changed again on 2026-10-01: the editor's adapter moves to the editor's
-own repository.** The reason above did not hold, and this repository is
-public, not private; `HISTORY.md` has both. Measured the same day, a package
-outside the consumer was not compiled; the build step that fixed it landed
-the same day, and `HISTORY.md` has it. The order for what is left:
+**Changed again on 2026-10-01: the editor gets a new adapter, in the
+editor's own repository.** The reason above did not hold, and this
+repository is public, not private; `HISTORY.md` has both. Measured the same
+day, a package outside the consumer was not compiled; the build step that
+fixed it landed the same day, and `HISTORY.md` has it. Then, said the same
+day: "Create the editor adapter from scratch, don't copy anything over," and
+of the questions that raised, "All yes. No Fix." So nothing of
+`trial/editor/` is carried over, and comparing a seed before and after is
+dropped, since a new adapter is not expected to take the same Hops. The
+home folder guard moved into the engine for it, the same day, which
+`HISTORY.md` has. The order for what is left:
 
-1. **`editor/phileas/`**, with a `package.json` of its own, so the editor's
-   root install never reaches it. It installs the engine with
+1. **A module of the editor's own holding its launch settings**, with no
+   imports, used by its harness and by the adapter alike. The harness itself
+   cannot be imported: it loads the editor's `@playwright/test` and
+   `electron`, and a second Playwright beside the engine's is refused.
+2. **`editor/phileas/`, written new**, with a `package.json` of its own, so
+   the editor's root install never reaches it. It installs the engine with
    `npm install github:ronplusron/phileas`, declares `@playwright/test`,
-   and imports the editor's own `tests/e2e/harness.ts` rather than
-   repeating its launch settings. An install through git was measured
-   working from a scratch consumer, which `HISTORY.md` has; this is the
-   first real one. It approves the engine's `prepare` in `allowScripts`,
-   and the install is measured with and without that approval, since npm's
-   documentation and the scratch consumer disagree on whether it is needed.
-   A real Route here is also the first to run with no Electron package
-   installed beside the engine.
-2. **The same seed before and after the move**, with and without the
-   `new-document` Fix, taking the same Hops. Any difference is the move's.
+   and has no Fix. An install through git was measured working from a
+   scratch consumer, which `HISTORY.md` has; this is the first real one. It
+   approves the engine's `prepare` in `allowScripts`, and the install is
+   measured with and without that approval, since npm's documentation and
+   the scratch consumer disagree on whether it is needed. A real Route here
+   is also the first to run with no Electron package installed beside the
+   engine.
 3. **`trial/editor/` removed**, and `../ORIENTATION.md` pointed at the
    editor's repository.
 

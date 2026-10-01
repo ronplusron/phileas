@@ -1,9 +1,9 @@
 import os from 'node:os';
-import { finishJourney, runEveryCheck, startJourney } from '@drugstoresushi/phileas';
+import { finishJourney, guardHome, runEveryCheck, startJourney } from '@drugstoresushi/phileas';
 import { journey } from './journeys';
 import { fixes } from './fixes';
 import { positron } from './adapter';
-import { POSITRON, guardHome } from '../../home-guard';
+import { POSITRON } from './home';
 import { journalsRoot, knownFindings } from './paths';
 
 

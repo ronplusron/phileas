@@ -25,6 +25,24 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-01: the home folder guard is the engine's
+
+**Why.** The editor's new adapter is to live in the editor's repository,
+written from scratch with nothing copied over, and the guard every trial's
+global setup uses was a file in this repository's `trial/`, which an adapter
+elsewhere cannot reach. It assumed nothing about any application: each
+passes in its own folders, executable and Route marker. Offered with a
+recommendation and agreed.
+
+**What moved.** `trial/home-guard.ts` is `src/home-guard.ts`, exported from
+the package: `guardHome` and what it is built from, and `GuardedApplication`.
+The three applications it knew, Positron, RStudio and Bobolink Editor, moved
+out of it, each into a `home.ts` beside its trial's global setup, worded as
+they were. The override is `PHILEAS_ALLOW_HOME_WRITES` now, without `TRIAL`,
+since it is no longer a trial's. Its eight tests are unchanged apart from
+where they import from, and still check against Positron's and RStudio's
+folders.
+
 ## 2026-10-01: the engine is compiled, and loads from another repository
 
 **Why.** Installed anywhere but this repository, the engine could not load.

@@ -1,9 +1,9 @@
 import os from 'node:os';
-import { finishJourney, runEveryCheck, startJourney } from '@drugstoresushi/phileas';
+import { finishJourney, guardHome, runEveryCheck, startJourney } from '@drugstoresushi/phileas';
 import { journey } from './journeys';
 import { fixes } from './fixes';
 import { rstudio } from './adapter';
-import { RSTUDIO, guardHome } from '../../home-guard';
+import { RSTUDIO } from './home';
 import { journalsRoot, knownFindings } from './paths';
 import { guardRLibraries } from './r-library-guard';
 

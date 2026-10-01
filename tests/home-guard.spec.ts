@@ -4,16 +4,16 @@ import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import {
   ALLOW_HOME_WRITES_VARIABLE,
-  POSITRON,
-  RSTUDIO,
   guardHome,
   readHome,
   snapshotHome,
   writesSince,
-} from '../trial/home-guard';
+} from '../src/index';
+import { POSITRON } from '../trial/positron/phileas/home';
+import { RSTUDIO } from '../trial/rstudio/phileas/home';
 
 /**
- * The trials' home folder guard, against a home folder made for the test. It
+ * The home folder guard, against a home folder made for the test. It
  * has to fire on a write, or its silence after a real Journey says nothing.
  */
 

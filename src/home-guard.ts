@@ -3,7 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * Whether a Journey wrote into the real home folder, shared by the trials.
+ * Whether a Journey wrote into the real home folder.
+ *
+ * An adapter's global setup calls `guardHome` with what it knows about its
+ * application, as a `GuardedApplication`, and runs what it returns when the
+ * Journey ends. It began as a file the trials shared, and moved into the
+ * engine on 2026-10-01 so an adapter outside this repository can use it.
  *
  * Measured on Positron on 2026-09-26: it writes into the home folder whatever
  * `--user-data-dir` says, and runs before its adapter gave each Route a home of
@@ -32,61 +37,11 @@ export interface GuardedApplication {
   readonly routeMarker: string;
 }
 
-/** Positron, measured 2026-09-26. */
-export const POSITRON: GuardedApplication = {
-  name: 'Positron',
-  knownRoots: [
-    '.positron',
-    '.positron-shared',
-    '.posit',
-    '.copilot',
-    path.join('Library', 'Application Support', 'Positron'),
-  ],
-  executable: '/Contents/MacOS/Positron',
-  routeMarker: 'phileas-positron-',
-};
-
-/**
- * RStudio, from what a launch wrote into a Route's own home on 2026-09-28:
- * its configuration, its state and R's history. Its Electron profile follows
- * `--user-data-dir`, so Application Support is the one it would write if that
- * stopped taking effect.
- */
-export const RSTUDIO: GuardedApplication = {
-  name: 'RStudio',
-  knownRoots: [
-    path.join('.config', 'rstudio'),
-    path.join('.local', 'share', 'rstudio'),
-    '.Rhistory',
-    '.RData',
-    path.join('Library', 'Application Support', 'RStudio'),
-  ],
-  executable: '/Contents/MacOS/RStudio',
-  routeMarker: 'phileas-rstudio-',
-};
-
-/**
- * Bobolink Editor, read from its source on 2026-09-30 rather than measured:
- * `src/main/index.ts` sets its settings folder from `EDITOR_USER_DATA`, and
- * without it uses `Bobolink Editor (Electron)` in Application Support, named
- * in `src/shared/identity.ts`. That folder is the one it would write if the
- * variable stopped taking effect. `Bobolink Editor` is deliberately not
- * listed: it is the Swift app's folder, and its writes would be blamed on
- * the run. The cost is that Electron's own default, should the app's
- * override ever go, lands there unseen.
- */
-export const EDITOR: GuardedApplication = {
-  name: 'Bobolink Editor',
-  knownRoots: [path.join('Library', 'Application Support', 'Bobolink Editor (Electron)')],
-  executable: '/Contents/MacOS/Bobolink Editor',
-  routeMarker: 'phileas-bobolink-editor-',
-};
-
 /** Folders whose new entries count, wherever they point. */
 const WATCHED_TOPS = ['.', path.join('Library', 'Application Support')];
 
 /** The variable that runs a Journey without the guard, which then says so. */
-export const ALLOW_HOME_WRITES_VARIABLE = 'PHILEAS_TRIAL_ALLOW_HOME_WRITES';
+export const ALLOW_HOME_WRITES_VARIABLE = 'PHILEAS_ALLOW_HOME_WRITES';
 
 export interface HomeSnapshot {
   readonly home: string;

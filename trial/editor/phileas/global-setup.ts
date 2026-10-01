@@ -1,9 +1,9 @@
 import os from 'node:os';
-import { finishJourney, runEveryCheck, startJourney } from '@drugstoresushi/phileas';
+import { finishJourney, guardHome, runEveryCheck, startJourney } from '@drugstoresushi/phileas';
 import { journey } from './journeys';
 import { fixes } from './fixes';
 import { editor } from './adapter';
-import { EDITOR, guardHome } from '../../home-guard';
+import { EDITOR } from './home';
 import { journalsRoot, knownFindings } from './paths';
 
 /**
