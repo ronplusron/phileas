@@ -89,10 +89,11 @@ application are not built yet, and most of the checks an application adds
 for itself are phase 6.
 
 **On real applications.** On Positron it found four candidate bugs, all
-written up. On RStudio Desktop it found two new bugs, each an error logged
+written up. On RStudio Desktop it found three new bugs, each an error logged
 with nothing wrong on screen: closing a terminal, which RStudio's developers
-have since submitted a fix for, and refreshing an empty Find in Files pane.
-It also found one RStudio already knew about. Along the way, each
+have since submitted a fix for, refreshing an empty Find in Files pane, and
+installing a database driver package from the New Connection dialog. It
+also found one RStudio already knew about. Along the way, each
 application taught the engine something about surviving it: a dialog drawn
 by the operating system, an application that restarts itself, a computer
 going to sleep mid-run.

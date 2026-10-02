@@ -161,19 +161,20 @@ the ordinary launch: for example
 **On a machine without that copy,** `node trial/rstudio/prepare-app.mjs`
 makes one from `/Applications/RStudio.app` and prints where it put it; the
 machine needs R, with `Rscript` on the PATH, for the trial's R library guard.
-More than a hundred Routes have run through it, one Route at a time, and
-two new RStudio bugs came from them, each an error logged with nothing
-wrong on screen: closing a terminal, which RStudio's developers have since
-submitted a fix for, and refreshing an empty Find in Files pane. A third it
-met, opening a folder as a project from the web dialog, RStudio already
-knew of. A batch of 20 Routes of 40 Hops from each start was stopped partway
-on 2026-09-29, when a Route climbed out of its home through the file
-dialog's "Folder .." row. Its rerun was stopped the same day, after eight
-Routes, when "Open Project in New Session..." started a second RStudio on
-the real screen that wrote into RStudio's real folder. The engine now stubs
-an application launching itself, so a new session starts nothing; the
-command palette is excluded, for now. Rerunning the batch is next. The next Journey to finish re-signs the known findings under the
-current rules, which should merge the two Find in Files entries into one.
+About two hundred Routes have run through it, and three new RStudio bugs
+came from them, each an error logged with nothing wrong on screen: closing
+a terminal, filed as RStudio's issue 18976, which its developers have since
+submitted a fix for; refreshing an empty Find in Files pane,
+`ronplusron/phileas` issue 62; and installing the odbc package from New
+Connection, issue 64. A fourth it met, opening a project from the web
+dialog, RStudio already knew of as its issue 14985; issue 65 was filed for
+it and says so. The full batch, 20 Routes of 40 Hops from each start, ran
+on 2026-09-29, once two escapes were closed: a Route climbing out of its
+home through the file dialog's "Folder .." row, and "Open Project in New
+Session..." starting a second RStudio, which the engine now stubs. The
+command palette is excluded, for now. 79 of the batch's 80 Routes passed,
+and the one failure was issue 64. Every entry in its `known-findings.json`
+is settled: four filed, and one dismissed as a false alarm.
 `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
 R script with code in it, `session-data`, code run in the console, or
 `r-markdown`, the dialog for a new R Markdown document. Its Journey fails the run when the machine's R libraries changed.

@@ -1129,6 +1129,17 @@ should be withheld while an in-page modal is up, as the survey reads only a
 native modal dialog, and whether RStudio's behavior is worth asking its
 developers about.
 
+**Whether a person meets it, a reading and not measured,** added on
+2026-10-02. The trial turns RStudio's native dialogs off, which is what
+puts an in-page dialog beside a live native menu bar. On RStudio Desktop a
+person meets that only with Global Options' "Use native file and message
+dialog boxes" turned off, which is uncommon; the trial turns it off only
+so that Playwright can reach the dialogs, and in the words it was put,
+"Otherwise I'd leave it on." RStudio Server has only web dialogs, so it may
+be a real path there, but its menu bar is drawn in the page too, and
+whether that menu can be reached while a dialog is open has not been
+measured.
+
 ### 2.21 This repository's history keeps the editor's adapter and findings
 
 Raised 2026-10-01, when the editor's adapter was decided to move into the
