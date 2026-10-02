@@ -624,42 +624,17 @@ same Hop. Across two machines it has never been measured.
   more of a seed's pools match. Whether RStudio can be pointed at such a
   library is unmeasured.
 
-### 1.19 Checking the demos' seeds after covered controls
+### 1.19 Checking the demos' seeds after covered and hidden controls
 
 Agreed 2026-09-30, when covered controls left the draw, and stopped partway
-the same day to keep to the engine's own tests. A seed moves only where a
-screen had a covered control, so the check is to run each seed saved in
-`demo/*/seeds.mjs` hidden and read its pools for a `covered` entry. Rail
-Itinerary's three planted-bug seeds were run and had none; its
-several-at-once seed and all of Eighty Days' were not. Any seed with a
-covered control is searched for again. `HISTORY.md` has the change.
-
-### 1.20 Leaving out controls nobody can see
-
-Asked for on 2026-10-01 as a must, and made `PRODUCT_REQUIREMENTS.md` R32
-the same day.
-
-**Measured the same day, on RStudio,** seed `ff5f9e25263d`, one Route of
-two Hops with no Fix. Hop 1 chose View > Panes > Zoom Plots, which hides
-the Source and Console panes. The next pool still offered 21 of their
-controls, with none recorded as covered. Hop 2 drew one, Source's "Show
-document outline", and its click was abandoned after 3.4 s, taken by a
-`<div>` on top.
-
-**Why the survey kept them, read in the code:** `coveredAmong` in
-`src/survey.ts` keeps a control that shows nowhere, wholly out of the
-window or clipped to nothing by a container, as scrolled out of sight,
-since a click scrolls such a control into view first. That holds for
-Bobolink Editor's preview pane, measured on 2026-09-30, where the controls
-really can be scrolled to. RStudio's zoom hides its panes in a way the same
-test cannot tell apart from that. How RStudio hides them was not measured.
-
-**What the fix has to keep:** a control that scrolling brings into view
-stays on offer, as Bobolink Editor's do, so the test has to tell hidden from
-merely scrolled away rather than leave out everything not showing. Leaving
-out controls changes what seeds draw wherever such controls appeared, so the
-demos' pinned seeds are checked again with it, as 1.19 does for covered
-controls.
+the same day to keep to the engine's own tests. Hidden controls left the
+draw on 2026-10-02 and join it. A seed moves only where a screen had a
+covered or hidden control, so the check is to run each seed saved in
+`demo/*/seeds.mjs` hidden and read its pools for a `covered` or `hidden`
+entry. Rail Itinerary's three planted-bug seeds were run for covered
+controls and had none, before hidden ones were recorded; its
+several-at-once seed and all of Eighty Days' were not run. Any seed with
+either is searched for again. `HISTORY.md` has both changes.
 
 ## 2. Undecided
 

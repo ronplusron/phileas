@@ -21,6 +21,7 @@ import {
   sideCandidates,
   printedShortcut,
   survey,
+  surveyLines,
   showWindows,
   clickMenuItem,
   takesTypedValue,
@@ -1743,6 +1744,93 @@ test('a covered control is recorded on the pool, and a seed still retraces its R
     );
   expect(hops(first)).toHaveLength(8);
   expect(hops(await run())).toEqual(hops(first));
+});
+
+/** Put buttons in a pane that clips what it holds, `#probe-pane`, at a given width. */
+async function paneOf(page: Page, width: number): Promise<void> {
+  await page.evaluate((paneWidth) => {
+    document.getElementById('probe-pane')?.remove();
+    const pane = document.createElement('div');
+    pane.id = 'probe-pane';
+    pane.style.cssText = `position: fixed; top: 10px; right: 10px; width: ${paneWidth}px; height: 60px; overflow: hidden;`;
+    // One where the pane would show it, and one pushed out of the window, as
+    // RStudio's Console tab sat at x = -110 once its pane was zoomed away.
+    pane.innerHTML =
+      '<button>Zoomed away</button>' +
+      '<button style="position: relative; left: -3000px">Zoomed far</button>';
+    document.body.append(pane);
+  }, width);
+}
+
+test('a control hidden inside something with no area leaves the draw, and is recorded with it', async ({ page, app }) => {
+  // R32. Measured on RStudio on 2026-10-01: zooming one pane left the others
+  // zero pixels wide, and their controls were offered as scrolled out of
+  // sight, so a Hop drawn to one was abandoned.
+  const names = (found: Awaited<ReturnType<typeof surveyed>>) =>
+    found.candidates.filter((c) => c.source === 'page').map((c) => c.name);
+
+  // The positive control: the same pane with room in it offers what shows,
+  // and keeps the one out of the window as scrolled away, hiding nothing.
+  await paneOf(page, 200);
+  const open = await surveyed(page, app);
+  expect(names(open)).toEqual(expect.arrayContaining(['Zoomed away', 'Zoomed far']));
+  expect(open.hidden).toEqual([]);
+
+  await paneOf(page, 0);
+  const zoomed = await surveyed(page, app);
+  expect(names(zoomed)).not.toContain('Zoomed away');
+  expect(names(zoomed)).not.toContain('Zoomed far');
+  expect(zoomed.hidden.map((entry) => entry.candidate.name).sort()).toEqual(['Zoomed away', 'Zoomed far']);
+  for (const entry of zoomed.hidden) expect(entry.by).toMatch(/^<div id="probe-pane">/);
+  expect(zoomed.covered).toEqual([]);
+  // The rest of the page is still offered.
+  expect(names(zoomed)).toContain('Summary');
+  expect(surveyLines(zoomed).find((line) => line.startsWith('button "Zoomed away"'))).toMatch(
+    /\(hidden inside <div id="probe-pane">/
+  );
+});
+
+test('a page whose html has no area and clips hides nothing', async ({ page, app }) => {
+  // RStudio's html is 1200 by 0 with overflow hidden, which applies to the
+  // window and not to the element's own box; read as a container, it hid
+  // four working Console controls on the first try at R32.
+  await page.evaluate(() => {
+    document.documentElement.style.cssText = 'height: 0; overflow: hidden;';
+    document.body.style.cssText = 'height: 0; margin: 0;';
+    // Outside the window, so the element itself is tested and its containers
+    // walked; everything in plain view is settled without that.
+    const far = document.createElement('button');
+    far.textContent = 'Far left';
+    far.style.cssText = 'position: absolute; top: 10px; left: -3000px;';
+    document.body.append(far);
+  });
+  const found = await surveyed(page, app);
+  expect(found.hidden).toEqual([]);
+  const names = found.candidates.filter((c) => c.source === 'page').map((c) => c.name);
+  expect(names).toEqual(expect.arrayContaining(['Summary', 'Far left']));
+});
+
+test('a page with every control hidden strands, naming what hides them', async ({ page, app }) => {
+  await page.evaluate(() => {
+    const pane = document.createElement('div');
+    pane.id = 'probe-pane';
+    pane.style.cssText = 'width: 0; height: 100vh; overflow: hidden;';
+    pane.append(...Array.from(document.body.childNodes));
+    document.body.append(pane);
+  });
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('hidden-seed', 1),
+    journeySeed: 'hidden-seed',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: scratch(),
+  });
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
+  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/hidden inside something with no area/);
+  expect(outcome.kind === 'stranded' && outcome.reason).toMatch(/inside <div id="probe-pane"/);
 });
 
 test('a chooser that returns something the survey did not offer is refused', async ({ page, app }) => {

@@ -210,6 +210,34 @@ test('a pool id depends on order, not only on membership', () => {
   journal.abandon();
 });
 
+test('hidden controls are written on the pool and change its id, and none leaves the id as it was', () => {
+  const dir = scratch();
+  const journal = Journal.open(dir, opening);
+  const shown = [{ source: 'page' as const, role: 'button', name: 'Inventory', nth: 1 }];
+  const away = {
+    candidate: { source: 'page' as const, role: 'button', name: 'Summary', nth: 1 },
+    by: '<div id="pane">',
+  };
+
+  // A screen hiding nothing keeps the id it had before hidden controls were
+  // recorded, so a journal from before is still compared like for like.
+  const plain = journal.pool(shown);
+  expect(journal.pool(shown, [], [])).toBe(plain);
+  const withHidden = journal.pool(shown, [], [away]);
+  expect(withHidden).not.toBe(plain);
+  // Hidden is not covered: the same control under each is a different screen.
+  expect(journal.pool(shown, [away], [])).not.toBe(withHidden);
+  journal.close({ outcome: 'passed', hops: 0 });
+
+  const pools = readJournal(journalPath(dir, opening.routeNumber, opening.routeSeed)).filter(
+    (entry) => entry.kind === 'pool'
+  );
+  const written = pools.find((entry) => entry.id === withHidden);
+  expect(written).toMatchObject({ hidden: [away] });
+  expect(written).not.toHaveProperty('covered');
+  expect(pools.find((entry) => entry.id === plain)).not.toHaveProperty('hidden');
+});
+
 test('an existing journal is refused, never overwritten', () => {
   // Each run writes to a folder of its own, so a journal already at this path
   // means two runs were handed one folder. The earlier record is what a replay

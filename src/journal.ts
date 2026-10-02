@@ -151,12 +151,26 @@ export interface PoolEntry {
    * present, so two screens differing only in what is covered each get a line.
    */
   readonly covered?: readonly JournaledCovered[];
+  /**
+   * Page controls the survey left out because the application has hidden them
+   * inside a container with no area (R32), each with that container. Absent
+   * where none were, and before 2026-10-01. On the pool and part of its id
+   * where present, for the reasons `covered` is.
+   */
+  readonly hidden?: readonly JournaledHidden[];
 }
 
 /** A covered control, as the journal records it. */
 export interface JournaledCovered {
   readonly candidate: JournaledCandidate;
   /** What is on top at its click point, described as Playwright describes an element. */
+  readonly by: string;
+}
+
+/** A hidden control, as the journal records it. */
+export interface JournaledHidden {
+  readonly candidate: JournaledCandidate;
+  /** The container that clips it and has no area, described as a covering element is. */
   readonly by: string;
 }
 
@@ -529,13 +543,19 @@ export class Journal {
    * replay compares: a list that merely reordered sends the same draw to a
    * different position.
    */
-  pool(candidates: readonly JournaledCandidate[], covered: readonly JournaledCovered[] = []): string {
-    // A screen with nothing covered hashes as it did before covered controls
-    // were recorded, so its id is unchanged.
-    const hashed = covered.length ? { candidates, covered } : candidates;
+  pool(
+    candidates: readonly JournaledCandidate[],
+    covered: readonly JournaledCovered[] = [],
+    hidden: readonly JournaledHidden[] = []
+  ): string {
+    // A screen with nothing covered or hidden hashes as it did before either
+    // was recorded, and one with only covered controls as it did before
+    // hidden ones were, so neither id changes.
+    const outOfReach = { ...(covered.length ? { covered } : {}), ...(hidden.length ? { hidden } : {}) };
+    const hashed = covered.length || hidden.length ? { candidates, ...outOfReach } : candidates;
     const id = createHash('sha256').update(JSON.stringify(hashed)).digest('hex').slice(0, 12);
     if (!this.pools.has(id)) {
-      this.write({ kind: 'pool', id, candidates, ...(covered.length ? { covered } : {}) });
+      this.write({ kind: 'pool', id, candidates, ...outOfReach });
       this.pools.add(id);
     }
     return id;

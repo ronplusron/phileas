@@ -573,6 +573,7 @@ export function surveyLines(found: SurveyResult): string[] {
     ...found.candidates.filter((c) => !isCommonKey(c)).map((c) => targetText(journaled(c))),
     ...found.excluded.map((entry) => `${targetText(entry.candidate)}   (excluded: ${entry.rule})`),
     ...found.covered.map((entry) => `${targetText(journaled(entry.candidate))}   (covered by ${entry.by})`),
+    ...found.hidden.map((entry) => `${targetText(journaled(entry.candidate))}   (hidden inside ${entry.by})`),
     ...(keys.length ? [`and the common keys: ${keys.join(', ')}`] : []),
   ];
 }
@@ -899,7 +900,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // line below never names a pool that is not already on disk.
       const pool = journal.pool(
         found.candidates.map(journaled),
-        found.covered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by }))
+        found.covered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
+        found.hidden.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by }))
       );
 
       span.endedAt = Date.now();
@@ -1004,6 +1006,15 @@ function strandedReason(found: SurveyResult): string {
       `No candidate was available on the page. ${found.covered.length} control(s) were found under ` +
       `something else, so a click could not reach them: ` +
       `${found.covered.map((entry) => `${targetText(journaled(entry.candidate))} under ${entry.by}`).join('; ')}.`
+    );
+  }
+  // Everything left is hidden by the application itself, such as every pane
+  // but one zoomed away (R32).
+  if (found.hidden.length) {
+    return (
+      `No candidate was available on the page. ${found.hidden.length} control(s) were found hidden ` +
+      `inside something with no area, so no person could see them: ` +
+      `${found.hidden.map((entry) => `${targetText(journaled(entry.candidate))} inside ${entry.by}`).join('; ')}.`
     );
   }
   // Menu exclusions fire on every hop, so they say nothing about this page.
@@ -1210,14 +1221,17 @@ async function runFix(
     }
     if (!match) {
       const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
-      // Waited for like a target not yet drawn, since a cover can go away;
-      // named if it never did.
+      // Waited for like a target not yet drawn, since a cover can go away and
+      // a hidden pane can come back; named if neither did.
       const under = found.covered.find((entry) => targetText(journaled(entry.candidate)) === target);
+      const inside = found.hidden.find((entry) => targetText(journaled(entry.candidate)) === target);
       throw new Error(
         refused
           ? `${target} is on screen but excluded (${refused.rule}), so a Fix cannot act on it either.`
           : under
           ? `${target} is on screen but covered by ${under.by} after ${hopTimeoutMs} ms, so a click cannot reach it.`
+          : inside
+          ? `${target} is in the page but hidden inside ${inside.by}, which has no area, after ${hopTimeoutMs} ms, so no person could see it.`
           : `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${found.candidates
               .filter((candidate) => !isCommonKey(candidate))
               .map((candidate) => targetText(journaled(candidate)))

@@ -25,6 +25,52 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-02: hidden controls leave the draw, and are recorded (R32)
+
+**Why.** Asked for on 2026-10-01 as a must, in the words "Don't include
+controls that cant be seen, for example what happens with Zoom. This is a
+must.", and made `PRODUCT_REQUIREMENTS.md` R32 the same day. Measured on
+RStudio, seed `ff5f9e25263d`: hop 1 chose View > Panes > Zoom Plots, the next
+pool still offered 21 controls of the Source and Console panes with none
+recorded as covered, and hop 2's click on Source's "Show document outline"
+was abandoned after 3.4 s, taken by a `<div>`. The survey kept every control
+that showed nowhere as scrolled out of sight, since a click scrolls such a
+control into view, which holds for Bobolink Editor's preview pane and not
+here.
+
+**How RStudio hides a pane, measured.** Zooming one pane leaves the others
+zero pixels wide inside containers with `overflow: hidden`: the Source pane
+measured 0 by 452, and the Console tab sat at x = -110 in a tab strip 0
+wide. Nothing inside a container that clips and has no area can show,
+however anything scrolls.
+
+**What changed.** The survey's test for a covered control also finds a
+hidden one: a control inside a container that clips what it holds and has
+no area. It is left out of the draw and written on the pool as `hidden`,
+with that container, as a covered one is with what covers it; `phileas
+survey` lists it, a page with nothing else strands naming it, and a Fix
+step naming it says so. Controls wholly outside the window are now tested
+against the element too, where before they were kept untested, so the test
+reaches RStudio's Console tab. A control scrolled away inside a pane with
+room in it is still offered.
+
+**A first try hid four working controls.** RStudio's `html` is 1200 by 0
+with `overflow: hidden`, and read as a container it hid four Console
+controls with nothing zoomed. The root's overflow, and the body's when it
+passes up, applies to the window rather than to the element's own box, so
+neither counts. Those controls take their clicks: of 51 earlier clicks on
+the three Console buttons among them, 45 landed.
+
+**Measured afterwards, on RStudio:** 57 page controls offered and none
+hidden at the start; 20 offered and 24 hidden after Zoom Plots, every one in
+the Source and Console panes; 62 offered and none hidden once the panes were
+restored. Not measured on Bobolink Editor; the test of a pane that scrolls,
+run on `buggy`, stands in for its preview links.
+
+**Not finished: the demos' seeds.** A seed moves only where a screen hid a
+control, as for covered controls, and `OUTSTANDING.md` carries the check of
+the demos' saved seeds for both.
+
 ## 2026-10-02: the settle wait honors `aria-busy`, and a Journey's end names both causes
 
 **The Journey's end, when no journal was written.** It refused, rightly, but

@@ -268,6 +268,20 @@ export interface CoveredCandidate {
 }
 
 /**
+ * A page control left out of the draw because the application has hidden it
+ * inside a container with no area, and what that container is (R32).
+ *
+ * Recorded for the reason a covered one is. Measured on RStudio on
+ * 2026-10-01: zooming one pane leaves the others zero pixels wide, and every
+ * control in them was offered as though scrolled out of sight.
+ */
+export interface HiddenCandidate {
+  readonly candidate: PageCandidate;
+  /** The container that clips it and has no area, described as a covering element is. */
+  readonly by: string;
+}
+
+/**
  * Whether menu entries were offered, and why not when they were not.
  *
  * A verdict rather than an absence, in the shape UNAVAILABLE_UNDER already uses
@@ -287,8 +301,10 @@ export interface SurveyResult {
   /** What may be hopped to, after exclusions. The draw is over exactly this. */
   readonly candidates: readonly SurveyedCandidate[];
   readonly excluded: readonly ExcludedCandidate[];
-  /** Page controls left out because something covers them; see `coveredAmong`. */
+  /** Page controls left out because something covers them; see `outOfReachAmong`. */
   readonly covered: readonly CoveredCandidate[];
+  /** Page controls left out because the application has hidden them; see `outOfReachAmong`. */
+  readonly hidden: readonly HiddenCandidate[];
   readonly unnamed: readonly UnnamedElement[];
   readonly menuSource: MenuSourceVerdict;
   /**
@@ -495,13 +511,13 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   // tested. Before the draw, for the reason this function's comment gives.
   // Shortcuts were built from every control, covered or not: a key press
   // needs no clear spot to land on.
-  const covered = await coveredAmong(
+  const { covered, hidden } = await outOfReachAmong(
     page,
     candidates.filter((c): c is PageCandidate => c.source === 'page'),
     timeoutMs
   );
-  if (covered.length) {
-    const out = new Set<SurveyedCandidate>(covered.map((entry) => entry.candidate));
+  if (covered.length || hidden.length) {
+    const out = new Set<SurveyedCandidate>([...covered, ...hidden].map((entry) => entry.candidate));
     candidates.splice(0, candidates.length, ...candidates.filter((c) => !out.has(c)));
   }
 
@@ -509,6 +525,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
     candidates,
     excluded,
     covered,
+    hidden,
     unnamed,
     // Counted after exclusions rather than before, because the number that
     // matters is how many menu entries the draw could actually reach. Reporting
@@ -522,7 +539,8 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
 }
 
 /**
- * The controls something else is drawn over, at the point a click would land.
+ * The controls something else is drawn over, at the point a click would land,
+ * and those the application has hidden inside a container with no area.
  *
  * **Why.** The accessibility tree lists a control under another window or an
  * open menu as readily as one in plain view. A Hop drawn to one was refused by
@@ -539,26 +557,36 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
  * be typed into, or a finding could come from somewhere no person gets to.
  * Decided on 2026-09-30, docs/OUTSTANDING.md.
  *
+ * **What counts as hidden** is a control inside a container that clips what
+ * it holds and has no area: nothing inside it can show, however anything
+ * scrolls, so no person can see the control (R32). Measured on RStudio on
+ * 2026-10-01: View > Panes > Zoom Plots leaves the Source and Console panes
+ * zero pixels wide inside containers that clip, and 21 of their controls
+ * were offered, as scrolled out of sight, until this. Not counted: a control
+ * placed outside such a container by `position: fixed`, which escapes the
+ * clip; unmeasured on any application, and it errs toward hiding.
+ *
  * **What is kept untested:** a control with no box, unless it sits inside a
- * covered one, one wholly out of view, or out of sight inside a container
- * that scrolls, since the click scrolls it in first, and one the test cannot
- * answer for. Each errs toward offering the control,
- * which at worst costs a timeout and a journaled reason, never a silently
- * missing control.
+ * covered or hidden one, one wholly out of view or out of sight inside a
+ * container that scrolls, since the click scrolls it in first, and one the
+ * test cannot answer for. Each errs toward offering the control, which at
+ * worst costs a timeout and a journaled reason, never a silently missing
+ * control.
  *
  * Two passes. One call tests every control by its box, which cannot know the
  * element, so it asks whether an element around the one on top has the
- * control's box. Only those it finds covered are then tested again against
- * the element itself, one call each; that pass decides. So the common case,
+ * control's box. Only those it finds covered, and those wholly outside the
+ * window, are then tested again against the element itself, one call each;
+ * that pass decides. So the common case, everything in the window and
  * nothing covered, costs one call per survey.
  */
-async function coveredAmong(
+async function outOfReachAmong(
   page: Page,
   controls: readonly PageCandidate[],
   timeoutMs: number | undefined
-): Promise<CoveredCandidate[]> {
+): Promise<{ covered: CoveredCandidate[]; hidden: HiddenCandidate[] }> {
   const tested = controls.filter((control) => control.box !== undefined);
-  if (!tested.length) return [];
+  if (!tested.length) return { covered: [], hidden: [] };
 
   const suspects = await answered(
     'the page, asked what is on top of each control,',
@@ -573,11 +601,14 @@ async function coveredAmong(
         return `<${element.tagName.toLowerCase()}${attributes}>${text}`;
       };
       return boxes.map((box) => {
+        if (box.width < 1 || box.height < 1) return null;
         const x0 = Math.max(0, box.x);
         const y0 = Math.max(0, box.y);
         const x1 = Math.min(window.innerWidth, box.x + box.width);
         const y1 = Math.min(window.innerHeight, box.y + box.height);
-        if (x1 - x0 < 1 || y1 - y0 < 1) return null;
+        // Wholly outside the window: scrolled away, or hidden somewhere with
+        // no area, which only the element itself can say.
+        if (x1 - x0 < 1 || y1 - y0 < 1) return 'outside the window';
         const x = (x0 + x1) / 2;
         const y = (y0 + y1) / 2;
         let top = document.elementFromPoint(x, y);
@@ -607,22 +638,33 @@ async function coveredAmong(
   );
 
   const covered: CoveredCandidate[] = [];
+  const hidden: HiddenCandidate[] = [];
   for (const [index, suspect] of suspects.entries()) {
     const control = tested[index];
     if (!suspect || !control) continue;
     // Tested against the element itself, and at the center of the part of it
     // that shows: inside the window and inside every container that clips
-    // it. None showing means it is scrolled out of sight inside one of them,
+    // it. A container that clips and has no area hides it, R32. Otherwise
+    // none showing means it is scrolled out of sight inside one of them,
     // not covered, since the click scrolls it into view first; measured on
     // Bobolink Editor on 2026-09-30, where a link in a preview pane read as
     // covered by whatever was drawn where it would have been. A control this
     // cannot reach, or a page that does not answer in time, stays in the draw.
-    const by = await control.locator
+    const verdict = await control.locator
       .evaluate(
-        (element) => {
+        (element): { hidden: string } | { covered: string } | null => {
           const up = (node: Element): Element | null => {
             const root = node.getRootNode();
             return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+          };
+          const describe = (node: Element): string => {
+            const attributes = ['role', 'aria-label', 'id', 'class']
+              .map((name) => [name, node.getAttribute(name)] as const)
+              .filter(([, value]) => value)
+              .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
+              .join('');
+            const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+            return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
           };
           const own = element.getBoundingClientRect();
           let [x0, y0, x1, y1] = [
@@ -635,6 +677,11 @@ async function coveredAmong(
             const style = getComputedStyle(node);
             if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
             const clip = node.getBoundingClientRect();
+            // The root's overflow, and the body's when it passes up, applies to
+            // the window rather than to the element's own box: RStudio's html
+            // is 1200 by 0 with overflow hidden, and hides nothing.
+            const window_ = node === document.documentElement || node === document.body;
+            if (!window_ && (clip.width < 1 || clip.height < 1)) return { hidden: describe(node) };
             [x0, y0, x1, y1] = [Math.max(x0, clip.left), Math.max(y0, clip.top), Math.min(x1, clip.right), Math.min(y1, clip.bottom)];
           }
           if (x1 - x0 < 1 || y1 - y0 < 1) return null;
@@ -651,37 +698,39 @@ async function coveredAmong(
             if (node === element) return null;
             if (node instanceof HTMLLabelElement && node.control === element) return null;
           }
-          const attributes = ['role', 'aria-label', 'id', 'class']
-            .map((name) => [name, top.getAttribute(name)] as const)
-            .filter(([, value]) => value)
-            .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
-            .join('');
-          const text = (top.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
-          return `<${top.tagName.toLowerCase()}${attributes}>${text}`;
+          return { covered: describe(top) };
         },
         undefined,
         timeoutMs === undefined ? {} : { timeout: timeoutMs }
       )
       .catch(() => null);
-    if (by !== null) covered.push({ candidate: control, by });
+    if (verdict && 'hidden' in verdict) hidden.push({ candidate: control, by: verdict.hidden });
+    else if (verdict) covered.push({ candidate: control, by: verdict.covered });
   }
 
   // A control with no box cannot be tested itself, and is kept, except inside
-  // one that is covered: an option in a closed native dropdown has no box,
-  // and choosing it needs no click, so it would otherwise reach a dropdown no
-  // pointer can. Measured on buggy's Category dropdown on 2026-09-30.
+  // one that is covered or hidden: an option in a closed native dropdown has
+  // no box, and choosing it needs no click, so it would otherwise reach a
+  // dropdown no pointer can. Measured on buggy's Category dropdown on
+  // 2026-09-30.
   const coveredBy = new Map<PageCandidate, string>(covered.map((entry) => [entry.candidate, entry.by]));
+  const hiddenBy = new Map<PageCandidate, string>(hidden.map((entry) => [entry.candidate, entry.by]));
   for (const control of controls) {
     if (control.box !== undefined && hasArea(control.box)) continue;
     for (let outer = control.within; outer; outer = outer.within) {
-      const by = coveredBy.get(outer);
-      if (by !== undefined) {
-        covered.push({ candidate: control, by });
+      const under = coveredBy.get(outer);
+      if (under !== undefined) {
+        covered.push({ candidate: control, by: under });
+        break;
+      }
+      const inside = hiddenBy.get(outer);
+      if (inside !== undefined) {
+        hidden.push({ candidate: control, by: inside });
         break;
       }
     }
   }
-  return covered;
+  return { covered, hidden };
 }
 
 /** Whether a box has any area at all, before it is placed against the viewport. */
@@ -903,7 +952,7 @@ async function surveyPage(
   const modalOpen = nativeOpen > 0 || markedOpen > 0;
   const root = nativeOpen > 0 ? native.last() : markedOpen > 0 ? marked.last() : page.locator('body');
   // With each element's box, which is where the test for a covered control
-  // looks; see `coveredAmong`. Read in the same call, so it costs nothing extra.
+  // looks; see `outOfReachAmong`. Read in the same call, so it costs nothing extra.
   const snapshot = (await root.ariaSnapshotJSON({ ...bounded, boxes: true })) as AriaNode | AriaNode[];
 
   // The whole page is still what a Hop's effect is read from (R31), since the

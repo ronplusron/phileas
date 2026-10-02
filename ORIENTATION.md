@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and thirty-four tests, after a
+through, and `npm test` runs three hundred and thirty-eight tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -122,7 +122,11 @@ Six came with covered controls: one left out and recorded with what covers
 it, a cover that lets clicks through and controls scrolled out of sight
 kept, a covered text box left out while its neighbor's shortcut stays, what
 took an abandoned click journaled, a page all covered stranding, and a seed
-retracing its Route with a control covered.
+retracing its Route with a control covered. Four came with hidden controls
+(R32): one in a pane with no area left out and recorded with that pane,
+while the same pane with room keeps it, a page whose html has no area
+hiding nothing, a page all hidden stranding, and a hidden control on the
+pool's line.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -227,11 +231,11 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Fourteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Fifteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
-reason not yet known, and one the Hop a Route ends on depending on when a
-late finding arrives. That file holds what is wrong, confirmed by reading the
+reason not yet known, one the Hop a Route ends on depending on when a
+late finding arrives, and one the covered test unable to fire on RStudio. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
@@ -328,7 +332,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and thirty-four tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and thirty-eight tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
