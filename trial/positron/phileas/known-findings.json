@@ -24,9 +24,9 @@
     "id": "1759e6e8",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 [lifecycle]: Error during will-shutdown phase in default joiners (error: Canceled)",
-    "issue": "ronplusron/phileas#46",
     "added": "2026-09-27",
-    "source": "command"
+    "source": "command",
+    "issue": "ronplusron/phileas#46"
   },
   {
     "id": "0f31d456",
@@ -36,9 +36,9 @@
     "source": "journey"
   },
   {
-    "id": "511b6d75",
+    "id": "ea8d959d",
     "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Could not find a notebook editor for session 'python-notebook-53750b52'",
+    "signature": "console-error: %c  ERR color: #f33 Could not find a notebook editor for session 'python-notebook-<id>'",
     "added": "2026-09-27",
     "source": "journey"
   },
@@ -93,37 +93,9 @@
     "source": "journey"
   },
   {
-    "id": "ec5bbc69",
+    "id": "68834758",
     "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-058df68c) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
-    "added": "2026-09-28",
-    "source": "journey"
-  },
-  {
-    "id": "535a73d2",
-    "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-357d668c) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
-    "added": "2026-09-28",
-    "source": "journey"
-  },
-  {
-    "id": "1ddd63ac",
-    "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-6eaf3abc) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "16e73132",
-    "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-a53b8400) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
-    "added": "2026-09-28",
-    "source": "journey"
-  },
-  {
-    "id": "8d889c81",
-    "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-cfbb872a) from runtime 003663c34c4e2f88a5145a4c13757481 (language: R name: R 4.6.0 version: 4.6.0) is not active.",
+    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-<id>) from runtime <id> (language: R name: R 4.6.0 version: 4.6.0) is not active.",
     "added": "2026-09-27",
     "source": "journey"
   },
@@ -141,6 +113,14 @@
     "added": "2026-09-27",
     "source": "journey",
     "issue": "ronplusron/phileas#53"
+  },
+  {
+    "id": "643cb31a",
+    "check": "console-error",
+    "signature": "console-error: Error running command openremotessh.explorer.configure: A system error occurred (ENOENT: no such file or directory, open '<profile>/home/.ssh/config'). This is likely caused by the extension that contributes openremotessh.explorer.configure.",
+    "added": "2026-10-02",
+    "source": "journey",
+    "issue": "ronplusron/phileas#87"
   },
   {
     "id": "45698e51",
@@ -185,9 +165,9 @@
     "source": "journey"
   },
   {
-    "id": "26e65bb2",
+    "id": "075cce19",
     "check": "log-error",
-    "signature": "log-error: exthost.log: [error] {\"code\":-32603,\"message\":\"The channel positron-ui-r-1-bf599a14 (positron.ui)  was closed before the RPC completed.\",\"name\":\"Error\",\"data\":{}}",
+    "signature": "log-error: exthost.log: [error] {\"code\":-32603,\"message\":\"The channel positron-ui-r-1-<id> (positron.ui)  was closed before the RPC completed.\",\"name\":\"Error\",\"data\":{}}",
     "added": "2026-09-27",
     "source": "journey"
   },
@@ -195,9 +175,9 @@
     "id": "baa530b2",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] An error occurred when deactivating the extension 'positron.positron-connections':",
-    "issue": "ronplusron/phileas#44",
     "added": "2026-09-27",
-    "source": "command"
+    "source": "command",
+    "issue": "ronplusron/phileas#44"
   },
   {
     "id": "f7aa5c97",
@@ -219,6 +199,14 @@
     "signature": "log-error: exthost.log: [error] Error: Client is not running and can't be stopped. It's current state is: starting",
     "added": "2026-09-27",
     "source": "journey"
+  },
+  {
+    "id": "c1b4b0ef",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: ENOENT: no such file or directory, open '<profile>/home/.ssh/config'",
+    "added": "2026-10-02",
+    "source": "journey",
+    "issue": "ronplusron/phileas#87"
   },
   {
     "id": "23032475",
@@ -287,9 +275,9 @@
     "id": "1f937235",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] TypeError: Cannot read properties of undefined (reading 'subscriptions')",
-    "issue": "ronplusron/phileas#44",
     "added": "2026-09-27",
-    "source": "command"
+    "source": "command",
+    "issue": "ronplusron/phileas#44"
   },
   {
     "id": "7557abd4",
@@ -311,6 +299,14 @@
     "signature": "log-error: exthost.log: at Object.error (file:///Applications/Positron.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:63115:9)",
     "added": "2026-09-27",
     "source": "journey"
+  },
+  {
+    "id": "fb1bc714",
+    "check": "no-error-notification",
+    "signature": "no-error-notification: error notification: Error running command openremotessh.explorer.configure: A system error occurred (ENOENT: no such file or directory, open '<profile>/home/.ssh/config'). This is likely caused by the extension that contributes openremotessh.explorer.configure.",
+    "added": "2026-10-02",
+    "source": "journey",
+    "issue": "ronplusron/phileas#87"
   },
   {
     "id": "db19254a",

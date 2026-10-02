@@ -25,6 +25,31 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-02: Positron's Remote Explorer fails with no `.ssh` folder
+
+**Found by a Journey.** One Route of 100 Hops on Positron 2026.09.1 with no
+Fix, seed `64156c12293c`, windows hidden, failed at hop 56 of 100, 43
+seconds in: clicking Configure in Remote Explorer's SSH Targets section
+raised "ENOENT: no such file or directory, open '<home>/.ssh/config'".
+Three checks saw it, the console error, the log error and the error
+notification, so it reached the known findings as three entries.
+
+**Misread first.** The message was taken to mean the config file was
+missing, and a probe's control created the `.ssh` folder and the file
+together, so it could not tell the two apart. A sandboxed check also
+reported a `~/.ssh/config` in the real home folder that is not there, which
+made the failure look like an artifact of the Route's fresh home. Following
+it by hand showed the folder is what matters, and the bundled Open Remote -
+SSH extension, 0.0.49, confirms it: Configure creates a missing config file
+with `fs.promises.appendFile`, which does not create a missing folder. With
+`.ssh` present and the file absent, Configure creates the file and opens it.
+
+**Filed as ronplusron/phileas issue 87,** one issue for all three entries,
+each marked filed against it. The same Journey's end re-signed older
+entries under the current rules, merging five "Session R ... is not
+active" entries that differed only by id into one, and that change is
+committed with it.
+
 ## 2026-10-02: a control hidden at the window's edge leaves the draw
 
 **Found by a Journey.** One Route of 200 Hops from the new `zoomed-plots`

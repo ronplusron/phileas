@@ -189,10 +189,11 @@ releases carrying known bugs, judged against a bar set in advance.
 phase 5 waits for its answer. Its first two steps, the checks and the
 adapter, are done: the adapter is in `trial/positron/`, three Routes of
 twenty Hops each passed through it on the current release, and one Route on
-each old release. Four Positron bug candidates have
-been found and filed, `ronplusron/phileas` issues 44, 46, 53 and 54, none
-yet followed by hand, and `trial/positron/phileas/known-findings.json` holds
-their signatures.
+each old release. Five Positron bug candidates have
+been found and filed, `ronplusron/phileas` issues 44, 46, 53, 54 and 87.
+Only 87, Remote Explorer's Configure failing when the home folder has no
+`.ssh` folder, has been followed by hand and read in the code, and
+`trial/positron/phileas/known-findings.json` holds their signatures.
 `docs/PLAN.md` has everything measured and decided for it.
 The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
