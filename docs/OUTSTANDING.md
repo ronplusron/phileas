@@ -56,25 +56,6 @@ Every other test in this repository can only show that the parts behave as
 written. This is the only thing that shows the assembled engine does its job,
 and the right way to test a bug-finder is to point it at known bugs.
 
-### 1.3 Wiring a consuming repository in another checkout
-
-`proving-ground/buggy` already consumes the engine as a `file:` dependency and
-imports it by package name, but that symlink lands back inside this
-repository. **The engine is compiled since 2026-10-01**, and loads from a
-consumer's `node_modules` outside this repository, which
-`tests/installed.spec.ts` checks; `HISTORY.md` has how. What is left is the
-first real consumer in a checkout of its own, the editor's adapter moving to
-the editor's repository, in `PLAN.md` phase 9.
-
-**The consumers here do not declare `@playwright/test`, on purpose.** The
-review of 2026-09-27 asked for it, since each imports Playwright directly and
-finds it only through this repository's own `node_modules`. Declared, each
-would install a second copy beside the one the engine resolves through its
-symlink, and two copies hand a consumer fixtures from the wrong instance. A
-consumer in its own checkout, installing the engine from a registry or by
-git dependency, should declare it, and the peer range dedupes it to one
-copy. The editor's move is where that layout exists to check.
-
 ### 1.4 Three things the review scheduled rather than fixed
 
 Each was found by the review on 2026-09-22, each is agreed, and each was

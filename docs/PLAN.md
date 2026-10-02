@@ -1262,45 +1262,12 @@ A `file:` dependency, an adapter, journeys, a spec and a project entry in that
 repository's Playwright configuration, following `buggy`'s consumer layout
 exactly. This phase repeats a shape phase 2 already proved.
 
-**Changed for `editor` on 2026-09-30:** its adapter is in `trial/editor/`,
-in this repository, pointed at its checkout through `PHILEAS_APP_DIR`,
-chosen from two options offered with a recommendation. The editor's CI runs
-`npm ci`, which cannot reach this private repository, so a `file:`
-dependency there would break it, and the second deployment shape was
-already the default. So whether a package outside the consumer transpiles
-is still unanswered. `HISTORY.md` has what the adapter needed and what its
-first Routes measured.
-
-**Changed again on 2026-10-01: the editor gets a new adapter, in the
-editor's own repository.** The reason above did not hold, and this
-repository is public, not private; `HISTORY.md` has both. Measured the same
-day, a package outside the consumer was not compiled; the build step that
-fixed it landed the same day, and `HISTORY.md` has it. Then, said the same
-day: "Create the editor adapter from scratch, don't copy anything over," and
-of the questions that raised, "All yes. No Fix." So nothing of
-`trial/editor/` is carried over, and comparing a seed before and after is
-dropped, since a new adapter is not expected to take the same Hops. The
-home folder guard moved into the engine for it, the same day, which
-`HISTORY.md` has. The order for what is left:
-
-1. **A module of the editor's own holding its launch settings**, with no
-   imports, used by its harness and by the adapter alike. The harness itself
-   cannot be imported: it loads the editor's `@playwright/test` and
-   `electron`, and a second Playwright beside the engine's is refused.
-2. **`editor/phileas/`, written new**, with a `package.json` of its own, so
-   the editor's root install never reaches it. It installs the engine with
-   `npm install github:ronplusron/phileas`, declares `@playwright/test`,
-   and has no Fix. An install through git was measured working from a
-   scratch consumer, which `HISTORY.md` has; this is the first real one. It
-   approves the engine's `prepare` in `allowScripts`, and the install is
-   measured with and without that approval, since npm's documentation and
-   the scratch consumer disagree on whether it is needed. A real Route here
-   is also the first to run with no Electron package installed beside the
-   engine.
-3. **`trial/editor/` removed**, and `../ORIENTATION.md` pointed at the
-   editor's repository.
-
-What happens to this repository's history of the editor is
+**Done for `editor` on 2026-10-01, in a different shape:** its adapter is in
+the editor's own repository, in `phileas/` there, installing the engine
+through git rather than by `file:`, which needed the engine compiled first.
+It was written new, with no Fix, rather than moved from `trial/editor/`,
+where it had been since 2026-09-30. `HISTORY.md` has each step and what was
+measured. What happens to this repository's history of the editor is
 `OUTSTANDING.md` 2.21.
 
 The repository is the confirmed consumer that already has an interface to

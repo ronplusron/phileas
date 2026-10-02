@@ -135,21 +135,13 @@ browser-style page, though none is promised. Read it before anything else.
 `docs/PLAN.md` is written: eleven phases, three of whose boundaries are real
 verification points rather than bookkeeping.
 
-**Bobolink Editor has an adapter since 2026-09-30,** in `trial/editor/`,
-pointed at a built and packaged checkout of `editor`: for example
-`PHILEAS_APP_DIR="<editor checkout>" phileas run trial/editor/phileas`.
-`phileas run --fix new-document` opens a second document with markdown in
-it; with no Fix a Route starts at the welcome note. Every Route so far has
-passed with no check firing, and the adapter declares no checks of its own
-yet; four defects in the editor turned up all the same, from reading the
-journals and one trace, recorded in the editor's own `docs/DEFECTS.md`, and
-`docs/HISTORY.md` has how the first was found. Over a third of the first ten Routes' Hops were abandoned behind the
-editor's dialogs, marked `aria-modal`, which the survey now honors. Close
-any running copy of the editor first, or the home guard cannot tell its
-writes from the run's. **In a fresh checkout, run `npm install` in
-`trial/editor/` first,** as for each trial: without it the engine's package
-is missing there and the run cannot start. **It is moving to the editor's
-own repository,** decided 2026-10-01; `docs/PLAN.md` phase 9 has the order.
+**Bobolink Editor's adapter lives in the editor's own repository,** in
+`phileas/` there, since 2026-10-01: the first consumer outside this
+repository, installing the engine from GitHub. The editor's `ORIENTATION.md`
+says how to run a Journey, and its `docs/DEFECTS.md` holds what Journeys
+found in it. The adapter declares no checks of its own yet, and no Fix.
+`docs/HISTORY.md` has why it moved and how, and the adapter that was in
+`trial/editor/` from 2026-09-30 is in this repository's history.
 
 **RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.

@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -294,6 +294,29 @@ finding, while every draw is the same. The failure says when the finding
 arrived and lists the steps before it, so a reader can see the two runs
 agree; nothing yet compares them, and R13 would read the second as a seed
 that no longer reproduces.
+
+## A Journey whose Routes never started blames the journals folder
+
+**Filed 2026-10-01, seen on Bobolink Editor's adapter.** With a built file
+changed on purpose, the staleness guard refused the only Route before it
+launched, as it should, and the Route wrote no journal. The Journey's end
+then threw, from `findingsInRun` in `src/known.mjs`: "The run's journals are
+not at ... Is journalsRoot the one the spec writes to?" The run's folder was
+missing because no Route had reached the point of writing to it, not because
+the spec and the setup disagree about where journals go.
+
+**Why it is a defect and not a limit.** Refusing is right, for the reason
+the code gives: read as nothing, a missing folder would report every known
+finding as possibly fixed. But the reason it offers sends a reader to check a
+configuration that is correct, while the real one, here the staleness
+guard's refusal, is printed among the Route's failures above. Every Route
+failing before its first journal line reads the same way, whatever stopped
+it.
+
+**What would close it, not decided.** Saying both causes, or telling them
+apart: a Journey whose Routes all failed before writing anything says so
+and points at their failures, and only a run where Routes passed with no
+journal left behind asks about `journalsRoot`.
 
 ## Two things that will look like candidates, and are not
 

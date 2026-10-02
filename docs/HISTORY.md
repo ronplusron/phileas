@@ -25,6 +25,34 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-01: Bobolink Editor's adapter is the editor's, and `trial/editor/` is gone
+
+**What happened.** The adapter was written new in the editor's repository,
+in `phileas/` there, with no Fix and nothing carried over from
+`trial/editor/`, which this removes. It is the first consumer outside this
+repository: its own `package.json` installs the engine from GitHub, and the
+editor's `docs/HISTORY.md` has its side.
+
+**What it settled for the engine.** The install through git built the
+engine, pinned its commit, and brought no Electron, in 7 seconds. npm 11.19
+built it with or without the consumer approving the engine's `prepare` in
+`allowScripts`; the approval only stopped the warning, and the editor keeps
+it in case a later npm enforces it. The consumer declares `@playwright/test`
+itself, and the engine resolved the same copy, so the layout a consumer in
+its own checkout needs, which the review of 2026-09-27 asked about and this
+repository's consumers could not show, works. The home folder guard ran from
+the engine's export.
+
+**Against the installed app.** The adapter points at
+`/Applications/Bobolink Editor.app` by default, whose fuses already allow
+the ordinary launch, and the staleness guard compares it with the editor's
+checkout: with a line added to one built file it refused, naming the file.
+That control also showed the Journey's end blaming the journals folder when
+no Route got far enough to write one, which `DEFECTS.md` carries. The first
+Journey, three Routes of thirty Hops, passed with the home folder guard
+clean, and one Route reproduced a defect already recorded in the editor,
+which no check flags yet.
+
 ## 2026-10-01: preparing RStudio's copy is a script
 
 **Why.** The RStudio trial was to run on another machine, where the copy of
