@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
+**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -317,6 +317,33 @@ it.
 apart: a Journey whose Routes all failed before writing anything says so
 and points at their failures, and only a run where Routes passed with no
 journal left behind asks about `journalsRoot`.
+
+## A list an application fills in late makes a seed replay differently
+
+**Filed 2026-10-01, seen on Bobolink Editor.** Three runs of Journey seed
+`4fd8b50f91d1`, with nothing changed between them that the draws read,
+chose a different font at route 1's hop 6: "Courier New", then "System
+Monospaced", then "Courier New" again. Every other Hop of the Route matched,
+so the draw took the same place in the pool and the pool held something
+different there.
+
+**A reading, not confirmed:** the editor fills its Source Font list lazily,
+off the startup path, by measuring the installed fonts
+(`src/renderer/fontCatalog.ts` in the editor). A survey that runs before the
+list arrives sees fewer options than one that runs after, and nothing in the
+settle wait knows the list is still coming.
+
+**Why it is a defect and not a limit.** A seed is only worth recording if it
+replays, and here it replays or not by timing. This one diverged on a
+choice that changed nothing after it, so the Route went on to match; a
+divergence on a choice that opens something sends every later Hop
+elsewhere, and the recorded seed then reads as a fixed bug, which R13 asks
+to be flagged rather than passed silently.
+
+**What would close it, not decided.** Measuring the cause first, by
+recording the pool's size at that Hop on several runs. Then either the
+adapter waits for the list where it knows one loads late, or the engine
+treats a pool that is still changing as not yet settled.
 
 ## Two things that will look like candidates, and are not
 

@@ -1058,18 +1058,20 @@ and the editing commands, are separate and not measured.
 
 ### 2.19 Checks of Bobolink Editor's own
 
-Raised 2026-09-30. The editor's adapter declares no checks, so a Route
-there fails only on what the built-in checks see: an uncaught error, a
-console error, a hang, a window showing nothing, or an unexpected native
-dialog. Every Route so far has passed, and the defects found in it came
-from reading journals (2.16) and one trace.
+Raised 2026-09-30, when the editor's adapter declared no checks and every
+defect found in it came from reading journals (2.16) and one trace.
 
-Candidates, none chosen, each from the application agreeing with itself
-rather than from its code, as `AppCheck` requires: at most one modal
-dialog open at a time, which would have caught the dialog opened over an
-unanswered question; the Table of Contents listing the same headings as
-the document; and a window's own frame buttons never covered by the page's
-own furniture, such as the notice line over a collapsed window.
+**One exists since 2026-10-01**, in the editor's own adapter:
+`one-dialog-at-a-time`, which fails a Route when two modal dialogs are open
+at once. It caught the dialog opened over an unanswered question on a
+replay, and the editor's `docs/HISTORY.md` has why it is the editor's rule
+rather than the engine's.
+
+Candidates still open, none chosen, each from the application agreeing with
+itself rather than from its code, as `AppCheck` requires: the Table of
+Contents listing the same headings as the document, and a window's own
+frame buttons never covered by the page's own furniture, such as the notice
+line over a collapsed window.
 
 ### 2.20 RStudio runs menu commands behind its own in-page dialog
 
