@@ -273,7 +273,8 @@ by approving a proposal made at the end of the session that recorded them:
 - **Measured before phase 5, by one probe of RStudio:** frames and webviews,
   the cost on a large application, and a page that never stops moving.
   Measured 2026-09-24, on Positron as well; `HISTORY.md` has the results.
-- **Designed before phase 9:** other windows, and more kinds of action.
+- **Designed before phase 9:** other windows, now 1.21, and more kinds of
+  action.
 - **At the IDEs' turn, after phase 9 and before the engine meets either:**
   reading inside frames and webviews, decided 2026-09-24 once the probes
   showed the need. Nothing earlier is known to need it, though whether the
@@ -298,9 +299,7 @@ repeating it.
   menu entry.
   Virtualized lists and long panes need scrolling before their contents exist
   to be found. How much either IDE puts in context menus is unmeasured.
-- **Other windows.** A Route surveys one window, the page the adapter selects.
-  The first of RStudio's recorded bugs starts in a second one, its plot zoom
-  window. How many others either IDE opens is unmeasured.
+- **Other windows.** Now a requirement, R33, and an item of its own, 1.21.
 - **Frames and webviews.** The survey does not read inside a frame, measured
   on both IDEs. RStudio's Help, Viewer and data viewer are each an iframe, and
   none of their controls reach the survey, 57 of them in the data viewer
@@ -684,6 +683,37 @@ on a machine where packages were installed there, a Route sees none of them.
 the engine and waits on 1.13; and whether `.Rprofile` and `.Renviron` come
 in too, since they can change anything and would make Routes depend on the
 person running them.
+
+### 1.21 Surveying every window the application opens
+
+Made a requirement on 2026-10-02, `PRODUCT_REQUIREMENTS.md` R33, a Must, in
+the words "floating windows should be surveyed". It was a line of 1.9 until
+then.
+
+**What a Route does today.** It surveys one window, the page the adapter
+selects, and clicks inside that page only. Playwright sends a click straight
+into a page whatever the operating system has stacked over it, so another
+window never counts as covering anything. Measured on RStudio the same day,
+seed `898df070194f` with the `r-markdown-further` Fix, a Route of 10 Hops
+run with windows shown: hop 5 chose Show in new window, which floated the
+document in a window of its own over the main one, and hops 6 to 10 clicked
+controls behind it. Those clicks are legitimate under R32 as widened that
+day, since a person reaches them by moving the floating window aside or by
+clicking the main window, which brings it to the front. What is missing is
+the other side: nothing in the floating window was ever offered.
+
+The first of RStudio's recorded bugs starts in a second window too, its plot
+zoom window. How many windows either IDE opens is unmeasured.
+
+**To decide when it is designed:** how a Route learns that a window opened
+and closed; whether one pool spans every window or a Hop first draws a
+window; how the journal names which window a target was in, so replay finds
+it again; and what the checks read in a second window.
+
+**Giving a new window priority, wanted later and not decided.** In the words
+it was put, "at some point, I'd even say given priority (another thing
+related to weighting)". That would weight the draw toward a window that has
+just opened, which belongs with weighting the draw toward new targets, 1.14.
 
 ## 2. Undecided
 

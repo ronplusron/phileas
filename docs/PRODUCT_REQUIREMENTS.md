@@ -232,7 +232,8 @@ and the runner runs all of them after every hop.
 - **R6 (Should)** A journey reports its stranded routes separately from its
   failures, with enough of the journal to tell the two causes apart.
 - **R32 (Must)** A hop acts only on what a person could see at that moment,
-  or bring into view by scrolling. A control the application has hidden,
+  or bring into view by scrolling or by bringing its own window to the
+  front. A control the application has hidden,
   such as one in a pane another pane has been zoomed over, is never offered.
   A hop spent on something no person could reach finds nothing a person
   would meet, and wastes the hop besides. Measured on RStudio on 2026-10-01:
@@ -240,7 +241,18 @@ and the runner runs all of them after every hop.
   Console panes was still offered, and the next hop's click on one was
   taken by whatever lay on top. Raised the same day in the words "Don't
   include controls that cant be seen, for example what happens with Zoom.
-  This is a must."
+  This is a must." Widened on 2026-10-02 to a window brought to the front:
+  on RStudio, a document shown in a new window floated over the main one,
+  and the next hops clicked controls behind it. A person reaches those by
+  moving the floating window aside, or by clicking the main window, which
+  brings it to the front.
+- **R33 (Must)** A route explores every window the application opens, not
+  only the first: a floating window, such as a document RStudio shows in a
+  new window, is surveyed and traveled through like the main one. Measured
+  on RStudio on 2026-10-02: Show in new window put a document in a window of
+  its own, and nothing in it was ever offered, so a whole surface a person
+  uses went unexplored. Raised as a must the same day, in the words
+  "floating windows should be surveyed."
 
 ### Findings and reproducing them
 
