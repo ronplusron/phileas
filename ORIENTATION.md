@@ -177,8 +177,12 @@ command palette is excluded, for now. 79 of the batch's 80 Routes passed,
 and the one failure was issue 64. Every entry in its `known-findings.json`
 is settled: four filed, and one dismissed as a false alarm.
 `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
-R script with code in it, `session-data`, code run in the console, or
-`r-markdown`, the dialog for a new R Markdown document. Its Journey fails the run when the machine's R libraries changed.
+R script with code in it; `session-data`, code run in the console;
+`r-markdown`, the dialog for a new R Markdown document;
+`r-markdown-further`, that document created, with text and an R chunk
+added at its end; or `zoomed-plots`, the Plots pane zoomed so the other
+panes are hidden. Its Journey fails the run when the machine's R libraries
+changed.
 `docs/PLAN.md` has the decision, what the adapter does and why, and what is
 not decided, under "Stepping away from the trial".
 
