@@ -647,6 +647,44 @@ not record today. Not decided: whether the run's end keeps a one-line count
 of entries not seen, pointing at the list, and what the list command is
 called.
 
+### 1.20 RStudio Routes see the person's own R library
+
+Asked for on 2026-10-02, close to how it was put: with 30 R packages
+installed and a Journey run locally, the Route should be able to see those
+packages. Decided the same day: "included by default".
+
+**What a Route sees today, measured the same day** with `Rscript` under a
+Route's environment, which stands in for RStudio's R session: R 4.6.0, R's
+system library with its 110 packages, and the Route's own library, empty
+and first, where any install goes. It does not see the person's own
+library, `~/Library/R/arm64/4.6/library` on this machine, nor their
+`~/.Rprofile` or `~/.Renviron`. The Route's fresh home folder and the
+adapter's `R_LIBS_USER` together replace the path to that library. On this
+machine it does not exist, so a Route sees every package the person does;
+on a machine where packages were installed there, a Route sees none of them.
+
+**What is agreed, all in the RStudio trial, none in the engine:**
+
+- The person's own library joins each Route's library list after the
+  Route's own, so an install still lands in the Route's library. Its path is
+  R's own default for the person, read from R, and nothing is added where
+  that folder does not exist.
+- `PHILEAS_R_PERSONAL_LIBRARY` decides it: unset or `1` includes it, `0`
+  leaves it out, a folder path includes that library instead, and anything
+  else is refused, in words saying it belongs to the RStudio trial. Named
+  without "TRIAL", since the engine reserves nothing under `PHILEAS_`.
+- The R library guard watches it too, so a Route can use those packages and
+  not change them.
+- A Journey's start prints whether it was included, where, and how many
+  packages it holds, or that there is none.
+- Tested on RStudio with a scratch library holding a copy of one package,
+  given by path, so nothing is written into the person's real home.
+
+**Not decided:** recording it on each journal's opening line, which needs
+the engine and waits on 1.13; and whether `.Rprofile` and `.Renviron` come
+in too, since they can change anything and would make Routes depend on the
+person running them.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -1158,6 +1196,34 @@ sources in the previous 14 days, whose owners GitHub does not say.
 
 Said on 2026-10-01: "let's not worry about this cleanup for now." Whether
 to clean it up later is open.
+
+### 2.22 More than one Fix in a Route
+
+Raised on 2026-10-02, while writing RStudio's `zoomed-plots` Fix, as "Could
+we adapt the engine to have multiple Fixes in one Route?", and asked to be
+kept as something to consider, in both of the meanings below. Nothing is
+decided. Different Fixes for different Routes of one Journey is a separate
+question, 2.4.
+
+What works today: a Fix is a function, so one Fix can run another before
+its own steps, and each step is journaled; the journal's fingerprint covers
+only the outer Fix's own source.
+
+**Several Fixes one after another, before the Trip.** For example `--fix
+script,zoomed-plots`, a script opened and then the Plots pane zoomed. A
+reading, not a decision: a small change in the engine. The Fixes run in
+order as one opening, the journal records each one's name and fingerprint,
+and a failure names the Fix that broke, so R11 still holds. The Trip keeps
+its own stream, so a seed's Trip is unaffected by which Fixes ran before it,
+though what the Trip finds on screen is not.
+
+**Fixes partway through a Route**, a Fix, then travel, then another Fix,
+then travel again. A reading, not a decision: a larger change, to what a
+Route is. A later Fix would run after unpredictable travel, so its failure
+is no longer a clean finding that the setup broke, which is what R11 rests
+on; it might be a bug the travel reached. And the Trip's stream would need a
+split per stretch of travel, or editing one Fix would move every draw after
+it, the hazard `../CLAUDE.md` gives for splitting each Route's seed in two.
 
 ## 3. Declined
 
