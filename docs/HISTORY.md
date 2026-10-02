@@ -25,6 +25,31 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-02: a control hidden at the window's edge leaves the draw
+
+**Found by a Journey.** One Route of 200 Hops from the new `zoomed-plots`
+Fix, seed `616cebae29ea`, abandoned two Hops, 34 and 38, on clicks the page
+took: "R" in the Environment pane and "Install R packages" in Packages,
+both offered as reachable. A replay of the seed to hop 33 matched the
+original's 33 targets, and showed why. Hop 6 had chosen View > Panes > Zoom
+Left / Center Column, which leaves the right column zero pixels wide at
+the window's right edge. Both buttons sat inside `overflow: hidden`
+containers 0 wide, the shape the hidden test looks for, with boxes from
+x = 1199 in a window 1200 wide: one pixel inside it, and no element at all
+under that pixel.
+
+**What was wrong.** The survey's first pass asks what is on top at the
+center of the part of a control inside the window, and kept the control
+whenever the answer was nothing, so the second pass, which would have found
+the zero-width container, never ran. Nothing at all at that point is not
+the control either, so such a control now goes to the second pass.
+
+**Measured afterwards, on RStudio:** with the right column collapsed, "R"
+is hidden, and Playwright refuses a trial click on it, a separator taking
+the click; 21 controls offered and 35 hidden. A replay of the seed now
+travels elsewhere from the first such screen, as any change to what is
+offered makes it.
+
 ## 2026-10-02: the covered test works on RStudio, and editors keep their text boxes
 
 **What was wrong.** Found while making hidden controls leave the draw. The

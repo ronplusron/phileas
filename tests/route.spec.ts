@@ -1856,6 +1856,32 @@ test('a text box under a layer of its own widget is kept and recorded, and one u
   expect(outside.layered).toEqual([]);
 });
 
+test('a control hidden at the window edge, with nothing under its sliver, leaves the draw', async ({ page, app }) => {
+  // Measured on RStudio on 2026-10-02: Zoom Left / Center Column leaves the
+  // right column zero pixels wide at the window's edge. Its buttons overlap
+  // the window by one pixel, with no element at all under that sliver, and
+  // were offered as reachable; two Hops drawn to them were abandoned.
+  await page.evaluate(() => {
+    document.documentElement.style.cssText = 'height: 0; overflow: hidden;';
+    document.body.style.cssText = 'height: 0; margin: 0;';
+    const pane = document.createElement('div');
+    pane.id = 'probe-pane';
+    pane.style.cssText = `position: absolute; left: ${window.innerWidth - 1}px; top: ${window.innerHeight - 40}px; width: 0; height: 30px; overflow: hidden;`;
+    pane.innerHTML = '<button style="width: 40px; height: 20px">At the edge</button>';
+    document.body.append(pane);
+  });
+  // The setup has to reproduce what RStudio did: nothing at the sliver's center.
+  const atSliver = await page.evaluate(() => {
+    const button = document.querySelector('#probe-pane button')!.getBoundingClientRect();
+    return document.elementFromPoint(window.innerWidth - 0.5, button.top + button.height / 2)?.tagName ?? null;
+  });
+  expect(atSliver).toBeNull();
+
+  const found = await surveyed(page, app);
+  expect(found.candidates.some((c) => c.source === 'page' && c.name === 'At the edge')).toBe(false);
+  expect(found.hidden.map((entry) => entry.candidate.name)).toContain('At the edge');
+});
+
 test('a page with every control hidden strands, naming what hides them', async ({ page, app }) => {
   await page.evaluate(() => {
     const pane = document.createElement('div');

@@ -640,7 +640,14 @@ async function outOfReachAmong(
           if (!inner || inner === top) break;
           top = inner;
         }
-        if (!top) return null;
+        // Nothing at all at its center: not the control either, so only the
+        // element itself can say what became of it. Measured on RStudio on
+        // 2026-10-02: Zoom Left / Center Column leaves the right column zero
+        // pixels wide at the window's edge, a button there overlaps the
+        // window by one pixel with no element under it, and it was offered
+        // as reachable until this; two Hops drawn to such buttons were
+        // abandoned.
+        if (!top) return 'nothing at its center';
         for (let node: Element | null = top; node; ) {
           const rect = node.getBoundingClientRect();
           if (
