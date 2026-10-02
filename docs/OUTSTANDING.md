@@ -490,6 +490,27 @@ and the default Trip went from 200 Hops to 150. Every baseline above was
 taken before it, and the demo's pinned seeds will be searched for again once
 a weighted chooser lands.
 
+**Two places the uniform draw spends Hops, measured on Bobolink Editor** on
+2026-10-01, one Journey of 3 Routes of 30 Hops, seed `4fd8b50f91d1`, no
+Fix, windows hidden. Asked to be recorded the same day; what to do about
+either is not decided.
+
+- **Controls that do nothing.** The editor draws its own window frame in
+  the page, and each resize handle is a button with a name, "Resize top
+  edge" and the like, so the survey offers it. Clicked without a drag, a
+  handle does nothing: 9 of the 90 Hops went to them, and 7 of those 9
+  reported no change. The editor's adapter could exclude them by name; a
+  weighting that lowers a target each time it changes nothing would cover
+  any application with controls like these.
+- **A modal dialog with many choices.** Settings is marked `aria-modal`, so
+  while it is open the survey offers only its controls, as it should, and
+  it holds a dozen dropdowns and closes only through Escape or Close. Once
+  in, most draws stay in. Counting from the Hop that opened it to the one
+  that closed it, route 1 spent all of hops 10 to 27 there, 18 Hops,
+  closing it at hop 20 and opening it again at hop 21; routes 2 and 3 spent
+  8 and 11. Weighting away from the controls just used, as above, is the
+  remedy this item already describes.
+
 ### 1.15 Weighting the draw by a control's role
 
 Raised 2026-09-28, close to how it was put: the kinds of control are few,
