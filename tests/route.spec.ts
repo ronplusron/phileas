@@ -1810,6 +1810,52 @@ test('a page whose html has no area and clips hides nothing', async ({ page, app
   expect(names).toEqual(expect.arrayContaining(['Summary', 'Far left']));
 });
 
+test('a covered control is found when the html has no area and clips', async ({ page, app }) => {
+  // Measured on RStudio on 2026-10-02: a cover over New File took a trial
+  // click, and the survey still offered it, since every control there was
+  // trimmed to nothing by the html's own box.
+  await page.evaluate(() => {
+    document.documentElement.style.cssText = 'height: 0; overflow: hidden;';
+    document.body.style.cssText = 'height: 0; margin: 0;';
+  });
+  await coverWith(page, '#view-summary');
+  const found = await surveyed(page, app);
+  expect(found.covered.map((entry) => entry.candidate.name)).toEqual(['Summary']);
+  expect(found.candidates.some((c) => c.source === 'page' && c.name === 'Summary')).toBe(false);
+});
+
+test('a text box under a layer of its own widget is kept and recorded, and one under anything else is covered', async ({ page, app }) => {
+  // Measured on RStudio on 2026-10-02: its code editor, Ace, keeps the real
+  // text box under its own content layer, and a click there focuses it.
+  await page.evaluate(() => {
+    const editor = document.createElement('div');
+    editor.id = 'probe-editor';
+    editor.style.cssText = 'position: fixed; top: 10px; right: 10px; width: 200px; height: 60px;';
+    editor.innerHTML =
+      '<textarea aria-label="Code editor" style="position: absolute; top: 5px; left: 5px; width: 20px; height: 10px;"></textarea>' +
+      '<div class="probe-content" style="position: absolute; inset: 0; background: white;">x <- 1</div>';
+    document.body.append(editor);
+  });
+  const found = await surveyed(page, app);
+  expect(found.candidates.some((c) => c.source === 'page' && c.name === 'Code editor')).toBe(true);
+  expect(found.covered.some((entry) => entry.candidate.name === 'Code editor')).toBe(false);
+  expect(found.layered.map((entry) => entry.candidate.name)).toEqual(['Code editor']);
+  expect(found.layered[0]?.by).toMatch(/^<div class="probe-content">/);
+
+  // The positive control: the same text box with its layer moved out of the
+  // widget, so what lies on top no longer shares its parent.
+  await page.evaluate(() => {
+    const layer = document.querySelector('#probe-editor .probe-content') as HTMLElement;
+    const rect = document.getElementById('probe-editor')!.getBoundingClientRect();
+    layer.style.cssText = `position: fixed; left: ${rect.x}px; top: ${rect.y}px; width: ${rect.width}px; height: ${rect.height}px; background: white;`;
+    document.body.append(layer);
+  });
+  const outside = await surveyed(page, app);
+  // It lies over a corner of buggy's own page too, which may cover more than this.
+  expect(outside.covered.map((entry) => entry.candidate.name)).toContain('Code editor');
+  expect(outside.layered).toEqual([]);
+});
+
 test('a page with every control hidden strands, naming what hides them', async ({ page, app }) => {
   await page.evaluate(() => {
     const pane = document.createElement('div');

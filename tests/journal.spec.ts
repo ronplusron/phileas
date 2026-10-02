@@ -238,6 +238,25 @@ test('hidden controls are written on the pool and change its id, and none leaves
   expect(pools.find((entry) => entry.id === plain)).not.toHaveProperty('hidden');
 });
 
+test('layered text boxes are written on the pool and change its id', () => {
+  const dir = scratch();
+  const journal = Journal.open(dir, opening);
+  const editor = { source: 'page' as const, role: 'textbox', name: 'Cursor at row 1', nth: 1 };
+  const layer = { candidate: editor, by: '<div class="ace_content">' };
+
+  // Kept in the pool, so it is a candidate as well as a layered one.
+  const plain = journal.pool([editor]);
+  const withLayer = journal.pool([editor], [], [], [layer]);
+  expect(withLayer).not.toBe(plain);
+  journal.close({ outcome: 'passed', hops: 0 });
+
+  const pools = readJournal(journalPath(dir, opening.routeNumber, opening.routeSeed)).filter(
+    (entry) => entry.kind === 'pool'
+  );
+  expect(pools.find((entry) => entry.id === withLayer)).toMatchObject({ candidates: [editor], layered: [layer] });
+  expect(pools.find((entry) => entry.id === plain)).not.toHaveProperty('layered');
+});
+
 test('an existing journal is refused, never overwritten', () => {
   // Each run writes to a folder of its own, so a journal already at this path
   // means two runs were handed one folder. The earlier record is what a replay

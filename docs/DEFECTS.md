@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -294,31 +294,6 @@ finding, while every draw is the same. The failure says when the finding
 arrived and lists the steps before it, so a reader can see the two runs
 agree; nothing yet compares them, and R13 would read the second as a seed
 that no longer reproduces.
-
-## The covered test cannot fire on RStudio, and two faults cancel out
-
-**Filed 2026-10-02, measured on RStudio, and confirmed by reading the code.**
-The covered test's second pass works out the part of a control that shows
-by trimming it to every container that clips, `<html>` included.
-RStudio's `<html>` is 1200 by 0 with `overflow: hidden`, so every suspect
-there is trimmed to nothing and kept as scrolled out of sight. A root's
-overflow applies to the window, not to its own box, so that trim is wrong.
-0 of RStudio's 55 journals since covered controls landed record one, where
-the same search finds them in Bobolink Editor's. The hidden-control test
-skips the root and the body for this reason; the covered test does not.
-
-**Why it is not simply fixed.** The first pass suspects three Console
-buttons: "View the current working directory", "Find in Console" and
-"Clear console (⌃L)". At each one's center the element on top is an `<img>`
-or a `<td>` not inside the button, yet 45 of 51 earlier clicks on them
-landed. The zero-height `<html>` keeps them on offer by accident.
-Correcting the trim alone would mark three working buttons covered and
-stop the draw from reaching them.
-
-**What would close it:** measure why those buttons fail the on-top test
-while clicks land, and correct both together. A guess, not checked: the
-icon belongs to the button but sits outside it in the page's structure,
-where Playwright's own click check accepts it.
 
 ## Two things that will look like candidates, and are not
 

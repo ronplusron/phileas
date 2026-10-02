@@ -901,7 +901,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       const pool = journal.pool(
         found.candidates.map(journaled),
         found.covered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
-        found.hidden.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by }))
+        found.hidden.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
+        found.layered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by }))
       );
 
       span.endedAt = Date.now();

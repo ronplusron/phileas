@@ -25,6 +25,52 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-02: the covered test works on RStudio, and editors keep their text boxes
+
+**What was wrong.** Found while making hidden controls leave the draw. The
+covered test trims a control to the part that shows inside every container
+that clips it, and counted `<html>` as one. RStudio's `html` is 1200 by 0
+with `overflow: hidden`, so every control there was trimmed to nothing and
+kept as scrolled out of sight: none of RStudio's 55 journals since covered
+controls landed recorded one, where the same search found them in Bobolink
+Editor's. Measured directly: a plain cover laid over New File took
+Playwright's trial click, and the survey still offered New File. A root's
+overflow, and the body's when the root's is visible, applies to the window,
+which is already the starting box, so neither counts now.
+
+**A diagnosis that was wrong, corrected by measuring.** The fault was first
+filed as two faults cancelling out, on the reading that three Console
+buttons whose clicks land, "View the current working directory", "Find in
+Console" and "Clear console", would be marked covered once the trim was
+fixed. They were suspected only because RStudio's Console toolbar moves
+after launch, so the box the first pass compares is stale: "Find in Console"
+sat at x = 698 in one probe and 602 in the next. Tested against the element
+itself, each is on top. One probe's trial clicks were refused on 34 of 57
+controls on the start screen; three runs changing the order and the timing
+did not reproduce it, and why is not known.
+
+**What fixing it showed.** On a 40-Hop RStudio Route, the source editor's
+text box was then covered from hop 19 on, by its own `ace_content`: Ace, the
+code editor, keeps its real text box under its content layer, and a click
+there focuses it. The rule of 2026-09-30, that a covered text box is not
+typed into, left the editor out entirely. So a text box whose cover sits
+inside the text box's own parent is kept, as layered, and written on the
+pool with what lies on top, since keeping it rests on how the page is
+built. Chosen on 2026-10-02 from three: this, not testing text boxes for
+cover at all, which would type again into text boxes under real covers such
+as Bobolink Editor's other windows, and each adapter naming such layers,
+which is a list per application.
+
+**Measured afterwards, on RStudio:** with a cover over New File it is left
+out, and offered again once the cover goes; after Zoom Plots, 24 controls
+hidden and none covered. Two Routes of 40 Hops from seed `ac01df79553d`
+passed, the editor's text boxes kept as layered and typed into once, pane
+controls covered while a popup menu was open, and one Hop abandoned on a
+timeout with nothing taking the click. Not measured on Bobolink Editor. Its
+journals' covered text boxes are all its "Source" editor, under a menu or
+another editor's lines; a line of its own editor would be inside the text
+box itself, so by that reading none would become layered.
+
 ## 2026-10-02: the demos' saved seeds still do what they record
 
 **Why.** Leaving covered controls out of the draw on 2026-09-30, and hidden

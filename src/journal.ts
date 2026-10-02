@@ -158,12 +158,26 @@ export interface PoolEntry {
    * where present, for the reasons `covered` is.
    */
   readonly hidden?: readonly JournaledHidden[];
+  /**
+   * Text boxes kept in the pool although something lies on top of each,
+   * because it sits inside the text box's own parent, with what it is.
+   * Absent where none were, and before 2026-10-02. On the pool and part of
+   * its id where present, so a wrong reading of a page shows in the journal.
+   */
+  readonly layered?: readonly JournaledLayered[];
 }
 
 /** A covered control, as the journal records it. */
 export interface JournaledCovered {
   readonly candidate: JournaledCandidate;
   /** What is on top at its click point, described as Playwright describes an element. */
+  readonly by: string;
+}
+
+/** A text box kept under a layer of its own widget, as the journal records it. */
+export interface JournaledLayered {
+  readonly candidate: JournaledCandidate;
+  /** What lies on top at its click point, described as a covering element is. */
   readonly by: string;
 }
 
@@ -546,13 +560,18 @@ export class Journal {
   pool(
     candidates: readonly JournaledCandidate[],
     covered: readonly JournaledCovered[] = [],
-    hidden: readonly JournaledHidden[] = []
+    hidden: readonly JournaledHidden[] = [],
+    layered: readonly JournaledLayered[] = []
   ): string {
-    // A screen with nothing covered or hidden hashes as it did before either
-    // was recorded, and one with only covered controls as it did before
-    // hidden ones were, so neither id changes.
-    const outOfReach = { ...(covered.length ? { covered } : {}), ...(hidden.length ? { hidden } : {}) };
-    const hashed = covered.length || hidden.length ? { candidates, ...outOfReach } : candidates;
+    // A screen with none of these hashes as it did before any was recorded,
+    // and one with only the older kinds as it did before the newer ones
+    // were, so no earlier id changes.
+    const outOfReach = {
+      ...(covered.length ? { covered } : {}),
+      ...(hidden.length ? { hidden } : {}),
+      ...(layered.length ? { layered } : {}),
+    };
+    const hashed = Object.keys(outOfReach).length ? { candidates, ...outOfReach } : candidates;
     const id = createHash('sha256').update(JSON.stringify(hashed)).digest('hex').slice(0, 12);
     if (!this.pools.has(id)) {
       this.write({ kind: 'pool', id, candidates, ...outOfReach });

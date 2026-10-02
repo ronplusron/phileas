@@ -282,6 +282,21 @@ export interface HiddenCandidate {
 }
 
 /**
+ * A text box kept in the draw although something lies on top of it, because
+ * that something sits inside the text box's own parent, and what it is.
+ *
+ * Recorded because keeping it rests on how the page is built rather than on
+ * what a click would reach: measured on RStudio on 2026-10-02, whose code
+ * editor keeps its real text box under its own content layer, and a wrong
+ * reading would otherwise pass without a sign.
+ */
+export interface LayeredCandidate {
+  readonly candidate: PageCandidate;
+  /** What lies on top at its click point, described as a covering element is. */
+  readonly by: string;
+}
+
+/**
  * Whether menu entries were offered, and why not when they were not.
  *
  * A verdict rather than an absence, in the shape UNAVAILABLE_UNDER already uses
@@ -305,6 +320,8 @@ export interface SurveyResult {
   readonly covered: readonly CoveredCandidate[];
   /** Page controls left out because the application has hidden them; see `outOfReachAmong`. */
   readonly hidden: readonly HiddenCandidate[];
+  /** Text boxes kept under a layer of their own widget; see `outOfReachAmong`. They are among `candidates`. */
+  readonly layered: readonly LayeredCandidate[];
   readonly unnamed: readonly UnnamedElement[];
   readonly menuSource: MenuSourceVerdict;
   /**
@@ -511,7 +528,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   // tested. Before the draw, for the reason this function's comment gives.
   // Shortcuts were built from every control, covered or not: a key press
   // needs no clear spot to land on.
-  const { covered, hidden } = await outOfReachAmong(
+  const { covered, hidden, layered } = await outOfReachAmong(
     page,
     candidates.filter((c): c is PageCandidate => c.source === 'page'),
     timeoutMs
@@ -526,6 +543,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
     excluded,
     covered,
     hidden,
+    layered,
     unnamed,
     // Counted after exclusions rather than before, because the number that
     // matters is how many menu entries the draw could actually reach. Reporting
@@ -555,7 +573,12 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
  * control nor inside it, nor inside a label for it. Typed fields are tested
  * too, though typing needs no click: a field no pointer can reach should not
  * be typed into, or a finding could come from somewhere no person gets to.
- * Decided on 2026-09-30, docs/OUTSTANDING.md.
+ * Decided on 2026-09-30, docs/OUTSTANDING.md. **Except** a text box whose
+ * cover sits inside the text box's own parent, a layer of its own widget,
+ * as RStudio's code editor lays its content over its real text box: a click
+ * there reaches it, so it is kept, and recorded as layered. Decided on
+ * 2026-10-02 over not testing text boxes at all, and over each adapter naming
+ * such layers.
  *
  * **What counts as hidden** is a control inside a container that clips what
  * it holds and has no area: nothing inside it can show, however anything
@@ -584,9 +607,9 @@ async function outOfReachAmong(
   page: Page,
   controls: readonly PageCandidate[],
   timeoutMs: number | undefined
-): Promise<{ covered: CoveredCandidate[]; hidden: HiddenCandidate[] }> {
+): Promise<{ covered: CoveredCandidate[]; hidden: HiddenCandidate[]; layered: LayeredCandidate[] }> {
   const tested = controls.filter((control) => control.box !== undefined);
-  if (!tested.length) return { covered: [], hidden: [] };
+  if (!tested.length) return { covered: [], hidden: [], layered: [] };
 
   const suspects = await answered(
     'the page, asked what is on top of each control,',
@@ -639,6 +662,7 @@ async function outOfReachAmong(
 
   const covered: CoveredCandidate[] = [];
   const hidden: HiddenCandidate[] = [];
+  const layered: LayeredCandidate[] = [];
   for (const [index, suspect] of suspects.entries()) {
     const control = tested[index];
     if (!suspect || !control) continue;
@@ -652,7 +676,7 @@ async function outOfReachAmong(
     // cannot reach, or a page that does not answer in time, stays in the draw.
     const verdict = await control.locator
       .evaluate(
-        (element): { hidden: string } | { covered: string } | null => {
+        (element, typed): { hidden: string } | { layered: string } | { covered: string } | null => {
           const up = (node: Element): Element | null => {
             const root = node.getRootNode();
             return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
@@ -673,15 +697,21 @@ async function outOfReachAmong(
             Math.min(window.innerWidth, own.right),
             Math.min(window.innerHeight, own.bottom),
           ];
+          // The root's overflow, and the body's when the root's is visible and
+          // it passes up, applies to the window, which is already the starting
+          // box, rather than to the element's own box. RStudio's html is 1200
+          // by 0 with overflow hidden: read as a container, it trimmed every
+          // control there to nothing, so none could be found covered, and it
+          // hid four working Console controls on the first try at R32.
+          // Measured on 2026-10-02.
+          const rootStyle = getComputedStyle(document.documentElement);
+          const bodyPassesUp = rootStyle.overflowX === 'visible' && rootStyle.overflowY === 'visible';
           for (let node = up(element); node; node = up(node)) {
+            if (node === document.documentElement || (node === document.body && bodyPassesUp)) continue;
             const style = getComputedStyle(node);
             if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
             const clip = node.getBoundingClientRect();
-            // The root's overflow, and the body's when it passes up, applies to
-            // the window rather than to the element's own box: RStudio's html
-            // is 1200 by 0 with overflow hidden, and hides nothing.
-            const window_ = node === document.documentElement || node === document.body;
-            if (!window_ && (clip.width < 1 || clip.height < 1)) return { hidden: describe(node) };
+            if (clip.width < 1 || clip.height < 1) return { hidden: describe(node) };
             [x0, y0, x1, y1] = [Math.max(x0, clip.left), Math.max(y0, clip.top), Math.min(x1, clip.right), Math.min(y1, clip.bottom)];
           }
           if (x1 - x0 < 1 || y1 - y0 < 1) return null;
@@ -698,13 +728,21 @@ async function outOfReachAmong(
             if (node === element) return null;
             if (node instanceof HTMLLabelElement && node.control === element) return null;
           }
+          // A text box under a layer of its own widget: what is on top sits
+          // inside the text box's parent. Measured on RStudio on 2026-10-02:
+          // its code editor, Ace, keeps the real text box under its content
+          // layer, and a click there focuses it, as a person typing does.
+          // Kept, and recorded, since it rests on how the page is built.
+          const parent = up(element);
+          if (typed && parent && parent.contains(top)) return { layered: describe(top) };
           return { covered: describe(top) };
         },
-        undefined,
+        takesTypedValue(control),
         timeoutMs === undefined ? {} : { timeout: timeoutMs }
       )
       .catch(() => null);
     if (verdict && 'hidden' in verdict) hidden.push({ candidate: control, by: verdict.hidden });
+    else if (verdict && 'layered' in verdict) layered.push({ candidate: control, by: verdict.layered });
     else if (verdict) covered.push({ candidate: control, by: verdict.covered });
   }
 
@@ -730,7 +768,7 @@ async function outOfReachAmong(
       }
     }
   }
-  return { covered, hidden };
+  return { covered, hidden, layered };
 }
 
 /** Whether a box has any area at all, before it is placed against the viewport. */
