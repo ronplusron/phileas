@@ -55,6 +55,15 @@ the same region hidden, settles as a quiet page does, so the first is about
 `aria-busy` and not about the region. The defect stays in `DEFECTS.md`
 until the editor's side lands and the seed replays one pool every time.
 
+**Closed the same day.** With the editor's 1.1.1 installed and its adapter
+pinned to this engine, 25 replays of the seed all drew hop 6 from the full
+pool, 53 controls with 36 options, where 3 in 25 had drawn from 47 before.
+The caveat stays with it: Settings' settle took 411 to 461 ms on every run,
+so the list had always arrived before Settings opened and the busy path did
+not run in these replays. Zero in 25 at the old rate of about 1 in 8 has a
+chance of about 4%; what shows the busy path works is the editor's own test,
+which holds the list back and fails without the fix.
+
 ## 2026-10-01: Bobolink Editor's adapter is the editor's, and `trial/editor/` is gone
 
 **What happened.** The adapter was written new in the editor's repository,

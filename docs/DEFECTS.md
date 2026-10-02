@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -294,38 +294,6 @@ finding, while every draw is the same. The failure says when the finding
 arrived and lists the steps before it, so a reader can see the two runs
 agree; nothing yet compares them, and R13 would read the second as a seed
 that no longer reproduces.
-
-## A list an application fills in late makes a seed replay differently
-
-**Filed 2026-10-01, seen on Bobolink Editor.** Three runs of Journey seed
-`4fd8b50f91d1`, with nothing changed between them that the draws read,
-chose a different font at route 1's hop 6: "Courier New", then "System
-Monospaced", then "Courier New" again. Every other Hop of the Route matched,
-so the draw took the same place in the pool and the pool held something
-different there.
-
-**Measured on 2026-10-02.** 25 more runs, read from their journals: 22
-drew hop 6 from a pool of 53 controls with 36 options, and 3 from a pool of
-47 with 30. The six missing were exactly the fixed-width fonts the editor
-measures after startup: Andale Mono, Ayuthaya, Courier New, Menlo, Monaco
-and PT Mono. Settings, opened at hop 4, copied whatever list had arrived by
-then and never updated it, and nothing on the page moved while the fonts
-were being measured, so the settle wait could not tell anything was coming.
-
-**Why it is a defect and not a limit.** A seed is only worth recording if it
-replays, and here it replays or not by timing. This one diverged on a
-choice that changed nothing after it, so the Route went on to match; a
-divergence on a choice that opens something sends every later Hop
-elsewhere, and the recorded seed then reads as a fixed bug, which R13 asks
-to be flagged rather than passed silently.
-
-**What closes it, decided 2026-10-02, in two parts.** The engine's settle
-wait treats a visible element marked `aria-busy="true"` as not settled, on
-this branch; the editor marks its font dropdown busy until the list arrives
-and fills it in then, on the editor's own branch. The entry leaves when the
-same seed replays the same pool on every run with both in place. An
-application that loads something late without saying so is still exposed,
-which no generic wait can see.
 
 ## Two things that will look like candidates, and are not
 
