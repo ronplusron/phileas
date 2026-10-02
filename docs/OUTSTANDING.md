@@ -715,6 +715,44 @@ it was put, "at some point, I'd even say given priority (another thing
 related to weighting)". That would weight the draw toward a window that has
 just opened, which belongs with weighting the draw toward new targets, 1.14.
 
+### 1.22 A run that ends on a finding reads as a crash
+
+Raised on 2026-10-02, after one Positron Route of 100 Hops, seed
+`64156c12293c`, failed at hop 56 on a new finding, in the words: "Right now
+when it ends it looks like Phileas threw and error. In this case, a ton of
+errors. It does not end gracefully or informatively." Asked first, of the
+same run, "There were three new findings and instead of reporting them it
+just quit?" The findings had been reported, three times over, and were not
+seen.
+
+**What printed, in order, measured on that run.** The failing Hop's line,
+carrying all three findings on one line of about a thousand characters. The
+failure, with when each finding arrived and the ten steps before it. The
+known findings: the three new ones, then 46 lines of entries not seen this
+Journey, then the re-signing. The home folder guard. Then Playwright's own
+report of the failed test, which repeats the whole failure, points at
+`dist/route.js:638` with a code frame and a stack, and dumps its
+attachments, numbered to seven with six printed: the staleness note, the narrowings, the page's DOM, the trace,
+the main process's standard error and the renderer's console errors. The
+last screen is that dump.
+
+**Why it reads that way.** A failed check reaches Playwright as a thrown
+`CheckFailure`, so Playwright reports it the way it reports a fault in the
+engine. The Journey's own summary prints from global teardown, before
+Playwright's final report, so it is never last. And the not-seen entries,
+which 1.19 already asks to take off the default, bury the new ones.
+
+**Proposed, not decided:** a reporter the engine ships and `phileas run`
+uses by default. It prints each Route's outcome, passed, failed or stranded,
+with no stack for a failed check, since that is a finding and not an error;
+names attachments by path rather than printing them; and ends on a short
+summary: Routes by outcome, the new findings with their ids, where the
+journals are, and the commands to replay a Route or file a finding. An error
+in the engine itself still prints in full, so the two stay told apart. It
+would be part of phase 7's Journey summary moved forward, as the journal's
+renderer was; it would take in 1.19; and it could be where stranded stops
+showing as a failed test, which `PLAN.md` puts in phase 5.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -1254,6 +1292,32 @@ is no longer a clean finding that the setup broke, which is what R11 rests
 on; it might be a bug the travel reached. And the Trip's stream would need a
 split per stretch of travel, or editing one Fix would move every draw after
 it, the hazard `../CLAUDE.md` gives for splitting each Route's seed in two.
+
+### 2.23 One error seen by several checks counts as several findings
+
+Raised on 2026-10-02 by the same Positron run as 1.22, asked as "there were
+three possible new errors?", and asked to be recorded. Nothing is decided.
+
+One click on Remote Explorer's Configure failed once. The extension printed
+the error to the console, wrote it to its log, and Positron showed it as an
+error notification, so the console, log and notification checks each made a
+finding of it, with a signature and id of its own: `643cb31a`, `c1b4b0ef`
+and `fb1bc714`. The run reported three new findings, and filing them took
+three `phileas known add` calls against one issue, ronplusron/phileas
+issue 87.
+
+**Notes, a reading and not a decision:**
+
+- **What would group them.** They arrived within half a second of each other
+  on the same Hop, and two carry the same message text. Neither is safe
+  alone: two real bugs can arrive on one Hop, and the log line words the
+  error differently from the console.
+- **Grouping is for reporting, not for matching.** Each check still needs
+  its own signature, since a later run may see only one of the three, and
+  that one should still be recognized as known.
+- **It is not the open question of one defect on several Routes,** in
+  `PRODUCT_REQUIREMENTS.md` section 11. That is one bug met many times;
+  this is one meeting seen many ways.
 
 ## 3. Declined
 
