@@ -1081,6 +1081,38 @@ test('a page that changes every 200ms is not settled, though two reads agree', a
   expect(withWindow.settled).toBe(false);
 });
 
+test('a page marked aria-busy is not settled until it clears, however still it looks', async ({ page }) => {
+  // Bobolink Editor's font list, measured on 2026-10-01, arrives after a pause
+  // in which nothing on the page changes. Here a region is marked busy for
+  // 1.2 s and then cleared, with nothing else moving.
+  const BUSY_MS = 1_200;
+  await page.evaluate((busyMs) => {
+    const region = document.createElement('div');
+    region.setAttribute('aria-busy', 'true');
+    region.textContent = 'Loading fonts';
+    document.body.append(region);
+    setTimeout(() => region.setAttribute('aria-busy', 'false'), busyMs);
+  }, BUSY_MS);
+
+  const result = await settle(page, 4_000);
+  expect(result.settled).toBe(true);
+  expect(result.ms).toBeGreaterThanOrEqual(BUSY_MS + DEFAULT_SETTLE_QUIET_MS - 100);
+});
+
+test('a page whose busy region is hidden settles as a quiet page does', async ({ page }) => {
+  // The control: the same region, hidden, holds nothing open, so the test
+  // above is about aria-busy and not about the region being added.
+  await page.evaluate(() => {
+    const region = document.createElement('div');
+    region.setAttribute('aria-busy', 'true');
+    region.hidden = true;
+    document.body.append(region);
+  });
+  const result = await settle(page, 4_000);
+  expect(result.settled).toBe(true);
+  expect(result.ms).toBeLessThan(DEFAULT_SETTLE_QUIET_MS + 500);
+});
+
 test('a quiet page settles after the window, not before', async ({ page }) => {
   const quiet = await settle(page, 2_000);
   expect(quiet.settled).toBe(true);

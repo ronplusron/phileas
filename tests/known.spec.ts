@@ -533,7 +533,11 @@ test('filing a finding keeps where it came from', () => {
 test("a Journey's end refuses a run it cannot read, rather than calling every finding unseen", () => {
   const root = scratch('phileas-known-test-');
   const file = knownFile([finding('console-error: the tickets could not be checked')]);
-  expect(() => recordJourneyFindings(path.join(root, 'absent'), file)).toThrow(/journals are not at/);
+  // Both ways a run's folder goes missing are named, so a Journey whose Routes
+  // all failed early is not sent to check a setting that is correct.
+  expect(() => recordJourneyFindings(path.join(root, 'absent'), file)).toThrow(
+    /No Route wrote a journal at .*every Route failed before its first Hop.*journalsRoot is not where the spec writes/
+  );
 
   const empty = path.join(root, 'empty');
   fs.mkdirSync(empty);

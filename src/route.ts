@@ -1442,6 +1442,10 @@ async function act(
  * docs/HISTORY.md has the measurement, and `DEFAULT_SETTLE_QUIET_MS` says how
  * the window's length was chosen.
  *
+ * **An element marked `aria-busy="true"` holds the window open.** Nothing is
+ * required of an application, but one that marks what it is still loading
+ * gets a survey that waits for it, which a quiet tree alone cannot promise.
+ *
  * **An application that never settles is not stopped here.** The wait is
  * bounded and returns unsettled, because a page that keeps moving is a finding
  * for the checks to make rather than a reason to abandon a Hop.
@@ -1474,8 +1478,21 @@ export async function settle(
       const remaining = Math.max(MIN_SETTLE_READ_MS, timeoutMs - (Date.now() - startedAt));
       tree = await page.locator('body').ariaSnapshotJSON({ timeout: remaining });
       const current = JSON.stringify(tree);
+      // A page that says it is still filling something in is not settled,
+      // however still it looks. `aria-busy` is the standard way to say so,
+      // and the one cooperation this takes when it is offered: measured on
+      // Bobolink Editor on 2026-10-01, its font list arrives after a pause in
+      // which nothing on the page changes, and 3 of 25 replays of one seed
+      // surveyed before it, drew from a shorter list, and chose another font.
+      const busy = await page
+        .evaluate(() =>
+          [...document.querySelectorAll('[aria-busy="true"]')].some((element) =>
+            (element as HTMLElement).checkVisibility()
+          )
+        )
+        .catch(() => false);
       const readAt = Date.now();
-      if (current !== previous) unchangedSince = readAt;
+      if (current !== previous || busy === true) unchangedSince = readAt;
       else if (readAt - unchangedSince >= quietMs) {
         return { settled: true, ms: readAt - startedAt, tree };
       }

@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -295,29 +295,6 @@ arrived and lists the steps before it, so a reader can see the two runs
 agree; nothing yet compares them, and R13 would read the second as a seed
 that no longer reproduces.
 
-## A Journey whose Routes never started blames the journals folder
-
-**Filed 2026-10-01, seen on Bobolink Editor's adapter.** With a built file
-changed on purpose, the staleness guard refused the only Route before it
-launched, as it should, and the Route wrote no journal. The Journey's end
-then threw, from `findingsInRun` in `src/known.mjs`: "The run's journals are
-not at ... Is journalsRoot the one the spec writes to?" The run's folder was
-missing because no Route had reached the point of writing to it, not because
-the spec and the setup disagree about where journals go.
-
-**Why it is a defect and not a limit.** Refusing is right, for the reason
-the code gives: read as nothing, a missing folder would report every known
-finding as possibly fixed. But the reason it offers sends a reader to check a
-configuration that is correct, while the real one, here the staleness
-guard's refusal, is printed among the Route's failures above. Every Route
-failing before its first journal line reads the same way, whatever stopped
-it.
-
-**What would close it, not decided.** Saying both causes, or telling them
-apart: a Journey whose Routes all failed before writing anything says so
-and points at their failures, and only a run where Routes passed with no
-journal left behind asks about `journalsRoot`.
-
 ## A list an application fills in late makes a seed replay differently
 
 **Filed 2026-10-01, seen on Bobolink Editor.** Three runs of Journey seed
@@ -327,11 +304,13 @@ Monospaced", then "Courier New" again. Every other Hop of the Route matched,
 so the draw took the same place in the pool and the pool held something
 different there.
 
-**A reading, not confirmed:** the editor fills its Source Font list lazily,
-off the startup path, by measuring the installed fonts
-(`src/renderer/fontCatalog.ts` in the editor). A survey that runs before the
-list arrives sees fewer options than one that runs after, and nothing in the
-settle wait knows the list is still coming.
+**Measured on 2026-10-02.** 25 more runs, read from their journals: 22
+drew hop 6 from a pool of 53 controls with 36 options, and 3 from a pool of
+47 with 30. The six missing were exactly the fixed-width fonts the editor
+measures after startup: Andale Mono, Ayuthaya, Courier New, Menlo, Monaco
+and PT Mono. Settings, opened at hop 4, copied whatever list had arrived by
+then and never updated it, and nothing on the page moved while the fonts
+were being measured, so the settle wait could not tell anything was coming.
 
 **Why it is a defect and not a limit.** A seed is only worth recording if it
 replays, and here it replays or not by timing. This one diverged on a
@@ -340,10 +319,13 @@ divergence on a choice that opens something sends every later Hop
 elsewhere, and the recorded seed then reads as a fixed bug, which R13 asks
 to be flagged rather than passed silently.
 
-**What would close it, not decided.** Measuring the cause first, by
-recording the pool's size at that Hop on several runs. Then either the
-adapter waits for the list where it knows one loads late, or the engine
-treats a pool that is still changing as not yet settled.
+**What closes it, decided 2026-10-02, in two parts.** The engine's settle
+wait treats a visible element marked `aria-busy="true"` as not settled, on
+this branch; the editor marks its font dropdown busy until the list arrives
+and fills it in then, on the editor's own branch. The entry leaves when the
+same seed replays the same pool on every run with both in place. An
+application that loads something late without saying so is still exposed,
+which no generic wait can see.
 
 ## Two things that will look like candidates, and are not
 

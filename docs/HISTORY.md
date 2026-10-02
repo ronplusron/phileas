@@ -25,6 +25,36 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-02: the settle wait honors `aria-busy`, and a Journey's end names both causes
+
+**The Journey's end, when no journal was written.** It refused, rightly, but
+asked only whether `journalsRoot` was where the spec writes, and the case
+that met it on 2026-10-01 had a correct setting: the staleness guard had
+refused the only Route before its first Hop. The message now says no Route
+wrote a journal, names that case first and the setting second, and points
+at the Routes' failures. The test for it asserts both causes.
+
+**The settle wait, and a list filled in late.** A seed of Bobolink Editor's
+replayed with a different font 3 times in 25, every time from a pool six
+options short: Settings had copied the editor's font list before the fonts
+were measured, in a pause in which the page did not change, so the settle
+wait ended on time and the survey saw the short list. Two ways were weighed.
+Surveying again until the pool stops changing still depends on how long
+anyone waits, which is the fault itself. An element marked
+`aria-busy="true"` is the standard way for a page to say it is still
+filling something in, so the settle wait now restarts its quiet window
+while a visible one is on the page, and the editor marks its font dropdown
+that way until the list arrives. Nothing is required of an application; one
+that says it is busy gets a survey that waits. Agreed the same day, as one
+engine change and one editor change.
+
+**Measured.** A test on the proving ground marks a region busy for 1.2
+seconds with nothing else moving, and the wait held for it; with the new
+rule disabled, it settled at 419 ms and the test failed. A second test,
+the same region hidden, settles as a quiet page does, so the first is about
+`aria-busy` and not about the region. The defect stays in `DEFECTS.md`
+until the editor's side lands and the seed replays one pool every time.
+
 ## 2026-10-01: Bobolink Editor's adapter is the editor's, and `trial/editor/` is gone
 
 **What happened.** The adapter was written new in the editor's repository,

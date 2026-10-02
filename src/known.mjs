@@ -339,8 +339,18 @@ export function findingsInRun(runFolder) {
   // **Refused rather than read as nothing.** Read as nothing, a wrong journals
   // folder or a run that wrote no journal reported every known finding as "not
   // seen this Journey, possibly fixed": an invitation to close a real issue.
+  //
+  // **Both causes named, the likelier first.** The folder is made by a Route's
+  // first journal line, so it is also missing when every Route failed before
+  // writing one, as when the staleness guard refused the app. Asking only
+  // about journalsRoot sent a reader to a setting that was correct, measured
+  // on 2026-10-01, while the real reason sat among the Routes' failures.
   if (!fs.existsSync(runFolder)) {
-    throw new Error(`The run's journals are not at ${runFolder}, so what the Journey found cannot be read. Is journalsRoot the one the spec writes to?`);
+    throw new Error(
+      `No Route wrote a journal at ${runFolder}, so what the Journey found cannot be read. ` +
+        `Most often every Route failed before its first Hop, as when the staleness guard or the launch ` +
+        `refused, and the Routes' failures say why. Otherwise journalsRoot is not where the spec writes.`
+    );
   }
   const journals = fs.readdirSync(runFolder).filter((file) => file.endsWith('.jsonl'));
   if (journals.length === 0) {
