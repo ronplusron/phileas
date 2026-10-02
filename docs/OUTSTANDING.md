@@ -624,17 +624,28 @@ same Hop. Across two machines it has never been measured.
   more of a seed's pools match. Whether RStudio can be pointed at such a
   library is unmeasured.
 
-### 1.19 Checking the demos' seeds after covered and hidden controls
+### 1.19 Known findings at a run's end: only those met, and a list on demand
 
-Agreed 2026-09-30, when covered controls left the draw, and stopped partway
-the same day to keep to the engine's own tests. Hidden controls left the
-draw on 2026-10-02 and join it. A seed moves only where a screen had a
-covered or hidden control, so the check is to run each seed saved in
-`demo/*/seeds.mjs` hidden and read its pools for a `covered` or `hidden`
-entry. Rail Itinerary's three planted-bug seeds were run for covered
-controls and had none, before hidden ones were recorded; its
-several-at-once seed and all of Eighty Days' were not run. Any seed with
-either is searched for again. `HISTORY.md` has both changes.
+Asked for on 2026-10-02, close to how it was put: the known findings shown
+at the end of a run are too verbose; by default a run should list a known
+finding only if it met it, and there should be an easy way to see the list
+of all known findings.
+
+**What prints today.** When a Journey ends, `renderJourneyFindings` in
+`src/known.mjs` prints every entry in `known-findings.json`: those seen,
+with how often, and every one not seen, each on a line reading "not seen
+this Journey, possibly fixed or not reached". With five entries on file
+and a short run, most of what prints is the second kind. No command lists
+the file; `phileas known` has only `add`, `dismiss` and `remove`.
+
+**What it overturns, as a reading.** The not-seen lines were decided on
+2026-09-27, with known findings themselves, as "the only way an entry for a
+bug Positron fixed ever comes to light", and `PLAN.md` records that. Taken
+off the default, a fixed bug is found only by someone asking for the list,
+so the list should say when each entry was last seen, which the file does
+not record today. Not decided: whether the run's end keeps a one-line count
+of entries not seen, pointing at the list, and what the list command is
+called.
 
 ## 2. Undecided
 

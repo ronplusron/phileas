@@ -25,6 +25,24 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-02: the demos' saved seeds still do what they record
+
+**Why.** Leaving covered controls out of the draw on 2026-09-30, and hidden
+ones on 2026-10-02, moves a seed wherever a screen it reaches had either,
+and the demos pin seeds to show particular things. The check was agreed when
+covered controls landed and stopped partway, with Rail Itinerary's three
+planted-bug seeds run and nothing else.
+
+**Measured, with the engine as of the hidden-controls change:** all 14 seeds
+in `demo/*/seeds.mjs`, each run hidden with its Fix, Trip length and plants
+as recorded, and an empty known findings file. No pool on any of their 24
+Routes recorded a covered or a hidden control, and every seed did what its
+comment says. Each planted-bug seed met its bug at the recorded hop, the two
+traps stranding at theirs. Rail Itinerary's several-at-once seed failed
+Routes 1, 2 and 4 at hops 81, 72 and 100. Eighty Days' default seed won,
+lost and was still going, and its several-at-once seed met export-throw on
+four Routes and carnatic-log-error on one. Nothing was searched for again.
+
 ## 2026-10-02: hidden controls leave the draw, and are recorded (R32)
 
 **Why.** Asked for on 2026-10-01 as a must, in the words "Don't include
