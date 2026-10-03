@@ -169,10 +169,10 @@ found in it. The adapter declares no checks of its own yet, and no Fix.
 `docs/HISTORY.md` has why it moved and how, and the adapter that was in
 `trial/editor/` from 2026-09-30 is in this repository's history.
 
-**What comes next was ordered on 2026-10-03:** issue 88 tried in VS Code,
-the menu bar's three parts, and then the rest of replay from the journal,
-whose first part, each Fix step's content on its journal line, landed the
-same day. `docs/PLAN.md` has the order and why, under "Next".
+**What comes next was ordered on 2026-10-03:** the menu bar's three parts,
+and then the rest of replay from the journal. Its first two steps landed
+the same day: each Fix step's content on its journal line, and issue 88
+tried in VS Code. `docs/PLAN.md` has the order and why, under "Next".
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
@@ -221,8 +221,9 @@ been found and filed, `ronplusron/phileas` issues 44, 46, 53, 54, 87 and 88.
 Only 87, Remote Explorer's Configure failing when the home folder has no
 `.ssh` folder, has been followed by hand and read in the code; 88, the
 Profiles editor logging a file it could not find when MCP Servers is opened
-to the side in a profile with no `mcp.json`, was reproduced by a probe. `trial/positron/phileas/known-findings.json`
-holds their signatures.
+to the side in a profile with no `mcp.json`, was reproduced by a probe,
+and then in VS Code, so the bug is VS Code's.
+`trial/positron/phileas/known-findings.json` holds their signatures.
 `docs/PLAN.md` has everything measured and decided for it.
 The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and

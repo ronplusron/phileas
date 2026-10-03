@@ -997,7 +997,8 @@ the words "One branch, multiple commits."
    journal written after it can be replayed once replay exists. Landed the
    same day; `HISTORY.md` has it.
 2. **Issue 88 tried in VS Code,** to say whether the bug is Positron's or
-   VS Code's, since the Profiles editor comes from VS Code.
+   VS Code's, since the Profiles editor comes from VS Code. Done the same
+   day: it is VS Code's, and `HISTORY.md` has the measurement.
 3. **B of `OUTSTANDING.md` 1.23:** Positron's full menu reviewed against its
    exclusions.
 4. **Whether RStudio's and Bobolink Editor's menus widen with focus too,**

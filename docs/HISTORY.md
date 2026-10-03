@@ -25,6 +25,28 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: issue 88 is VS Code's
+
+The Profiles editor's MCP Servers row, opened to the side in a profile with
+no `mcp.json`, logs "The editor could not be opened because the file was
+not found" in Positron, ronplusron/phileas issue 88. The editor comes from
+VS Code, which Positron is built on, so the same steps were tried in VS Code
+1.140.0, the installed release, by a throwaway Playwright script: a fresh
+profile folder, Manage > Profiles, then Open to the Side on a row.
+
+**The control,** the Settings row, opened `settings.json` with no error.
+**MCP Servers** then logged the same message to the console and to
+`renderer.log`, and opened a tab for an `mcp.json` that does not exist. Two
+runs, the same both times. So the bug is VS Code's, and Positron carries it.
+
+**For any later probe of VS Code.** Set `window.menuStyle` to `custom`, or
+its Manage menu is native and out of Playwright's reach. And keep the
+profile folder's path short: with one in the scratchpad, VS Code closed
+before showing a window. Moved under the system temp folder, with
+Positron's launch flags added in the same change, it started. So which of
+the two mattered is not isolated; the reading is the path, since Positron
+fails when a socket inside its profile passes 103 characters.
+
 ## 2026-10-03: each Fix step's line says what the step was
 
 The first part of replay from the journal, which its decision said to build
