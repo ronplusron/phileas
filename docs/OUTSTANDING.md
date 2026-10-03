@@ -625,6 +625,72 @@ same Hop. Across two machines it has never been measured.
   more of a seed's pools match. Whether RStudio can be pointed at such a
   library is unmeasured.
 
+**Decided on 2026-10-02: replay from the journal,** built as `phileas replay
+<journal file>`, with the seed kept for rerunning within one testing
+session, in the words that came with it: seed "_is_ useful for rerunning
+during testing sessions." Proposed with four questions, each answered from
+the options offered:
+
+- **A replay runs the Fix, then acts on each recorded Hop in order**, by its
+  target, with the checks after each as usual. It ends in one of three
+  outcomes, never a plain pass: reproduced, the finding came back; not
+  reproduced, every Hop landed and it did not, which is how a fix is checked
+  on that path; and could not replay, a target was not on screen, where it
+  stops and names the Hop and what was there instead (R14). The finding being
+  replayed is set aside from the known findings, or a replay of a filed one
+  would carry straight past it. These were proposed and not questioned;
+  the four below were asked.
+- **Matching: exact first.** A target's role, name and position must match.
+  A mismatch is a could-not-replay naming the Hop, and the rule loosens only
+  where a real replay shows the need. Chosen over falling back to the name
+  when the position is off, and over fuzzy matching.
+- **The Fix: its steps are recorded in the journal,** so a replay needs the
+  journal and not the consumer's current Fix. Chosen over running the
+  consumer's current Fix with a warning when its fingerprint differs, and
+  over refusing.
+- **Code steps, decided the same day** by taking, in the words it was put,
+  "the agent's recommendation": a review of the options by a second model,
+  ranked, after a `code` step was found to be Playwright code that a journal
+  cannot hold. Four of RStudio's five Fixes, two of Positron's four and
+  one of the rail demo's two have code steps: 16 written, 9 in RStudio's,
+  6 in Positron's and 1 in the rail demo's, counted from the source on
+  2026-10-02.
+  - **New step kinds, so that most of what code does today is data the
+    journal holds whole:** `wait`, for text or a target, with a timeout;
+    `press`, any key, where an `act` step reaches only the keys a survey
+    offers; and `insert` or `type`, text into whatever has focus. And an
+    `act` step may name its target as data, role and name or a pattern and
+    position, which answers 2.7 and 2.11. RStudio's 9 code steps run as
+    11, since `session-data` runs one for each of three lines, and the
+    review found all 11 expressible this way: waits, keys and typed text.
+    Some of Positron's, which click inside a dialog through chained
+    locators, stay code.
+    A kind is added only where a Trip Hop could in principle do the same and
+    a person could by hand.
+  - **A replay acts from the journal only.** A `code` step it reaches is
+    refused by default, by name. `--with-current-fix` runs the consumer's
+    code step of the same number and label; the replay then says how many
+    steps ran from the current Fix, refuses a step whose recorded source
+    text differs from today's, and stops as could not replay where a step
+    changes the screen differently from its recording (R31's effect). That
+    last is evidence that does not rest on the Fix's fingerprint, which the
+    review found weaker than it looks: it hashes the Fix function's own
+    source, `fixFingerprint` in `src/journal.ts`, so a constant outside it,
+    such as the text `r-markdown-further` inserts, or a branch on the
+    application's version, as Positron's `session` Fix takes, changes what
+    runs and leaves the fingerprint the same.
+  - **Built first, whatever else lands:** each `fix-step` line records its
+    kind, an `act` step's target as data and any value beside its label,
+    and a `code` step's source text with a hash of it; and `phileas show`
+    prints the kind. Today a journal cannot tell an `act` step from a
+    `code` one, so no replay could tell which lines it may act on.
+- **How far: a flag decides.** By default to the step where the finding
+  arrived, plus a few Hops for one that arrives late; `--whole` replays every
+  recorded Hop.
+- **Proved first with another R on this machine:** a recorded RStudio finding
+  replayed under R 4.4.3, installed with rig, in place of 4.6, which is the
+  case R12 names without a second machine.
+
 ### 1.21 Surveying every window the application opens
 
 Made a requirement on 2026-10-02, `PRODUCT_REQUIREMENTS.md` R33, a Must, in

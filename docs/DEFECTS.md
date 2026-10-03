@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fourteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -294,6 +294,40 @@ finding, while every draw is the same. The failure says when the finding
 arrived and lists the steps before it, so a reader can see the two runs
 agree; nothing yet compares them, and R13 would read the second as a seed
 that no longer reproduces.
+
+## A Fix's fingerprint misses what the Fix does not itself contain
+
+**Filed 2026-10-02, confirmed by reading the code.** `fixFingerprint` in
+`src/journal.ts` hashes `fix.toString()`, the Fix function's own source, and
+each Route's opening line records it so that an edit to the Fix shows.
+`OUTSTANDING.md` 2.13 relies on that, as the way an edited Fix is told apart
+from a changed application. Three things change what a Fix does and leave
+its fingerprint the same:
+
+- **A constant outside the function.** RStudio's `r-markdown-further`
+  inserts the text in `ADDED`, and `script` and `session-data` type the
+  lines in `CODE`, each a module constant; changing `mean(x)` to `median(x)`
+  changes what every Route types and nothing in its journal.
+- **Anything the Fix imports.** Positron's `data-explorer` runs its
+  `session` Fix, and `session` reads the adapter; an edit to either leaves
+  `data-explorer`'s fingerprint as it was.
+- **A branch on something read at run time.** Positron's `session` Fix
+  takes different steps for the early releases and the current one, by
+  `positronFamily`, so one fingerprint stands for two different openings.
+
+**Why it is a defect and not a limit.** A recorded failing seed whose Fix
+changed this way stops reproducing while the journal says the Fix is the
+same, which reads as the application having changed, or as a fixed bug:
+R13's failure, arriving through the record meant to prevent it. Found by a
+review of how a replay could run a Fix's `code` steps.
+
+**What would close it.** Recording each Fix step's own content in its
+journal line, as `OUTSTANDING.md` 1.18 schedules first for replay: an `act`
+step's target as data, and a `code` step's source text with a hash of it.
+That makes a changed constant visible wherever a step's recorded content is
+compared, which a replay does. It still misses a constant read inside a
+`code` step's own body by name, which only a comparison of what the step
+did to the screen catches, as 1.18 also decides.
 
 ## Two things that will look like candidates, and are not
 
