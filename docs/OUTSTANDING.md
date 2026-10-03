@@ -722,6 +722,56 @@ it was put, "at some point, I'd even say given priority (another thing
 related to weighting)". That would weight the draw toward a window that has
 just opened, which belongs with weighting the draw toward new targets, 1.14.
 
+### 1.23 The menu bar: chance, flat, and uncontained
+
+Raised on 2026-10-03, after measuring Positron's menu bar, in the words "I
+think we need to do something about menubars", and agreed to be recorded
+with the proposal below. The order of its parts is not decided.
+
+**What was measured, on Positron 2026.09.1.** Its application menu holds
+226 entries a person sees in the menu bar, at every level. With the Route's
+window hidden it has no focus, and only 18 are enabled, which leaves 6 on
+offer after the standard entries and the adapter's exclusions: 8 of 9
+recent Routes were offered 6. One Route of the 5×500 Journey, seed
+`d5665b418361`, Route 2, was offered 157 at its first Hop, rising to 186:
+its window had focus, from outside the engine. Its replay was offered 6.
+`DEFECTS.md` has that as a defect. A probe that made `getFocusedWindow` and
+`isFocused` answer for the hidden window and sent it its `focus` event
+enabled 195, and View > Run, disabled before, then ran; the window stayed
+hidden.
+
+**Three problems, from that:**
+
+- **Which menu a Route gets is chance,** as above, so it decides where a
+  seed goes on one Hop in eight.
+- **The full menu is flat.** 157 to 195 entries share the menu's eighth of
+  the draw evenly, so View > Appearance > Render Whitespace > Set Render
+  Whitespace to Selection is as likely as File > Save. 75 of the 157 sit
+  inside submenus, 52 three levels down and 23 four. View alone holds 70.
+  Of Route 2's 64 menu Hops, 13 changed the screen.
+- **The containment never met it.** Route 2 drew Help > Toggle Developer
+  Tools, View > Editor Layout > Move Editor into New Window, Help > Show
+  Release Notes, Help > Positron Documentation, File > Save As... and Save
+  Workspace As..., none of which Positron's exclusions had seen, since none
+  is among the 6.
+
+**Proposed, the parts agreed to be recorded, not yet ordered:**
+
+- **A. The engine claims focus for each Route's window,** in every window
+  mode, so the menu is the same on every launch. It lands only with B and
+  C, since alone it makes the other two problems every Route's.
+- **B. Positron's full menu is reviewed against its exclusions** first, from
+  one listing of every entry: new windows, developer tools, the network,
+  quitting and restarting.
+- **C. The menu is drawn as a person opens it:** a top menu first, then an
+  entry within it, a level at a time, so each top menu has an equal chance
+  and a fourth-level entry is rare. A chooser behind the choosing seam, and
+  still a seeded draw; 1.11's shares are the related question.
+
+**An option, not proposed:** D, offering the menu bar only to an
+application that asks for it, for one whose menu mostly repeats its page,
+as Positron's View > Explorer repeats the Explorer tab.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
+**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -294,6 +294,25 @@ finding, while every draw is the same. The failure says when the finding
 arrived and lists the steps before it, so a reader can see the two runs
 agree; nothing yet compares them, and R13 would read the second as a seed
 that no longer reproduces.
+
+## A Route's menu depends on whether its window has focus
+
+**Filed 2026-10-03, measured on Positron 2026.09.1.** Positron enables most
+of its menu bar only while its window has focus. A Route's window is hidden
+and cannot take focus, so it is offered 6 menu entries; but a window can
+have focus by chance, from outside the engine, and is then offered 157 or
+more. Of the 5×500 Journey with seed `d5665b418361`, Route 2 had focus and
+Routes 1, 3, 4 and 5 did not; Route 2 replayed alone had not.
+
+**Why it is a defect.** The menu is one side of the draw, so whether a
+Route's window happened to have focus decides what one Hop in eight can
+reach, which no seed records and no replay can reproduce. And it reads as
+nothing: a journal of 6 menu entries looks like an application with a
+small menu.
+
+**What would close it:** the engine claiming focus for each Route's window,
+which a probe showed enables the menu with the window still hidden. It is
+part of `OUTSTANDING.md` 1.23, which says why it lands only with the rest.
 
 ## A Fix's fingerprint misses what the Fix does not itself contain
 

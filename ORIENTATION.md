@@ -259,12 +259,13 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Fifteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one the Hop a Route ends on depending on when a
-late finding arrives, and one a Fix's fingerprint missing what the Fix
-does not itself contain. That file holds what is wrong, confirmed by reading the
+late finding arrives, one a Fix's fingerprint missing what the Fix
+does not itself contain, and one a Route's menu depending on whether its
+window has focus. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
