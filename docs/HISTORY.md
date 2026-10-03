@@ -25,6 +25,59 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-02: a run ends on a summary, not on Playwright's report of an error
+
+**What raised it.** One Positron Route of 100 Hops, seed `64156c12293c`,
+failed at hop 56 on a new finding, and the run ended, in the words it was
+put, looking like "Phileas threw and error. In this case, a ton of errors.
+It does not end gracefully or informatively." Asked first, "There were
+three new findings and instead of reporting them it just quit?" They had
+been reported three times, and none could be seen. A failed check reaches
+Playwright as a thrown error, so Playwright reported it as a fault in the
+engine: the whole failure again, a code frame and a stack, and six
+attachments printed out, last on the screen. The Journey's own summary
+printed above that, from its end, and buried its three new findings under
+46 lines of entries it had not met.
+
+**What landed.** `phileas run` prints through a reporter of the engine's
+own, `src/report/reporter.mjs`. Each Route's ending is read from its
+journal, which `runRoute` names on its test: a failed check is one line per
+check with its finding's id and what it saw, a stranded Route says stranded
+with its reason, and the journal, trace and other attachments are named by
+path. An error that is not a check's finding prints whole, stack and all,
+so a fault in the engine still reads as one. A summary prints last, since
+the Journey's end now hands it its known findings rather than printing them
+above Playwright's report: the Routes by outcome and Hops, the run's
+journal folder, the known findings, any failure at the Journey's end, and
+the command to run it again, with the first Route that did not pass on its
+own. Following, a failed Hop's line names each check and finding without
+what it saw, which its ending says once; `phileas show` keeps it all. A
+`--reporter` given after `--` replaces the engine's, and a survey keeps the
+config's own.
+
+**Known findings at a run's end,** asked for the same day as too verbose:
+it lists only those the Journey met, and counts the rest with the command
+that lists them. `phileas known list` prints every entry, unfiled first,
+with when it was last met in the journals beside the file, matched under
+the signature rules in force as well. Read from the journals rather than
+recorded in `known-findings.json`, since a date written on every run would
+change that committed file on every run. Its positive control: the three
+entries filed as issue 87 show last met on 2026-10-02 from the run that met
+them, and Positron's older entries, from runs before journals recorded
+findings, show not met.
+
+**Measured on real runs:** a buggy
+Journey that passed, and rail demo Journeys with bugs planted, one of five
+Routes with three stranded and two failed, one followed that failed on the
+sleeper plant, and one carrying past a finding made known by the run
+before. Stranded Routes still fail their tests in Playwright's count, as
+`../CLAUDE.md` says, until phase 5.
+
+**Tested.** Twelve new tests, 363 in all: nine on the reporter and how
+`phileas run` chooses it, and three on known findings counted rather than
+listed, the list, and the hand-over to the reporter. The command's own test
+now requires the summary to be last.
+
 ## 2026-10-02: RStudio Routes see the person's own R library
 
 **Asked for** the same day, close to how it was put: with 30 R packages

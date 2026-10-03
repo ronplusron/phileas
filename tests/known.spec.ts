@@ -30,6 +30,7 @@ import {
   type KnownFinding,
   type TripHopEntry,
 } from '../src/index';
+import { journalsBeside, listKnownFindings } from '../src/known.mjs';
 import { parse } from '../bin/phileas.mjs';
 import { removeScratch, scratch } from './scratch';
 
@@ -240,8 +241,14 @@ test("a Journey's end adds what it found as unfiled, and says what was seen and 
 
   const printed = renderJourneyFindings(result, file).join('\n');
   expect(printed).toMatch(/UNFILED, seen 1 time\(s\): \w{8} {2}console-error: found for the first time/);
-  expect(printed).toMatch(/not seen this Journey, possibly fixed or not reached: \w{8} {2}unfiled {2}console-error: not seen/);
+  // Counted, not listed: a line per finding not met buried the ones met.
+  expect(printed).not.toContain('console-error: not seen this time');
+  expect(printed).toContain(`1 other known finding(s) not met this Journey; to list every one: phileas known list ${file}`);
   expect(printed).toContain('phileas known add <id> --issue <issue>');
+  // The default file needs no argument, so the command printed is the one typed.
+  expect(renderJourneyFindings(result, path.join('phileas', 'known-findings.json')).join('\n')).toMatch(
+    /to list every one: phileas known list$/m
+  );
 });
 
 test("finishJourney finds the Journey's run by its seed and run name", () => {
@@ -332,7 +339,78 @@ test('the command parses known add, and refuses it without an id or an issue', (
   expect(parse(['known', 'add', 'baa5', '--issue=x', 'other.json'])).toMatchObject({ file: 'other.json', issue: 'x' });
   expect(() => parse(['known', 'add', '--issue', 'x'])).toThrow(/needs the id/);
   expect(() => parse(['known', 'add', 'baa5'])).toThrow(/needs --issue/);
-  expect(() => parse(['known', 'list'])).toThrow(/known takes add/);
+  expect(() => parse(['known', 'show'])).toThrow(/known takes add, dismiss, remove or list/);
+});
+
+test('the command parses known list, with a file or without', () => {
+  expect(parse(['known', 'list'])).toEqual({ command: 'known-list', file: path.join('phileas', 'known-findings.json') });
+  expect(parse(['known', 'list', 'other.json'])).toEqual({ command: 'known-list', file: 'other.json' });
+  expect(() => parse(['known', 'list', 'a.json', 'b.json'])).toThrow(/takes one file/);
+  expect(() => parse(['known', 'list', '--all'])).toThrow(/takes no flags/);
+});
+
+test('the list shows every finding, unfiled first, with when each was last met in the journals beside it', () => {
+  const met = 'console-error: met in the later run';
+  const older = 'console-error: met in the earlier run only';
+  const never = 'console-error: never met here';
+  const filed = 'console-error: filed and met';
+  const file = knownFile([finding(met), finding(older), finding(never), finding(filed, 'ronplusron/phileas#7')]);
+  const root = path.join(path.dirname(file), '.phileas-journals');
+  const runOf = (name: string, signatures: string[]) => {
+    const run = path.join(root, 'seed', name);
+    fs.mkdirSync(run, { recursive: true });
+    fs.copyFileSync(
+      path.join(runWith(signatures.map((signature) => ({ signature, known: true }))), 'route-001-abc.jsonl'),
+      path.join(run, 'route-001-abc.jsonl')
+    );
+  };
+  runOf('2026-09-30T10-00-00-000Z', [older, met]);
+  runOf('2026-10-02T10-00-00-000Z', [met, filed]);
+
+  expect(journalsBeside(file)).toBe(root);
+  const lines = listKnownFindings(file, journalsBeside(file));
+  expect(lines[0]).toBe(`Known findings in ${file}: 4, 3 unfiled, 1 filed, 0 false alarm(s)`);
+  const row = (signature: string) => lines.find((line) => line.endsWith(signature)) ?? '';
+  expect(row(met)).toMatch(/unfiled\s+last met 2026-10-02/);
+  expect(row(older)).toMatch(/unfiled\s+last met 2026-09-30/);
+  expect(row(never)).toMatch(/unfiled\s+not met in these journals/);
+  expect(row(filed)).toMatch(/ronplusron\/phileas#7\s+last met 2026-10-02/);
+  // Unfiled first, the most recently met first among them; filed after.
+  expect(lines.slice(1, 5).map((line) => line.slice(line.indexOf('console-error')))).toEqual([met, older, never, filed]);
+  expect(lines.at(-1)).toBe(`Last met is read from 2 run(s) kept in ${root}.`);
+
+  // With no journals, it says so rather than calling every one unmet.
+  const alone = knownFile([finding(met)]);
+  expect(journalsBeside(alone)).toBeUndefined();
+  expect(listKnownFindings(alone, undefined).at(-1)).toBe(`No journals beside ${alone}, so when each was last met is not known.`);
+});
+
+test("finishJourney hands its findings to the engine's reporter when one is present, and prints nothing", () => {
+  const root = scratch('phileas-known-test-');
+  const found = runWith([{ signature: 'console-error: handed over', known: false }]);
+  const shared = globalThis as Record<symbol, unknown>;
+  process.env[SEED_VARIABLE] = 'handed-seed';
+  shared[Symbol.for('phileas.reporterPresent')] = true;
+  const printed: string[] = [];
+  const log = console.log;
+  console.log = (...args: unknown[]) => void printed.push(args.join(' '));
+  try {
+    const { run } = startJourney(defineJourney({ routes: 1, tripLength: 1 }), buggy);
+    const folder = journalFolder(root, 'handed-seed', run);
+    fs.mkdirSync(folder, { recursive: true });
+    fs.copyFileSync(path.join(found, 'route-001-abc.jsonl'), path.join(folder, 'route-001-abc.jsonl'));
+    printed.length = 0;
+    finishJourney({ journalsRoot: root, knownFindings: path.join(root, 'known-findings.json') });
+  } finally {
+    console.log = log;
+    delete process.env[SEED_VARIABLE];
+    delete process.env[RUN_VARIABLE];
+    delete shared[Symbol.for('phileas.reporterPresent')];
+  }
+  const handed = shared[Symbol.for('phileas.journeyEnd')] as { findings: { added: { signature: string }[] }; file: string };
+  delete shared[Symbol.for('phileas.journeyEnd')];
+  expect(handed.findings.added.map((a) => a.signature)).toEqual(['console-error: handed over']);
+  expect(printed.join('\n')).not.toContain('Known findings');
 });
 
 // A Route over buggy's planted log error, which writes into the Route's own

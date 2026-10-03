@@ -628,8 +628,8 @@ game. What a watcher sees that the rail demo could not show:
   quay and draw three different lines.
 - **Every Hop's line carries the checks.** Six run today, and two say "not
   run" with the reason. An absent check is never read as a passing one.
-- **The Journey ends with a summary**: what was found, how often, and what
-  was not seen. With nothing planted it says nothing was found, which is
+- **The Journey ends with a summary**: what was found, how often, and how
+  many known findings were not met. With nothing planted it says nothing was found, which is
   the baseline stage two breaks.
 - **Replay as a story**: the same seed plays the same game, and Fogg meets
   the same fate at the same Hop.

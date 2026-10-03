@@ -23,6 +23,38 @@ import { currentEntry } from '../legacy.mjs';
 /** @typedef {import('../journal').JournaledCandidate} JournaledCandidate */
 
 /**
+ * Set to 1 by `phileas run` when the engine's own reporter prints the run, so
+ * what a Route prints as it goes, and what a Journey's end prints, leave to
+ * it what it says once and better. A run without it, such as plain
+ * `playwright test`, prints everything where it happens, as before.
+ */
+export const REPORTER_VARIABLE = 'PHILEAS_REPORTER';
+
+/** Whether the engine's reporter is printing this run. */
+export function reporterInUse() {
+  return process.env[REPORTER_VARIABLE] === '1';
+}
+
+/**
+ * Where a Journey's end leaves what it did to the known findings for the
+ * reporter, which runs in the same process: `{ findings, file }`.
+ */
+export const JOURNEY_END = Symbol.for('phileas.journeyEnd');
+
+/**
+ * Set by the reporter as it is made, in the process that later runs the
+ * Journey's end, which hands its findings over only when this is set. Read
+ * there rather than the variable, so a variable left in the shell cannot make
+ * a Journey's end hand its findings to a reporter that is not there.
+ */
+export const REPORTER_PRESENT = Symbol.for('phileas.reporterPresent');
+
+/** Whether the engine's reporter is in this process, waiting for a Journey's end. */
+export function reporterPresent() {
+  return /** @type {Record<symbol, unknown>} */ (globalThis)[REPORTER_PRESENT] === true;
+}
+
+/**
  * A Route as a person reads it. Routes count from 1, as Hops do.
  *
  * A journal whose opening line is missing has no Route number, and says so
@@ -120,11 +152,17 @@ function valueText(value) {
  * `phileas known add` takes to file it, and when it arrived against this
  * step: the step a check runs after is not always the one that caused what it
  * read, and a line that named only its own step would say so by omission.
+ *
+ * Brief, the observations are left out and only each check's name and
+ * finding stay, for a run whose reporter prints the observations once under
+ * the Route's ending: a line carrying three of them ran to a thousand
+ * characters, measured on Positron on 2026-10-02.
  * @param {readonly { check: string, result?: string, observation?: string, findings?: readonly { id: string, known: boolean, seenAt?: string, seenAfter?: string, seenBefore?: string, loggedAt?: string }[] }[] | undefined} checks
  * @param {Step} step
+ * @param {boolean} [brief]
  * @returns {string}
  */
-function failedText(checks, step) {
+function failedText(checks, step, brief = false) {
   const failed = (checks ?? []).filter((check) => check.result === 'failed');
   if (!failed.length) return '';
   return `   CHECK FAILED: ${failed
@@ -138,6 +176,7 @@ function failedText(checks, step) {
           const arrived = arrivalAgainst(arrivalOf(finding), step.name, step.startedAt);
           return arrived ? `finding ${finding.id}, arrived ${arrived}` : `finding ${finding.id}`;
         });
+      if (brief) return `${check.check}${ids.length ? ` (${ids.join('; ')})` : ''}`;
       return `${check.check}: ${(check.observation ?? '').split('\n')[0]}${ids.length ? ` (${ids.join('; ')})` : ''}`;
     })
     .join('; ')}`;
@@ -209,16 +248,36 @@ export function caughtText(caught, step) {
 }
 
 /**
+ * The first sentence of a reason, without a colon it ends on: "3 checks failed
+ * after hop 56, which is when the checks read it." from the whole failure.
+ * @param {string} text
+ * @returns {string}
+ */
+export function firstSentence(text) {
+  const line = text.split('\n')[0] ?? '';
+  const end = line.search(/[.:](\s|$)/);
+  const sentence = end === -1 ? line : line.slice(0, end + (line[end] === '.' ? 1 : 0));
+  return sentence.trim();
+}
+
+/**
  * One journal entry as one line, or nothing for an entry a person has no use
  * for, which is a pool: every Hop already names what it acted on.
  *
  * The Route's number comes from the caller for every entry but the opening one,
  * since a Hop line does not carry it.
+ *
+ * `brief` is for a run the engine's reporter is printing, which says what a
+ * failed check saw once, under the Route's ending: a failed Hop names each
+ * check and its finding without what it saw, and a failed Route's line keeps
+ * the first sentence of its reason. `phileas show` is never brief, since a
+ * journal read on its own has nothing printed under it.
  * @param {JournalEntry} entry
  * @param {number} routeNumber
+ * @param {{ brief?: boolean }} [options]
  * @returns {string | undefined}
  */
-export function renderEntry(entry, routeNumber) {
+export function renderEntry(entry, routeNumber, { brief = false } = {}) {
   const route = routeLabel(routeNumber);
   switch (entry.kind) {
     case 'route':
@@ -236,7 +295,7 @@ export function renderEntry(entry, routeNumber) {
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
         caughtText(entry.caught, step),
         knownText(entry.checks),
-        failedText(entry.checks, step),
+        failedText(entry.checks, step, brief),
       ].join('');
     }
     case 'trip-hop': {
@@ -251,13 +310,15 @@ export function renderEntry(entry, routeNumber) {
         entry.abandoned ? `   (gave up: ${entry.abandoned}${underText(entry.interceptedBy)})` : '',
         caughtText(entry.caught, step),
         knownText(entry.checks),
-        failedText(entry.checks, step),
+        failedText(entry.checks, step, brief),
       ].join('');
     }
     case 'note':
       return `${route}  note before hop ${entry.hop}: ${entry.note}`;
-    case 'outcome':
-      return `${route}  ${entry.outcome} after ${entry.hops} hops${entry.reason ? `: ${entry.reason}` : ''}`;
+    case 'outcome': {
+      const reason = entry.reason && brief && entry.outcome === 'failed' ? firstSentence(entry.reason) : entry.reason;
+      return `${route}  ${entry.outcome} after ${entry.hops} hops${reason ? `: ${reason}` : ''}`;
+    }
     default:
       return undefined;
   }

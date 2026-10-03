@@ -625,29 +625,6 @@ same Hop. Across two machines it has never been measured.
   more of a seed's pools match. Whether RStudio can be pointed at such a
   library is unmeasured.
 
-### 1.19 Known findings at a run's end: only those met, and a list on demand
-
-Asked for on 2026-10-02, close to how it was put: the known findings shown
-at the end of a run are too verbose; by default a run should list a known
-finding only if it met it, and there should be an easy way to see the list
-of all known findings.
-
-**What prints today.** When a Journey ends, `renderJourneyFindings` in
-`src/known.mjs` prints every entry in `known-findings.json`: those seen,
-with how often, and every one not seen, each on a line reading "not seen
-this Journey, possibly fixed or not reached". With five entries on file
-and a short run, most of what prints is the second kind. No command lists
-the file; `phileas known` has only `add`, `dismiss` and `remove`.
-
-**What it overturns, as a reading.** The not-seen lines were decided on
-2026-09-27, with known findings themselves, as "the only way an entry for a
-bug Positron fixed ever comes to light", and `PLAN.md` records that. Taken
-off the default, a fixed bug is found only by someone asking for the list,
-so the list should say when each entry was last seen, which the file does
-not record today. Not decided: whether the run's end keeps a one-line count
-of entries not seen, pointing at the list, and what the list command is
-called.
-
 ### 1.21 Surveying every window the application opens
 
 Made a requirement on 2026-10-02, `PRODUCT_REQUIREMENTS.md` R33, a Must, in
@@ -678,44 +655,6 @@ it again; and what the checks read in a second window.
 it was put, "at some point, I'd even say given priority (another thing
 related to weighting)". That would weight the draw toward a window that has
 just opened, which belongs with weighting the draw toward new targets, 1.14.
-
-### 1.22 A run that ends on a finding reads as a crash
-
-Raised on 2026-10-02, after one Positron Route of 100 Hops, seed
-`64156c12293c`, failed at hop 56 on a new finding, in the words: "Right now
-when it ends it looks like Phileas threw and error. In this case, a ton of
-errors. It does not end gracefully or informatively." Asked first, of the
-same run, "There were three new findings and instead of reporting them it
-just quit?" The findings had been reported, three times over, and were not
-seen.
-
-**What printed, in order, measured on that run.** The failing Hop's line,
-carrying all three findings on one line of about a thousand characters. The
-failure, with when each finding arrived and the ten steps before it. The
-known findings: the three new ones, then 46 lines of entries not seen this
-Journey, then the re-signing. The home folder guard. Then Playwright's own
-report of the failed test, which repeats the whole failure, points at
-`dist/route.js:638` with a code frame and a stack, and dumps its
-attachments, numbered to seven with six printed: the staleness note, the narrowings, the page's DOM, the trace,
-the main process's standard error and the renderer's console errors. The
-last screen is that dump.
-
-**Why it reads that way.** A failed check reaches Playwright as a thrown
-`CheckFailure`, so Playwright reports it the way it reports a fault in the
-engine. The Journey's own summary prints from global teardown, before
-Playwright's final report, so it is never last. And the not-seen entries,
-which 1.19 already asks to take off the default, bury the new ones.
-
-**Proposed, not decided:** a reporter the engine ships and `phileas run`
-uses by default. It prints each Route's outcome, passed, failed or stranded,
-with no stack for a failed check, since that is a finding and not an error;
-names attachments by path rather than printing them; and ends on a short
-summary: Routes by outcome, the new findings with their ids, where the
-journals are, and the commands to replay a Route or file a finding. An error
-in the engine itself still prints in full, so the two stay told apart. It
-would be part of phase 7's Journey summary moved forward, as the journal's
-renderer was; it would take in 1.19; and it could be where stranded stops
-showing as a failed test, which `PLAN.md` puts in phase 5.
 
 ## 2. Undecided
 
@@ -1259,8 +1198,10 @@ it, the hazard `../CLAUDE.md` gives for splitting each Route's seed in two.
 
 ### 2.23 One error seen by several checks counts as several findings
 
-Raised on 2026-10-02 by the same Positron run as 1.22, asked as "there were
-three possible new errors?", and asked to be recorded. Nothing is decided.
+Raised on 2026-10-02 by a Positron Route of 100 Hops, seed
+`64156c12293c`, which failed at hop 56 on a new finding, asked as "there
+were three possible new errors?", and asked to be recorded. Nothing is
+decided.
 
 One click on Remote Explorer's Configure failed once. The extension printed
 the error to the console, wrote it to its log, and Positron showed it as an

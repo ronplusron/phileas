@@ -240,8 +240,8 @@ Filed, the bug no longer ends the Route. Point at Trip hop 11 again: the
 line now says the finding is known, with its issue, and the Route carries
 on to the end of its Trip and passes. Point at the summary: it still lists
 the finding, as seen, with its issue. A filed bug stops blocking without
-going quiet, and one not seen in a later Journey is reported as possibly
-fixed or not reached.
+going quiet. One not seen in a later Journey is counted at its end, and
+`phileas known list` says when each was last met.
 
 ## 12. Several at once
 

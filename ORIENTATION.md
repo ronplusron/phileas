@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and fifty-one tests, after a
+through, and `npm test` runs three hundred and sixty-three tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -135,7 +135,11 @@ marked busy is not settled until it clears, and one whose busy region is
 hidden settles as a quiet page does. Seven came with RStudio Routes seeing
 the person's own R library: each value of `PHILEAS_R_PERSONAL_LIBRARY`,
 what is refused, the Route's library staying first, and the R library guard
-watching a library given by path.
+watching a library given by path. Twelve came with the run's ending: nine
+on the reporter, from a Route that failed on checks, on an error, stranded,
+passed, followed, cut off and never opened, to the summary and `phileas run`
+choosing it, and three on known findings counted rather than listed, the
+list with when each was last met, and the hand-over to the reporter.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -233,7 +237,9 @@ unfiled, when it ends, and prints each with its id, and `phileas known add
 <id> --issue <issue>` files one. Since 2026-09-29, `phileas known dismiss
 <id> --reason <why>` marks one a false alarm, which Routes keep carrying
 past and a Journey never adds back, and `phileas known remove <id>` takes
-one out, for a bug since fixed or a finding the engine itself caused. A narrowing is only for what is normal for
+one out, for a bug since fixed or a finding the engine itself caused. A
+Journey's end lists only those it met and counts the rest; `phileas known
+list` prints every one, with when it was last met in the journals kept. A narrowing is only for what is normal for
 an application. `docs/GLOSSARY.md` defines the terms. The same end of a
 Journey fails the run on a profile it left in its own folder in the system
 temp folder, for every consumer whose global setup returns `finishJourney`.
@@ -349,7 +355,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and fifty-one tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and sixty-three tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
@@ -389,6 +395,15 @@ the same way: with no argument the latest run under `phileas/.phileas-journals/`
 or a seed's name, a seed's folder, a run folder or one journal file. A journal
 cut off mid-write reads up to the cut and says the Route did not finish.
 `jq . route-001-*.jsonl` still prints every line in full.
+
+**`phileas run` prints through the engine's reporter,** `src/report/reporter.mjs`,
+since 2026-10-02: each Route's ending, read from its journal, with what each
+failed check saw once and the trace by path; an error that is not a check's
+finding printed whole, stack and all; and a summary last, with the Routes by
+outcome, stranded apart, the known findings, and the command to run it again.
+Following, a failed Hop's line names each check and finding without what it
+saw, since the ending says it. A `--reporter` given after `--` replaces it, and
+the run then prints as it did before.
 
 **Writing a Fix starts from `phileas survey`,** which launches the application
 and prints what the engine sees at the start, one control per line in the

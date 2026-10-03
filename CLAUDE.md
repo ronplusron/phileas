@@ -155,9 +155,11 @@ every Hop was abandoned strands too.
 
 **Playwright does not show it yet.** The journal keeps stranded apart, but a
 test has only pass, fail and skip, and every consumer spec currently expects
-passed, so a stranded Route's test fails with the reason. `docs/PLAN.md`
-schedules the encoding for phase 5; until then, read the journal before
-counting a red test as a failure.
+passed, so a stranded Route's test fails with the reason. `phileas run`'s
+reporter prints it as stranded, and counts it apart in its summary, but
+Playwright's own count and exit code still call it failed. `docs/PLAN.md`
+schedules the encoding for phase 5; until then, read the reporter or the
+journal before counting a red test as a failure.
 
 ## Completing the Trip is itself an assertion
 

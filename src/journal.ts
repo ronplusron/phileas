@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { CaughtByStubs } from './caught.js';
 import type { HopEffect } from './effect.js';
 import { currentEntry } from './legacy.mjs';
-import { renderEntry } from './report/render.mjs';
+import { renderEntry, reporterInUse } from './report/render.mjs';
 
 /**
  * The record one Route writes as it goes.
@@ -541,8 +541,10 @@ export class Journal {
 
     // Printed after the entry is on disk, never before, so what a person sees
     // following a run is never ahead of the record. See `phileas run --follow`.
+    // Brief when the engine's reporter prints the run, which says once, under
+    // the Route's ending, what each failed check saw.
     if (this.follow) {
-      const line = renderEntry(entry, this.routeNumber);
+      const line = renderEntry(entry, this.routeNumber, { brief: reporterInUse() });
       if (line) console.log(line);
     }
   }

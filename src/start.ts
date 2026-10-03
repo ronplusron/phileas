@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { journalFolder } from './journal.js';
 import { recordJourneyFindings, renderJourneyFindings, type JourneyFindings } from './known.mjs';
+import { JOURNEY_END, reporterPresent } from './report/render.mjs';
 import { folderName, TEMP_FOLDER_VARIABLE, windowMode } from './launch.js';
 import type { AppUnderTest } from './app-under-test.js';
 import { fixFor, type Fixes } from './fixes.js';
@@ -244,9 +245,16 @@ export function finishJourney(
     }
     const run = journalFolder(options.journalsRoot, requireSeed(), requireRun());
     findings = recordJourneyFindings(run, options.knownFindings, undefined, options.varying ?? []);
-    console.log('');
     // Named from where the run was started, so a summary names no home folder.
     const shown = path.relative(process.cwd(), options.knownFindings) || options.knownFindings;
+    // Handed to the engine's reporter, which prints them last, in its summary,
+    // so they are never above Playwright's own report. The reporter runs in
+    // this process, as global setup and what it returns do.
+    if (reporterPresent()) {
+      (globalThis as Record<symbol, unknown>)[JOURNEY_END] = { findings, file: shown };
+      return;
+    }
+    console.log('');
     for (const line of renderJourneyFindings(findings, shown)) console.log(line);
   };
   const checkLeftovers = () => {

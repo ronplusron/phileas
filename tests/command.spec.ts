@@ -204,7 +204,9 @@ test('the command runs a Journey with its settings changed, and the file unchang
   expect(output).toMatch(/Routes: 1\s+set for this run/);
   expect(output).toMatch(/Trip length: 2\s+set for this run/);
   // One Route registered rather than the file's five, which is the override
-  // reaching the workers and not only the printout.
-  expect(output).toMatch(/1 passed/);
+  // reaching the workers and not only the printout. Said by the engine's
+  // reporter, which `phileas run` prints through, last.
+  expect(output).toMatch(/^Journey cmd-seed, run \S+: 1 Route, 1 passed, 0 failed, 0 stranded; 2 of 2 Hops$/m);
+  expect(output.trim().split('\n').at(-1)).toMatch(/^Run it again: phileas run proving-ground\/buggy\/phileas --seed cmd-seed --routes 1 --trip-length 2$/);
   expect(fs.readFileSync(journeyFile, 'utf8')).toBe(before);
 });

@@ -92,7 +92,7 @@ export function checkTally(folder) {
 export function journeyEndLines(lines) {
   const start = lines.findIndex((line) => /^Known findings, in /.test(line));
   if (start < 0) return [];
-  const under = /^ {2}(seen |UNFILED, |not seen this Journey|none found|\d+ new finding|To file one)/;
+  const under = /^ {2}(seen |UNFILED, |false alarm|\d+ other known finding|not seen this Journey|none found|\d+ new finding|To file one|To mark one|re-signed|merged|NOT MERGED)/;
   let end = start + 1;
   while (end < lines.length && under.test(lines[end])) end++;
   return lines.slice(start, end);

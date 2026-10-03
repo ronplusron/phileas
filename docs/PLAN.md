@@ -847,7 +847,9 @@ question:**
   ends.
 - **A known finding not seen in a Journey is reported,** as possibly fixed
   or possibly not reached, which is the only way an entry for a bug Positron
-  fixed ever comes to light.
+  fixed ever comes to light. **Changed on 2026-10-02,** asked for as too
+  verbose: a run's end counts those it did not meet, and `phileas known
+  list` lists every entry with when it was last met in the journals kept.
 - **The file is an input to outcomes, not to draws,** so each Route's opening
   journal line records which version of it the Route ran with: a Route that
   ended at hop 8 now goes on, while hops 1 to 8 retrace unchanged, and a
@@ -1219,7 +1221,14 @@ the format's. Decided 2026-09-23, over building a reader earlier. If reading
 journals during phases 5 and 6 turns out to hurt, this piece moves forward as
 the first part of `report/` rather than being built twice. **It moved forward on
 2026-09-24**, before phase 5, as `src/report/render.mjs`, behind `phileas run
---follow` and `phileas show`; the Journey summary here builds on it.
+--follow` and `phileas show`; the Journey summary here builds on it. **A first
+Journey summary moved forward too, on 2026-10-02,** as `src/report/reporter.mjs`,
+the reporter `phileas run` prints through: each Route's ending from its
+journal, stranded shown as stranded, and a summary last with the known
+findings and the command to run it again. A run that ended on a finding had
+looked like an error in the engine. It reads only the journals and what the
+Journey's end hands it; R27's degraded runs and R13's comparison are still
+this phase's.
 
 **R27 lands here too, and it asks for more than the nothing-found case.** A
 run where the application never launched, where every Route stranded at its

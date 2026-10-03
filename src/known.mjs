@@ -510,6 +510,128 @@ export function recordJourneyFindings(runFolder, file, today = new Date().toISOS
   return result;
 }
 
+/** Where `phileas known` looks when given no file, from the folder a consumer works in. */
+export const DEFAULT_KNOWN_FINDINGS = path.join('phileas', 'known-findings.json');
+
+/**
+ * The file argument a `phileas known` command needs to reach `file`: none when
+ * it is the default, so the line printed is the one a person would type.
+ * @param {string} file
+ * @returns {string}
+ */
+function listFileArgument(file) {
+  if (path.normalize(file) === DEFAULT_KNOWN_FINDINGS) return '';
+  return /\s/.test(file) ? ` "${file}"` : ` ${file}`;
+}
+
+/**
+ * The journals beside a known findings file, where `phileas known list`
+ * reads when each was last met: a `.phileas-journals` folder beside it, or
+ * the folder it is in when that is one, as the demos keep theirs.
+ * @param {string} file
+ * @returns {string | undefined}
+ */
+export function journalsBeside(file) {
+  const folder = path.dirname(file);
+  if (path.basename(folder) === '.phileas-journals') return folder;
+  const beside = path.join(folder, '.phileas-journals');
+  return fs.existsSync(beside) ? beside : undefined;
+}
+
+/**
+ * When each finding was last met, by signature, from every run kept under a
+ * journals folder: the run's name, which is when it started. A finding in a
+ * journal written under older signature rules is matched by the rules in
+ * force too. A run whose journals cannot be read is counted, not dropped.
+ * @param {string} journalsRoot
+ * @returns {{ lastMet: Map<string, string>, runs: number, unreadable: number }}
+ */
+export function lastMetIn(journalsRoot) {
+  /** @type {Map<string, string>} */
+  const lastMet = new Map();
+  let runs = 0;
+  let unreadable = 0;
+  /** @param {string} folder */
+  const folders = (folder) =>
+    fs
+      .readdirSync(folder, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => path.join(folder, entry.name));
+  for (const seed of folders(journalsRoot)) {
+    for (const run of folders(seed)) {
+      if (!fs.readdirSync(run).some((name) => name.endsWith('.jsonl'))) continue;
+      runs += 1;
+      /** @type {ReturnType<typeof findingsInRun>} */
+      let found;
+      try {
+        found = findingsInRun(run);
+      } catch {
+        unreadable += 1;
+        continue;
+      }
+      const name = path.basename(run);
+      for (const [signature, { check }] of found) {
+        const now = currentSignature({ id: '', check, signature, added: '', source: 'journey' });
+        for (const each of new Set([signature, now])) {
+          const was = lastMet.get(each);
+          if (was === undefined || name > was) lastMet.set(each, name);
+        }
+      }
+    }
+  }
+  return { lastMet, runs, unreadable };
+}
+
+/**
+ * A run's name as the day it started: `2026-10-02T17-33-21-755Z` is 2026-10-02.
+ * @param {string} run
+ * @returns {string}
+ */
+function runDay(run) {
+  return /^\d{4}-\d{2}-\d{2}/.exec(run)?.[0] ?? run;
+}
+
+/**
+ * Every known finding, as `phileas known list` prints it: unfiled first, then
+ * filed, then false alarms, each with when it was last met in the journals
+ * kept here, most recent first. Asked for on 2026-10-02 with the run's end
+ * listing only what it met, so that the whole list is one command away.
+ * @param {string} file
+ * @param {string | undefined} journalsRoot
+ * @returns {string[]}
+ */
+export function listKnownFindings(file, journalsRoot) {
+  const { entries } = readKnownFindings(file);
+  const met = journalsRoot ? lastMetIn(journalsRoot) : undefined;
+  /** @param {KnownFinding} entry */
+  const when = (entry) => met?.lastMet.get(entry.signature);
+  /** @param {KnownFinding} entry */
+  const rank = (entry) => (entry.issue ? 1 : entry.falseAlarm !== undefined ? 2 : 0);
+  const sorted = [...entries].sort(
+    (a, b) => rank(a) - rank(b) || (when(b) ?? '').localeCompare(when(a) ?? '') || a.id.localeCompare(b.id)
+  );
+  const counts = [0, 1, 2].map((r) => entries.filter((entry) => rank(entry) === r).length);
+  /** @type {string[]} */
+  const lines = [
+    `Known findings in ${file}: ${entries.length}, ${counts[0]} unfiled, ${counts[1]} filed, ${counts[2]} false alarm(s)`,
+  ];
+  const width = Math.max(0, ...entries.map((entry) => standing(entry).length));
+  for (const entry of sorted) {
+    const last = when(entry);
+    const lastText = met ? (last ? `last met ${runDay(last)}` : 'not met in these journals') : '';
+    lines.push(
+      `  ${entry.id}  ${standing(entry).padEnd(width)}  ${lastText ? `${lastText.padEnd(25)}  ` : ''}${entry.signature}`
+    );
+  }
+  lines.push(
+    met
+      ? `Last met is read from ${met.runs} run(s) kept in ${journalsRoot}` +
+          (met.unreadable ? `, ${met.unreadable} of which could not be read.` : '.')
+      : `No journals beside ${file}, so when each was last met is not known.`
+  );
+  return lines;
+}
+
 /**
  * A Journey's findings as a person reads them, for the end of a run.
  * @param {JourneyFindings} findings
@@ -529,9 +651,14 @@ export function renderJourneyFindings(findings, file) {
   for (const finding of [...findings.added, ...unfiled]) {
     lines.push(`  UNFILED, seen ${finding.sightings} time(s): ${finding.id}  ${finding.signature}`);
   }
-  for (const finding of findings.notSeen) {
+  // Counted rather than listed, asked for on 2026-10-02 as too verbose: with
+  // dozens on file, a short run printed a line for each it did not meet and
+  // buried the ones it did. The list says when each was last met, which is
+  // how an entry for a bug since fixed comes to light now.
+  if (findings.notSeen.length) {
     lines.push(
-      `  not seen this Journey, possibly fixed or not reached: ${finding.id}  ${standing(finding)}  ${finding.signature}`
+      `  ${findings.notSeen.length} other known finding(s) not met this Journey; to list every one: ` +
+        `phileas known list${listFileArgument(file)}`
     );
   }
   if (findings.added.length) {

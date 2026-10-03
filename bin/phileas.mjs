@@ -7,6 +7,7 @@
 //   phileas known add <id> --issue <issue> [file]
 //   phileas known dismiss <id> --reason <why> [file]
 //   phileas known remove <id> [file]
+//   phileas known list [file]
 //
 // `run` runs a Journey with its settings changed for one run. Real flags need
 // a command of their own, because Playwright refuses any it does not know
@@ -27,6 +28,13 @@
 // once somebody has filed it. `known dismiss` marks one a false alarm, with the
 // reason, so Routes keep carrying past it and it is never added back; `known
 // remove` takes one out, so the next time it is seen it is reported as new.
+// `known list` prints every one, with when it was last met in the journals
+// kept beside the file, since a run's end lists only those it met.
+//
+// `run` prints through the engine's own reporter, src/report/reporter.mjs,
+// unless a reporter is given after --: each Route's ending, what its failed
+// checks saw, and a summary last, rather than Playwright's report of a
+// thrown error and its attachments.
 //
 // docs/HISTORY.md has the reasoning for each.
 //
@@ -43,7 +51,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderJournal } from '../src/report/render.mjs';
-import { dismissFinding, markFiled, removeFinding } from '../src/known.mjs';
+import { DEFAULT_KNOWN_FINDINGS, dismissFinding, journalsBeside, listKnownFindings, markFiled, removeFinding } from '../src/known.mjs';
+import { REPORTER_VARIABLE } from '../src/report/render.mjs';
 
 /** Flags that take a value, and the variable each travels in. */
 const FLAGS = /** @type {Record<string, string>} */ ({
@@ -66,7 +75,10 @@ const SWITCHES = /** @type {Record<string, string>} */ ({
 // `phileas run --routes 3` needs no path there, and where its journals go.
 const DEFAULT_CONFIG = 'phileas';
 const DEFAULT_JOURNALS = path.join(DEFAULT_CONFIG, '.phileas-journals');
-const DEFAULT_KNOWN = path.join(DEFAULT_CONFIG, 'known-findings.json');
+const DEFAULT_KNOWN = DEFAULT_KNOWN_FINDINGS;
+
+// The engine's reporter, shipped as source beside the renderer it uses.
+const REPORTER = fileURLToPath(new URL('../src/report/reporter.mjs', import.meta.url));
 
 const USAGE = `Usage:
   phileas run [config] [flags] [-- extra Playwright arguments]
@@ -75,6 +87,7 @@ const USAGE = `Usage:
   phileas known add <id> --issue <issue> [file]
   phileas known dismiss <id> --reason <why> [file]
   phileas known remove <id> [file]
+  phileas known list [file]
 
 run: run a Journey, with its settings changed for this run only.
   config    A Playwright config file, or a folder holding playwright.config.ts.
@@ -88,6 +101,8 @@ ${Object.entries(FLAGS)
   ${'--follow'.padEnd(32)}PHILEAS_FOLLOW   print each Hop as it happens
 
   Anything after -- is handed to Playwright, such as -- --grep "route 1$".
+  The run prints through the engine's reporter: each Route's ending, what a
+  failed check saw, and a summary last. A --reporter after -- replaces it.
 
 show: print a finished run, one line per Hop.
   what      A run folder, a seed's folder or a journals folder (its latest run),
@@ -117,6 +132,10 @@ known remove: take a known finding out, so the next time it is seen it is
   reported as new: for a bug since fixed, a finding the engine itself caused,
   or one left by a deliberate test.
   id        As for add.
+  file      As for add.
+
+known list: print every known finding: unfiled, filed and false alarms, each
+  with when it was last met in the journals kept beside the file.
   file      As for add.`;
 
 /**
@@ -135,7 +154,8 @@ function refuse(message) {
  *   | { command: 'survey', config: string }
  *   | { command: 'known-add', id: string, issue: string, file: string }
  *   | { command: 'known-dismiss', id: string, reason: string, file: string }
- *   | { command: 'known-remove', id: string, file: string }} Parsed
+ *   | { command: 'known-remove', id: string, file: string }
+ *   | { command: 'known-list', file: string }} Parsed
  */
 
 /**
@@ -164,8 +184,14 @@ export function parse(args) {
   }
   if (command === 'known') {
     const [sub, ...args] = rest;
+    if (sub === 'list') {
+      if (args.length > 1) throw new Error(`known list takes one file, and was given ${args.length}`);
+      const [file] = args;
+      if (file?.startsWith('-')) throw new Error(`known list takes no flags, and was given ${file}`);
+      return { command: 'known-list', file: file ?? DEFAULT_KNOWN };
+    }
     if (sub !== 'add' && sub !== 'dismiss' && sub !== 'remove') {
-      throw new Error(`known takes add, dismiss or remove, and was given ${sub ?? 'nothing'}`);
+      throw new Error(`known takes add, dismiss, remove or list, and was given ${sub ?? 'nothing'}`);
     }
     // The one flag each takes: add its issue, dismiss its reason, remove none.
     const flag = sub === 'add' ? '--issue' : sub === 'dismiss' ? '--reason' : undefined;
@@ -251,11 +277,32 @@ function playwrightCli(configPath) {
 }
 
 /**
+ * Whether Playwright's own arguments name a reporter, which then replaces the
+ * engine's, and the run prints as it did before the engine had one.
+ * @param {string[]} passThrough
+ * @returns {boolean}
+ */
+export function ownReporter(passThrough) {
+  return passThrough.some((arg) => arg === '--reporter' || arg.startsWith('--reporter='));
+}
+
+/**
+ * Playwright's arguments, with the engine's reporter unless they name one.
+ * @param {string[]} passThrough
+ * @returns {string[]}
+ */
+export function runReporter(passThrough) {
+  return ownReporter(passThrough) ? passThrough : [`--reporter=${REPORTER}`, ...passThrough];
+}
+
+/**
  * @param {string} config
  * @param {Record<string, string>} settings
  * @param {string[]} passThrough
+ * @param {{ reporter?: boolean }} [options] false for a survey, which judges
+ *   nothing and keeps the config's own reporter
  */
-function run(config, settings, passThrough) {
+function run(config, settings, passThrough, { reporter = true } = {}) {
   if (!fs.existsSync(config)) {
     refuse(
       config === DEFAULT_CONFIG
@@ -272,9 +319,12 @@ function run(config, settings, passThrough) {
     refuse(`@playwright/test is not installed where ${config} can reach it`);
   }
 
-  const child = spawn(process.execPath, [cli, 'test', '-c', config, ...passThrough], {
+  const engineReports = reporter && !ownReporter(passThrough);
+  const child = spawn(process.execPath, [cli, 'test', '-c', config, ...(engineReports ? runReporter(passThrough) : passThrough)], {
     stdio: 'inherit',
-    env: { ...process.env, ...settings },
+    // Set either way, so one left in the shell never says the reporter is
+    // printing a run it is not.
+    env: { ...process.env, ...settings, [REPORTER_VARIABLE]: engineReports ? '1' : '0' },
   });
   // Ctrl-C reaches the whole process group, so Playwright stops on its own;
   // this only has to report how it ended.
@@ -413,6 +463,19 @@ function knownChange(action, id, file, reason) {
   }
 }
 
+/** @param {string} file */
+function knownList(file) {
+  if (!fs.existsSync(file)) {
+    refuse(`there is no ${file}; a Journey writes it when it ends, or give the file`);
+  }
+  try {
+    for (const line of listKnownFindings(file, journalsBeside(file))) console.log(line);
+  } catch (error) {
+    console.error(`phileas: ${/** @type {Error} */ (error).message}`);
+    process.exit(2);
+  }
+}
+
 function main() {
   /** @type {Parsed} */
   let parsed;
@@ -424,10 +487,11 @@ function main() {
   if (parsed.command === 'help') console.log(USAGE);
   else if (parsed.command === 'show') show(parsed.what);
   // One Route is enough to see the start, since every Route starts the same way.
-  else if (parsed.command === 'survey') run(parsed.config, { PHILEAS_SURVEY: '1', PHILEAS_ROUTES: '1' }, []);
+  else if (parsed.command === 'survey') run(parsed.config, { PHILEAS_SURVEY: '1', PHILEAS_ROUTES: '1' }, [], { reporter: false });
   else if (parsed.command === 'known-add') knownAdd(parsed.id, parsed.issue, parsed.file);
   else if (parsed.command === 'known-dismiss') knownChange('dismiss', parsed.id, parsed.file, parsed.reason);
   else if (parsed.command === 'known-remove') knownChange('remove', parsed.id, parsed.file);
+  else if (parsed.command === 'known-list') knownList(parsed.file);
   else run(parsed.config, parsed.settings, parsed.passThrough);
 }
 

@@ -1,4 +1,4 @@
-import type { ElectronApplication, Page } from '@playwright/test';
+import { test, type ElectronApplication, type Page } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test.js';
 import type { Rng, RouteStreams } from './random.js';
 import { caughtSince, type CaughtByStubs } from './caught.js';
@@ -623,6 +623,25 @@ export function hopDelayFromEnvironment(): number {
   return value;
 }
 
+/** The annotation naming a Route's journal, which the engine's reporter reads its ending from. */
+export const JOURNAL_ANNOTATION = 'phileas-journal';
+
+/**
+ * Name the Route's journal on its test, so the engine's reporter can read how
+ * the Route ended from the record rather than from the error a test threw.
+ * A Route run outside a test, which only the engine's own code might do, has
+ * nothing to name it on, and needs nothing.
+ */
+function noteJournal(file: string): void {
+  let info: ReturnType<typeof test.info>;
+  try {
+    info = test.info();
+  } catch {
+    return;
+  }
+  info.annotations.push({ type: JOURNAL_ANNOTATION, description: file });
+}
+
 export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> {
   const {
     page,
@@ -731,6 +750,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       : {}),
     ...(fix ? { fix: { ...namedFix(fix), fingerprint: fixFingerprint(fix) } } : {}),
   }, { follow });
+  noteJournal(journal.file);
 
   const tally = createExclusionTally(cfg.exclusions);
   let hops = 0;
