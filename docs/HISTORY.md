@@ -25,6 +25,15 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: a profile test waits for its writer before deleting
+
+`tests/profile-cleanup.spec.ts`'s "a profile that keeps coming back is
+reported" failed `npm test` once on 2026-10-03, with the delete resolving
+instead of refusing, and passed 6 of 6 alone. It started a writer process
+and deleted at once, watching for 100 ms; under a full suite's load Node can
+take longer than that to start, so nothing came back while it watched. It
+now waits for the writer's first file, as the test beside it already did.
+
 ## 2026-10-03: a control with no area of its own is clicked through its label
 
 **Found by a Journey.** One Positron Route of 100 Hops, seed

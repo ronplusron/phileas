@@ -164,6 +164,16 @@ test('a profile that keeps coming back is reported, not left in silence', async 
   );
   const exited = new Promise((resolve) => child.once('exit', resolve));
   try {
+    // Waited for, as the test above waits for its writer: Node takes around a
+    // tenth of a second to start, and longer under a full suite's load, so a
+    // delete run at once could watch its whole 100 ms before the first write
+    // and find nothing coming back. It failed `npm test` that way on
+    // 2026-10-03 and passed 6 of 6 alone.
+    const started = Date.now();
+    while (!fs.existsSync(logs) || fs.readdirSync(logs).length === 0) {
+      if (Date.now() - started > 5_000) throw new Error('the writer never started writing');
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
     await expect(removeProfile(dir, 100)).rejects.toThrow(/kept coming back after it was deleted/);
   } finally {
     await exited;
