@@ -25,6 +25,14 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: the summary names the lowest-numbered Route to run alone
+
+The 5×500 Positron Journey of the same day ran two Routes at a time, Route 3
+finished before Route 2, and the summary's "Route alone" named Route 3 while
+Route 2 had also failed: it took the first Route to finish that did not
+pass. It now takes the lowest-numbered. One new test, 368 in all, which
+fails without the change.
+
 ## 2026-10-03: five Routes of 500 Hops on Positron, and what each finding was
 
 One Journey on Positron 2026.09.1, seed `d5665b418361`, 5 Routes of 500

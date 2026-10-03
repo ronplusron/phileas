@@ -295,7 +295,12 @@ export function summaryLines({ routes, journeyEnd, endErrors, config, env, cwd =
 
   if (seed) {
     const base = ['phileas run', quoted(config), '--seed', seed, ...rerunFlags(env)].join(' ');
-    const first = routes.find((route) => route.outcome !== 'passed' && route.outcome !== 'skipped' && route.routeNumber);
+    // The lowest-numbered, not the first to finish: with Routes run side by
+    // side, a later Route can end first, and the hint named Route 3 while
+    // Route 2 had also failed, on 2026-10-03.
+    const first = routes
+      .filter((route) => route.outcome !== 'passed' && route.outcome !== 'skipped' && route.routeNumber)
+      .sort((a, b) => (a.routeNumber ?? 0) - (b.routeNumber ?? 0))[0];
     lines.push(`Run it again: ${base}`);
     if (first?.routeNumber && routes.length > 1) {
       const only = ['phileas run', quoted(config), '--seed', seed, '--routes', String(first.routeNumber)]

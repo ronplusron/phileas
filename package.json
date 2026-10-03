@@ -1,6 +1,6 @@
 {
   "name": "@drugstoresushi/phileas",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "private": true,
   "description": "An exploratory testing engine for Electron apps: unscripted travel with continuous invariant checking.",
   "type": "module",

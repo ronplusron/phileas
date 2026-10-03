@@ -181,6 +181,22 @@ test('the summary counts the Routes by outcome and Hops, prints the known findin
   expect(lines.at(-1)).toMatch(/^Route 2 alone: /);
 });
 
+test('the Route named alone is the lowest-numbered that did not pass, whatever order they finished in', () => {
+  // Measured on 2026-10-03: Routes run two at a time finished 1, 2's partner
+  // 3, then 2, and the hint named Route 3.
+  const lines = summaryLines({
+    routes: [
+      { outcome: 'passed', routeNumber: 1, hops: 10, tripLength: 10 },
+      { outcome: 'failed', routeNumber: 3, hops: 4, tripLength: 10 },
+      { outcome: 'failed', routeNumber: 2, hops: 7, tripLength: 10 },
+    ],
+    endErrors: [],
+    config: 'phileas',
+    env: { PHILEAS_SEED: 's' },
+  });
+  expect(lines.at(-1)).toBe('Route 2 alone: phileas run phileas --seed s --routes 2 -- --grep "route 2$"');
+});
+
 test('the first Route alone needs no grep, since --routes 1 runs only it', () => {
   const lines = summaryLines({
     routes: [{ outcome: 'failed', routeNumber: 1, hops: 5, tripLength: 10 }, { outcome: 'passed', routeNumber: 2, hops: 10, tripLength: 10 }],
