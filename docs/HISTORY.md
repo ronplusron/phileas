@@ -47,7 +47,7 @@ was followed up with a probe.
   profile has no `mcp.json`. The control, the Settings row, opens
   `settings.json` with no error. The Profiles editor comes from VS Code,
   which Positron is built on, so it may belong there; not yet tried in VS
-  Code, and not yet filed.
+  Code. Filed as ronplusron/phileas issue 88.
 - **Route 3, hop 295, `a06c57c5`: not reproduced.** The page did not answer
   the settle wait for 7.1 s, two Hops after the Route clicked Open New
   Window with this Profile twice. Each click opens a whole new window,

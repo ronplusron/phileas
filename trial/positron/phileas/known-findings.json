@@ -70,7 +70,8 @@
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 FileOperationError: The editor could not be opened because the file was not found. at TextFileEditor.handleSetInputError (workbench.desktop.main.js)",
     "added": "2026-10-03",
-    "source": "journey"
+    "source": "journey",
+    "issue": "ronplusron/phileas#88"
   },
   {
     "id": "b282aad0",
