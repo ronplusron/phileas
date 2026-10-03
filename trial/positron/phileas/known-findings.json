@@ -29,6 +29,14 @@
     "issue": "ronplusron/phileas#46"
   },
   {
+    "id": "780836b7",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 A system error occurred (ENOENT: no such file or directory, open '<profile>/home/.ssh/config'): Error: A system error occurred (ENOENT: no such file or directory, open '<profile>/home/.ssh/config') at ExtHostCommands._executeContributedCommand (extensionHostProcess.js)",
+    "added": "2026-10-03",
+    "source": "journey",
+    "issue": "ronplusron/phileas#87"
+  },
+  {
     "id": "0f31d456",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 Cannot read properties of undefined (reading 'id'): TypeError: Cannot read properties of undefined (reading 'id') at ViewDescriptorService.loadCustomViewDescriptor (workbench.desktop.main.js)",
@@ -58,10 +66,24 @@
     "source": "journey"
   },
   {
+    "id": "39df2721",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 FileOperationError: The editor could not be opened because the file was not found. at TextFileEditor.handleSetInputError (workbench.desktop.main.js)",
+    "added": "2026-10-03",
+    "source": "journey"
+  },
+  {
     "id": "b282aad0",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 lock() request could not be registered.: InvalidStateError: lock() request could not be registered.",
     "added": "2026-09-27",
+    "source": "journey"
+  },
+  {
+    "id": "65d8aff3",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 potential listener LEAK detected, popular: Error at _Stacktrace.create (workbench.desktop.main.js)",
+    "added": "2026-10-03",
     "source": "journey"
   },
   {

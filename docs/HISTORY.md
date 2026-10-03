@@ -25,6 +25,45 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: five Routes of 500 Hops on Positron, and what each finding was
+
+One Journey on Positron 2026.09.1, seed `d5665b418361`, 5 Routes of 500
+Hops, no Fix, windows hidden, two Routes at a time. 1 passed and 4 failed,
+1,387 of 2,500 Hops; none stranded, and nothing was written to the home
+folder. Issue 87's three findings were met and carried past. Each failure
+was followed up with a probe.
+
+- **Route 5, hop 52, `39df2721`: reproduced.** Manage > Profiles, the MCP
+  Servers row, Open to the Side logs "The editor could not be opened
+  because the file was not found" and opens an `mcp.json` tab: a fresh
+  profile has no `mcp.json`. The control, the Settings row, opens
+  `settings.json` with no error. The Profiles editor comes from VS Code,
+  which Positron is built on, so it may belong there; not yet tried in VS
+  Code, and not yet filed.
+- **Route 3, hop 295, `a06c57c5`: not reproduced.** The page did not answer
+  the settle wait for 7.1 s, two Hops after the Route clicked Open New
+  Window with this Profile twice. Each click opens a whole new window,
+  hidden, and alone a probe measured the first window's slowest answer at
+  about 1 s after each. A reading, not measured: two Routes running at once
+  and two more windows' extension hosts. It stays known and unfiled.
+- **Route 4, hop 133, `780836b7`: issue 87, by a second command.** Open SSH
+  Configuration File... runs `openremotessh.openConfigFile`, which calls
+  the same function as Configure, read in the extension's code. Filed
+  against issue 87.
+- **Route 2, hop 407, `65d8aff3`: not settled.** VS Code's "potential
+  listener LEAK detected", from a new terminal after many editors and
+  groups had been opened. A probe opening and killing one terminal 150
+  times saw no warning, but its positive control, terminals left open,
+  never reached it either, so that zero shows nothing. Replaying Route 2 by
+  its seed went elsewhere from hop 1, so it did not reach hop 407.
+- **And the menu bar.** Route 2 was the one Route offered Positron's full
+  menu, 157 entries at its first Hop against 6 for the others. Its window
+  had focus, which the engine never gives a hidden window, so as far as can
+  be told it came from outside the engine. `DEFECTS.md` and
+  `OUTSTANDING.md` 1.23 have it. Its replay split off at hop 1 for another
+  reason: 46 page controls against 40, as Positron's views loaded at
+  different speeds.
+
 ## 2026-10-03: a profile test waits for its writer before deleting
 
 `tests/profile-cleanup.spec.ts`'s "a profile that keeps coming back is
