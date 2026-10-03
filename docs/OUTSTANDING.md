@@ -581,7 +581,9 @@ release:
 - **R and its packages.** The Packages pane lists the machine's R library,
   and its checkboxes are in the pools: the batch of 2026-09-29 drew
   `yaml`, `stringr` and `splines` among others. The Route's own library,
-  `R_LIBS_USER`, adds to the machine's rather than replacing it.
+  `R_LIBS_USER`, adds to the machine's rather than replacing it, and since
+  2026-10-02 the person's own library joins it by default, so whatever each
+  person has installed is in the pools too.
 - **The fused copy,** which each person makes from their own install.
 - **The engine, the adapter and the Fix,** any of which changes what is
   offered; the journal records the Fix's fingerprint and 1.13 lists
@@ -645,44 +647,6 @@ so the list should say when each entry was last seen, which the file does
 not record today. Not decided: whether the run's end keeps a one-line count
 of entries not seen, pointing at the list, and what the list command is
 called.
-
-### 1.20 RStudio Routes see the person's own R library
-
-Asked for on 2026-10-02, close to how it was put: with 30 R packages
-installed and a Journey run locally, the Route should be able to see those
-packages. Decided the same day: "included by default".
-
-**What a Route sees today, measured the same day** with `Rscript` under a
-Route's environment, which stands in for RStudio's R session: R 4.6.0, R's
-system library with its 110 packages, and the Route's own library, empty
-and first, where any install goes. It does not see the person's own
-library, `~/Library/R/arm64/4.6/library` on this machine, nor their
-`~/.Rprofile` or `~/.Renviron`. The Route's fresh home folder and the
-adapter's `R_LIBS_USER` together replace the path to that library. On this
-machine it does not exist, so a Route sees every package the person does;
-on a machine where packages were installed there, a Route sees none of them.
-
-**What is agreed, all in the RStudio trial, none in the engine:**
-
-- The person's own library joins each Route's library list after the
-  Route's own, so an install still lands in the Route's library. Its path is
-  R's own default for the person, read from R, and nothing is added where
-  that folder does not exist.
-- `PHILEAS_R_PERSONAL_LIBRARY` decides it: unset or `1` includes it, `0`
-  leaves it out, a folder path includes that library instead, and anything
-  else is refused, in words saying it belongs to the RStudio trial. Named
-  without "TRIAL", since the engine reserves nothing under `PHILEAS_`.
-- The R library guard watches it too, so a Route can use those packages and
-  not change them.
-- A Journey's start prints whether it was included, where, and how many
-  packages it holds, or that there is none.
-- Tested on RStudio with a scratch library holding a copy of one package,
-  given by path, so nothing is written into the person's real home.
-
-**Not decided:** recording it on each journal's opening line, which needs
-the engine and waits on 1.13; and whether `.Rprofile` and `.Renviron` come
-in too, since they can change anything and would make Routes depend on the
-person running them.
 
 ### 1.21 Surveying every window the application opens
 
@@ -1318,6 +1282,19 @@ issue 87.
 - **It is not the open question of one defect on several Routes,** in
   `PRODUCT_REQUIREMENTS.md` section 11. That is one bug met many times;
   this is one meeting seen many ways.
+
+### 2.24 What else of the person's R setup an RStudio Route sees
+
+Left open when RStudio Routes were given the person's own R library on
+2026-10-02, which `HISTORY.md` records. Nothing is decided.
+
+- **Recording the library on each journal's opening line,** with how many
+  packages it held, so a journal says what its Route could see. It needs
+  the engine, and waits on recording versions there, 1.13.
+- **Whether `~/.Rprofile` and `~/.Renviron` come in too.** A Route reads
+  neither, since its home folder is its own. They can change anything R
+  does, so bringing them in would make a Route depend on the person running
+  it in ways a library list does not.
 
 ## 3. Declined
 

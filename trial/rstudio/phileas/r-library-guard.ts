@@ -94,6 +94,15 @@ export function changesSince(before: LibrarySnapshot): string[] {
 }
 
 /**
+ * The machine's libraries and the person's own library a Route sees, each
+ * once. R lists the default personal library among the machine's whenever
+ * it exists, so only one given by path adds anything.
+ */
+export function librariesToGuard(machine: readonly string[], personal: readonly string[]): string[] {
+  return [...new Set([...machine, ...personal])];
+}
+
+/**
  * Start watching the libraries, and return what checks them when the Journey
  * ends. Throws when anything changed, listing it, unless the override is set,
  * in which case it says the guard did not run. Says how much it read when it

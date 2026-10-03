@@ -905,7 +905,9 @@ setting, and `HISTORY.md` has them together. In short:
   `RSTUDIO_DISABLE_WHATS_NEW=1`, raised because the What's New screen masks
   the IDE; `RS_NO_SPLASH=1`, raised the same day; and `R_LIBS_USER`, a
   package library inside the Route's home, so an install lands there and not
-  in the machine's R.
+  in the machine's R. Since 2026-10-02 it lists the person's own R library
+  after the Route's, so a Route sees what the person has installed, unless
+  `PHILEAS_R_PERSONAL_LIBRARY` says otherwise.
 - **It chooses the workbench page,** never the splash, should one appear.
 - **Its logs** are `rdesktop.log` and the session log, `rsession-<user>.log`,
   both under the Route's home. The session log is named although it is

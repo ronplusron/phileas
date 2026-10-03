@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { requireAppDir, type AppUnderTest } from '@drugstoresushi/phileas';
 import type { ElectronApplication, Page } from '@playwright/test';
+import { libraryList, personalLibrary } from '../personal-library';
 
 /**
  * The adapter for RStudio Desktop, pointed at a copy of the installed release
@@ -92,7 +93,11 @@ export const rstudio: AppUnderTest = {
     // the first; without it, the machine's library was the only one. Measured
     // in RStudio's own console on 2026-09-28, and the Install Packages dialog
     // then defaulted to this library. r-library-guard.ts checks it held.
-    R_LIBS_USER: libraryIn(userDataDir),
+    //
+    // After it, the person's own R library, so a Route sees the packages the
+    // person running the Journey has installed, and still installs into its
+    // own. personal-library.ts has what decides it.
+    R_LIBS_USER: libraryList(libraryIn(userDataDir), personalLibrary()),
     // ODBC's own settings files, in the Route's home. HOME does not move
     // them: on 2026-09-29 a Route that installed odbc from New Connection
     // left an empty .odbc.ini in the real home folder.

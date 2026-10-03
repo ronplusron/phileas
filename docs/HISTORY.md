@@ -25,6 +25,37 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-02: RStudio Routes see the person's own R library
+
+**Asked for** the same day, close to how it was put: with 30 R packages
+installed and a Journey run locally, a Route should see them, "included by
+default". A Route's fresh home folder and the adapter's own `R_LIBS_USER`
+had hidden that library, since R finds it from HOME.
+
+**What landed, in the RStudio trial and not the engine.** The adapter's
+`R_LIBS_USER` lists the Route's own library and then the person's, so a
+Route's `.libPaths()` is the Route's library, the person's, and R's system
+library, and an install still lands in the first.
+`PHILEAS_R_PERSONAL_LIBRARY` decides it: unset or `1` takes R's own default
+for the person, read from `Rscript` under the real home folder; `0` leaves
+it out; an absolute path to a folder names one instead; and anything else
+is refused, saying it belongs to the RStudio trial, including a path that
+names no folder, which would otherwise be dropped by R without a word. The
+Journey's start prints which, and how many packages it holds. The R library
+guard watches a library given by path as well as the machine's.
+
+**Measured before building:** R lists every folder of `R_LIBS_USER` in
+order and drops one that does not exist, under `Rscript`. **And after, in
+RStudio itself,** with a scratch library holding a copy of `abind` given by
+path: the session's `.libPaths()` was the Route's library, the scratch one
+and the system library, `abind` loaded from the scratch library, and the
+guard read its 111 entries, the system library's 110 and `abind`, and found
+nothing changed. Nothing was written into the real home folder.
+
+**Tested.** Seven new tests, 351 in all: six on the variable's values and
+refusals, the guard's list and the start's line, and one on the adapter's
+`R_LIBS_USER`, which failed with the old line put back.
+
 ## 2026-10-02: Positron's Remote Explorer fails with no `.ssh` folder
 
 **Found by a Journey.** One Route of 100 Hops on Positron 2026.09.1 with no

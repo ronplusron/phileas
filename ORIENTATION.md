@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and forty-four tests, after a
+through, and `npm test` runs three hundred and fifty-one tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -132,7 +132,10 @@ own widget kept and recorded while one under anything else is covered, and
 such a text box on the pool's line. One more holds a control hidden at
 the window's edge, with nothing under the pixel that shows, out of the draw. Two hold the settle wait to `aria-busy`: a page
 marked busy is not settled until it clears, and one whose busy region is
-hidden settles as a quiet page does.
+hidden settles as a quiet page does. Seven came with RStudio Routes seeing
+the person's own R library: each value of `PHILEAS_R_PERSONAL_LIBRARY`,
+what is refused, the Route's library staying first, and the R library guard
+watching a library given by path.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -182,7 +185,9 @@ R script with code in it; `session-data`, code run in the console;
 `r-markdown-further`, that document created, with text and an R chunk
 added at its end; or `zoomed-plots`, the Plots pane zoomed so the other
 panes are hidden. Its Journey fails the run when the machine's R libraries
-changed.
+changed. Its Routes see the person's own R library after their own, so an
+install still lands in the Route's; `PHILEAS_R_PERSONAL_LIBRARY=0` leaves
+it out, a folder's path names another, and the Journey's start says which.
 `docs/PLAN.md` has the decision, what the adapter does and why, and what is
 not decided, under "Stepping away from the trial".
 
@@ -344,7 +349,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and forty-four tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and fifty-one tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

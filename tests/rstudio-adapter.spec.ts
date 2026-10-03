@@ -15,7 +15,11 @@ let scratch: string;
 let run: string;
 let profile: string;
 let rstudio: AppUnderTest;
-const saved = { app: process.env.PHILEAS_APP_DIR, temp: process.env.PHILEAS_TEMP_FOLDER };
+const saved = {
+  app: process.env.PHILEAS_APP_DIR,
+  temp: process.env.PHILEAS_TEMP_FOLDER,
+  personal: process.env.PHILEAS_R_PERSONAL_LIBRARY,
+};
 
 test.beforeAll(async () => {
   scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'rstudio-adapter-test-'));
@@ -28,9 +32,14 @@ test.beforeEach(() => {
   run = fs.mkdtempSync(path.join(scratch, 'phileas-rstudio-'));
   profile = fs.mkdtempSync(path.join(run, 'r'));
   process.env.PHILEAS_TEMP_FOLDER = run;
+  // The person's own R library left out, so these tests never ask the
+  // machine's R where it is; the test that wants one sets it.
+  process.env.PHILEAS_R_PERSONAL_LIBRARY = '0';
 });
 
 test.afterAll(() => {
+  if (saved.personal === undefined) delete process.env.PHILEAS_R_PERSONAL_LIBRARY;
+  else process.env.PHILEAS_R_PERSONAL_LIBRARY = saved.personal;
   fs.rmSync(scratch, { recursive: true, force: true });
   if (saved.app === undefined) delete process.env.PHILEAS_APP_DIR;
   else process.env.PHILEAS_APP_DIR = saved.app;
@@ -69,6 +78,15 @@ test("ODBC's settings files are in the Route's home, since HOME does not move th
     ODBCINI: path.join(profile, 'home', '.odbc.ini'),
     ODBCINSTINI: path.join(profile, 'home', '.odbcinst.ini'),
   });
+});
+
+test("R_LIBS_USER puts the Route's own library first, then a personal library given by path", () => {
+  const env = () => (typeof rstudio.env === 'function' ? rstudio.env(profile) : rstudio.env ?? {});
+  const own = path.join(profile, 'home', 'R', 'library');
+  expect(env().R_LIBS_USER).toBe(own);
+  const personal = fs.mkdtempSync(path.join(scratch, 'personal-'));
+  process.env.PHILEAS_R_PERSONAL_LIBRARY = personal;
+  expect(env().R_LIBS_USER).toBe(`${own}:${personal}`);
 });
 
 test('anything that prints is excluded, in the menu or the page, and a word merely containing print is not', async () => {
