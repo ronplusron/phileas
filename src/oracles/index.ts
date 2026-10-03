@@ -214,6 +214,23 @@ export interface WatchOptions {
 }
 
 /**
+ * What makes a log line a failure, for every application: a word ending in
+ * "error", such as TypeError, GmailError or error itself, or one of fatal,
+ * failed, failure, exception and panic.
+ *
+ * It was `error` as a whole word until 2026-10-03, which never matched an
+ * error's class name, so "fatal: uncaught: TypeError" read as clean: reported
+ * from Bobolink Inbox, whose log writes a failure's class and never its
+ * message. Widened that day after counting real Positron and VS Code logs,
+ * 6,533 lines: a word ending in "error" added 8 matches, each a real
+ * exception, and the other words added 91, most of them debug lines such as
+ * "Failed to find pixi". Chosen with both, in the words "I want 1 and 2".
+ * A log whose own words for failure are none of these names a pattern of its
+ * own, `LogPath.failsOn`, matched as well as this one.
+ */
+export const LOG_FAILURE = /\w*error\b|\b(?:fatal|failed|failure|exception|panic)\b/i;
+
+/**
  * The logs to read, from a list or from the Route's profile folder.
  *
  * Refuses when the adapter names its logs by folder and no folder was given,
@@ -342,6 +359,8 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   const createdOnFirstWrite = new Set<string>();
   // Each log's own reader of a line's time, where the adapter gives one.
   const timeOf = new Map<string, (line: string) => number | undefined>();
+  // Each log's own failure pattern, where the adapter gives one, read beside LOG_FAILURE.
+  const failsOn = new Map<string, RegExp>();
   // Since when each log's unread bytes may date: the last read that left
   // nothing behind. A line split across two reads started before the second.
   const unreadSince = new Map<string, number>();
@@ -350,6 +369,12 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     const file = typeof log === 'string' ? log : log.path;
     if (typeof log !== 'string' && log.createdOnFirstWrite) createdOnFirstWrite.add(file);
     if (typeof log !== 'string' && log.timeOf) timeOf.set(file, log.timeOf);
+    // Without its global and sticky flags, which make a pattern's test depend
+    // on where the last one stopped: the same line could then fail one read
+    // and pass the next.
+    if (typeof log !== 'string' && log.failsOn) {
+      failsOn.set(file, new RegExp(log.failsOn.source, log.failsOn.flags.replace(/[gy]/g, '')));
+    }
     logOffsets.set(file, sizeOf(file) ?? 0);
     unreadSince.set(file, watchedFrom);
   }
@@ -406,8 +431,9 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
           // left for the next read.
           const end = buffer.lastIndexOf(0x0a) + 1;
           const since = unreadSince.get(file) ?? watchedFrom;
+          const own = failsOn.get(file);
           for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
-            if (!/\berror\b/i.test(line)) continue;
+            if (!LOG_FAILURE.test(line) && !own?.test(line)) continue;
             const logged = loggedAt(file, line);
             const arrival: Arrival = { after: since, before: readAt, ...(logged === undefined ? {} : { loggedAt: logged }) };
             found.push({ text: `${file}: ${line.trim()}`, arrival });

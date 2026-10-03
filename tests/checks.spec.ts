@@ -6,6 +6,7 @@ import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   CHECK_ORDER,
   CheckFailure,
+  LOG_FAILURE,
   PageConnectionLost,
   FixFailure,
   RUN_VARIABLE,
@@ -587,6 +588,60 @@ writtenTest('a log marked as created on its first write passes until it appears,
   const { error, hops } = await logRoute(page, app, [undefined, 'ERROR the session broke\n'], marked);
   expect(hops.map((check) => check?.result)).toEqual(['passed', 'failed']);
   expect(hops[1]?.observation).toMatch(/ERROR the session broke/);
+  expect(error).toBeInstanceOf(CheckFailure);
+});
+
+test('a log line fails on an error class name and on the plain words for failure', () => {
+  // Invented, in the shape of Bobolink Inbox's log, which writes a failure's
+  // class and never its message. "error" as a whole word matched only the
+  // last of the first four, so the rest read as clean on every Hop.
+  for (const line of [
+    '2026-01-15 09:35:02  sign-in: failed: LoopbackError timedOut',
+    '2026-01-15 09:36:10  unsubscribe: failed: TypeError',
+    '2026-01-15 09:38:00  fatal: uncaught: TypeError',
+    '2026-01-15 09:37:44  window: could not save its frame: Error EACCES',
+    'GmailError http 500',
+    'an unhandled exception in the worker',
+    'panic: the index is out of range',
+  ]) {
+    expect(LOG_FAILURE.test(line), line).toBe(true);
+  }
+  // Ordinary lines, including words that only contain "error".
+  for (const line of [
+    '2026-01-15 09:30:12  sign-in: succeeded',
+    '2026-01-15 09:31:40  sign-in: cancelled in the app',
+    'checked 3 files, 0 errors',
+    'errorCount=0',
+  ]) {
+    expect(LOG_FAILURE.test(line), line).toBe(false);
+  }
+});
+
+writtenTest('a line naming an error class fails the log check on a Route', async ({ page, app }) => {
+  fs.writeFileSync(WRITTEN, '');
+  const { error, hops } = await logRoute(page, app, [
+    '2026-01-15 09:30:12  sign-in: succeeded\n',
+    '2026-01-15 09:36:10  unsubscribe: failed: TypeError\n',
+  ]);
+  expect(hops.map((check) => check?.result)).toEqual(['passed', 'failed']);
+  expect(hops[1]?.observation).toMatch(/unsubscribe: failed: TypeError/);
+  expect(error).toBeInstanceOf(CheckFailure);
+});
+
+writtenTest("a log's own failure pattern is read beside the engine's, and only for that log", async ({ page, app }) => {
+  // A failure with no error name in it at all, as Bobolink Inbox writes a
+  // refused sign-in. The same line passes on a log with no pattern of its own,
+  // which is the control that the pattern is what failed it.
+  const refused = '2026-01-15 09:40:00  sign-in: Google refused it: access_denied\n';
+  fs.writeFileSync(WRITTEN, '');
+  const plain = await logRoute(page, app, [refused]);
+  expect(plain.hops.map((check) => check?.result)).toEqual(['passed', 'passed', 'passed']);
+
+  fs.writeFileSync(WRITTEN, '');
+  const own: AppUnderTest = { ...buggy, logPaths: [{ path: WRITTEN, failsOn: /refused it:/g }] };
+  const { error, hops } = await logRoute(page, app, [refused], own);
+  expect(hops[0]?.result).toBe('failed');
+  expect(hops[0]?.observation).toMatch(/Google refused it: access_denied/);
   expect(error).toBeInstanceOf(CheckFailure);
 });
 

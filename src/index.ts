@@ -207,6 +207,7 @@ export {
   PageConnectionLost,
   assertAppChecks,
   CHECK_ORDER,
+  LOG_FAILURE,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,
   STALLED,
   judgedByTheWatch,

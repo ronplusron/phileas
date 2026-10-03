@@ -316,6 +316,11 @@ export type AppCheckVerdict = readonly string[] | { readonly notRun: string };
  * zone is the adapter's to supply: a time written with none, parsed as if
  * local, lands hours off. A time outside the reads around the line is not
  * trusted, and the failure says so.
+ *
+ * `failsOn` is a pattern for a failure line this log writes in its own words,
+ * matched as well as the engine's own rule, `LOG_FAILURE`, never instead of
+ * it. Asked for on 2026-10-03 for Bobolink Inbox, whose log writes a failure
+ * as "failed: <kind>" and one sign-in failure with no error name at all.
  */
 export type LogPath =
   | string
@@ -323,6 +328,7 @@ export type LogPath =
       readonly path: string;
       readonly createdOnFirstWrite?: true;
       readonly timeOf?: (line: string) => number | undefined;
+      readonly failsOn?: RegExp;
     };
 
 export interface AppUnderTest {

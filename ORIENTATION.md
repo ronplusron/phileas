@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and seventy-two tests, after a
+through, and `npm test` runs three hundred and seventy-five tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -149,7 +149,9 @@ summary's Route alone to the lowest-numbered Route that did not pass. Two
 more came with each Fix step's line saying what the step was: an `act`
 step's target and value and a `code` step's source recorded, and the kind
 printed. Two more came with exclusion groups: a group kept out unless a run
-lets it in, and a group the adapter does not declare refused.
+lets it in, and a group the adapter does not declare refused. Three more
+came with the log check's wider rule: a line naming an error class or a
+plain word for failure, the same through a Route, and a log's own pattern.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -376,7 +378,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and seventy-two tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and seventy-five tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

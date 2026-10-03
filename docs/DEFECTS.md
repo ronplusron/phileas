@@ -264,6 +264,11 @@ in the log became up to three findings on Positron, each with a signature
 of its own and each ending a Route until filed. Reading a frame line as part
 of the error above it, rather than as one of its own, would close it.
 
+**Wider since 2026-10-03,** when a line began to fail on a word ending in
+"error" or on fatal, failed, failure, exception or panic. Counted on 6,533
+lines of real Positron and VS Code logs, frames that match went from 0 to
+5, each naming an exception in its function's or file's name.
+
 ## A determinism test failed once, and why is not known
 
 **Filed 2026-09-30, observed rather than confirmed.** In a full run of the

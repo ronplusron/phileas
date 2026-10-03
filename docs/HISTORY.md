@@ -25,6 +25,40 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: the log check reads an error's class name as an error
+
+**Reported by the session building Bobolink Inbox's adapter,** and taken
+first, ahead of the menu bar's work, in the words "The 'error' error is top
+priority." The log check took a line as a failure only if it held `error`
+as a whole word, so an error's class name never matched: "fatal: uncaught:
+TypeError", "failed: LoopbackError timedOut" and "GmailError http 500" all
+read as clean. Inbox's log writes a failure's class and a code and never its
+message, so there the check passed every Hop while seeing almost nothing.
+
+**Measured before choosing,** on real logs, read and not kept: 6,533 lines
+of Positron and VS Code logs, 174 files. Today's rule matched 416. A word
+ending in "error" matched 8 more, every one `ModuleNotFoundError`; adding
+fatal, failed, failure, exception and panic matched 91 more, 77 of them
+"Failed to find pixi" at debug level and 6 git's "fatal: not a git
+repository" at info, and 5 stack frames. Positron's own `exthost.log`, the
+one its adapter reads, gained none, though only three of it were on the
+machine. RStudio's logs here held 18 lines, none matching any rule.
+
+**Chosen from three rules offered,** in the words "I want 1 and 2": the
+first two together, `LOG_FAILURE` in `src/oracles/index.ts`. And a log an
+adapter names can add a pattern of its own, `failsOn`, matched beside the
+engine's, never instead of it, for a failure written in a log's own words:
+Inbox writes a refused sign-in as "Google refused it: access_denied". A
+pattern's global and sticky flags are dropped, so the same line answers the
+same way on every read. The stack-frame defect grew by those 5 frames, and
+`DEFECTS.md` says so.
+
+**Tested.** Three new tests: the rule against invented lines in Inbox's
+shape and ordinary ones, "0 errors" and `errorCount=0` among them; a
+class-name line failing a Route; and a log's own pattern failing a line
+that passes on a log without one. Run against the old rule, the first two
+fail. 375 tests in all.
+
 ## 2026-10-03: Positron's whole menu reviewed, and exclusion groups a run can let in
 
 Part B of the menu bar's proposal: Positron's exclusions had only ever met
