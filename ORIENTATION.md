@@ -173,10 +173,11 @@ found in it. The adapter declares no checks of its own yet, and no Fix.
 `trial/editor/` from 2026-09-30 is in this repository's history.
 
 **What comes next was ordered on 2026-10-03:** the rest of the menu bar's
-three parts, and then the rest of replay from the journal. Its first three
+three parts, and then the rest of replay from the journal. Its first four
 steps landed the same day: each Fix step's content on its journal line,
-issue 88 tried in VS Code, and Positron's whole menu reviewed against its
-exclusions, with exclusion groups a run can let back in. `docs/PLAN.md` has the order and why, under "Next".
+issue 88 tried in VS Code, Positron's whole menu reviewed against its
+exclusions, with exclusion groups a run can let back in, and the finding
+that only Positron's menu depends on focus. `docs/PLAN.md` has the order and why, under "Next".
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.

@@ -1003,7 +1003,8 @@ the words "One branch, multiple commits."
    exclusions. Done the same day, with exclusion groups a run can let back
    in, asked for while choosing what to exclude; `HISTORY.md` has both.
 4. **Whether RStudio's and Bobolink Editor's menus widen with focus too,**
-   and their exclusions reviewed if they do.
+   and their exclusions reviewed if they do. Done the same day: neither
+   does, so neither needed reviewing; `HISTORY.md` has how each was told.
 5. **C of 1.23:** the menu drawn a level at a time.
 6. **A of 1.23:** the engine claiming focus for each Route's window.
 7. **The rest of replay from the journal:** the new step kinds, `phileas

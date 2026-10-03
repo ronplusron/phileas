@@ -754,9 +754,9 @@ hidden.
   Release Notes, Help > Positron Documentation, File > Save As... and Save
   Workspace As..., none of which Positron's exclusions had seen, since none
   is among the 6. Positron's exclusions were reviewed against its whole
-  menu on 2026-10-03, part B of the proposal, and `HISTORY.md` has it;
-  RStudio's and Bobolink Editor's are still to be measured, as the order
-  below says.
+  menu on 2026-10-03, part B of the proposal, and `HISTORY.md` has it.
+  RStudio's and Bobolink Editor's menus do not depend on focus, found the
+  same day, so their exclusions already meet the whole of them.
 
 **Proposed, the parts agreed to be recorded:**
 
@@ -776,7 +776,8 @@ measured for whether focus widens them too, and their exclusions reviewed if
 it does, which came with the order chosen. `PLAN.md` has where these sit
 among the rest, under "Next". B, Positron's full menu reviewed against its
 exclusions, landed the same day, with exclusion groups a run can let back
-in; `HISTORY.md` has both.
+in, and so did the measurement before A: of the three applications, only
+Positron's menu depends on focus. `HISTORY.md` has all of it.
 
 **An option, not proposed:** D, offering the menu bar only to an
 application that asks for it, for one whose menu mostly repeats its page,

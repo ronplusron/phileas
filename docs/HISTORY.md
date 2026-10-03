@@ -25,6 +25,27 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: only Positron's menu depends on focus
+
+Measured before the engine claims focus for each Route's window, since that
+change reaches every application and only Positron's exclusions had been
+reviewed against a whole menu.
+
+**RStudio,** the fused copy of 2026.09.1, by the probe that listed
+Positron's menu: its menu holds 249 entries, and the same 219 are enabled
+with and without focus faked, leaving 179 offered and 40 excluded either
+way. The same probe on Positron took 18 enabled to 195, which is the
+control that faking focus works.
+
+**Bobolink Editor,** read rather than run, since its adapter lives in its
+own repository: `src/main/system-menu.ts` builds the menu once, holding
+three entries of the editor's own, About, Settings… and Keyboard Shortcuts,
+none of them setting `enabled`, and otherwise only standard roles, which
+the engine skips. The editor draws its own menus in the page on purpose.
+
+So neither needed its exclusions reviewed, and claiming focus changes the
+menu of Positron alone among the three.
+
 ## 2026-10-03: the log check reads an error's class name as an error
 
 **Reported by the session building Bobolink Inbox's adapter,** and taken
