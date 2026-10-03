@@ -269,9 +269,23 @@ export interface ExcludedCandidate {
  * sign of one was a Hop abandoned on its click.
  */
 export interface CoveredCandidate {
-  readonly candidate: PageCandidate;
+  /**
+   * A page control, or a printed shortcut whose every control is covered by a
+   * dialog; see `underDialog`.
+   */
+  readonly candidate: PageCandidate | KeyCandidate;
   /** What is on top at its click point, described as Playwright describes an element. */
   readonly by: string;
+  /**
+   * Whether what covers it is, or sits inside, a dialog: an element with the
+   * role `dialog` or `alertdialog`, or a `<dialog>`. A covered control's
+   * printed shortcut stays in the draw, since a key needs no clear spot to
+   * land on, except under a dialog, which takes the keys. Measured on
+   * Positron on 2026-10-03: New Folder from Template, a `role="dialog"` not
+   * marked `aria-modal`, held a Route for its last 43 Hops, and all 27 of the
+   * printed shortcuts drawn there, of controls behind it, changed nothing.
+   */
+  readonly underDialog?: boolean;
 }
 
 /**
@@ -555,12 +569,24 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   // by the rail that names it, and only what would otherwise be drawn is
   // tested. Before the draw, for the reason this function's comment gives.
   // Shortcuts were built from every control, covered or not: a key press
-  // needs no clear spot to land on.
+  // needs no clear spot to land on, except under a dialog, below.
   const { covered, hidden, layered, labeled: reached } = await outOfReachAmong(
     page,
     candidates.filter((c): c is PageCandidate => c.source === 'page'),
     timeoutMs
   );
+  // A printed shortcut whose every control is covered by a dialog leaves the
+  // draw too, recorded as covered by what covers the first of them; see
+  // `CoveredCandidate.underDialog`. Under anything else it stays.
+  const underDialog = new Map<PageCandidate | KeyCandidate, CoveredCandidate>(
+    covered.filter((entry) => entry.underDialog).map((entry) => [entry.candidate, entry])
+  );
+  for (const candidate of candidates) {
+    if (candidate.source !== 'key' || candidate.role !== 'shortcut' || !candidate.controls.length) continue;
+    const covers = candidate.controls.map((control) => underDialog.get(control));
+    const [first] = covers;
+    if (first && covers.every(Boolean)) covered.push({ candidate, by: first.by, underDialog: true });
+  }
   if (covered.length || hidden.length) {
     const out = new Set<SurveyedCandidate>([...covered, ...hidden].map((entry) => entry.candidate));
     candidates.splice(0, candidates.length, ...candidates.filter((c) => !out.has(c)));
@@ -738,7 +764,7 @@ async function outOfReachAmong(
     // cannot reach, or a page that does not answer in time, stays in the draw.
     const verdict = await control.locator
       .evaluate(
-        (element, typed): { hidden: string } | { layered: string } | { covered: string } | null => {
+        (element, typed): { hidden: string } | { layered: string } | { covered: string; dialog: boolean } | null => {
           const up = (node: Element): Element | null => {
             const root = node.getRootNode();
             return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
@@ -797,7 +823,7 @@ async function outOfReachAmong(
           // Kept, and recorded, since it rests on how the page is built.
           const parent = up(element);
           if (typed && parent && parent.contains(top)) return { layered: describe(top) };
-          return { covered: describe(top) };
+          return { covered: describe(top), dialog: top.closest('[role="dialog"], [role="alertdialog"], dialog') !== null };
         },
         takesTypedValue(control),
         timeoutMs === undefined ? {} : { timeout: timeoutMs }
@@ -805,7 +831,7 @@ async function outOfReachAmong(
       .catch(() => null);
     if (verdict && 'hidden' in verdict) hidden.push({ candidate: control, by: verdict.hidden });
     else if (verdict && 'layered' in verdict) layered.push({ candidate: control, by: verdict.layered });
-    else if (verdict) covered.push({ candidate: control, by: verdict.covered });
+    else if (verdict) covered.push({ candidate: control, by: verdict.covered, ...(verdict.dialog ? { underDialog: true } : {}) });
   }
 
   // A control with no box cannot be tested itself, and is kept, except inside
@@ -813,14 +839,14 @@ async function outOfReachAmong(
   // no box, and choosing it needs no click, so it would otherwise reach a
   // dropdown no pointer can. Measured on buggy's Category dropdown on
   // 2026-09-30.
-  const coveredBy = new Map<PageCandidate, string>(covered.map((entry) => [entry.candidate, entry.by]));
+  const coveredBy = new Map<PageCandidate | KeyCandidate, CoveredCandidate>(covered.map((entry) => [entry.candidate, entry]));
   const hiddenBy = new Map<PageCandidate, string>(hidden.map((entry) => [entry.candidate, entry.by]));
   for (const control of controls) {
     if ((control.box !== undefined && hasArea(control.box)) || labeled.decided.has(control)) continue;
     for (let outer = control.within; outer; outer = outer.within) {
       const under = coveredBy.get(outer);
       if (under !== undefined) {
-        covered.push({ candidate: control, by: under });
+        covered.push({ ...under, candidate: control });
         break;
       }
       const inside = hiddenBy.get(outer);
@@ -864,7 +890,7 @@ async function throughLabels(
       .evaluate(
         (element):
           | { labeled: string; inside: boolean; id: string }
-          | { covered: string }
+          | { covered: string; dialog: boolean }
           | { hidden: string }
           | null => {
           const describe = (node: Element): string => {
@@ -901,7 +927,9 @@ async function throughLabels(
             }
             cover ??= top;
           }
-          return cover ? { covered: describe(cover) } : null;
+          return cover
+            ? { covered: describe(cover), dialog: cover.closest('[role="dialog"], [role="alertdialog"], dialog') !== null }
+            : null;
         },
         undefined,
         timeoutMs === undefined ? {} : { timeout: timeoutMs }
@@ -915,7 +943,9 @@ async function throughLabels(
         ? control.locator.locator('xpath=ancestor::label[1]')
         : page.locator(`label[for="${verdict.id.replace(/["\\]/g, '\\$&')}"]`).first();
       reached.push({ candidate: control, by: verdict.labeled, via });
-    } else if ('covered' in verdict) covered.push({ candidate: control, by: verdict.covered });
+    } else if ('covered' in verdict) {
+      covered.push({ candidate: control, by: verdict.covered, ...(verdict.dialog ? { underDialog: true } : {}) });
+    }
     else hidden.push({ candidate: control, by: verdict.hidden });
   }
   return { reached, covered, hidden, decided };

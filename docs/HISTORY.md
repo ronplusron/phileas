@@ -34,6 +34,35 @@ and deleted at once, watching for 100 ms; under a full suite's load Node can
 take longer than that to start, so nothing came back while it watched. It
 now waits for the writer's first file, as the test beside it already did.
 
+## 2026-10-03: a covered control's shortcut leaves the draw under a dialog
+
+**Found by a Journey,** the first after template radios became reachable:
+one Positron Route of 100 Hops, seed `d072060d2415`, no Fix, opened New
+Folder from Template at hop 58 and spent its last 43 Hops there. The dialog
+is a `role="dialog"` not marked `aria-modal`, so the survey read the whole
+page, and the 45 controls behind it were covered and left out. Their
+printed shortcuts were not: 10 of the 29 candidates on its last pool, and
+all 27 of the shortcuts drawn in those 43 Hops changed nothing.
+
+**Why they were offered.** Decided on 2026-09-30, and pinned by a test: a
+covered control's shortcut stays, since a key needs no clear spot to land
+on. That holds under a floating window or a menu, where a shortcut can
+still act; under a dialog, which takes the keys, it does not.
+
+**What landed, chosen from three offered:** where what covers a control is,
+or sits inside, an element with the role `dialog` or `alertdialog`, or a
+`<dialog>`, the covered entry says so, and a printed shortcut whose every
+control is covered that way leaves the draw, recorded as covered. Under
+anything else it stays, as before. Chosen over withholding every covered
+control's shortcut, which reverses the earlier decision for windows and
+menus, and over surveying a `role="dialog"` alone as though modal, which
+`OUTSTANDING.md` 2.20 now holds open with the two measurements that would
+decide it.
+
+**Tested.** One new test, 367 in all, which fails with the change switched
+off; the test of a covered control's shortcut staying under a cover that is
+not a dialog still passes.
+
 ## 2026-10-03: a control with no area of its own is clicked through its label
 
 **Found by a Journey.** One Positron Route of 100 Hops, seed

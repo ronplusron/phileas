@@ -1565,6 +1565,42 @@ test('a covered text box leaves the draw, and a covered control\'s shortcut does
   expect(found.candidates.some((c) => c.source === 'key' && c.name === '⌘S')).toBe(true);
 });
 
+test("a covered control's shortcut leaves the draw when a dialog covers it, unless a control not under one prints it too", async ({ page, app }) => {
+  // Measured on Positron on 2026-10-03: under New Folder from Template, a
+  // role="dialog" not marked aria-modal, all 27 printed shortcuts drawn, of
+  // controls behind it, changed nothing.
+  await page.evaluate(() => {
+    const save = document.createElement('button');
+    save.id = 'probe-save';
+    save.textContent = 'Save (⌘S)';
+    document.body.prepend(save);
+    const rect = save.getBoundingClientRect();
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-label', 'Probe dialog');
+    dialog.style.cssText = `position: fixed; left: ${rect.x - 4}px; top: ${rect.y - 4}px; width: ${rect.width + 8}px; height: ${rect.height + 8}px; background: white; z-index: 99;`;
+    dialog.innerHTML = '<span>In the way</span>';
+    document.body.append(dialog);
+  });
+  const found = await surveyed(page, app);
+  expect(found.candidates.some((c) => c.source === 'key' && c.name === '⌘S')).toBe(false);
+  const shortcut = found.covered.find((entry) => entry.candidate.source === 'key' && entry.candidate.name === '⌘S');
+  // Named by what is on top, as every cover is: here an element inside the dialog.
+  expect(shortcut?.by).toBe('<span>In the way');
+  expect(shortcut?.underDialog).toBe(true);
+  expect(surveyLines(found)).toContain(`shortcut ⌘S   (covered by ${shortcut?.by})`);
+
+  // The same shortcut printed by a second control in plain view stays.
+  await page.evaluate(() => {
+    const also = document.createElement('button');
+    also.textContent = 'Save all (⌘S)';
+    also.style.cssText = 'position: fixed; bottom: 10px; left: 10px; z-index: 100;';
+    document.body.append(also);
+  });
+  const both = await surveyed(page, app);
+  expect(both.candidates.some((c) => c.source === 'key' && c.name === '⌘S')).toBe(true);
+});
+
 test('a modal dialog with no way out strands the Route', async ({ page, app }) => {
   // The planted defect phase 5 needs: before the survey honored modals, the
   // controls behind this dialog kept every Route going.

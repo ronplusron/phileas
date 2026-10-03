@@ -1215,6 +1215,28 @@ be a real path there, but its menu bar is drawn in the page too, and
 whether that menu can be reached while a dialog is open has not been
 measured.
 
+**Positron, and whether to treat a dialog not marked `aria-modal` as one,**
+added on 2026-10-03. A Positron Route, seed `d072060d2415`, spent its last 43
+Hops in New Folder from Template, a `role="dialog"` not marked `aria-modal`,
+so the survey read the whole page: the controls behind it were covered and
+left out, but their printed shortcuts were offered, and all 27 drawn changed
+nothing. Those shortcuts now leave the draw under a dialog, and `HISTORY.md`
+has it. Two menu Hops drawn there changed nothing either, File > New Text
+File at hop 62 and About Positron at hop 98, where RStudio's menu commands
+have run behind its in-page dialogs. Not decided: surveying a visible
+`role="dialog"` alone, as a native or `aria-modal` one is, which would also
+withhold the menu bar and everything behind it. Two measurements would
+decide it, asked to come first on 2026-10-03:
+
+- **Whether menu commands act behind such a dialog,** on each application:
+  menu Hops drawn while a dialog covered the page, and whether each changed
+  the screen or set off a stub. Most of it is in the journals already, as a
+  pool whose covered controls are under a dialog.
+- **Whether any application uses `role="dialog"` for something that leaves
+  the rest of the page usable,** a panel beside the work rather than over
+  it. One such case rules out treating the role as modal by default. Needs
+  a probe per application, or the pool recording that a dialog was showing.
+
 ### 2.21 This repository's history keeps the editor's adapter and findings
 
 Raised 2026-10-01, when the editor's adapter was decided to move into the
