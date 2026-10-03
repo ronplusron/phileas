@@ -289,9 +289,12 @@ export function renderEntry(entry, routeNumber, { brief = false } = {}) {
       return undefined;
     case 'fix-step': {
       const step = { name: `Fix step ${entry.step}`, startedAt: Date.parse(entry.startedAt) };
+      // The step's kind sits where a Trip hop's action does, blank in a
+      // journal written before kinds were recorded.
       return [
         column(`${route}  fix ${entry.step}`, 18),
-        column(shortened(entry.label, 39), 40),
+        column(entry.stepKind ?? '', 11),
+        column(shortened(entry.label, 43), 44),
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
         caughtText(entry.caught, step),
         knownText(entry.checks),

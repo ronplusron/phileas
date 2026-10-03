@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
+**Seventeen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -279,6 +279,26 @@ full suite's load, and that the change being tested, to the Fix API, is not
 on the path a Route with no Fix takes. The next failure should keep its
 report, `test-results/` and the two plays' journals, before anything reruns.
 
+## A page changing every 200 ms read as settled once
+
+**Filed 2026-10-03, observed rather than confirmed.** In a full `npm test`
+run, `a page that changes every 200ms is not settled, though two reads
+agree` in `tests/route.spec.ts` failed at its last assertion: `settle`, with
+its default quiet window of 400 ms, returned settled on a page replacing a
+button every 200 ms. Its positive control, the same page reading as settled
+with no quiet window, had passed just before. It passed in the next full
+run. That run had other tests failing for a reason of its own, a build
+older than its source, and nothing else is known about its load.
+
+**Why it is a defect and not a flaky test to rerun.** Either the test can
+fail on a correct engine, and then a red run says nothing, or the settle
+wait really can call a moving page settled. Then a survey is taken from a
+page mid-change, which is the first place a seed stops reproducing (R8).
+Which one it was is not known. One reading, not measured: under load the
+page's own timer can fall behind, so nothing changes for 400 ms and the
+page really was quiet while it was read. The next failure should keep its
+report and `test-results/` before anything reruns.
+
 ## The Hop a Route ends on depends on when a late finding arrives
 
 **Filed 2026-09-30; what is left of a larger defect fixed the same day.** A
@@ -340,13 +360,24 @@ same, which reads as the application having changed, or as a fixed bug:
 R13's failure, arriving through the record meant to prevent it. Found by a
 review of how a replay could run a Fix's `code` steps.
 
-**What would close it.** Recording each Fix step's own content in its
-journal line, as `OUTSTANDING.md` 1.18 schedules first for replay: an `act`
-step's target as data, and a `code` step's source text with a hash of it.
-That makes a changed constant visible wherever a step's recorded content is
-compared, which a replay does. It still misses a constant read inside a
-`code` step's own body by name, which only a comparison of what the step
-did to the screen catches, as 1.18 also decides.
+**Narrowed on 2026-10-03.** Each `fix-step` line now records the step's
+kind, an `act` step's target as data with any value typed, and a `code`
+step's source text with a hash of it. That puts the second and third cases
+on the steps' own lines: a step that an imported Fix or the other branch
+takes is written down with what it is. **It does not reach the first.**
+Read in the source, each of the three constants is used by name inside a
+`code` step's action, `insertText(ADDED)`, `type(CODE.join('\n'))` and
+`type(line)`, so the recorded source names the constant and not what it
+holds. This entry had said the recording would make such a change visible;
+it does not.
+
+**What would close it,** both parts of `OUTSTANDING.md` 1.18 and both
+unbuilt: a replay that compares each step's recorded content, and what the
+step did to the screen (R31's effect), with what happens today; and the new
+step kinds that let typed text sit on the line as data rather than as a
+name inside code. Until a replay exists nothing compares the recorded
+content either, so a changed Fix shows only to someone reading two
+journals side by side.
 
 ## Two things that will look like candidates, and are not
 

@@ -225,6 +225,37 @@ export interface FixStepEntry {
    */
   readonly label: string;
   /**
+   * Which kind of step it was, `act` or `code`. Absent in journals written
+   * before 2026-10-03.
+   *
+   * Recorded for replay from the journal, which acts on an `act` step from
+   * what is written here and must not act on a `code` one, whose code no
+   * journal can hold. Until it was recorded nothing on the line told the two
+   * apart, since the label is free text either way.
+   */
+  readonly stepKind?: 'act' | 'code';
+  /**
+   * An `act` step's target as data, the control it found on screen, written
+   * as a Trip hop's is. Absent where the step failed before finding one.
+   */
+  readonly target?: JournaledCandidate;
+  /** How an `act` step acted on its target, as for a Trip hop. Absent where it found none. */
+  readonly action?: HopAction;
+  /** The text an `act` step was given to type, apart from the label that also shows it. */
+  readonly value?: string;
+  /**
+   * A `code` step's source text, its action function's own, and the first
+   * twelve hex digits of a hash of it.
+   *
+   * The Fix's fingerprint on the opening line hashes only the Fix function,
+   * so a step's code or a constant typed by an `act` step could change while
+   * it stayed the same; `DEFECTS.md` has that. Each step's own content here
+   * is what a replay compares instead. A constant a `code` step reads by name
+   * from outside its own function is still not in its source.
+   */
+  readonly source?: string;
+  readonly sourceHash?: string;
+  /**
    * Why the step failed, on the step that did.
    *
    * R11 wants a broken Fix told apart from a failed Route, and that means
@@ -400,7 +431,12 @@ export interface OpeningEntry {
 
 /** A Fix's fingerprint: the first twelve hex digits of a hash of its source. */
 export function fixFingerprint(fix: (...args: never[]) => unknown): string {
-  return createHash('sha256').update(fix.toString()).digest('hex').slice(0, 12);
+  return sourceHash(fix.toString());
+}
+
+/** The first twelve hex digits of a SHA-256 hash of some source text. */
+export function sourceHash(source: string): string {
+  return createHash('sha256').update(source).digest('hex').slice(0, 12);
 }
 
 /**

@@ -25,6 +25,33 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: each Fix step's line says what the step was
+
+The first part of replay from the journal, which its decision said to build
+before the rest, and placed the same day ahead of the menu bar's work. A
+`fix-step` line had only a label, free text either way, so nothing on it
+told an `act` step from a `code` one, and a replay could not know which
+lines it may act on.
+
+Each line now records `stepKind`, `act` or `code`. An `act` step adds the
+control it found as `target`, written as a Trip hop's is, with its `action`
+and any `value`; a `code` step adds its action's `source` and a twelve-digit
+`sourceHash`. An `act` step that failed before finding its target records
+its kind and value with no target. `phileas show` and `--follow` print the
+kind in the column a Trip hop's action takes, blank for a journal written
+before. Older journals read as they did.
+
+**What it does not do.** The defect of a Fix's fingerprint missing what the
+Fix does not contain narrows rather than closes: each of the three
+constants that entry names is read by name inside a `code` step, so the
+recorded source names it and not what it holds. `DEFECTS.md` has it.
+
+**Tested.** Two new tests, 370 in all. One Route's Fix takes a click, a
+typed value and a code step, and its lines hold each, with the hash worked
+out in the test rather than by the engine's helper; and the renderer prints
+each kind, and a blank one for an older line. The existing test of a target
+not on screen now also holds that its line has no target.
+
 ## 2026-10-03: the summary names the lowest-numbered Route to run alone
 
 The 5×500 Positron Journey of the same day ran two Routes at a time, Route 3

@@ -154,6 +154,27 @@ test('a long name is cut to its column, a menu path in the middle, and never run
   expect(line).toBe(`${'route 1  hop 1'.padEnd(18)}${'click'.padEnd(11)}${`button "${'x'.repeat(32)}...`} no change`);
 });
 
+test("a Fix step's line names its kind, and one from before kinds were recorded leaves it blank", () => {
+  const step = {
+    kind: 'fix-step' as const,
+    step: 1,
+    label: 'button "Summary"',
+    startedAt: '',
+    durationMs: 1,
+    effect: effect(['Total weight'], []),
+    checks: [],
+  };
+  expect(renderEntry({ ...step, stepKind: 'act' }, 1)).toBe(
+    `${'route 1  fix 1'.padEnd(18)}${'act'.padEnd(11)}${'button "Summary"'.padEnd(44)}+ Total weight`
+  );
+  expect(renderEntry({ ...step, label: 'some code', stepKind: 'code' }, 1)).toBe(
+    `${'route 1  fix 1'.padEnd(18)}${'code'.padEnd(11)}${'some code'.padEnd(44)}+ Total weight`
+  );
+  expect(renderEntry(step, 1)).toBe(
+    `${'route 1  fix 1'.padEnd(18)}${''.padEnd(11)}${'button "Summary"'.padEnd(44)}+ Total weight`
+  );
+});
+
 test('show finds the latest run from a run, a seed, or the journals folder', () => {
   const root = fs.mkdtempSync(path.join(runTempFolder(), 'report-test-'));
   try {

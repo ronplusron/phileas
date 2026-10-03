@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and sixty-eight tests, after a
+through, and `npm test` runs three hundred and seventy tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -145,7 +145,10 @@ and recorded with it, its label covered or absent, and a test that
 passed with no journal reported as passed. One more holds a covered
 control's printed shortcut out of the draw when a dialog covers it, and
 in when a control in plain view prints it too. One more holds the
-summary's Route alone to the lowest-numbered Route that did not pass.
+summary's Route alone to the lowest-numbered Route that did not pass. Two
+more came with each Fix step's line saying what the step was: an `act`
+step's target and value and a `code` step's source recorded, and the kind
+printed.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -166,7 +169,12 @@ found in it. The adapter declares no checks of its own yet, and no Fix.
 `docs/HISTORY.md` has why it moved and how, and the adapter that was in
 `trial/editor/` from 2026-09-30 is in this repository's history.
 
-**RStudio Desktop is the next thing to do,** decided 2026-09-28 in place of
+**What comes next was ordered on 2026-10-03:** issue 88 tried in VS Code,
+the menu bar's three parts, and then the rest of replay from the journal,
+whose first part, each Fix step's content on its journal line, landed the
+same day. `docs/PLAN.md` has the order and why, under "Next".
+
+**RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
 The adapter is in `trial/rstudio/`, pointed at a copy of the installed
 release with two fuses switched back on, since the installed release refuses
@@ -208,11 +216,13 @@ releases carrying known bugs, judged against a bar set in advance.
 phase 5 waits for its answer. Its first two steps, the checks and the
 adapter, are done: the adapter is in `trial/positron/`, three Routes of
 twenty Hops each passed through it on the current release, and one Route on
-each old release. Five Positron bug candidates have
-been found and filed, `ronplusron/phileas` issues 44, 46, 53, 54 and 87.
+each old release. Six Positron bug candidates have
+been found and filed, `ronplusron/phileas` issues 44, 46, 53, 54, 87 and 88.
 Only 87, Remote Explorer's Configure failing when the home folder has no
-`.ssh` folder, has been followed by hand and read in the code, and
-`trial/positron/phileas/known-findings.json` holds their signatures.
+`.ssh` folder, has been followed by hand and read in the code; 88, the
+Profiles editor logging a file it could not find when MCP Servers is opened
+to the side in a profile with no `mcp.json`, was reproduced by a probe. `trial/positron/phileas/known-findings.json`
+holds their signatures.
 `docs/PLAN.md` has everything measured and decided for it.
 The three old releases and the current one are installed as
 `Positron-2024.11.app`, `Positron-2025.01.app`, `Positron-2025.02.app` and
@@ -260,10 +270,10 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Seventeen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
-reason not yet known, one the Hop a Route ends on depending on when a
+reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
 late finding arrives, one a Fix's fingerprint missing what the Fix
 does not itself contain, and one a Route's menu depending on whether its
 window has focus. That file holds what is wrong, confirmed by reading the
@@ -363,7 +373,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and sixty-eight tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and seventy tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

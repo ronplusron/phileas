@@ -4,7 +4,16 @@ import type { Rng, RouteStreams } from './random.js';
 import { caughtSince, type CaughtByStubs } from './caught.js';
 import { effectOf, type HopEffect } from './effect.js';
 import { fixName } from './fixes.js';
-import { Journal, fixFingerprint, journalFolder, type HopAction, type JournaledCandidate, type JournaledCheck } from './journal.js';
+import {
+  Journal,
+  fixFingerprint,
+  journalFolder,
+  sourceHash,
+  type FixStepEntry,
+  type HopAction,
+  type JournaledCandidate,
+  type JournaledCheck,
+} from './journal.js';
 import { requireRun } from './journey.js';
 import { clickMenuItem } from './menu.js';
 import { renderEntry, targetText } from './report/render.mjs';
@@ -1081,6 +1090,11 @@ async function pauseToWatch(ms: number): Promise<void> {
   if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** What a Fix step is, as its `fix-step` line records it beside the label. See `FixStepEntry`. */
+type StepContent = {
+  -readonly [K in 'stepKind' | 'target' | 'action' | 'value' | 'source' | 'sourceHash']?: FixStepEntry[K];
+};
+
 /** Run the Fix, journaling each step, and wrap any failure as R11 asks. */
 async function runFix(
   fix: Fix,
@@ -1156,8 +1170,12 @@ async function runFix(
   // longer readable on its own.
   let running: string | undefined;
 
-  /** Record one step: run it, settle, check, and write its line. */
-  const record = async (label: string, action: () => Promise<void>): Promise<void> => {
+  /**
+   * Record one step: run it, settle, check, and write its line. `content` is
+   * what the step is, written on its line whether or not it fails; an `act`
+   * step adds its target and action to it once it finds them.
+   */
+  const record = async (label: string, content: StepContent, action: () => Promise<void>): Promise<void> => {
     if (running !== undefined) {
       throw new Error(
         `The Fix step "${label}" was taken inside the step "${running}". A step cannot hold another ` +
@@ -1190,6 +1208,7 @@ async function runFix(
         kind: 'fix-step',
         step: number,
         label,
+        ...content,
         error: error instanceof Error ? error.message.split('\n')[0] : String(error),
         startedAt: startedAt.toISOString(),
         durationMs: span.endedAt - startedAt.getTime(),
@@ -1208,6 +1227,7 @@ async function runFix(
       kind: 'fix-step',
       step: number,
       label,
+      ...content,
       startedAt: startedAt.toISOString(),
       durationMs: span.endedAt - startedAt.getTime(),
       effect,
@@ -1225,8 +1245,11 @@ async function runFix(
     await pauseToWatch(hopDelayMs);
   };
 
-  /** An `act` step's action: find the target on screen and act on it as a Trip hop would. */
-  const actOn = (target: string, value: string | undefined) => async () => {
+  /**
+   * An `act` step's action: find the target on screen and act on it as a Trip
+   * hop would, adding what it found to the step's `content`.
+   */
+  const actOn = (target: string, value: string | undefined, content: StepContent) => async () => {
     // Surveyed again until the target appears, within the hop timeout, since
     // a list can fill in after the step that opened it has settled: Positron's
     // New File list, measured 2026-09-27, lost 1 of 7 `quarto` Routes to a
@@ -1261,6 +1284,8 @@ async function runFix(
       );
     }
     const action = await actionFor(match, hopTimeoutMs);
+    content.target = journaled(match);
+    content.action = action;
     if (action === 'type' && value === undefined) {
       throw new Error(`${target} takes typing, so give the value to type: { kind: 'act', target, value }.`);
     }
@@ -1280,10 +1305,12 @@ async function runFix(
     // Checked at run time too, for a Fix the compiler did not see.
     if (what?.kind === 'act' && typeof what.target === 'string') {
       const label = what.value === undefined ? what.target : `${what.target}, typing ${JSON.stringify(what.value)}`;
-      return record(label, actOn(what.target, what.value));
+      const content: StepContent = { stepKind: 'act', ...(what.value === undefined ? {} : { value: what.value }) };
+      return record(label, content, actOn(what.target, what.value, content));
     }
     if (what?.kind === 'code' && typeof what.label === 'string' && typeof what.action === 'function') {
-      return record(what.label, what.action);
+      const source = what.action.toString();
+      return record(what.label, { stepKind: 'code', source, sourceHash: sourceHash(source) }, what.action);
     }
     return Promise.reject(
       new FixFailure(

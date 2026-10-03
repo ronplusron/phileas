@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -91,6 +92,49 @@ test('a Fix step can type into a named field, and refuses to without a value', a
   expect(String((missing.outcome as FixFailure).message)).toMatch(/give the value to type/);
 });
 
+test("each step's line records its kind, an act step's target as data and a code step's source", async ({
+  page,
+  app,
+}) => {
+  // Replay from the journal acts on an act step from its line and must not
+  // act on a code step, so the line has to say which it is and hold what it did.
+  const ran: string[] = [];
+  const action = async () => {
+    ran.push('code');
+  };
+  // Typed first, since Summary replaces the view the search box is in.
+  const { outcome, entries } = await routeWithFix(page, app, async ({ step }) => {
+    await step({ kind: 'act', target: 'searchbox "Search items"', value: 'Carpet' });
+    await step({ kind: 'act', target: 'button "Summary"' });
+    await step({ kind: 'code', label: 'some code', action });
+  });
+  expect(outcome).toMatchObject({ kind: 'passed' });
+  expect(ran).toEqual(['code']);
+  const [typed, clicked, code] = entries.filter((entry) => entry.kind === 'fix-step');
+  expect(clicked).toMatchObject({
+    stepKind: 'act',
+    target: { source: 'page', role: 'button', name: 'Summary' },
+    action: 'click',
+  });
+  expect(clicked).not.toHaveProperty('value');
+  expect(clicked).not.toHaveProperty('source');
+  expect(typed).toMatchObject({
+    stepKind: 'act',
+    target: { source: 'page', role: 'searchbox', name: 'Search items' },
+    action: 'type',
+    value: 'Carpet',
+  });
+  // The hash is worked out here, not with the engine's own helper, so a
+  // change to how the engine hashes shows rather than agreeing with itself.
+  const source = action.toString();
+  expect(code).toMatchObject({
+    stepKind: 'code',
+    source,
+    sourceHash: createHash('sha256').update(source).digest('hex').slice(0, 12),
+  });
+  expect(code).not.toHaveProperty('target');
+});
+
 test('a target that is not on screen fails the Fix and lists what is', async ({ page, app }) => {
   const { outcome, entries } = await routeWithFix(page, app, ({ step }) => step({ kind: 'act', target: 'button "Sumary"' }));
   expect(outcome).toBeInstanceOf(FixFailure);
@@ -100,6 +144,10 @@ test('a target that is not on screen fails the Fix and lists what is', async ({ 
   expect(step?.kind === 'fix-step' ? step.error : '').toMatch(
     /button "Sumary" is not on screen after \d+ ms\. What is: .*button "Summary"/
   );
+  // Still an act step, with no target, since none was found.
+  expect(step).toMatchObject({ stepKind: 'act' });
+  expect(step).not.toHaveProperty('target');
+  expect(step).not.toHaveProperty('action');
 });
 
 test('a Fix step waits for a target that appears after the step before it settled', async ({ page, app }) => {

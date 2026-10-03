@@ -985,6 +985,37 @@ measured on this release. A Route that closes RStudio fails
 still-responding, so that one would fail loudly rather than go unseen.
 `DEFECTS.md` has what this turned up in the engine.
 
+### Next: Fix steps recorded, the menu bar, and replay from the journal
+
+**Ordered on 2026-10-03,** one open question at a time, each answered from
+options offered, and built on one branch with a commit or more per step, in
+the words "One branch, multiple commits."
+
+1. **Each Fix step's content recorded in the journal,** the part of replay
+   from the journal its decision said to build first. Placed before the
+   menu work once the trade-offs were laid out: it moves no seed, and every
+   journal written after it can be replayed once replay exists. Landed the
+   same day; `HISTORY.md` has it.
+2. **Issue 88 tried in VS Code,** to say whether the bug is Positron's or
+   VS Code's, since the Profiles editor comes from VS Code.
+3. **B of `OUTSTANDING.md` 1.23:** Positron's full menu reviewed against its
+   exclusions.
+4. **Whether RStudio's and Bobolink Editor's menus widen with focus too,**
+   and their exclusions reviewed if they do.
+5. **C of 1.23:** the menu drawn a level at a time.
+6. **A of 1.23:** the engine claiming focus for each Route's window.
+7. **The rest of replay from the journal:** the new step kinds, `phileas
+   replay`, and the proof under R 4.4.3.
+
+The answer put step 4 before A. Placing it before C as well is a reading,
+not part of the answer: it keeps the two reviews of exclusions together.
+
+**Throughout,** the listener leak warning `65d8aff3`, known and unfiled, is
+watched for in each run's summary, chosen over taking it out of the known
+findings so that it ends a Route, probing it again, and dismissing it. A
+recurrence prints as an unfiled finding and fails nothing, so it is seen
+only by someone reading the summary.
+
 ### After the trial: weighting the draw toward new targets
 
 **Placed 2026-09-27,** asked for in the words "Let's do it sooner", and

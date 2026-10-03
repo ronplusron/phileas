@@ -679,17 +679,17 @@ the options offered:
     such as the text `r-markdown-further` inserts, or a branch on the
     application's version, as Positron's `session` Fix takes, changes what
     runs and leaves the fingerprint the same.
-  - **Built first, whatever else lands:** each `fix-step` line records its
-    kind, an `act` step's target as data and any value beside its label,
-    and a `code` step's source text with a hash of it; and `phileas show`
-    prints the kind. Today a journal cannot tell an `act` step from a
-    `code` one, so no replay could tell which lines it may act on.
 - **How far: a flag decides.** By default to the step where the finding
   arrived, plus a few Hops for one that arrives late; `--whole` replays every
   recorded Hop.
 - **Proved first with another R on this machine:** a recorded RStudio finding
   replayed under R 4.4.3, installed with rig, in place of 4.6, which is the
   case R12 names without a second machine.
+
+**Placed on 2026-10-03:** the rest of replay comes after the menu bar's
+work, 1.23. What was to be built first, each Fix step's content on its
+journal line, landed the same day, and `HISTORY.md` has it. `PLAN.md` has
+the order, under "Next".
 
 ### 1.21 Surveying every window the application opens
 
@@ -726,7 +726,7 @@ just opened, which belongs with weighting the draw toward new targets, 1.14.
 
 Raised on 2026-10-03, after measuring Positron's menu bar, in the words "I
 think we need to do something about menubars", and agreed to be recorded
-with the proposal below. The order of its parts is not decided.
+with the proposal below.
 
 **What was measured, on Positron 2026.09.1.** Its application menu holds
 226 entries a person sees in the menu bar, at every level. With the Route's
@@ -755,18 +755,30 @@ hidden.
   Workspace As..., none of which Positron's exclusions had seen, since none
   is among the 6.
 
-**Proposed, the parts agreed to be recorded, not yet ordered:**
+**Proposed, the parts agreed to be recorded:**
 
 - **A. The engine claims focus for each Route's window,** in every window
   mode, so the menu is the same on every launch. It lands only with B and
   C, since alone it makes the other two problems every Route's.
 - **B. Positron's full menu is reviewed against its exclusions** first, from
   one listing of every entry: new windows, developer tools, the network,
-  quitting and restarting.
+  quitting and restarting. Among the new windows is Open New Window with
+  this Profile, which the 5×500 Journey's Route 3 clicked twice, two Hops
+  before the page stopped answering, finding `a06c57c5`. Folding that hang
+  into this review was chosen on 2026-10-03 over probing it with a second
+  Positron running.
 - **C. The menu is drawn as a person opens it:** a top menu first, then an
   entry within it, a level at a time, so each top menu has an equal chance
   and a fourth-level entry is rare. A chooser behind the choosing seam, and
   still a seeded draw; 1.11's shares are the related question.
+
+**Ordered on 2026-10-03: B, then C, then A,** chosen from four orders
+offered, after asking whether this is an engine or an adapter change. A and
+C are the engine's, so they apply to every application; B is Positron's
+adapter alone. So before A lands, RStudio's and Bobolink Editor's menus are
+measured for whether focus widens them too, and their exclusions reviewed if
+it does, which came with the order chosen. `PLAN.md` has where these sit
+among the rest, under "Next".
 
 **An option, not proposed:** D, offering the menu bar only to an
 application that asks for it, for one whose menu mostly repeats its page,
