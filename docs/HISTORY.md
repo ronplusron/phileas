@@ -25,6 +25,50 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: Positron's whole menu reviewed, and exclusion groups a run can let in
+
+Part B of the menu bar's proposal: Positron's exclusions had only ever met
+the 6 entries a Route without focus is offered. A probe listed all 226 with
+focus faked, 195 of them enabled, and 180 offered after the standard
+entries and the existing exclusions. Read entry by entry against new
+windows, developer tools, the network, and quitting and restarting.
+
+**Groups, asked for while choosing.** Offered three groups to exclude, the
+answer was a question: "We're using the adapter to permanently expel these.
+What if I want to run a few tests, say, with newwindows?" Of an engine
+change and an adapter-only one, the engine change was chosen.
+`exclusions.groups` in an adapter names each group with why it is left out;
+every group is excluded by default, `phileas run --allow <group>` lets one
+in for that run, traveling as `PHILEAS_ALLOW_EXCLUDED`, and a group the
+adapter does not declare is refused before anything launches. What an
+adapter excludes outside any group stays out whatever a run allows. Each
+Route's opening line records the groups let in, as it records the standard
+roles allowed back, since a group is an input to the draw; a rule and a
+stale entry name their group; the run's printout shows each group's state;
+and "Run it again" carries the flag.
+
+**Positron's groups, chosen from the three offered and a fourth for what
+was already there:** `new-windows`, seven menu entries that open a window a
+Route does not survey or close the only one, with File > New Window and the
+Profiles editor's "Open New Window with this Profile" button, which the
+5×500 Journey's Route 3 clicked twice two Hops before the page stopped
+answering, finding `a06c57c5`, folded in here rather than probed under
+load; `outside`, six entries reaching a page outside the application or the
+network, with Report Issue and View License; `command-palette`, Command
+Palette and Show All Commands, as RStudio's adapter excludes its own; and
+`native-dialog`, Clear Recently Opened. Quit stays out for good. Reviewed
+and left offered: Save As and Save Workspace As, which open the in-page
+dialog, and Full Screen and Zen Mode, which the engine keeps off the screen.
+
+**Measured on Positron afterwards,** with the same probe: 165 offered and
+30 excluded, every group entry matching an entry on screen; with `--allow
+new-windows`, 173 and 22, the group's eight back. Two new tests on `buggy`:
+a group excluded by default with its name in the rule and a stale entry,
+let in when asked, and a permanent exclusion staying out when its group is
+let in; and a group the adapter does not declare refused, with a Route's
+opening line recording the one let in. The command's and the reporter's
+tests each gained the flag. 372 tests in all.
+
 ## 2026-10-03: issue 88 is VS Code's
 
 The Profiles editor's MCP Servers row, opened to the side in a profile with

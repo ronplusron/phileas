@@ -67,6 +67,7 @@ test('the command reads its flags, a config, and what goes to Playwright', () =>
     passThrough: ['--grep', 'route 1$'],
   });
   expect(parse(['run', '--fix', 'quarto'])).toMatchObject({ settings: { PHILEAS_FIX: 'quarto' } });
+  expect(parse(['run', '--allow', 'new-windows'])).toMatchObject({ settings: { PHILEAS_ALLOW_EXCLUDED: 'new-windows' } });
 });
 
 test('the command refuses what it cannot read, by name', () => {
@@ -165,10 +166,13 @@ test('startJourney prints every setting, and marks each one set for this run', (
     'Window mode',
     'Hop delay',
     'Follow',
+    'Exclusion groups',
     'Staleness guard',
     'Survey only',
   ]);
   expect(line('Survey only')).toBe('Survey only: off');
+  // buggy declares no exclusion groups.
+  expect(line('Exclusion groups')).toBe('Exclusion groups: none declared');
   // buggy names its sources, so the guard is on.
   expect(line('Staleness guard')).toBe('Staleness guard: on');
 });

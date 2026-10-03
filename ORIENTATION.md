@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and seventy tests, after a
+through, and `npm test` runs three hundred and seventy-two tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -148,7 +148,8 @@ in when a control in plain view prints it too. One more holds the
 summary's Route alone to the lowest-numbered Route that did not pass. Two
 more came with each Fix step's line saying what the step was: an `act`
 step's target and value and a `code` step's source recorded, and the kind
-printed.
+printed. Two more came with exclusion groups: a group kept out unless a run
+lets it in, and a group the adapter does not declare refused.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -169,10 +170,11 @@ found in it. The adapter declares no checks of its own yet, and no Fix.
 `docs/HISTORY.md` has why it moved and how, and the adapter that was in
 `trial/editor/` from 2026-09-30 is in this repository's history.
 
-**What comes next was ordered on 2026-10-03:** the menu bar's three parts,
-and then the rest of replay from the journal. Its first two steps landed
-the same day: each Fix step's content on its journal line, and issue 88
-tried in VS Code. `docs/PLAN.md` has the order and why, under "Next".
+**What comes next was ordered on 2026-10-03:** the rest of the menu bar's
+three parts, and then the rest of replay from the journal. Its first three
+steps landed the same day: each Fix step's content on its journal line,
+issue 88 tried in VS Code, and Positron's whole menu reviewed against its
+exclusions, with exclusion groups a run can let back in. `docs/PLAN.md` has the order and why, under "Next".
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
@@ -374,7 +376,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and seventy tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and seventy-two tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
@@ -388,7 +390,8 @@ every setting in force, marking those set for this run.
 **The `phileas` command changes a Journey's settings for one run** without
 editing its file: `phileas run [config] --routes 3 --trip-length 50 --seed
 abc --show back --hop-delay-ms 300`, and `--route-deadline-ms` and
-`--journey-deadline-ms`. The config defaults to `phileas/`, the consumer
+`--journey-deadline-ms`. `--allow new-windows` lets one of the adapter's
+exclusion groups back in for the run, such as Positron's new windows. The config defaults to `phileas/`, the consumer
 layout's folder, and anything after `--` goes to Playwright. From this
 repository, `npm run journey -- --routes 1` passes flags through. A replay
 needs the seed, and enough of the rest to reach what it is retracing: the Route

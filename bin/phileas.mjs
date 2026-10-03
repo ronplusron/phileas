@@ -64,6 +64,7 @@ const FLAGS = /** @type {Record<string, string>} */ ({
   '--show': 'PHILEAS_SHOW',
   '--hop-delay-ms': 'PHILEAS_HOP_DELAY_MS',
   '--fix': 'PHILEAS_FIX',
+  '--allow': 'PHILEAS_ALLOW_EXCLUDED',
 });
 
 /** Flags that take no value, and the variable each sets to 1. */

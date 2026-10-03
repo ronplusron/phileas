@@ -165,7 +165,7 @@ test('the summary counts the Routes by outcome and Hops, prints the known findin
     },
     endErrors: [{ message: 'The home folder guard found a write' }],
     config: 'trial/positron/phileas',
-    env: { PHILEAS_SEED: '64156c12293c', PHILEAS_RUN: 'r1', PHILEAS_TRIP_LENGTH: '100', PHILEAS_FIX: 'none' },
+    env: { PHILEAS_SEED: '64156c12293c', PHILEAS_RUN: 'r1', PHILEAS_TRIP_LENGTH: '100', PHILEAS_FIX: 'none', PHILEAS_ALLOW_EXCLUDED: 'new-windows' },
     cwd: '/',
   });
   const text = lines.join('\n');
@@ -173,9 +173,9 @@ test('the summary counts the Routes by outcome and Hops, prints the known findin
   expect(text).toContain('Journals: j/seed/run');
   expect(text).toMatch(/UNFILED, seen 1 time\(s\): 643cb31a/);
   expect(text).toContain("The Journey's end failed:\n  The home folder guard found a write");
-  expect(text).toContain('Run it again: phileas run trial/positron/phileas --seed 64156c12293c --trip-length 100 --fix none');
+  expect(text).toContain('Run it again: phileas run trial/positron/phileas --seed 64156c12293c --trip-length 100 --fix none --allow new-windows');
   expect(text).toContain(
-    'Route 2 alone: phileas run trial/positron/phileas --seed 64156c12293c --routes 2 --trip-length 100 --fix none -- --grep "route 2$"'
+    'Route 2 alone: phileas run trial/positron/phileas --seed 64156c12293c --routes 2 --trip-length 100 --fix none --allow new-windows -- --grep "route 2$"'
   );
   // The summary is last: nothing of Playwright's own report follows it.
   expect(lines.at(-1)).toMatch(/^Route 2 alone: /);

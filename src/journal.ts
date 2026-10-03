@@ -400,6 +400,13 @@ export interface OpeningEntry {
    */
   readonly allowStandardMenuRoles?: readonly string[];
   /**
+   * The adapter's exclusion groups this run let back in, empty when it let in
+   * none, which is the default. Written for the reason the standard roles
+   * are: a group is an input to the draw. Absent where the adapter declares
+   * no groups, and in journals written before 2026-10-03.
+   */
+  readonly allowedExclusionGroups?: readonly string[];
+  /**
    * Which known findings the Route ran with: the file's version and how many
    * it held. Written because the file decides where a Route ends, though not
    * what it draws, and a replay under a newer file would otherwise look like a

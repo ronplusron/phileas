@@ -753,20 +753,16 @@ hidden.
   Tools, View > Editor Layout > Move Editor into New Window, Help > Show
   Release Notes, Help > Positron Documentation, File > Save As... and Save
   Workspace As..., none of which Positron's exclusions had seen, since none
-  is among the 6.
+  is among the 6. Positron's exclusions were reviewed against its whole
+  menu on 2026-10-03, part B of the proposal, and `HISTORY.md` has it;
+  RStudio's and Bobolink Editor's are still to be measured, as the order
+  below says.
 
 **Proposed, the parts agreed to be recorded:**
 
 - **A. The engine claims focus for each Route's window,** in every window
-  mode, so the menu is the same on every launch. It lands only with B and
+  mode, so the menu is the same on every launch. It lands only after B and
   C, since alone it makes the other two problems every Route's.
-- **B. Positron's full menu is reviewed against its exclusions** first, from
-  one listing of every entry: new windows, developer tools, the network,
-  quitting and restarting. Among the new windows is Open New Window with
-  this Profile, which the 5×500 Journey's Route 3 clicked twice, two Hops
-  before the page stopped answering, finding `a06c57c5`. Folding that hang
-  into this review was chosen on 2026-10-03 over probing it with a second
-  Positron running.
 - **C. The menu is drawn as a person opens it:** a top menu first, then an
   entry within it, a level at a time, so each top menu has an equal chance
   and a fourth-level entry is rare. A chooser behind the choosing seam, and
@@ -778,7 +774,9 @@ C are the engine's, so they apply to every application; B is Positron's
 adapter alone. So before A lands, RStudio's and Bobolink Editor's menus are
 measured for whether focus widens them too, and their exclusions reviewed if
 it does, which came with the order chosen. `PLAN.md` has where these sit
-among the rest, under "Next".
+among the rest, under "Next". B, Positron's full menu reviewed against its
+exclusions, landed the same day, with exclusion groups a run can let back
+in; `HISTORY.md` has both.
 
 **An option, not proposed:** D, offering the menu bar only to an
 application that asks for it, for one whose menu mostly repeats its page,

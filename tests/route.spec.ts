@@ -3,8 +3,10 @@ import path from 'node:path';
 import { expect, type ElectronApplication, type Page } from '@playwright/test';
 import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
+  allowedGroupsFromEnvironment,
   createExclusionTally,
   createTest,
+  ALLOW_EXCLUDED_VARIABLE,
   deriveRouteStreams,
   neverMatched,
   readJournal,
@@ -177,6 +179,73 @@ test('a menu path excludes an entry the application wrote itself', async ({ page
   expect(found.candidates.map((c) => c.name)).not.toContain('Show Summary');
   expect(found.excluded.map((entry) => entry.rule)).toContain('menuPaths: View > Show Summary');
   expect(neverMatched(tally)).toEqual([]);
+});
+
+test("an exclusion group keeps its entries out unless a run lets it in, and names itself in the rule", async ({
+  page,
+  app,
+}) => {
+  const exclusions: AppUnderTest['exclusions'] = {
+    // Inventory is also excluded for good, so letting its group in leaves it out.
+    names: ['Inventory'],
+    groups: {
+      views: { why: 'for the test', names: ['Inventory'], menuPaths: [['View', 'Show Summary']] },
+      gone: { why: 'for the test', names: ['A control that no longer exists'] },
+    },
+  };
+
+  // No group let in, which is the default.
+  const shut = createExclusionTally(exclusions, []);
+  const closed = await survey({ page, app, exclusions, hopIndex: 0, tally: shut });
+  expect(closed.candidates.map((c) => c.name)).not.toContain('Show Summary');
+  expect(closed.excluded.map((entry) => entry.rule)).toEqual(
+    expect.arrayContaining(['names: Inventory', 'menuPaths in views: View > Show Summary'])
+  );
+  // A stale entry in a group says which group, so the reader knows where to look.
+  expect(neverMatched(shut)).toEqual(['names in gone: A control that no longer exists']);
+
+  // Views let in: its menu path is offered again, and Inventory stays out.
+  const open = createExclusionTally(exclusions, ['views']);
+  const opened = await survey({ page, app, exclusions, hopIndex: 0, tally: open });
+  expect(opened.candidates.map((c) => c.name)).toContain('Show Summary');
+  expect(opened.excluded.map((entry) => entry.rule)).toContain('names: Inventory');
+  expect(opened.excluded.map((entry) => entry.rule)).not.toContain('menuPaths in views: View > Show Summary');
+});
+
+test('a run lets in only exclusion groups the adapter declares, and its journal says which', async ({
+  page,
+  app,
+}) => {
+  const exclusions: AppUnderTest['exclusions'] = {
+    groups: { views: { why: 'for the test', menuPaths: [['View', 'Show Summary']] } },
+  };
+  const previous = process.env[ALLOW_EXCLUDED_VARIABLE];
+  try {
+    process.env[ALLOW_EXCLUDED_VARIABLE] = 'views, vews';
+    expect(() => allowedGroupsFromEnvironment(exclusions)).toThrow(
+      /names "vews", which the adapter does not declare as an exclusion group\. It declares: views\./
+    );
+
+    process.env[ALLOW_EXCLUDED_VARIABLE] = 'views';
+    expect(allowedGroupsFromEnvironment(exclusions)).toEqual(['views']);
+    const root = scratch();
+    await runRoute({
+      page,
+      app,
+      cfg: { ...buggy, exclusions: { ...buggy.exclusions, ...exclusions } },
+      streams: deriveRouteStreams('exclusion-groups', 1),
+      journeySeed: 'exclusion-groups',
+      routeNumber: 1,
+      tripLength: 1,
+      journalsRoot: root,
+    });
+    const run = inRun(root);
+    const [file] = fs.readdirSync(run);
+    expect(readJournal(path.join(run, file ?? ''))[0]).toMatchObject({ kind: 'route', allowedExclusionGroups: ['views'] });
+  } finally {
+    if (previous === undefined) delete process.env[ALLOW_EXCLUDED_VARIABLE];
+    else process.env[ALLOW_EXCLUDED_VARIABLE] = previous;
+  }
 });
 
 test('survey offers nothing that is hidden', async ({ page, app }) => {

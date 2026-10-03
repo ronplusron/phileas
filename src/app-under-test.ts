@@ -124,6 +124,33 @@ export interface Exclusions {
    * only one of them should be excluded.
    */
   namesCoverMenuEntries?: boolean;
+
+  /**
+   * Exclusions a run can let back in, each group named, such as
+   * `{ 'new-windows': { why: 'a Route surveys one window', menuPaths: [['File',
+   * 'New Window']] } }`.
+   *
+   * Excluded by default, like `names` and `menuPaths`. `phileas run --allow
+   * new-windows`, which travels as `PHILEAS_ALLOW_EXCLUDED`, lets a group back
+   * in for that run, and a name the adapter does not declare is refused.
+   * Asked for on 2026-10-03, when Positron's whole menu was reviewed, in the
+   * words "What if I want to run a few tests, say, with newwindows?" An entry
+   * in `names` or `menuPaths` stays out whatever a run allows, so what must
+   * never be reached, such as Quit, stays apart from what a run usually
+   * leaves out.
+   *
+   * Like every exclusion, a group is an input to the seeded draw, so the
+   * groups a run let in are written on each Route's opening journal line.
+   */
+  groups?: Readonly<Record<string, ExclusionGroup>>;
+}
+
+/** One named group of exclusions a run can let back in. See `Exclusions.groups`. */
+export interface ExclusionGroup {
+  /** Why the group is left out by default, which a run letting it in sets aside. */
+  why: string;
+  names?: string[];
+  menuPaths?: string[][];
 }
 
 /**

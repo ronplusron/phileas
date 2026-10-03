@@ -23,6 +23,7 @@ import type { StepSpan } from './timeline.js';
 import {
   answered,
   ApplicationStoppedAnswering,
+  allowedGroupsFromEnvironment,
   createExclusionTally,
   neverMatched,
   survey,
@@ -683,11 +684,13 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   }
   const shares = sharesFor(cfg);
   const chooser = options.chooser ?? createSeededChooser(shares);
+  // Read once, so the survey, the Fix and the opening line all use the same.
+  const allowedGroups = allowedGroupsFromEnvironment(cfg.exclusions);
 
   // Before the journal opens, so that a survey leaves no record behind that
   // could be mistaken for a Route that traveled nowhere.
   if (surveyOnly) {
-    const tally = createExclusionTally(cfg.exclusions);
+    const tally = createExclusionTally(cfg.exclusions, allowedGroups);
     const print = async (heading: string) => {
       const found = await survey({
         page,
@@ -753,6 +756,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     responsiveTimeoutMs: responsiveMs,
     ...shares,
     allowStandardMenuRoles: (cfg.exclusions.allowStandardMenuRoles ?? []).map((role) => role.toLowerCase()),
+    ...(cfg.exclusions.groups ? { allowedExclusionGroups: allowedGroups } : {}),
     ...(known ? { knownFindings: { version: known.version, entries: known.entries.length } } : {}),
     ...(cfg.varyingInSignatures?.length
       ? { varyingInSignatures: cfg.varyingInSignatures.map(([pattern, replacement]) => [String(pattern), replacement] as const) }
@@ -761,7 +765,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   }, { follow });
   noteJournal(journal.file);
 
-  const tally = createExclusionTally(cfg.exclusions);
+  const tally = createExclusionTally(cfg.exclusions, allowedGroups);
   let hops = 0;
   let menuVerdictNoted = false;
 

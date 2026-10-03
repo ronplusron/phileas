@@ -10,6 +10,7 @@ import type { AppUnderTest } from './app-under-test.js';
 import { fixFor, type Fixes } from './fixes.js';
 import { allowStaleFromEnvironment } from './bundle.js';
 import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route.js';
+import { allowedGroupsFromEnvironment } from './survey.js';
 
 /**
  * Settle the seed, name the run, check the run's settings and print them. The
@@ -55,6 +56,10 @@ export function startJourney(
   const follow = followFromEnvironment();
   const surveyOnly = surveyFromEnvironment();
   const allowStale = allowStaleFromEnvironment();
+  // Here too, so a group the adapter does not declare is refused before
+  // anything launches, not once per Route.
+  const allowedGroups = allowedGroupsFromEnvironment(application.exclusions);
+  const groups = Object.keys(application.exclusions.groups ?? {});
   // Looked up here as well as by each Route, so a Fix name that is not one of
   // the consumer's is refused before anything launches, not once per Route.
   fixFor(journey, fixes);
@@ -78,6 +83,13 @@ export function startJourney(
     ['Window mode', mode, ''],
     ['Hop delay', hopDelayMs ? `${hopDelayMs} ms` : 'none', ''],
     ['Follow', follow ? 'on' : 'off', ''],
+    [
+      'Exclusion groups',
+      !groups.length
+        ? 'none declared'
+        : groups.map((group) => `${group} ${allowedGroups.includes(group) ? 'let in' : 'excluded'}`).join(', '),
+      allowedGroups.length ? 'set for this run' : '',
+    ],
     // Printed, so a PHILEAS_SURVEY left set in the shell is seen at the top of
     // a run that would otherwise travel nowhere.
     // Printed, so a run against a stale build says so where it is read, not

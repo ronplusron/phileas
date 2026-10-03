@@ -156,21 +156,60 @@ export const positron: AppUnderTest = {
     // A link to the VS Code documentation on the Welcome view, which opens a
     // page outside the application; a Route clicked it on 2026-09-27.
     names: ['read the VS Code docs'],
-    // Ways out of the application, and into what a Route cannot follow.
-    menuPaths: [
-      // Positron wrote its own Quit, with no Electron role, so the engine's
-      // skip of standard entries does not reach it.
-      ['Positron', 'Quit Positron'],
-      // Both open a page outside the application.
-      ['Help', 'Report Issue'],
-      ['Help', 'View License'],
-      // A second window, which a Route does not survey.
-      ['File', 'New Window'],
-      // Raises a confirmation from the main process with showMessageBox, a
-      // native dialog that window.dialogStyle does not reach. It blocked both
-      // processes on two Routes out of two on 2026-09-26.
-      ['File', 'Open Recent', 'Clear Recently Opened...'],
-    ],
+    // Positron wrote its own Quit, with no Electron role, so the engine's skip
+    // of standard entries does not reach it. Out for good: no run lets it in.
+    menuPaths: [['Positron', 'Quit Positron']],
+    // Left out unless a run lets a group in with `phileas run --allow`. The
+    // whole menu was listed on 2026-10-03, with focus faked so all of it was
+    // enabled, and reviewed against these; the groups were chosen the same day.
+    groups: {
+      'new-windows': {
+        why: 'Each opens a window a Route does not survey, or closes the only one it does.',
+        menuPaths: [
+          ['File', 'New Window'],
+          ['File', 'Duplicate Workspace'],
+          // The only window: a Route would read as the application stopping.
+          ['File', 'Close Window'],
+          ['View', 'Editor Layout', 'Move Editor into New Window'],
+          // Positron writes a two-part shortcut into the label itself.
+          ['View', 'Editor Layout', 'Copy Editor into New Window [⌘K O]'],
+          ['Terminal', 'New Terminal Window'],
+          ['Help', 'Open Process Explorer'],
+          ['Help', 'Toggle Developer Tools'],
+        ],
+        // In the Profiles editor. A Route of the 5x500 Journey clicked it twice,
+        // two Hops before the page stopped answering, finding a06c57c5.
+        names: ['Open New Window with this Profile'],
+      },
+      outside: {
+        why: 'Each opens a page outside the application, or reaches the network.',
+        menuPaths: [
+          ['Help', 'Report Issue'],
+          ['Help', 'View License'],
+          ['Help', 'Show Release Notes'],
+          ['Help', 'Positron Documentation'],
+          ['Help', 'Sign Up for Positron Updates'],
+          ['Run', 'Install Additional Debuggers...'],
+          ['File', 'New Folder from Git...'],
+          ['File', 'Share', 'Export Profile (Default)...'],
+        ],
+      },
+      'command-palette': {
+        why:
+          'The palette offers nearly every command again, and menu exclusions do not reach it, ' +
+          "as RStudio's adapter found of its own.",
+        menuPaths: [
+          ['View', 'Command Palette...'],
+          ['Help', 'Show All Commands'],
+        ],
+      },
+      'native-dialog': {
+        why:
+          'Raises a confirmation from the main process with showMessageBox, a native dialog ' +
+          'window.dialogStyle does not reach. It blocked both processes on two Routes of two on 2026-09-26.',
+        menuPaths: [['File', 'Open Recent', 'Clear Recently Opened...']],
+      },
+    },
     // Sign-in. A predicate rather than a name, because the name changes while
     // a Route runs: "Accounts" became "Accounts - Sign in requested" on
     // 2026-09-26 and a name missed it. Decided by the name alone, so it answers

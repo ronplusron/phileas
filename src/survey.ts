@@ -392,25 +392,95 @@ export interface ExclusionTally {
    * matches, and is most likely misspelled.
    */
   readonly allowedStandardRoles: Map<string, number>;
+  /**
+   * The group each name or menu path came from, where it came from one, so a
+   * rule and a stale entry both say which group to let in. See
+   * `Exclusions.groups`.
+   */
+  readonly nameGroups: Map<string, string>;
+  readonly menuPathGroups: Map<string, string>;
   predicate: number;
 }
 
-export function createExclusionTally(exclusions: Exclusions): ExclusionTally {
+/** The variable `phileas run --allow` travels in: the exclusion groups let back in for a run. */
+export const ALLOW_EXCLUDED_VARIABLE = 'PHILEAS_ALLOW_EXCLUDED';
+
+/**
+ * The exclusion groups this run lets back in, from `PHILEAS_ALLOW_EXCLUDED`,
+ * a comma-separated list of group names, sorted.
+ *
+ * A name the adapter does not declare is refused, naming those it does: a
+ * mistyped group would otherwise be let in by nobody and the run would read
+ * as having allowed it.
+ */
+export function allowedGroupsFromEnvironment(exclusions: Exclusions): string[] {
+  const raw = (process.env[ALLOW_EXCLUDED_VARIABLE] ?? '').trim();
+  if (!raw) return [];
+  const declared = Object.keys(exclusions.groups ?? {});
+  const asked = [...new Set(raw.split(',').map((name) => name.trim()).filter(Boolean))].sort();
+  const unknown = asked.filter((name) => !declared.includes(name));
+  if (unknown.length) {
+    throw new Error(
+      `${ALLOW_EXCLUDED_VARIABLE}=${JSON.stringify(raw)} names ${unknown.map((name) => JSON.stringify(name)).join(', ')}, ` +
+        `which the adapter does not declare as an exclusion group. ` +
+        (declared.length ? `It declares: ${declared.join(', ')}.` : 'It declares none.')
+    );
+  }
+  return asked;
+}
+
+/**
+ * A fresh tally for one Route: the adapter's names and menu paths, and those
+ * of every group the run does not let back in, which by default is every
+ * group. An entry in `names` or `menuPaths` itself is counted there whatever
+ * a group also says.
+ */
+export function createExclusionTally(
+  exclusions: Exclusions,
+  allowedGroups: readonly string[] = allowedGroupsFromEnvironment(exclusions)
+): ExclusionTally {
+  const names = new Map((exclusions.names ?? []).map((name) => [name, 0]));
+  const menuPaths = new Map((exclusions.menuPaths ?? []).map((path) => [path.join(' > '), 0]));
+  const nameGroups = new Map<string, string>();
+  const menuPathGroups = new Map<string, string>();
+  for (const [group, entries] of Object.entries(exclusions.groups ?? {})) {
+    if (allowedGroups.includes(group)) continue;
+    for (const name of entries.names ?? []) {
+      if (names.has(name)) continue;
+      names.set(name, 0);
+      nameGroups.set(name, group);
+    }
+    for (const path of entries.menuPaths ?? []) {
+      const key = path.join(' > ');
+      if (menuPaths.has(key)) continue;
+      menuPaths.set(key, 0);
+      menuPathGroups.set(key, group);
+    }
+  }
   return {
-    names: new Map((exclusions.names ?? []).map((name) => [name, 0])),
-    menuPaths: new Map((exclusions.menuPaths ?? []).map((path) => [path.join(' > '), 0])),
+    names,
+    menuPaths,
     allowedStandardRoles: new Map(
       (exclusions.allowStandardMenuRoles ?? []).map((role) => [role.toLowerCase(), 0])
     ),
+    nameGroups,
+    menuPathGroups,
     predicate: 0,
   };
+}
+
+/** How a rule names a name or menu path, with the group it came from where it came from one. */
+function ruleText(kind: 'names' | 'menuPaths', entry: string, group: string | undefined): string {
+  return group === undefined ? `${kind}: ${entry}` : `${kind} in ${group}: ${entry}`;
 }
 
 /** The exclusion entries that matched nothing, named as the list wrote them. */
 export function neverMatched(tally: ExclusionTally): string[] {
   const stale: string[] = [];
-  for (const [name, count] of tally.names) if (count === 0) stale.push(`names: ${name}`);
-  for (const [path, count] of tally.menuPaths) if (count === 0) stale.push(`menuPaths: ${path}`);
+  for (const [name, count] of tally.names) if (count === 0) stale.push(ruleText('names', name, tally.nameGroups.get(name)));
+  for (const [path, count] of tally.menuPaths) {
+    if (count === 0) stale.push(ruleText('menuPaths', path, tally.menuPathGroups.get(path)));
+  }
   for (const [role, count] of tally.allowedStandardRoles) {
     if (count === 0) stale.push(`allowStandardMenuRoles: ${role}`);
   }
@@ -1035,14 +1105,14 @@ async function excludedBy(
 
   if (nameApplies && tally.names.has(candidate.name)) {
     tally.names.set(candidate.name, (tally.names.get(candidate.name) ?? 0) + 1);
-    return `names: ${candidate.name}`;
+    return ruleText('names', candidate.name, tally.nameGroups.get(candidate.name));
   }
 
   if (candidate.source === 'menu') {
     const key = candidate.menuPath.join(' > ');
     if (tally.menuPaths.has(key)) {
       tally.menuPaths.set(key, (tally.menuPaths.get(key) ?? 0) + 1);
-      return `menuPaths: ${key}`;
+      return ruleText('menuPaths', key, tally.menuPathGroups.get(key));
     }
 
     // After the adapter's own rules, so that an entry it names is counted
