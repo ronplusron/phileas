@@ -98,6 +98,13 @@ export interface PageCandidate {
    */
   readonly within?: PageCandidate;
   readonly locator: Locator;
+  /**
+   * Where a click on it lands instead of on the control itself: its label,
+   * for a control with no area of its own whose label shows. See
+   * `LabeledCandidate`. The control is still what the draw, the journal and
+   * a Fix name; only the click goes here.
+   */
+  readonly via?: Locator;
 }
 
 /** A menu entry, reached by walking the menu by label. */
@@ -297,6 +304,25 @@ export interface LayeredCandidate {
 }
 
 /**
+ * A control kept in the draw although it has no area of its own, because a
+ * label for it shows and a click lands there, and what that label is.
+ *
+ * Measured on Positron on 2026-10-02: New Folder from Template offers four
+ * templates as radio buttons, each a native input 0 by 0 pixels inside a
+ * label drawn as a card. The input cannot be clicked, so three Hops drawn
+ * to one were abandoned after Playwright's timeout; a person clicks the
+ * card. So a click goes to the label, which chooses the radio as a person's
+ * would. Decided the same day, over leaving such controls out as hidden,
+ * which would have left the templates unreachable. Recorded, as a layered
+ * text box is, since keeping it rests on how the page is built.
+ */
+export interface LabeledCandidate {
+  readonly candidate: PageCandidate;
+  /** The label a click lands on, described as a covering element is. */
+  readonly by: string;
+}
+
+/**
  * Whether menu entries were offered, and why not when they were not.
  *
  * A verdict rather than an absence, in the shape UNAVAILABLE_UNDER already uses
@@ -322,6 +348,8 @@ export interface SurveyResult {
   readonly hidden: readonly HiddenCandidate[];
   /** Text boxes kept under a layer of their own widget; see `outOfReachAmong`. They are among `candidates`. */
   readonly layered: readonly LayeredCandidate[];
+  /** Controls with no area reached through their label; see `outOfReachAmong`. They are among `candidates`, with `via` set. */
+  readonly labeled: readonly LabeledCandidate[];
   readonly unnamed: readonly UnnamedElement[];
   readonly menuSource: MenuSourceVerdict;
   /**
@@ -528,7 +556,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   // tested. Before the draw, for the reason this function's comment gives.
   // Shortcuts were built from every control, covered or not: a key press
   // needs no clear spot to land on.
-  const { covered, hidden, layered } = await outOfReachAmong(
+  const { covered, hidden, layered, labeled: reached } = await outOfReachAmong(
     page,
     candidates.filter((c): c is PageCandidate => c.source === 'page'),
     timeoutMs
@@ -537,6 +565,14 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
     const out = new Set<SurveyedCandidate>([...covered, ...hidden].map((entry) => entry.candidate));
     candidates.splice(0, candidates.length, ...candidates.filter((c) => !out.has(c)));
   }
+  // A control reached through its label keeps its place in the draw, with
+  // its click sent to the label.
+  const labeled: LabeledCandidate[] = [];
+  for (const { candidate, by, via } of reached) {
+    const withVia: PageCandidate = { ...candidate, via };
+    candidates[candidates.indexOf(candidate)] = withVia;
+    labeled.push({ candidate: withVia, by });
+  }
 
   return {
     candidates,
@@ -544,6 +580,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
     covered,
     hidden,
     layered,
+    labeled,
     unnamed,
     // Counted after exclusions rather than before, because the number that
     // matters is how many menu entries the draw could actually reach. Reporting
@@ -589,6 +626,18 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
  * placed outside such a container by `position: fixed`, which escapes the
  * clip; unmeasured on any application, and it errs toward hiding.
  *
+ * **A control with no area of its own** is reached through its label, the
+ * way a person reaches it: where a label for it shows and nothing covers the
+ * label, the control stays in the draw and a click lands on the label, and
+ * it is recorded as labeled; where the label is covered, the control is
+ * covered; and where no label shows, it is hidden, since nothing a person
+ * can see stands for it. Measured on Positron on 2026-10-02, whose New
+ * Folder from Template radios are 0 by 0 inside labels drawn as cards. Not
+ * counted: an option, which is chosen inside its dropdown and needs no
+ * click; a text box, which a person reaches some other way if at all and is
+ * unmeasured; and a control with something inside it that has area, as an
+ * element laid out with `display: contents` has, which Playwright clicks.
+ *
  * **What is kept untested:** a control with no box, unless it sits inside a
  * covered or hidden one, one wholly out of view or out of sight inside a
  * container that scrolls, since the click scrolls it in first, and one the
@@ -607,9 +656,15 @@ async function outOfReachAmong(
   page: Page,
   controls: readonly PageCandidate[],
   timeoutMs: number | undefined
-): Promise<{ covered: CoveredCandidate[]; hidden: HiddenCandidate[]; layered: LayeredCandidate[] }> {
-  const tested = controls.filter((control) => control.box !== undefined);
-  if (!tested.length) return { covered: [], hidden: [], layered: [] };
+): Promise<{
+  covered: CoveredCandidate[];
+  hidden: HiddenCandidate[];
+  layered: LayeredCandidate[];
+  labeled: (LabeledCandidate & { via: Locator })[];
+}> {
+  const labeled = await throughLabels(page, controls, timeoutMs);
+  const tested = controls.filter((control) => control.box !== undefined && !labeled.decided.has(control));
+  if (!tested.length && !labeled.decided.size) return { covered: [], hidden: [], layered: [], labeled: [] };
 
   const suspects = await answered(
     'the page, asked what is on top of each control,',
@@ -667,8 +722,8 @@ async function outOfReachAmong(
     timeoutMs
   );
 
-  const covered: CoveredCandidate[] = [];
-  const hidden: HiddenCandidate[] = [];
+  const covered: CoveredCandidate[] = [...labeled.covered];
+  const hidden: HiddenCandidate[] = [...labeled.hidden];
   const layered: LayeredCandidate[] = [];
   for (const [index, suspect] of suspects.entries()) {
     const control = tested[index];
@@ -761,7 +816,7 @@ async function outOfReachAmong(
   const coveredBy = new Map<PageCandidate, string>(covered.map((entry) => [entry.candidate, entry.by]));
   const hiddenBy = new Map<PageCandidate, string>(hidden.map((entry) => [entry.candidate, entry.by]));
   for (const control of controls) {
-    if (control.box !== undefined && hasArea(control.box)) continue;
+    if ((control.box !== undefined && hasArea(control.box)) || labeled.decided.has(control)) continue;
     for (let outer = control.within; outer; outer = outer.within) {
       const under = coveredBy.get(outer);
       if (under !== undefined) {
@@ -775,7 +830,95 @@ async function outOfReachAmong(
       }
     }
   }
-  return { covered, hidden, layered };
+  return { covered, hidden, layered, labeled: labeled.reached };
+}
+
+/** Roles a Hop clicks, which a control with no area of its own cannot take. */
+const CLICKED_ROLES = new Set(['button', 'checkbox', 'link', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'radio', 'switch', 'tab', 'treeitem']);
+
+/**
+ * The controls with no area of their own, decided by their labels: those
+ * reached through a label that shows, those whose label is covered, and
+ * those with no label that shows, which are hidden. See `outOfReachAmong`.
+ * One call per such control; a page with none costs nothing.
+ */
+async function throughLabels(
+  page: Page,
+  controls: readonly PageCandidate[],
+  timeoutMs: number | undefined
+): Promise<{
+  reached: (LabeledCandidate & { via: Locator })[];
+  covered: CoveredCandidate[];
+  hidden: HiddenCandidate[];
+  decided: Set<PageCandidate>;
+}> {
+  const reached: (LabeledCandidate & { via: Locator })[] = [];
+  const covered: CoveredCandidate[] = [];
+  const hidden: HiddenCandidate[] = [];
+  const decided = new Set<PageCandidate>();
+  const flat = controls.filter(
+    (control) => control.box !== undefined && !hasArea(control.box) && CLICKED_ROLES.has(control.role)
+  );
+  for (const control of flat) {
+    const verdict = await control.locator
+      .evaluate(
+        (element):
+          | { labeled: string; inside: boolean; id: string }
+          | { covered: string }
+          | { hidden: string }
+          | null => {
+          const describe = (node: Element): string => {
+            const attributes = ['role', 'aria-label', 'id', 'class']
+              .map((name) => [name, node.getAttribute(name)] as const)
+              .filter(([, value]) => value)
+              .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
+              .join('');
+            const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+            return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
+          };
+          const area = (node: Element) => {
+            const rect = node.getBoundingClientRect();
+            return rect.width >= 1 && rect.height >= 1;
+          };
+          // Something inside it with area, as `display: contents` lays out:
+          // Playwright clicks that, so it is no case for a label.
+          if ([...element.querySelectorAll('*')].some(area)) return null;
+          const labels = [...((element as HTMLInputElement).labels ?? [])].filter(area);
+          if (!labels.length) return { hidden: `${describe(element)}, with no label that shows,` };
+          let cover: Element | null = null;
+          for (const label of labels) {
+            const rect = label.getBoundingClientRect();
+            const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
+            const y = Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1);
+            let top = document.elementFromPoint(x, y);
+            while (top?.shadowRoot) {
+              const inner = top.shadowRoot.elementFromPoint(x, y);
+              if (!inner || inner === top) break;
+              top = inner;
+            }
+            if (top && (label.contains(top) || top === element)) {
+              return { labeled: describe(label), inside: label.contains(element), id: element.id };
+            }
+            cover ??= top;
+          }
+          return cover ? { covered: describe(cover) } : null;
+        },
+        undefined,
+        timeoutMs === undefined ? {} : { timeout: timeoutMs }
+      )
+      .catch(() => null);
+    if (!verdict) continue;
+    decided.add(control);
+    if ('labeled' in verdict) {
+      // The label around it, or the one naming it by id.
+      const via = verdict.inside
+        ? control.locator.locator('xpath=ancestor::label[1]')
+        : page.locator(`label[for="${verdict.id.replace(/["\\]/g, '\\$&')}"]`).first();
+      reached.push({ candidate: control, by: verdict.labeled, via });
+    } else if ('covered' in verdict) covered.push({ candidate: control, by: verdict.covered });
+    else hidden.push({ candidate: control, by: verdict.hidden });
+  }
+  return { reached, covered, hidden, decided };
 }
 
 /** Whether a box has any area at all, before it is placed against the viewport. */

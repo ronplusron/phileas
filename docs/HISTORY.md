@@ -25,6 +25,43 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: a control with no area of its own is clicked through its label
+
+**Found by a Journey.** One Positron Route of 100 Hops, seed
+`4ecb1f2e6772`, no Fix, opened New Folder from Template at hop 83, and its
+three Hops drawn to the template radio buttons, R Project twice and Empty
+Project once, were each abandoned on Playwright's timeout, with nothing
+named as taking the click. A probe on a fresh launch, with nothing else
+open, found why: each radio is a native input 0 by 0 pixels inside a label
+drawn as a card, and Playwright refuses to click an element with no area,
+"element is not visible". A person clicks the card. The survey had offered
+them because a control with no area skipped the covered and hidden tests
+altogether, kept untested.
+
+**What landed, decided on 2026-10-02 over leaving such controls out as
+hidden,** which would have left the templates unreachable: a control a Hop
+clicks, with no area of its own and nothing inside it with area, is tested
+through its labels. Where one shows and nothing covers it, the control stays
+in the draw, a click lands on the label, which chooses it as a person's
+would, and it is recorded on the pool as labeled. Where the label is
+covered, it is covered; where none shows, it is hidden. Options in a native
+dropdown and text boxes are left as they were. Measured on Positron with a
+Fix whose `act` step named `radio "R Project"`: the click landed on the
+card and R Project was the one radio checked.
+
+**Seen in the same Route, and not a fault:** at hop 84 it opened a context
+menu, which stayed open to the end, since no Hop drew Escape or one of the
+menu's three entries; the pool recorded 41 controls covered by Positron's
+`context-view-block` throughout.
+
+**And a fault in the reporter, found by the probe:** a test that passed
+with no journal, as a probe run through a Journey's config does, was
+printed as "route ?  failed before its journal was opened" and counted as
+not finished. It is now said to have passed, named by its title.
+
+**Tested.** Three new tests, 366 in all. The two on controls with no area
+fail with the label pass switched off.
+
 ## 2026-10-02: a run ends on a summary, not on Playwright's report of an error
 
 **What raised it.** One Positron Route of 100 Hops, seed `64156c12293c`,

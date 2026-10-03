@@ -131,7 +131,9 @@ export function routeLines(result, { follow, cwd }) {
   const journal = result.annotations.find((note) => note.type === JOURNAL_ANNOTATION)?.description;
   const ending = journal ? readEnding(journal) : { hops: 0 };
   const routeNumber = ending.opening?.routeNumber ?? Number(/route (\d+)/.exec(result.title)?.[1] ?? 0);
-  const route = routeLabel(routeNumber);
+  // A test that is not a Route, such as a probe a person runs through the
+  // same config, has no number, and is named by its title.
+  const route = routeNumber >= 1 ? routeLabel(routeNumber) : `"${result.title}"`;
   const tripLength = ending.opening?.tripLength;
   /** @type {string[]} */
   const lines = [];
@@ -143,6 +145,12 @@ export function routeLines(result, { follow, cwd }) {
   }
 
   const outcome = ending.outcome;
+  if (!outcome && result.status === 'passed') {
+    // Passed with no outcome line: a test that wrote no journal, since a Route
+    // that passes always closes one. Said as passed, never as failed, which
+    // is what this said before 2026-10-02 of a probe that passed.
+    return { lines: [`${route}  passed${journal ? '' : ', with no journal'}`], outcome: 'passed', routeNumber, hops: ending.hops, tripLength, journal };
+  }
   if (!outcome) {
     // No outcome line: cut off by its deadline, stopped, or failed before its
     // journal opened. Playwright's error says which, and it is printed whole.

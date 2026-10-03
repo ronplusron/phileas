@@ -165,6 +165,20 @@ export interface PoolEntry {
    * its id where present, so a wrong reading of a page shows in the journal.
    */
   readonly layered?: readonly JournaledLayered[];
+  /**
+   * Controls with no area of their own kept in the pool because a label for
+   * each shows, where a click on it lands, with what that label is. Absent
+   * where none were, and before 2026-10-02. On the pool and part of its id
+   * where present, as layered text boxes are.
+   */
+  readonly labeled?: readonly JournaledLabeled[];
+}
+
+/** A control reached through its label, as the journal records it. */
+export interface JournaledLabeled {
+  readonly candidate: JournaledCandidate;
+  /** The label a click lands on, described as a covering element is. */
+  readonly by: string;
 }
 
 /** A covered control, as the journal records it. */
@@ -563,7 +577,8 @@ export class Journal {
     candidates: readonly JournaledCandidate[],
     covered: readonly JournaledCovered[] = [],
     hidden: readonly JournaledHidden[] = [],
-    layered: readonly JournaledLayered[] = []
+    layered: readonly JournaledLayered[] = [],
+    labeled: readonly JournaledLabeled[] = []
   ): string {
     // A screen with none of these hashes as it did before any was recorded,
     // and one with only the older kinds as it did before the newer ones
@@ -572,6 +587,7 @@ export class Journal {
       ...(covered.length ? { covered } : {}),
       ...(hidden.length ? { hidden } : {}),
       ...(layered.length ? { layered } : {}),
+      ...(labeled.length ? { labeled } : {}),
     };
     const hashed = Object.keys(outOfReach).length ? { candidates, ...outOfReach } : candidates;
     const id = createHash('sha256').update(JSON.stringify(hashed)).digest('hex').slice(0, 12);

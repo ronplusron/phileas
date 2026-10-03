@@ -573,7 +573,7 @@ export function surveyLines(found: SurveyResult): string[] {
     ...found.candidates.filter((c) => !isCommonKey(c)).map((c) => targetText(journaled(c))),
     ...found.excluded.map((entry) => `${targetText(entry.candidate)}   (excluded: ${entry.rule})`),
     ...found.covered.map((entry) => `${targetText(journaled(entry.candidate))}   (covered by ${entry.by})`),
-    ...found.hidden.map((entry) => `${targetText(journaled(entry.candidate))}   (hidden inside ${entry.by})`),
+    ...found.hidden.map((entry) => `${targetText(journaled(entry.candidate))}   (hidden: ${entry.by} has no area)`),
     ...(keys.length ? [`and the common keys: ${keys.join(', ')}`] : []),
   ];
 }
@@ -922,7 +922,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         found.candidates.map(journaled),
         found.covered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
         found.hidden.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
-        found.layered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by }))
+        found.layered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
+        found.labeled.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by }))
       );
 
       span.endedAt = Date.now();
@@ -1252,7 +1253,7 @@ async function runFix(
           : under
           ? `${target} is on screen but covered by ${under.by} after ${hopTimeoutMs} ms, so a click cannot reach it.`
           : inside
-          ? `${target} is in the page but hidden inside ${inside.by}, which has no area, after ${hopTimeoutMs} ms, so no person could see it.`
+          ? `${target} is in the page but hidden: ${inside.by} has no area, after ${hopTimeoutMs} ms, so no person could see it.`
           : `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${found.candidates
               .filter((candidate) => !isCommonKey(candidate))
               .map((candidate) => targetText(journaled(candidate)))
@@ -1445,7 +1446,9 @@ async function act(
     return;
   }
 
-  await target.locator.click({ timeout: timeoutMs });
+  // Through its label where the control has no area of its own; see
+  // `LabeledCandidate` in survey.ts.
+  await (target.via ?? target.locator).click({ timeout: timeoutMs });
 }
 
 /**

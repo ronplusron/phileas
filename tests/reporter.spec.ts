@@ -144,6 +144,14 @@ test('a Route with no outcome line says how it ended, and one with no journal sa
   expect(never.lines.join('\n')).toContain('at bundle.js:1');
 });
 
+test('a test that passed with no journal is said to have passed, named by its title', () => {
+  // Measured on 2026-10-02: a probe run through a Journey's config passed,
+  // and was reported as "route ?  failed before its journal was opened".
+  const probe = routeLines({ title: 'probe: template radios', status: 'passed', annotations: [], errors: [], attachments: [] }, { follow: false, cwd: '/' });
+  expect(probe.lines).toEqual(['"probe: template radios"  passed, with no journal']);
+  expect(probe.outcome).toBe('passed');
+});
+
 test('the summary counts the Routes by outcome and Hops, prints the known findings, and how to run it again', () => {
   const lines = summaryLines({
     routes: [

@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and sixty-three tests, after a
+through, and `npm test` runs three hundred and sixty-six tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -139,7 +139,10 @@ watching a library given by path. Twelve came with the run's ending: nine
 on the reporter, from a Route that failed on checks, on an error, stranded,
 passed, followed, cut off and never opened, to the summary and `phileas run`
 choosing it, and three on known findings counted rather than listed, the
-list with when each was last met, and the hand-over to the reporter.
+list with when each was last met, and the hand-over to the reporter. Three more came with
+controls that have no area of their own: one reached through its label
+and recorded with it, its label covered or absent, and a test that
+passed with no journal reported as passed.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -356,7 +359,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and sixty-three tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and sixty-six tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

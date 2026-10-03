@@ -1786,7 +1786,7 @@ test('a control hidden inside something with no area leaves the draw, and is rec
   // The rest of the page is still offered.
   expect(names(zoomed)).toContain('Summary');
   expect(surveyLines(zoomed).find((line) => line.startsWith('button "Zoomed away"'))).toMatch(
-    /\(hidden inside <div id="probe-pane">/
+    /\(hidden: <div id="probe-pane">.* has no area\)/
   );
 });
 
@@ -1881,6 +1881,105 @@ test('a control hidden at the window edge, with nothing under its sliver, leaves
   expect(found.candidates.some((c) => c.source === 'page' && c.name === 'At the edge')).toBe(false);
   expect(found.hidden.map((entry) => entry.candidate.name)).toContain('At the edge');
 });
+
+/**
+ * Template choices as Positron draws them in New Folder from Template: a
+ * native radio 0 by 0 pixels inside a label drawn as a card, measured on
+ * 2026-10-02. `labels` false leaves the radios with no label at all.
+ */
+async function templateCards(page: Page, { labels = true } = {}) {
+  await page.evaluate((labels) => {
+    const box = document.createElement('div');
+    box.id = 'probe-templates';
+    box.style.cssText = 'position: fixed; top: 10px; right: 10px; width: 240px; display: flex; gap: 8px; background: white; z-index: 10;';
+    const radio = (name: string) =>
+      `<input type="radio" name="probe-template" aria-label="${name}" style="appearance: none; display: block; width: 0; height: 0; margin: 0; padding: 0; border: 0;">`;
+    box.innerHTML = ['Python Project', 'R Project']
+      .map((name) =>
+        labels
+          ? `<label class="probe-card" style="display: block; width: 100px; height: 60px; border: 1px solid;">${radio(name)}<span>${name}</span></label>`
+          : `<div class="probe-card" style="width: 100px; height: 60px;">${radio(name)}</div>`
+      )
+      .join('');
+    document.body.append(box);
+  }, labels);
+}
+
+const templateRadio = (found: Awaited<ReturnType<typeof surveyed>>, name: string) =>
+  found.candidates.find((c) => c.source === 'page' && c.role === 'radio' && c.name === name);
+
+test('a control with no area of its own is reached through the label that shows, and recorded with it', async ({ page, app }) => {
+  // Measured on Positron on 2026-10-02: three Hops drawn to such a radio were
+  // abandoned, since the input itself cannot be clicked.
+  await templateCards(page);
+  const found = await surveyed(page, app);
+  const chosen = templateRadio(found, 'R Project');
+  expect(chosen?.source === 'page' && chosen.via).toBeTruthy();
+  expect(found.labeled.map((entry) => entry.candidate.name).sort()).toEqual(['Python Project', 'R Project']);
+  for (const entry of found.labeled) expect(entry.by).toMatch(/^<label class="probe-card">/);
+  // The cards lie over a corner of buggy's own page, which may cover more than these.
+  expect(found.hidden.filter((e) => e.candidate.role === 'radio')).toEqual([]);
+  expect(found.covered.filter((e) => e.candidate.role === 'radio')).toEqual([]);
+
+  // A Hop drawn to it lands on the label, which chooses it, and is not abandoned.
+  const dir = scratch();
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('labeled', 1),
+    journeySeed: 'labeled',
+    routeNumber: 1,
+    tripLength: 1,
+    journalsRoot: dir,
+    chooser: {
+      choose: (candidates) => {
+        const target = candidates.find((c) => c.source === 'page' && c.role === 'radio' && c.name === 'R Project');
+        if (!target) throw new Error('the template radio was not on offer');
+        return { target };
+      },
+    },
+    hopTimeoutMs: 1_000,
+    settleTimeoutMs: 1_000,
+  });
+  expect(outcome).toMatchObject({ kind: 'passed', hops: 1 });
+  expect(await page.locator('input[aria-label="R Project"]').isChecked()).toBe(true);
+  const entries = readJournal(path.join(inRun(dir), `route-001-${deriveRouteStreams('labeled', 1).routeSeed}.jsonl`));
+  const hop = entries.find((entry) => entry.kind === 'trip-hop');
+  expect(hop?.kind === 'trip-hop' && hop.abandoned).toBeFalsy();
+  const pool = entries.find((entry) => entry.kind === 'pool');
+  expect(pool?.kind === 'pool' && pool.labeled?.map((entry) => entry.candidate.name).sort()).toEqual(['Python Project', 'R Project']);
+});
+
+test('a control with no area is covered when its label is, and hidden when no label shows', async ({ page, app }) => {
+  await templateCards(page);
+  await page.evaluate(() => {
+    const rect = document.getElementById('probe-templates')!.getBoundingClientRect();
+    const cover = document.createElement('div');
+    cover.id = 'probe-cover';
+    cover.style.cssText = `position: fixed; left: ${rect.x}px; top: ${rect.y}px; width: ${rect.width}px; height: ${rect.height}px; z-index: 20; background: transparent;`;
+    document.body.append(cover);
+  });
+  const covered = await surveyed(page, app);
+  expect(templateRadio(covered, 'R Project')).toBeUndefined();
+  expect(covered.covered.filter((e) => e.candidate.role === 'radio').map((e) => e.by)).toEqual([
+    expect.stringMatching(/^<div id="probe-cover">/),
+    expect.stringMatching(/^<div id="probe-cover">/),
+  ]);
+  expect(covered.labeled).toEqual([]);
+
+  await page.evaluate(() => document.getElementById('probe-templates')?.remove());
+  await page.evaluate(() => document.getElementById('probe-cover')?.remove());
+  await templateCards(page, { labels: false });
+  const bare = await surveyed(page, app);
+  expect(templateRadio(bare, 'R Project')).toBeUndefined();
+  expect(bare.hidden.filter((e) => e.candidate.role === 'radio').map((e) => e.by)).toEqual([
+    expect.stringMatching(/^<input aria-label="Python Project">, with no label that shows,$/),
+    expect.stringMatching(/^<input aria-label="R Project">, with no label that shows,$/),
+  ]);
+  expect(surveyLines(bare).find((line) => line.startsWith('radio "R Project"'))).toMatch(/\(hidden: <input .* has no area\)/);
+});
+
 
 test('a page with every control hidden strands, naming what hides them', async ({ page, app }) => {
   await page.evaluate(() => {
