@@ -692,14 +692,16 @@ step's content on its journal line, landed the same day, and `HISTORY.md`
 has it. `PLAN.md` has the order, under "Next".
 
 **Decided on 2026-10-04, how it is built,** from two questions asked and a
-list of defaults agreed as listed:
+list of defaults. The defaults were first agreed without being shown, the
+list having stayed in the agent's working, and were then shown and
+confirmed the same day:
 
 - **`phileas replay` before the new step kinds,** chosen over the kinds
   first, so a Route whose Fix has `code` steps can be replayed with
   `--with-current-fix` from the start. The kinds come next, then the proof
   under R 4.4.3.
-- **A replay chooser behind the choosing seam,** chosen over a replay
-  runner of its own: in place of a draw it picks the candidate whose role,
+- **A replay chooser behind the choosing seam,** built the same day,
+  chosen over a replay runner of its own: in place of a draw it picks the candidate whose role,
   name and position, menu path or key match the recorded target exactly,
   so the hop loop, its checks and its journal stay as they are. A value
   seam types the recorded value. A target not on offer stops the replay as

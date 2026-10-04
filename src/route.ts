@@ -1384,8 +1384,8 @@ async function runFix(
   await fix({ page, app, rng, step });
 }
 
-/** The plain-data form of a candidate, for the record. */
-function journaled(candidate: SurveyedCandidate): JournaledCandidate {
+/** The plain-data form of a candidate, for the record, and what a replay compares with it. */
+export function journaled(candidate: SurveyedCandidate): JournaledCandidate {
   if (candidate.source === 'key') {
     return {
       source: 'key',

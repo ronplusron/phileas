@@ -25,6 +25,26 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-04: a Route replays from its journal, through a chooser
+
+The first part of replay from the journal to be built, after each Fix
+step's content on its line. `replayOf` in `src/replay.ts` returns a chooser
+and a value generator: in place of a draw, the chooser picks the candidate
+whose journaled form, role, name and position, menu path or key, matches the
+recorded target exactly, and the generator types the recorded value. So the
+hop loop, its checks and its journal are the ones every Route uses. A
+target not on offer throws `CouldNotReplay`, naming the Hop, the target and
+what was offered instead. `journaled` in `src/route.ts` is exported for it,
+so the comparison is with what the journal wrote rather than with how a
+candidate prints. Nothing calls it from the command yet; that is next.
+
+**Tested.** Three new tests, 383 in all. A Route of 10 Hops recorded, then
+replayed in a fresh launch under another seed, takes the same targets,
+actions and values, and the control: that seed drawn on its own goes
+elsewhere. A replay with Summary renamed to Overview stops at the Hop that
+clicked it, naming Overview among what is there. And a target matches only
+exactly: a different position or a trailing space is not the same.
+
 ## 2026-10-04: the engine claims focus for each Route's window
 
 Part A of the menu bar's proposal, the last of its three, and the defect it

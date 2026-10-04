@@ -181,6 +181,7 @@ export {
   DEFAULT_MENU_SHARE,
   sharesFor,
   createSeededChooser,
+  journaled,
   drawMenuByLevel,
   type Shares,
   sideOfShareDraw,
@@ -219,3 +220,4 @@ export {
   type WatchOptions,
 } from './oracles/index.js';
 export { renderEntry, renderJournal, effectText, targetText, shortened } from './report/render.mjs';
+export { readRecorded, replayOf, sameTarget, CouldNotReplay, type Recorded } from './replay.js';
