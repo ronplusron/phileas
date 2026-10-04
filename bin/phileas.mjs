@@ -8,6 +8,7 @@
 //   phileas known dismiss <id> --reason <why> [file]
 //   phileas known remove <id> [file]
 //   phileas known list [file]
+//   phileas replay <journal> [config] [--whole] [--with-current-fix]
 //
 // `run` runs a Journey with its settings changed for one run. Real flags need
 // a command of their own, because Playwright refuses any it does not know
@@ -89,6 +90,7 @@ const USAGE = `Usage:
   phileas known dismiss <id> --reason <why> [file]
   phileas known remove <id> [file]
   phileas known list [file]
+  phileas replay <journal> [config] [--whole] [--with-current-fix]
 
 run: run a Journey, with its settings changed for this run only.
   config    A Playwright config file, or a folder holding playwright.config.ts.
@@ -135,6 +137,17 @@ known remove: take a known finding out, so the next time it is seen it is
   or one left by a deliberate test.
   id        As for add.
   file      As for add.
+
+replay: replay one Route from its journal, acting on each recorded target by
+  name in place of drawing, so a changed application or another machine does
+  not send it elsewhere. It runs the Route's Journey with the journal's seed
+  and Route, and says whether the finding came back.
+  journal   One Route's journal file.
+  config    As for run. Defaults to ${DEFAULT_CONFIG}/.
+  --whole   Replay every recorded Hop, not only to the finding and 3 after.
+  --with-current-fix
+            Run the current Fix's code steps, checked against those recorded,
+            for a Fix with code steps, which a journal cannot hold.
 
 known list: print every known finding: unfiled, filed and false alarms, each
   with when it was last met in the journals kept beside the file.
@@ -186,7 +199,8 @@ export function knownFileIn(file, dir = process.cwd()) {
  *   | { command: 'known-add', id: string, issue: string, file: string }
  *   | { command: 'known-dismiss', id: string, reason: string, file: string }
  *   | { command: 'known-remove', id: string, file: string }
- *   | { command: 'known-list', file: string }} Parsed
+ *   | { command: 'known-list', file: string }
+ *   | { command: 'replay', journal: string, config: string, whole: boolean, withCurrentFix: boolean }} Parsed
  */
 
 /**
@@ -212,6 +226,21 @@ export function parse(args) {
     const [config] = rest;
     if (config?.startsWith('-')) throw new Error(`survey takes no flags, and was given ${config}`);
     return { command: 'survey', config: config ?? DEFAULT_CONFIG };
+  }
+  if (command === 'replay') {
+    const flags = rest.filter((arg) => arg.startsWith('-'));
+    const unknown = flags.find((flag) => flag !== '--whole' && flag !== '--with-current-fix');
+    if (unknown) throw new Error(`replay takes --whole and --with-current-fix, and was given ${unknown}`);
+    const [journal, config, ...more] = rest.filter((arg) => !arg.startsWith('-'));
+    if (!journal) throw new Error('replay needs the journal of the Route to replay');
+    if (more.length) throw new Error(`replay takes a journal and a config, and was given ${more.join(' ')} as well`);
+    return {
+      command: 'replay',
+      journal,
+      config: config ?? DEFAULT_CONFIG,
+      whole: flags.includes('--whole'),
+      withCurrentFix: flags.includes('--with-current-fix'),
+    };
   }
   if (command === 'known') {
     const [sub, ...args] = rest;
@@ -435,6 +464,47 @@ export function journalsFor(what) {
   return { from: run, files: journalsIn(run) };
 }
 
+/**
+ * Replay one Route from its journal: run its Journey with the journal's seed
+ * and Route, and the variables a Route reads its replay from. Whether each
+ * Fix step can be replayed is checked by the engine before anything launches.
+ * @param {{ journal: string, config: string, whole: boolean, withCurrentFix: boolean }} asked
+ */
+function replay({ journal, config, whole, withCurrentFix }) {
+  if (!fs.existsSync(journal) || !fs.statSync(journal).isFile()) fail(`${journal} is not a journal file`);
+  /** @type {{ journeySeed?: string, routeNumber?: number, tripLength?: number, fix?: { name?: string } } | undefined} */
+  let opening;
+  for (const line of fs.readFileSync(journal, 'utf8').split('\n')) {
+    try {
+      const entry = JSON.parse(line);
+      if (entry.kind === 'route') {
+        opening = entry;
+        break;
+      }
+    } catch {
+      continue;
+    }
+  }
+  if (!opening?.journeySeed || !opening.routeNumber) fail(`${journal} has no opening line, so it names no Route to replay`);
+  if (withCurrentFix && opening.fix && !opening.fix.name) {
+    fail(`${journal} recorded a Fix with no name, so there is no current Fix to run in its place`);
+  }
+  const route = opening.routeNumber;
+  run(
+    config,
+    {
+      PHILEAS_SEED: opening.journeySeed,
+      PHILEAS_ROUTES: String(route),
+      PHILEAS_TRIP_LENGTH: String(opening.tripLength ?? 1),
+      PHILEAS_FIX: withCurrentFix && opening.fix?.name ? opening.fix.name : 'none',
+      PHILEAS_REPLAY: path.resolve(journal),
+      ...(whole ? { PHILEAS_REPLAY_WHOLE: '1' } : {}),
+      ...(withCurrentFix ? { PHILEAS_REPLAY_CURRENT_FIX: '1' } : {}),
+    },
+    route > 1 ? ['--grep', `route ${route}$`] : []
+  );
+}
+
 /** @param {string | undefined} what */
 function show(what) {
   /** @type {{ from: string, files: string[] }} */
@@ -524,6 +594,7 @@ function main() {
   else if (parsed.command === 'known-dismiss') knownChange('dismiss', parsed.id, knownFileIn(parsed.file), parsed.reason);
   else if (parsed.command === 'known-remove') knownChange('remove', parsed.id, knownFileIn(parsed.file));
   else if (parsed.command === 'known-list') knownList(knownFileIn(parsed.file));
+  else if (parsed.command === 'replay') replay(parsed);
   else run(parsed.config, parsed.settings, parsed.passThrough);
 }
 

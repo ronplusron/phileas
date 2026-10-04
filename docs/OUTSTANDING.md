@@ -722,6 +722,22 @@ confirmed the same day:
   reason. A Route that passed or stranded is reported as ending the same
   way or not.
 
+**Built on 2026-10-04: the chooser and the command,** and `HISTORY.md` has
+them. Still to do, in this order:
+
+- **The new step kinds,** `wait`, `press` and `type`, and an `act` step
+  naming its target as data, so most Fixes' code becomes data a replay runs
+  from the journal alone.
+- **The proof under R 4.4.3,** a recorded RStudio finding replayed with
+  another R on this machine.
+- **Two parts of the code-step decision above, not built:** saying how many
+  steps ran from the current Fix, which the journal's opening line records
+  only as the Fix having come from it; and stopping as could not replay
+  where a step changes the screen differently from its recording.
+- **A stranded Route's replay does not strand.** It stops after the
+  recorded Hops and passes, and the report says how the recorded Route
+  ended beside it; replaying the survey that stranded it is not built.
+
 ### 1.21 Surveying every window the application opens
 
 Made a requirement on 2026-10-02, `PRODUCT_REQUIREMENTS.md` R33, a Must, in

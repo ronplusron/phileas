@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and eighty-three tests, after a
+through, and `npm test` runs three hundred and eighty-six tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -161,7 +161,9 @@ which it refuses in one line. One more holds the engine's claim of focus
 for a Route's window, which stays hidden. Three came with replaying a
 Route from its journal: Hop for Hop in a fresh launch under another seed,
 a renamed control stopping the replay at its Hop, and a target matched
-only exactly.
+only exactly. Three more came with `phileas replay`: a finding reproduced
+and, fixed, not reproduced; a `code` step refused and the current Fix
+checked against the recording; and a replay offered again as a replay.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -391,7 +393,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and eighty-three tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and eighty-six tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
@@ -423,6 +425,14 @@ in UTC, and the run prints its name beside the seed. The layout under
 kept, in folders that sort in the order the runs happened, and comparing two
 runs means comparing two folders. A journal never overwrites another: one
 already at its path is refused. Nothing yet clears old runs away.
+
+**Replaying a Route from its journal (R12)** is `phileas replay <journal
+file> [config]`, since 2026-10-04: it runs the Route's Journey with the
+journal's seed and Route, acts on each recorded target by name in place of
+drawing, and says whether the finding came back. It replays to the Hop the
+finding came on and 3 more, or every Hop with `--whole`. A Fix with `code`
+steps needs `--with-current-fix`, which runs the current Fix checked step by
+step against what was recorded. `docs/OUTSTANDING.md` 1.18 has what is left.
 
 **Reading a journal (R30)** goes through one renderer, `src/report/render.mjs`,
 moved forward from phase 7. `phileas run --follow` prints each Route's lines

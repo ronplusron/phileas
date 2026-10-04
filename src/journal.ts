@@ -443,6 +443,19 @@ export interface OpeningEntry {
    * Absent for a Route with no Fix, and in journals written before 2026-09-28.
    */
   readonly fix?: { readonly name?: string; readonly fingerprint: string };
+  /**
+   * Where the Route was a replay of another, since 2026-10-04: the journal
+   * replayed, how many of its Trip hops, whether its Fix ran from the
+   * journal or the current Fix checked against it, and the signatures of the
+   * finding set aside from the known findings. A replay draws nothing, so its
+   * seeds are the recorded Route's and say nothing about where it went.
+   */
+  readonly replays?: {
+    readonly journal: string;
+    readonly hops: number;
+    readonly fix: 'journal' | 'current';
+    readonly setAside: readonly string[];
+  };
   readonly startedAt: string;
 }
 

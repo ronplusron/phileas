@@ -18,6 +18,7 @@ import { requireRun } from './journey.js';
 import { clickMenuItem } from './menu.js';
 import { renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
+import { replayFix, replayFromEnvironment, replayOf, type ReplayPlan } from './replay.js';
 import { CheckFailure, DEFAULT_RESPONSIVE_TIMEOUT_MS, failedChecks, startWatching, STALLED, type Watch } from './oracles/index.js';
 import type { StepSpan } from './timeline.js';
 import {
@@ -498,6 +499,11 @@ export interface RunRouteOptions {
   readonly fix?: Fix;
   readonly chooser?: Chooser;
   readonly values?: ValueGenerator;
+  /**
+   * A replay to run in place of a seeded draw, for the engine's own tests.
+   * Otherwise read from `phileas replay`'s variables. See `replay.ts`.
+   */
+  readonly replay?: ReplayPlan;
   /** How long one Hop's action may take before it is abandoned. */
   readonly hopTimeoutMs?: number;
   /** How long to wait for the page to stop moving after a Hop. */
@@ -714,10 +720,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     streams,
     journeySeed,
     routeNumber,
-    tripLength,
     journalsRoot,
-    fix,
-    values = seededValues,
     hopTimeoutMs = DEFAULT_HOP_TIMEOUT_MS,
     settleTimeoutMs = DEFAULT_SETTLE_TIMEOUT_MS,
     hopDelayMs = hopDelayFromEnvironment(),
@@ -727,6 +730,20 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     userDataDir,
     knownFindings,
   } = options;
+  // `phileas replay` asks for one through its variables. A replay acts on each
+  // recorded target in place of drawing, opens with the recorded Fix, and
+  // sets the finding replayed aside, so it is judged afresh; `replay.ts` says
+  // how far it goes and what it refuses.
+  const replay = options.replay ?? replayFromEnvironment();
+  if (replay && replay.recorded.opening.routeNumber !== routeNumber) {
+    throw new Error(
+      `This run replays Route ${replay.recorded.opening.routeNumber} of ${replay.recorded.file}, and was asked for Route ${routeNumber}.`
+    );
+  }
+  const replaying = replay ? replayOf(replay.recorded.hops, journaled, replay.count) : undefined;
+  const values = replaying?.values ?? options.values ?? seededValues;
+  const tripLength = replay ? replay.count : options.tripLength;
+  const fix = replay ? replayFix(replay, options.fix) : options.fix;
   const settleQuietMs = cfg.settleQuietMs ?? DEFAULT_SETTLE_QUIET_MS;
   // This Route's own setting first, which the engine's tests use, then the
   // adapter's, then the default.
@@ -737,7 +754,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     throw new Error(`responsiveTimeoutMs must be a whole number of milliseconds above 0, and is ${responsiveMs}.`);
   }
   const shares = sharesFor(cfg);
-  const chooser = options.chooser ?? createSeededChooser(shares);
+  const chooser = replaying?.chooser ?? options.chooser ?? createSeededChooser(shares);
   // Read once, so the survey, the Fix and the opening line all use the same.
   const allowedGroups = allowedGroupsFromEnvironment(cfg.exclusions);
 
@@ -797,7 +814,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
   // Read before the journal opens, so a file that cannot be read stops the Route
   // before it has anything to record, and the opening line can name its version.
-  const known = knownFindings === undefined ? undefined : readKnownFindings(knownFindings);
+  const read = knownFindings === undefined ? undefined : readKnownFindings(knownFindings);
+  const setAside = new Set(replay?.setAside ?? []);
+  const known = read && setAside.size ? { ...read, entries: read.entries.filter((entry) => !setAside.has(entry.signature)) } : read;
 
   // Opened and flushed before the Route does anything, so that a Route which
   // dies inside its Fix still leaves a file naming the seed that produced it.
@@ -815,7 +834,19 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     ...(cfg.varyingInSignatures?.length
       ? { varyingInSignatures: cfg.varyingInSignatures.map(([pattern, replacement]) => [String(pattern), replacement] as const) }
       : {}),
-    ...(fix ? { fix: { ...namedFix(fix), fingerprint: fixFingerprint(fix) } } : {}),
+    ...(replay
+      ? {
+          ...(replay.recorded.opening.fix ? { fix: replay.recorded.opening.fix } : {}),
+          replays: {
+            journal: replay.recorded.file,
+            hops: replay.count,
+            fix: replay.withCurrentFix ? ('current' as const) : ('journal' as const),
+            setAside: replay.setAside,
+          },
+        }
+      : fix
+        ? { fix: { ...namedFix(fix), fingerprint: fixFingerprint(fix) } }
+        : {}),
   }, { follow });
   noteJournal(journal.file);
 

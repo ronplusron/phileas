@@ -293,8 +293,9 @@ and the runner runs all of them after every hop.
   for replaying while one setup is being tested, and is deprecated as the way
   a finding is reproduced: a report, a filed bug and anything kept for the
   long run rely on something else. R8's seed replays only an unchanged build,
-  so as it stands this is met by replaying from the journal, which is not
-  built; `OUTSTANDING.md` 1.18 has the proposal. Raised from Should on
+  so as it stands this is met by replaying from the journal, `phileas
+  replay`, built in part on 2026-10-04; `OUTSTANDING.md` 1.18 has what is
+  left. Raised from Should on
   2026-09-30, in the words "Make R12 a requirement. Doesn't matter if it
   relies on a seed or not. Though if it's not a seed, then seeds should be
   deprecated." Asked whether deprecated meant the seed as the way a finding

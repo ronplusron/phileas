@@ -1010,7 +1010,8 @@ the words "One branch, multiple commits."
 6. **A of the menu bar's proposal:** the engine claiming focus for each
    Route's window. Done the same day; `HISTORY.md` has it.
 7. **The rest of replay from the journal:** the new step kinds, `phileas
-   replay`, and the proof under R 4.4.3.
+   replay`, and the proof under R 4.4.3. The chooser and `phileas replay`
+   landed on 2026-10-04; `OUTSTANDING.md` 1.18 has what is left.
 
 The answer put step 4 before A. Placing it before C as well is a reading,
 not part of the answer: it keeps the two reviews of exclusions together.

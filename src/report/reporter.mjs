@@ -185,6 +185,9 @@ export function routeLines(result, { follow, cwd }) {
     }
   }
 
+  const verdict = replayVerdict(ending);
+  if (verdict) lines.push(`    replay of ${shown(ending.opening?.replays?.journal ?? '', cwd)}: ${verdict}`);
+
   // Named for a Route that did not pass; the summary names the run's folder
   // once, so a long Journey that passed is not a line per Route longer.
   if (journal && outcome?.outcome !== 'passed' && !journalNamed) lines.push(`    journal  ${shown(journal, cwd)}`);
@@ -192,6 +195,39 @@ export function routeLines(result, { follow, cwd }) {
   /** @type {'passed' | 'failed' | 'stranded' | 'unfinished'} */
   const kind = outcome ? outcome.outcome : 'unfinished';
   return { lines, outcome: kind, routeNumber, hops: ending.hops, tripLength, journal };
+}
+
+/**
+ * What a replay showed, for a Route whose journal says it replays another:
+ * never a plain pass, since a replay that passed says the finding did not
+ * come back, which is how a fix is checked on that path. Undefined for a
+ * Route that is not a replay.
+ * @param {ReturnType<typeof readEnding>} ending
+ * @returns {string | undefined}
+ */
+export function replayVerdict(ending) {
+  const replays = ending.opening?.replays;
+  if (!replays) return undefined;
+  const outcome = ending.outcome;
+  if (!outcome) return 'ended without finishing its journal, so it shows nothing';
+  if (/^Could not replay hop /.test(outcome.reason ?? '')) return `could not replay: ${firstSentence(outcome.reason ?? '')}`;
+  const wanted = new Set(replays.setAside);
+  if (outcome.outcome === 'failed') {
+    const seen = (ending.last?.checks ?? [])
+      .filter((check) => check.result === 'failed')
+      .flatMap((check) => (check.findings ?? []).map((finding) => finding.signature));
+    if (seen.some((signature) => wanted.has(signature))) return 'reproduced: the finding came back';
+    return wanted.size ? 'not reproduced, and failed on something else' : 'failed, where the recorded Route did not fail on a check';
+  }
+  if (wanted.size) {
+    return `not reproduced: all ${replays.hops} replayed Hops landed, and the finding did not come back`;
+  }
+  // No finding to look for. A replay stops after the recorded Hops, so it
+  // never strands where the recorded Route did; said beside how that one
+  // ended, so a stranded Route's replay is not read as a plain pass.
+  const recorded = readEnding(replays.journal).outcome;
+  const then = recorded ? `${recorded.outcome} after ${recorded.hops} hops` : 'did not finish';
+  return `replayed all ${replays.hops} recorded Hops; the recorded Route ${then}`;
 }
 
 /** @param {string} text */
@@ -294,7 +330,12 @@ export function summaryLines({ routes, journeyEnd, endErrors, config, env, cwd =
     }
   }
 
-  if (seed) {
+  if (env.PHILEAS_REPLAY) {
+    // A replay is run again by replaying the same journal: a seeded run would
+    // draw, and go wherever the application now sends it.
+    const flags = [env.PHILEAS_REPLAY_WHOLE === '1' ? '--whole' : '', env.PHILEAS_REPLAY_CURRENT_FIX === '1' ? '--with-current-fix' : ''];
+    lines.push(`Replay it again: ${['phileas replay', quoted(shown(env.PHILEAS_REPLAY, cwd)), quoted(config), ...flags.filter(Boolean)].join(' ')}`);
+  } else if (seed) {
     const base = ['phileas run', quoted(config), '--seed', seed, ...rerunFlags(env)].join(' ');
     // The lowest-numbered, not the first to finish: with Routes run side by
     // side, a later Route can end first, and the hint named Route 3 while

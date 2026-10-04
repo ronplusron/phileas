@@ -11,6 +11,7 @@ import { fixFor, type Fixes } from './fixes.js';
 import { allowStaleFromEnvironment } from './bundle.js';
 import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route.js';
 import { allowedGroupsFromEnvironment } from './survey.js';
+import { replayFromEnvironment } from './replay.js';
 
 /**
  * Settle the seed, name the run, check the run's settings and print them. The
@@ -60,6 +61,9 @@ export function startJourney(
   // anything launches, not once per Route.
   const allowedGroups = allowedGroupsFromEnvironment(application.exclusions);
   const groups = Object.keys(application.exclusions.groups ?? {});
+  // Read here too, so a journal that cannot be replayed, such as one whose
+  // Fix has code steps, is refused before anything launches.
+  const replay = replayFromEnvironment();
   // Looked up here as well as by each Route, so a Fix name that is not one of
   // the consumer's is refused before anything launches, not once per Route.
   fixFor(journey, fixes);
@@ -107,6 +111,15 @@ export function startJourney(
       '',
     ],
     ['Survey only', surveyOnly ? 'on: nothing is traveled, and every Route is skipped' : 'off', ''],
+    [
+      'Replay',
+      replay
+        ? `${path.relative(process.cwd(), replay.recorded.file) || replay.recorded.file}, ${replay.count} of ` +
+          `${replay.recorded.hops.length} Trip hops, the Fix from ${replay.withCurrentFix ? 'the current Fix, checked' : 'the journal'}` +
+          (replay.setAside.length ? `, its finding set aside from the known findings` : '')
+        : 'off',
+      replay ? 'set for this run' : '',
+    ],
   ];
   const width = Math.max(...rows.map(([name, value]) => `${name}: ${value}`.length));
   const settings = rows.map(([name, value, note]) =>

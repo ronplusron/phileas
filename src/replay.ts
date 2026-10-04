@@ -1,6 +1,6 @@
-import { readJournal, type JournaledCandidate, type JournalEntry, type TripHopEntry } from './journal.js';
+import { readJournal, sourceHash, type FixStepEntry, type JournaledCandidate, type JournalEntry, type TripHopEntry } from './journal.js';
 import { targetText } from './report/render.mjs';
-import type { Chooser, ValueGenerator } from './route.js';
+import type { Chooser, Fix, FixStep, ValueGenerator } from './route.js';
 import type { SurveyedCandidate } from './survey.js';
 
 /**
@@ -19,11 +19,13 @@ import type { SurveyedCandidate } from './survey.js';
  * its checks and its journal are the ones every Route uses.
  */
 
-/** What a replay needs from one journal: the Route it opened as, and its Trip hops in order. */
+/** What a replay needs from one journal: the Route it opened as, its Fix steps and Trip hops in order, and how it ended. */
 export interface Recorded {
   readonly file: string;
   readonly opening: Extract<JournalEntry, { kind: 'route' }>;
+  readonly fixSteps: readonly FixStepEntry[];
   readonly hops: readonly TripHopEntry[];
+  readonly outcome?: Extract<JournalEntry, { kind: 'outcome' }>;
 }
 
 /** Read a journal for replaying, refusing one with no opening line, since it names no Route. */
@@ -31,7 +33,138 @@ export function readRecorded(file: string): Recorded {
   const entries = readJournal(file);
   const opening = entries.find((entry): entry is Extract<JournalEntry, { kind: 'route' }> => entry.kind === 'route');
   if (!opening) throw new Error(`${file} has no opening line, so it names no Route to replay.`);
-  return { file, opening, hops: entries.filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop') };
+  const outcome = entries.find((entry): entry is Extract<JournalEntry, { kind: 'outcome' }> => entry.kind === 'outcome');
+  return {
+    file,
+    opening,
+    fixSteps: entries.filter((entry): entry is FixStepEntry => entry.kind === 'fix-step'),
+    hops: entries.filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop'),
+    ...(outcome ? { outcome } : {}),
+  };
+}
+
+/** The variables `phileas replay` travels in. */
+export const REPLAY_VARIABLE = 'PHILEAS_REPLAY';
+export const REPLAY_WHOLE_VARIABLE = 'PHILEAS_REPLAY_WHOLE';
+export const REPLAY_CURRENT_FIX_VARIABLE = 'PHILEAS_REPLAY_CURRENT_FIX';
+
+/** How many Hops a replay covers past the one a finding came on, for one that arrives late. */
+export const REPLAY_HOPS_AFTER = 3;
+
+/** One replay, as a Route runs it. */
+export interface ReplayPlan {
+  readonly recorded: Recorded;
+  /** How many of its Trip hops are replayed. */
+  readonly count: number;
+  readonly whole: boolean;
+  readonly withCurrentFix: boolean;
+  /** The signatures of the finding replayed, set aside from the known findings. */
+  readonly setAside: readonly string[];
+}
+
+/**
+ * The finding a journal records its Route failing on: every finding of every
+ * failed check on the last step it wrote, the Fix's or the Trip's, that was
+ * not already known. Empty for a Route that did not fail on a check.
+ */
+export function findingOf(recorded: Recorded): { hop?: number; signatures: string[] } {
+  if (recorded.outcome?.outcome !== 'failed') return { signatures: [] };
+  const steps = [...recorded.fixSteps, ...recorded.hops];
+  const last = steps[steps.length - 1];
+  const signatures = (last?.checks ?? [])
+    .filter((check) => check.result === 'failed')
+    .flatMap((check) => (check.findings ?? []).filter((finding) => !finding.known).map((finding) => finding.signature));
+  return { ...(last?.kind === 'trip-hop' ? { hop: last.hop } : {}), signatures: [...new Set(signatures)] };
+}
+
+/**
+ * The replay a journal asks for: to the Hop its finding came on and
+ * `REPLAY_HOPS_AFTER` more, or every Hop with `whole` or where there is no
+ * finding. Refused, naming the step, where a Fix step cannot be replayed from
+ * the journal: one from before step kinds were recorded, or a `code` step
+ * without `withCurrentFix`.
+ */
+export function planReplay(file: string, { whole = false, withCurrentFix = false } = {}): ReplayPlan {
+  const recorded = readRecorded(file);
+  for (const step of recorded.fixSteps) {
+    if (step.stepKind === undefined) {
+      throw new Error(
+        `${file} was written before Fix steps recorded their kind, so its Fix step ${step.step}, "${step.label}", ` +
+          'cannot be told apart from code. Replay a journal written since 2026-10-03.'
+      );
+    }
+    if (step.stepKind === 'code' && !withCurrentFix) {
+      throw new Error(
+        `Fix step ${step.step}, "${step.label}", is code, which a journal cannot hold. Replay with ` +
+          `--with-current-fix to run the current Fix's step ${step.step} in its place, checked against what was recorded.`
+      );
+    }
+  }
+  const finding = findingOf(recorded);
+  const count =
+    whole || finding.hop === undefined ? recorded.hops.length : Math.min(recorded.hops.length, finding.hop + REPLAY_HOPS_AFTER);
+  return { recorded, count, whole, withCurrentFix, setAside: finding.signatures };
+}
+
+/** The replay this run asks for, from `phileas replay`'s variables, or none. */
+export function replayFromEnvironment(): ReplayPlan | undefined {
+  const file = (process.env[REPLAY_VARIABLE] ?? '').trim();
+  if (!file) return undefined;
+  return planReplay(file, {
+    whole: process.env[REPLAY_WHOLE_VARIABLE] === '1',
+    withCurrentFix: process.env[REPLAY_CURRENT_FIX_VARIABLE] === '1',
+  });
+}
+
+/** An `act` step as the recorded line describes it, in the form a Fix step takes. */
+function actStepOf(recorded: FixStepEntry): FixStep {
+  if (!recorded.target) {
+    throw new Error(`Fix step ${recorded.step}, "${recorded.label}", recorded no target, since it failed before finding one.`);
+  }
+  return { kind: 'act', target: targetText(recorded.target), ...(recorded.value === undefined ? {} : { value: recorded.value }) };
+}
+
+/**
+ * The Fix a replay opens with. From the journal alone, its `act` steps; or,
+ * with `withCurrentFix`, the consumer's current Fix, each step checked against
+ * the step of the same number recorded: an `act` step must name the same
+ * target and value, and a `code` step carry the same label and source hash.
+ * A step that differs, or a count that differs, stops the replay: running a
+ * different opening proves nothing about the recorded Route.
+ */
+export function replayFix(plan: ReplayPlan, current: Fix | undefined): Fix | undefined {
+  const steps = plan.recorded.fixSteps;
+  if (!steps.length && !plan.withCurrentFix) return undefined;
+  if (!plan.withCurrentFix) {
+    return async ({ step }) => {
+      for (const recorded of steps) await step(actStepOf(recorded));
+    };
+  }
+  if (!current) throw new Error('The replay was asked to run the current Fix, and the consumer gave none.');
+  return async (context) => {
+    let taken = 0;
+    const checked: typeof context.step = async (what) => {
+      const recorded = steps[taken];
+      taken += 1;
+      if (!recorded) throw new Error(`The current Fix takes a step ${taken}, and the recorded one took ${steps.length}.`);
+      if (what.kind === 'act') {
+        const value = what.value === undefined ? '' : `, typing ${JSON.stringify(what.value)}`;
+        if (recorded.stepKind !== 'act' || recorded.label !== `${what.target}${value}`) {
+          throw new Error(`The current Fix's step ${taken} is ${what.target}${value}, and the recorded one was "${recorded.label}".`);
+        }
+        return context.step(actStepOf(recorded));
+      }
+      if (recorded.stepKind !== 'code' || recorded.label !== what.label || recorded.sourceHash !== sourceHash(what.action.toString())) {
+        throw new Error(
+          `The current Fix's step ${taken}, "${what.label}", is not the code recorded as step ${recorded.step}, ` +
+            `"${recorded.label}": its label or its source differs.`
+        );
+      }
+      return context.step(what);
+    };
+    await current({ ...context, step: checked });
+    if (taken !== steps.length) throw new Error(`The current Fix took ${taken} steps, and the recorded one took ${steps.length}.`);
+  };
 }
 
 /**

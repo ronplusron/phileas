@@ -25,6 +25,48 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-04: `phileas replay`
+
+R12's command, on the chooser that landed before it: `phileas replay
+<journal> [config] [--whole] [--with-current-fix]` runs the Route's Journey
+with the journal's seed and Route, and the Route reads its replay from
+`PHILEAS_REPLAY`. Built to the defaults confirmed the same day,
+`OUTSTANDING.md` 1.18 has them.
+
+**What a replayed Route does.** It acts on each recorded target, types each
+recorded value, and stops at the Hop its finding came on and 3 more, or
+every Hop with `--whole`. Its Fix runs from the journal's `act` steps; a
+`code` step, which no journal can hold, is refused before anything launches
+unless `--with-current-fix`, which runs the current Fix with each step
+checked against the recorded one, its target and value or its label and
+source hash, and stops at the first that differs. The finding replayed is
+set aside from the known findings, so a filed one cannot be carried past.
+Its opening line records what it replays, from where, and what it set
+aside, and `startJourney` prints it among the run's settings.
+
+**What it says.** The reporter adds a line under the Route: reproduced, the
+finding came back; not reproduced, every replayed Hop landed and it did
+not, which is how a fix is checked on that path and never a plain pass; or
+could not replay, naming the Hop. A Route that did not fail on a check is
+reported beside how the recorded one ended, since a replay stops after the
+recorded Hops and so never strands where the recorded Route did; that was
+caught before it shipped, as a stranded Route's replay that would have read
+as a plain pass. The summary offers "Replay it again" with the same
+journal, never a seeded run, which would draw.
+
+**Measured on `buggy`,** through the command: a Journey of 2 Routes of 6
+Hops, then Route 2 replayed from its journal alone, took the same 6
+targets, actions and values.
+
+**Tested.** Three new tests, 386 in all: a planted console error replayed
+comes back as reproduced, and with the error silenced in the page, the
+control still there, every Hop lands and it is not reproduced; a `code` step
+is refused, and the current Fix runs when it matches the recording and is
+stopped when its code or its first step differs; and a replay is offered
+again as a replay. The command's parsing of `replay` joined its test, and
+the run's settings now include Replay. What is left, the step kinds among
+it, is in `OUTSTANDING.md` 1.18.
+
 ## 2026-10-04: a Route replays from its journal, through a chooser
 
 The first part of replay from the journal to be built, after each Fix

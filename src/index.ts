@@ -220,4 +220,18 @@ export {
   type WatchOptions,
 } from './oracles/index.js';
 export { renderEntry, renderJournal, effectText, targetText, shortened } from './report/render.mjs';
-export { readRecorded, replayOf, sameTarget, CouldNotReplay, type Recorded } from './replay.js';
+export {
+  readRecorded,
+  replayOf,
+  sameTarget,
+  planReplay,
+  findingOf,
+  replayFix,
+  CouldNotReplay,
+  REPLAY_VARIABLE,
+  REPLAY_WHOLE_VARIABLE,
+  REPLAY_CURRENT_FIX_VARIABLE,
+  REPLAY_HOPS_AFTER,
+  type Recorded,
+  type ReplayPlan,
+} from './replay.js';

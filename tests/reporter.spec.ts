@@ -207,6 +207,17 @@ test('the first Route alone needs no grep, since --routes 1 runs only it', () =>
   expect(lines.at(-1)).toBe('Route 1 alone: phileas run phileas --seed s --routes 1');
 });
 
+test('a replay is offered again as a replay, never as a seeded run, which would draw', () => {
+  const lines = summaryLines({
+    routes: [{ outcome: 'passed', routeNumber: 2, hops: 6, tripLength: 6 }],
+    endErrors: [],
+    config: 'phileas',
+    env: { PHILEAS_SEED: 's', PHILEAS_ROUTES: '2', PHILEAS_REPLAY: '/somewhere/route-002-x.jsonl', PHILEAS_REPLAY_WHOLE: '1' },
+  });
+  expect(lines.at(-1)).toBe('Replay it again: phileas replay /somewhere/route-002-x.jsonl phileas --whole');
+  expect(lines.join('\n')).not.toMatch(/phileas run/);
+});
+
 test('brief, a failed Hop names its checks and findings without what they saw, and the ending keeps its first sentence', () => {
   const entry = hop(56, [failedCheck('console-error', '643cb31a', 'a very long observation')]) as unknown as JournalEntry;
   expect(renderEntry(entry, 1)).toContain('console-error: a very long observation');
