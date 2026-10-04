@@ -8,7 +8,7 @@
   "main": "main.cjs",
   "author": "Drugstore Sushi",
   "scripts": {
-    "package": "electron-packager . --overwrite --platform=darwin --arch=arm64 --app-bundle-id=com.drugstoresushi.buggy --app-copyright=\"Copyright (c) 2026 Ron Blum. All rights reserved.\" --out dist --prune=true --ignore=\"^/dist($|/)\" --ignore=\"^/phileas($|/)\" --ignore=\"^/node_modules($|/)\""
+    "package": "electron-packager . --overwrite --platform=darwin --arch=arm64 --icon=../../images/phileas.icns --app-bundle-id=com.drugstoresushi.buggy --app-copyright=\"Copyright (c) 2026 Ron Blum. All rights reserved.\" --out dist --prune=true --ignore=\"^/dist($|/)\" --ignore=\"^/phileas($|/)\" --ignore=\"^/node_modules($|/)\""
   },
   "devDependencies": {
     "@drugstoresushi/phileas": "file:../..",

@@ -446,6 +446,10 @@ per-application list of controls was rejected alongside it and reversed on
   the capital.
 - ASCII only in git artifacts: commit messages, branch names, tags.
 - American spelling: license, organization, behavior, analyze.
+- A new demo or test application built here, with no image provided for it,
+  gets offered `images/phileas.icns` as its Dock icon, passed as `--icon` in
+  its package script. Offered, not assumed. Without one, macOS shows
+  Electron's own icon, and every such application looks alike in the Dock.
 - Documents address whoever reads next. No personal names in prose, and no
   gendered pronouns for the reader. The copyright notice is an ownership
   claim and is the exception.

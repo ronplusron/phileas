@@ -25,6 +25,32 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-04: an icon for the demos and the proving ground
+
+The two demos and `buggy` showed Electron's own icon in the Dock, because
+their package scripts named none. `images/` now holds three pictures of
+Phileas, and `images/phileas.icns` is made from `phileas_head.jpeg`, chosen
+over the full figure in `phileas_simple.jpeg` after seeing both: the art
+reduced to the 824-pixel body of Apple's 1024-pixel icon grid, with its
+corners cut to a radius of 185 so the white outside the drawn square does not
+show. Each package script passes it as `--icon`.
+
+**The pictures were AI-generated, and each carried a provenance record**
+saying so, embedded as metadata. The record was removed, losslessly and with
+nothing added; the pixels are unchanged. Any invisible watermark in the
+pixels themselves is still there.
+
+**The icon is not among `staleness.packagedInputs`, on purpose.** The guard
+compares files inside `app.asar`, and the packager writes the icon beside it
+as `Contents/Resources/electron.icns`, so listing it would fail every run. A
+changed icon therefore goes unnoticed until the next package, which costs
+nothing but looks. The packager also warns that it found no `.icon` file, the
+newer Icon Composer format; that warning is harmless, and the `.icns` is used.
+
+**The three lockfiles had fallen behind the engine they install.** Each still
+recorded it as version 0.0.0 with an Electron peer dependency it no longer
+declares, so every `npm install` rewrote them. They now match `package.json`.
+
 ## 2026-10-04: `phileas replay`
 
 R12's command, on the chooser that landed before it: `phileas replay
