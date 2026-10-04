@@ -237,8 +237,8 @@ RAIL_DEMO_PLANT=sleeper-throw RAIL_DEMO_KNOWN=demo/rail-itinerary/phileas/.phile
 ```
 
 The bug: choosing the sleeper class in the Add a leg form throws an error in
-the page. Nothing steers the Route there. It wanders the timetable and the
-itineraries, opens Add a leg, and picks Sleeper at Trip hop 17.
+the page. Nothing steers the Route there. It wanders the itineraries, opens
+Add a leg, and picks Sleeper at Trip hop 16.
 
 Point at the line for that Hop: the failed check, what it saw, and the
 finding's id, which is the same every time the same bug is seen. The Route
@@ -265,7 +265,7 @@ Delete the known findings file, putting it back as it was before section 12,
 then run section 12's command again.
 
 The same Route, from the same seed, makes the same moves straight back to
-Trip hop 17 and the same finding. The guided command compares the two
+Trip hop 16 and the same finding. The guided command compares the two
 journals and says whether every Hop matched. This is what makes a finding
 worth filing: whoever gets the report can watch it happen again, from the
 seed alone. It had to be run against the file as it was, since a finding the
@@ -280,7 +280,7 @@ phileas known add <id> --issue demo-1 demo/rail-itinerary/phileas/.phileas-journ
 Then section 12's command once more. `<id>` is the finding's id from
 section 12; the guided command fills it in.
 
-Filed, the bug no longer ends the Route. Point at Trip hop 17 again: the line
+Filed, the bug no longer ends the Route. Point at Trip hop 16 again: the line
 now says the finding is known, with its issue, and the Route carries on to the
 end of its Trip and passes. Point at the summary: it still lists the finding,
 as seen, with its issue. A filed bug stops blocking without going quiet. One

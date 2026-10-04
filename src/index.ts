@@ -180,6 +180,7 @@ export {
   DEFAULT_MENU_SHARE,
   sharesFor,
   createSeededChooser,
+  drawMenuByLevel,
   type Shares,
   sideOfShareDraw,
   sideCandidates,

@@ -112,8 +112,8 @@ Trip in the next section starts.
 ## 4. Three fates from one Journey
 
 ```
-EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed passepartout --routes 3 --trip-length 150 --hop-delay-ms 300 --show front
-node demo/eighty-days/measure.mjs demo/eighty-days/phileas/.phileas-journals/passepartout/<run>
+EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed carnatic --routes 3 --trip-length 150 --hop-delay-ms 300 --show front
+node demo/eighty-days/measure.mjs demo/eighty-days/phileas/.phileas-journals/carnatic/<run>
 ```
 
 The `<run>` folder is named on the run's second line. The guided command fills
@@ -129,14 +129,14 @@ chart shows the line it has drawn round the world.
 With this seed the three games go three ways, and the guided command prints
 them when the run ends:
 
-- **Route 1 wins.** It sails on the Carnatic, crosses the Pacific, takes the
-  special train east, and reaches the Reform Club by way of Queenstown and
-  Liverpool, at Trip hop 72.
-- **Route 2 loses.** By way of Shanghai and San Francisco it sails south for
-  Panama, the game's own route and not the book's, and the wager is lost
-  there, at Trip hop 60.
-- **Route 3 is still going** when its Trip ends, at Omaha, having followed
-  the book overland by Salt Lake City and Fort Kearney.
+- **Route 1 loses.** By way of Shanghai and Yokohama it crosses to San
+  Francisco, and the wager is lost there, at Trip hop 100.
+- **Route 2 wins.** It sails straight for Yokohama, crosses the Pacific,
+  follows the book overland by Salt Lake City, Fort Kearney and Omaha to New
+  York, and reaches the Reform Club by way of Queenstown and Liverpool, at
+  Trip hop 126.
+- **Route 3 is still going** when its Trip ends, having reached Liverpool by
+  way of Shanghai, San Francisco, Omaha, New York and Queenstown.
 
 Each Route that ends offers "Set out again", and the rest of its Trip starts
 the game over from London, which is why the places listed carry on past it.
@@ -162,7 +162,7 @@ game and shows the same Journey finding them.
 ## 6. The same seed, the same game
 
 ```
-EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed passepartout --routes 3 --trip-length 150 --hop-delay-ms 300 --show front -- --grep 'route 1$'
+EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed carnatic --routes 3 --trip-length 150 --hop-delay-ms 300 --show front -- --grep 'route 1$'
 ```
 
 Route 1 of section 4's Journey again, on its own, about two and a half minutes.
@@ -170,7 +170,7 @@ The guided command compares the two journals and says whether every Hop
 matched, and prints how the game went both times. By hand, run `measure.mjs`
 on the new run folder and read it against section 4's.
 
-Route 1 again: the same Carnatic, the same special train, the same win at
+Route 1 again: the same Shanghai, the same San Francisco, the same loss at
 the same Hop.
 
 A Route that had found a bug would walk straight back to it, which is what
@@ -195,7 +195,7 @@ EIGHTY_DAYS_PLANT=kiouni-throw EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phile
 
 The bug: the raise that brings the offer for Kiouni to £2,000 throws an
 error in the page. The Fix ends at Kholby with the offer at £1,800, so one
-raise is left for the Trip to choose. It does at Trip hop 11.
+raise is left for the Trip to choose. It does at Trip hop 9.
 
 Point at the line for that Hop: the failed check, what it saw, and the
 finding's id, which is the same every time the same bug is seen. The Route
@@ -210,7 +210,7 @@ EIGHTY_DAYS_PLANT=bradshaw-trap EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phil
 ```
 
 Game > Consult Bradshaw opens a dialog with nothing in it to press, and
-Escape does not close it. The Route strands after Trip hop 8: no move left.
+Escape does not close it. The Route strands after Trip hop 12: no move left.
 Stranded is the third outcome, neither a pass nor a failure, and the
 summary shows no finding. A trap may be a bug or a corner with nothing
 more to do, and the engine reports what it saw rather than guessing which.
@@ -221,7 +221,7 @@ Delete the known findings file, putting it back as it was before section 8,
 then run section 8's command again.
 
 The same Route, from the same seed, plays the same game straight back to
-Trip hop 11 and the same finding. The guided command compares the two
+Trip hop 9 and the same finding. The guided command compares the two
 journals and says whether every Hop matched. This is what makes a finding
 worth filing: whoever gets the report can watch it happen again, from the
 seed alone. It had to be run against the file as it was, since a finding
@@ -236,7 +236,7 @@ phileas known add <id> --issue demo-1 demo/eighty-days/phileas/.phileas-journals
 Then section 8's command once more. `<id>` is the finding's id from
 section 8; the guided command fills it in.
 
-Filed, the bug no longer ends the Route. Point at Trip hop 11 again: the
+Filed, the bug no longer ends the Route. Point at Trip hop 9 again: the
 line now says the finding is known, with its issue, and the Route carries
 on to the end of its Trip and passes. Point at the summary: it still lists
 the finding, as seen, with its issue. A filed bug stops blocking without

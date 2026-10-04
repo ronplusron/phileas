@@ -25,6 +25,44 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-03: the menu drawn a level at a time, and the demos' seeds searched again
+
+Part C of the menu bar's proposal. A menu Hop drew one entry evenly from
+every entry on offer, so with Positron's 165 about four in ten landed in
+View, and Set Render Whitespace to All, four levels down, was as likely as
+File > Save. It now draws as a person opens a menu: a top menu, evenly, then
+an item within it, a level at a time, an item being a label and whether it
+ends there, and only branches holding an offered entry being drawn from.
+Every level takes a draw, recorded on the Hop's line as `menuDraws` in place
+of `draw`, and the line can be walked from the file alone. Chosen for every
+adapter over letting one opt in, once it was laid out that the flat draw
+would stay the default for any adapter that forgot.
+
+**What it moved.** Every seed's menu Hops, once, in every application with
+a menu. The demos' pinned seeds were replayed on this branch and, as the
+control, on `main` with the flat draw, where all eleven plant seeds met
+their bug at their recorded Hop and `passepartout` played its recorded
+games. On this branch five plant seeds still met their bug at other Hops,
+now in each demo's `seeds.mjs`; Eighty Days' `set-out-confirm` no longer met
+it in 60 Hops, and `stuart`, the sixth seed tried, meets it at hop 2. Both
+demos' several-at-once seeds still find two bugs, Rail Itinerary's on other
+Routes. `passepartout` gave one win and two losses, so the Journey shown in
+"Three fates" was searched for again: `carnatic`, the eighth seed tried,
+loses on Route 1 at Trip hop 100, wins on Route 2 at 126 and is still going
+on Route 3, and Route 1 alone retraced all 150 Hops. Seven of the eight tried
+showed two fates or fewer, where eight seeds on 2026-09-27 had shown all
+three in four; whether the level draw shifted the game's balance, Game's
+three entries now taking half the menu Hops, is not measured. Both
+`PRESENTING.md` files were rewritten where they told a Route's path or
+Hop, and the rail demo's `explain-hop.mjs` explains a menu Hop's levels.
+
+**Tested.** Two new tests, 377 in all: a menu Hop's draws pinned over four
+Hops, one walked by hand three levels down; and each top menu drawn alike
+with a deep entry rare, and a submenu and an entry sharing a label kept
+apart. The test that checks every target against its draw from the journal
+alone now walks a menu Hop's levels too, and fails if no menu Hop was drawn.
+The draw order pinned on 2026-09-27 holds no menu Hop and did not move.
+
 ## 2026-10-03: only Positron's menu depends on focus
 
 Measured before the engine claims focus for each Route's window, since that

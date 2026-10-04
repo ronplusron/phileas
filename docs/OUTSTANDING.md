@@ -748,7 +748,8 @@ hidden.
   the draw evenly, so View > Appearance > Render Whitespace > Set Render
   Whitespace to Selection is as likely as File > Save. 75 of the 157 sit
   inside submenus, 52 three levels down and 23 four. View alone holds 70.
-  Of Route 2's 64 menu Hops, 13 changed the screen.
+  Of Route 2's 64 menu Hops, 13 changed the screen. Answered by C, the
+  menu drawn a level at a time since 2026-10-03.
 - **The containment never met it.** Route 2 drew Help > Toggle Developer
   Tools, View > Editor Layout > Move Editor into New Window, Help > Show
   Release Notes, Help > Positron Documentation, File > Save As... and Save
@@ -762,11 +763,8 @@ hidden.
 
 - **A. The engine claims focus for each Route's window,** in every window
   mode, so the menu is the same on every launch. It lands only after B and
-  C, since alone it makes the other two problems every Route's.
-- **C. The menu is drawn as a person opens it:** a top menu first, then an
-  entry within it, a level at a time, so each top menu has an equal chance
-  and a fourth-level entry is rare. A chooser behind the choosing seam, and
-  still a seeded draw; 1.11's shares are the related question.
+  C, since alone it makes the other two problems every Route's. Both B and
+  C have landed, so A is what is left of the proposal.
 
 **Ordered on 2026-10-03: B, then C, then A,** chosen from four orders
 offered, after asking whether this is an engine or an adapter change. A and
@@ -777,7 +775,9 @@ it does, which came with the order chosen. `PLAN.md` has where these sit
 among the rest, under "Next". B, Positron's full menu reviewed against its
 exclusions, landed the same day, with exclusion groups a run can let back
 in, and so did the measurement before A: of the three applications, only
-Positron's menu depends on focus. `HISTORY.md` has all of it.
+Positron's menu depends on focus. C, the menu drawn a level at a time, landed
+the same day for every adapter, chosen over letting an adapter opt in.
+`HISTORY.md` has all of it.
 
 **An option, not proposed:** D, offering the menu bar only to an
 application that asks for it, for one whose menu mostly repeats its page,

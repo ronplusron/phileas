@@ -469,6 +469,7 @@ test('every target is the pool entry its draw points at, from the file alone', a
 
   const pools = new Map<string, readonly JournaledCandidate[]>();
   let checked = 0;
+  let menuHops = 0;
   let keyShare = NaN;
   let menuShare = NaN;
   for (const entry of readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`))) {
@@ -484,7 +485,6 @@ test('every target is the pool entry its draw points at, from the file alone', a
     if (entry.kind === 'pool') pools.set(entry.id, entry.candidates);
     if (entry.kind !== 'trip-hop') continue;
 
-    expect(entry.draw, `hop ${entry.hop} has no draw, and the seeded chooser always draws`).toBeDefined();
     expect(entry.shareDraw, `hop ${entry.hop} has no share draw`).toBeDefined();
     // Written out here from the journal's own description of the share draw,
     // rather than calling the chooser's helpers, which would check the chooser
@@ -498,14 +498,39 @@ test('every target is the pool entry its draw points at, from the file alone', a
     const chosen =
       fraction < keyShare ? keys : fraction < keyShare + menuShare ? menu : page;
     const side = [chosen, page, keys, menu].find((candidates) => candidates.length) ?? [];
-    const position = Math.floor(((entry.draw ?? 0) / 4_294_967_296) * side.length);
-    expect(side[position], `hop ${entry.hop}`).toEqual(entry.target);
+    const at = (draw: number, length: number) => Math.floor((draw / 4_294_967_296) * length);
+    if (side === menu) {
+      // A level at a time, as the journal describes menuDraws.
+      expect(entry.draw, `hop ${entry.hop} is a menu Hop and should record menuDraws instead`).toBeUndefined();
+      let remaining = menu;
+      let depth = 0;
+      for (const draw of entry.menuDraws ?? []) {
+        const items: string[] = [];
+        for (const c of remaining) {
+          const path = c.menuPath ?? [];
+          const item = `${path[depth]}${path.length === depth + 1 ? '' : ' >'}`;
+          if (!items.includes(item)) items.push(item);
+        }
+        const item = items[at(draw, items.length)];
+        remaining = remaining.filter((c) => {
+          const path = c.menuPath ?? [];
+          return `${path[depth]}${path.length === depth + 1 ? '' : ' >'}` === item;
+        });
+        depth += 1;
+      }
+      expect(remaining[0], `hop ${entry.hop}`).toEqual(entry.target);
+      menuHops += 1;
+    } else {
+      expect(entry.draw, `hop ${entry.hop} has no draw, and the seeded chooser always draws`).toBeDefined();
+      expect(side[at(entry.draw ?? 0, side.length)], `hop ${entry.hop}`).toEqual(entry.target);
+    }
     checked += 1;
   }
 
   // A loop over an empty journal passes every assertion inside it. This is the
   // line that makes the zero-failure result above mean something.
   expect(checked).toBe(12);
+  expect(menuHops, 'no menu Hop was drawn, so the menu walk went unchecked').toBeGreaterThan(0);
   expect([keyShare, menuShare]).toEqual([DEFAULT_KEY_SHARE, DEFAULT_MENU_SHARE]);
 });
 

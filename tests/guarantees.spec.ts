@@ -6,6 +6,7 @@ import {
   RUN_VARIABLE,
   closeApp,
   createSeededChooser,
+  drawMenuByLevel,
   createTest,
   deriveRouteStreams,
   journalFolder,
@@ -98,6 +99,64 @@ const PINNED: unknown[] = [
   [313465525, 3832602742, 'Enter', '2'],
   [2892804314, 221617084, 'Inventory', '0'],
 ];
+
+plain('a menu Hop walks the menu a level at a time, one draw per level, pinned', async () => {
+  // Frozen on 2026-10-03, when the menu began to be drawn a level at a time,
+  // under the same rule as the order above: if this fails, a menu draw was
+  // reordered, added or removed, and every recorded seed is invalid. The
+  // fourth Hop is worked by hand: 0.50 of [App, View] is View, 0.54 of
+  // [Show Inventory, Whitespace] is Whitespace, and 0.76 of [None, All] is All.
+  const pool = [
+    { source: 'page', role: 'button', name: 'Summary', nth: 1, disabled: false },
+    { source: 'menu', role: 'menuitem', name: 'About', menuPath: ['App', 'About'] },
+    { source: 'menu', role: 'menuitem', name: 'Show Inventory', menuPath: ['View', 'Show Inventory'] },
+    { source: 'menu', role: 'menuitem', name: 'None', menuPath: ['View', 'Whitespace', 'None'] },
+    { source: 'menu', role: 'menuitem', name: 'All', menuPath: ['View', 'Whitespace', 'All'] },
+  ] as unknown as SurveyedCandidate[];
+  const trip = deriveRouteStreams('pin-menu', 1).trip;
+  const chooser = createSeededChooser({ keyShare: 0, menuShare: 0.9 });
+  const drawn = [];
+  for (let hop = 0; hop < 4; hop += 1) {
+    const { target, draw, menuDraws, shareDraw } = await chooser.choose(pool, trip);
+    drawn.push([shareDraw, draw ?? null, menuDraws ?? null, target.name]);
+  }
+  expect(drawn).toEqual([
+    [3621398769, null, [3099882758, 1442991573], 'Show Inventory'],
+    [4201995323, 1829482063, null, 'Summary'],
+    [3219173349, null, [584532983, 3049685309], 'About'],
+    [3023621292, null, [2150662823, 2319596296, 3278844874], 'All'],
+  ]);
+});
+
+plain('each top menu is drawn alike, and an entry deep in a submenu is rare', () => {
+  // The reason for walking by level. One top menu holding one entry, beside
+  // another holding nine, of which eight sit a level further down: drawn
+  // evenly, the lone entry would come up 1 time in 10.
+  const entries = [
+    { menuPath: ['File', 'Save'] },
+    { menuPath: ['View', 'Explorer'] },
+    ...['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map((x) => ({ menuPath: ['View', 'Whitespace', x] })),
+  ];
+  const rng = deriveRouteStreams('menu-shape', 1).trip;
+  const counts = new Map<string, number>();
+  const runs = 4_000;
+  for (let i = 0; i < runs; i += 1) {
+    const { item, draws } = drawMenuByLevel(entries, rng);
+    expect(draws).toHaveLength(item.menuPath.length);
+    const key = item.menuPath.join(' > ');
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const share = (key: string) => (counts.get(key) ?? 0) / runs;
+  expect(share('File > Save')).toBeGreaterThan(0.45);
+  expect(share('File > Save')).toBeLessThan(0.55);
+  expect(share('View > Explorer')).toBeGreaterThan(0.2);
+  expect(share('View > Whitespace > A')).toBeLessThan(0.05);
+  // A submenu and an entry sharing a label are two items, never merged.
+  const shared = [{ menuPath: ['Go', 'Back'] }, { menuPath: ['Go', 'Back', 'Twice'] }];
+  const seen = new Set<string>();
+  for (let i = 0; i < 200; i += 1) seen.add(drawMenuByLevel(shared, rng).item.menuPath.join(' > '));
+  expect([...seen].sort()).toEqual(['Go > Back', 'Go > Back > Twice']);
+});
 
 // ---------------------------------------------------------------------------
 // The Fix draws from its own stream.

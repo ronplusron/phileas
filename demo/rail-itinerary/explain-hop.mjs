@@ -89,12 +89,29 @@ console.log(
 );
 
 const list = sides[side];
-const index = Math.floor(fraction(hop.draw) * list.length);
-const chosen = list[index];
-console.log(`3. Pick one. The seed gave ${hop.draw}, which is ${percent(fraction(hop.draw))} of the way up.`);
-console.log(
-  `   ${percent(fraction(hop.draw))} of ${list.length} lands on number ${index + 1}: ${chosen ? targetText(chosen) : 'nothing'}.\n`
-);
+let chosen;
+if (hop.menuDraws) {
+  // Since 2026-10-03 the menu is opened as a person opens it: a top menu
+  // first, then an item within it, one number from the seed for each level.
+  console.log(`3. Open the menu, a level at a time, one number from the seed for each.`);
+  let remaining = list;
+  hop.menuDraws.forEach((draw, depth) => {
+    const itemOf = (c) => `${c.menuPath[depth]}${c.menuPath.length === depth + 1 ? '' : ' >'}`;
+    const items = [...new Set(remaining.map(itemOf))];
+    const index = Math.floor(fraction(draw) * items.length);
+    console.log(`   ${percent(fraction(draw))} of [${items.join(', ')}] lands on ${items[index]}.`);
+    remaining = remaining.filter((c) => itemOf(c) === items[index]);
+  });
+  chosen = remaining[0];
+  console.log(`   So: ${chosen ? targetText(chosen) : 'nothing'}.\n`);
+} else {
+  const index = Math.floor(fraction(hop.draw) * list.length);
+  chosen = list[index];
+  console.log(`3. Pick one. The seed gave ${hop.draw}, which is ${percent(fraction(hop.draw))} of the way up.`);
+  console.log(
+    `   ${percent(fraction(hop.draw))} of ${list.length} lands on number ${index + 1}: ${chosen ? targetText(chosen) : 'nothing'}.\n`
+  );
+}
 
 if (!chosen || JSON.stringify(chosen) !== JSON.stringify(hop.target)) {
   console.error(

@@ -301,7 +301,7 @@ export interface TripHopEntry {
    * reader can check from the file alone. On a replay, a draw
    * that differs names the hop where the sequence broke, even when the broken
    * draw lands on the same target by chance. Absent for a chooser that does not
-   * draw.
+   * draw, and for a menu entry since 2026-10-03, which `menuDraws` records.
    */
   readonly draw?: number;
   /**
@@ -318,6 +318,16 @@ export interface TripHopEntry {
    * into the whole pool.
    */
   readonly shareDraw?: number;
+  /**
+   * For a menu entry, the raw 32-bit draws that walked the menu to it, one per
+   * level, in place of `draw`, since 2026-10-03; `drawMenuByLevel` says how.
+   * At each level the items are the distinct labels of the side's entries
+   * under the path so far, in pool order, an entry and a submenu sharing a
+   * label being two items, and each draw picks floor(draw / 2^32 x items).
+   * Before that day a menu Hop was drawn evenly from every entry, and
+   * recorded `draw` like any other.
+   */
+  readonly menuDraws?: readonly number[];
   /** What was typed, where the action was `type`, or filled, for `fill`. */
   readonly value?: string;
   /**

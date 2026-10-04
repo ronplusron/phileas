@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and seventy-five tests, after a
+through, and `npm test` runs three hundred and seventy-seven tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -152,6 +152,8 @@ printed. Two more came with exclusion groups: a group kept out unless a run
 lets it in, and a group the adapter does not declare refused. Three more
 came with the log check's wider rule: a line naming an error class or a
 plain word for failure, the same through a Route, and a log's own pattern.
+Two more came with the menu drawn a level at a time: a menu Hop's draws
+pinned, and each top menu drawn alike with a deep entry rare.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -172,12 +174,13 @@ found in it. The adapter declares no checks of its own yet, and no Fix.
 `docs/HISTORY.md` has why it moved and how, and the adapter that was in
 `trial/editor/` from 2026-09-30 is in this repository's history.
 
-**What comes next was ordered on 2026-10-03:** the rest of the menu bar's
-three parts, and then the rest of replay from the journal. Its first four
-steps landed the same day: each Fix step's content on its journal line,
-issue 88 tried in VS Code, Positron's whole menu reviewed against its
-exclusions, with exclusion groups a run can let back in, and the finding
-that only Positron's menu depends on focus. `docs/PLAN.md` has the order and why, under "Next".
+**What comes next was ordered on 2026-10-03:** the engine claiming focus
+for each Route's window, and then the rest of replay from the journal. Its
+first five steps landed the same day: each Fix step's content on its journal
+line, issue 88 tried in VS Code, Positron's whole menu reviewed against its
+exclusions, with exclusion groups a run can let back in, the finding that
+only Positron's menu depends on focus, and the menu drawn a level at a
+time. `docs/PLAN.md` has the order and why, under "Next".
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stops where it stands.
@@ -379,7 +382,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and seventy-five tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and seventy-seven tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

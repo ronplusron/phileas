@@ -29,6 +29,7 @@ import {
   survey,
   NondeterministicExclusion,
   takesTypedValue,
+  type MenuCandidate,
   type SurveyedCandidate,
   type SurveyResult,
   type ExclusionTally,
@@ -79,6 +80,11 @@ export interface Choice {
    * `sideOfShareDraw`.
    */
   readonly shareDraw?: number;
+  /**
+   * For a menu entry, the draws that walked the menu to it a level at a time,
+   * in place of `draw`. See `drawMenuByLevel`.
+   */
+  readonly menuDraws?: readonly number[];
 }
 
 /**
@@ -212,10 +218,58 @@ export function createSeededChooser(shares: Shares): Chooser {
       // One draw, wanted for its raw value: sideOfShareDraw reads the side from it.
       const share = rng.pickWithDraw([0]);
       const side = sideCandidates(candidates, sideOfShareDraw(share.draw, shares));
+      // The menu is walked a level at a time, as a person opens it.
+      if (side.length && side.every((candidate) => candidate.source === 'menu')) {
+        const { item, draws } = drawMenuByLevel(side as readonly MenuCandidate[], rng);
+        return { target: item, menuDraws: draws, shareDraw: share.draw };
+      }
       const { item, draw } = rng.pickWithDraw(side);
       return { target: item, draw, shareDraw: share.draw };
     },
   };
+}
+
+/**
+ * Draw a menu entry the way a person opens a menu: one top menu, evenly, then
+ * one item within it, evenly, and on down until an entry, rather than one
+ * entry evenly from them all.
+ *
+ * Decided on 2026-10-03 for every adapter, chosen over letting an adapter opt
+ * in. Drawn evenly, Positron's 165 offered entries put about four menu Hops in
+ * ten somewhere in View, and Set Render Whitespace to All, four levels down,
+ * was as likely as File > Save; a level at a time, each top menu has an equal
+ * chance and an entry deep in a submenu is rare. `docs/OUTSTANDING.md` 1.23
+ * has the measurement.
+ *
+ * Only branches holding an offered entry are drawn from, since `entries` is
+ * what the survey offered. Each level takes one draw, even where it has one
+ * item, so a reader can walk the journal's draws without knowing which levels
+ * were forced. Items keep menu order. Two entries with the same path are one
+ * item, and the first is taken, as a click by label would take it.
+ */
+export function drawMenuByLevel<T extends { readonly menuPath: readonly string[] }>(
+  entries: readonly T[],
+  rng: Rng
+): { item: T; draws: number[] } {
+  let remaining = entries;
+  const draws: number[] = [];
+  for (let depth = 0; ; depth += 1) {
+    // At this level, an item is a label and whether it ends there, so a
+    // submenu and an entry that share a label stay two items.
+    const items: { label: string; leaf: boolean }[] = [];
+    for (const entry of remaining) {
+      const label = entry.menuPath[depth] ?? '';
+      const leaf = entry.menuPath.length <= depth + 1;
+      if (!items.some((item) => item.label === label && item.leaf === leaf)) items.push({ label, leaf });
+    }
+    const { item: chosen, draw } = rng.pickWithDraw(items);
+    draws.push(draw);
+    remaining = remaining.filter(
+      (entry) => (entry.menuPath[depth] ?? '') === chosen.label && entry.menuPath.length <= depth + 1 === chosen.leaf
+    );
+    const first = remaining[0];
+    if (chosen.leaf && first) return { item: first, draws };
+  }
 }
 
 /** The seeded chooser with the engine's default shares. */
@@ -865,7 +919,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       }
 
       const startedAt = new Date();
-      const { target, draw, shareDraw } = await chooser.choose(found.candidates, streams.trip);
+      const { target, draw, shareDraw, menuDraws } = await chooser.choose(found.candidates, streams.trip);
       // The chooser is a seam other implementations will fill. One that hands
       // back something the survey did not offer would have the journal record
       // a Hop against a pool that does not hold its target (R10).
@@ -949,6 +1003,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         pool,
         ...(draw === undefined ? {} : { draw }),
         ...(shareDraw === undefined ? {} : { shareDraw }),
+        ...(menuDraws === undefined ? {} : { menuDraws }),
         ...(action === 'type' ? { value } : {}),
         ...(abandoned === undefined ? {} : { abandoned }),
         ...(interceptedBy === undefined ? {} : { interceptedBy }),
