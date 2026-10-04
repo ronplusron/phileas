@@ -1383,6 +1383,29 @@ menu bar to be offered, and one that does not would get none. With the menu
 now drawn a level at a time, how much of a Route goes to such repeats is
 unmeasured.
 
+### 2.26 A Positron window that closed at hop 3, unexplained
+
+Seen on 2026-10-04, seed `3c62c3b3f576`, one Positron Route of 200 Hops with
+no Fix, in `back` mode before `back` handed the screen back. Hop 3 pressed
+⇧⌘H, the shortcut printed in the Session button, and the window closed: the
+Route failed still-responding on "the window closed", which since
+2026-09-28 is reported only once the engine has found the window gone, and
+the person at the machine did not close it. Recorded on request; nothing is
+decided.
+
+**Ruled out the same day:** replaying the Route from its journal retraced
+all 3 Hops 13 times, 11 in `back` and 2 in `front`, and the window stayed
+open every time. So it was not the Hops alone, and not the window having
+focus. Positron binds ⇧⌘H to five commands, Replace in Files, Variables,
+Help, Viewer and Set Working Directory, the last with the highest weight;
+pressed in a hidden launch with the main process watched, it called no
+window or dialog function. The run's profile and logs went with the Route,
+and its trace was overwritten by later runs, so nothing of it is left to
+read. The finding stays known and unfiled, `81072f59`.
+
+**Seen once beside it:** a hidden window made visible after ⇧⌘H, in a probe
+that launched two Positrons at once; 4 single launches did not repeat it.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias
