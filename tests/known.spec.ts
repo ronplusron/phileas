@@ -1,6 +1,8 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
@@ -31,7 +33,7 @@ import {
   type TripHopEntry,
 } from '../src/index';
 import { journalsBeside, listKnownFindings } from '../src/known.mjs';
-import { parse } from '../bin/phileas.mjs';
+import { knownFileIn, parse } from '../bin/phileas.mjs';
 import { removeScratch, scratch } from './scratch';
 
 /**
@@ -314,6 +316,39 @@ test("a Journey's end never adds back a false alarm, counts it apart, and report
   expect(printed).toMatch(/UNFILED, seen 1 time\(s\): \w{8} {2}console-error: removed after a fix/);
   expect(printed).not.toMatch(/UNFILED[^\n]*dismissed/);
   expect(printed).toContain('phileas known dismiss <id> --reason <why>');
+});
+
+test("known finds the folder's own file when run from inside phileas/, and says alone what is missing", () => {
+  // Run from inside a consumer's phileas/, the default phileas/known-findings.json
+  // is not there and known-findings.json is.
+  const inside = scratch('phileas-known-inside-');
+  const atRoot = scratch('phileas-known-root-');
+  const empty = scratch('phileas-known-empty-');
+  const signature = 'console-error: the tickets could not be checked';
+  fs.writeFileSync(path.join(inside, 'known-findings.json'), JSON.stringify([finding(signature)]));
+  fs.mkdirSync(path.join(atRoot, 'phileas'));
+  fs.writeFileSync(path.join(atRoot, 'phileas', 'known-findings.json'), '[]');
+  const fallback = path.join('phileas', 'known-findings.json');
+  expect(knownFileIn(fallback, inside)).toBe('known-findings.json');
+  expect(knownFileIn(fallback, atRoot)).toBe(fallback);
+  expect(knownFileIn(fallback, empty)).toBe(fallback);
+  // A file named is taken as named.
+  expect(knownFileIn('other.json', inside)).toBe('other.json');
+
+  const command = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'phileas.mjs');
+  const run = (cwd: string) =>
+    spawnSync(process.execPath, [command, 'known', 'dismiss', findingId(signature).slice(0, 4), '--reason', 'a test'], {
+      cwd,
+      encoding: 'utf8',
+    });
+  const worked = run(inside);
+  expect(worked.status, worked.stderr).toBe(0);
+  expect(worked.stdout).toMatch(/is marked a false alarm \(a test\)/);
+
+  // Nothing to find: the one line saying so, with no usage text after it.
+  const refused = run(empty);
+  expect(refused.status).toBe(2);
+  expect(refused.stderr.trim()).toBe(`phileas: there is no ${fallback}; a Journey writes it when it ends, or give the file`);
 });
 
 test('the command parses known dismiss and known remove, and refuses dismiss without a reason', () => {

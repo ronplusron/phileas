@@ -120,7 +120,8 @@ known add: mark a known finding as filed. A Journey adds each finding it
   meets to the known findings, unfiled, when it ends, and prints its id.
   id        The finding's id, or enough of its start to name one.
   --issue   Where it was filed, such as ronplusron/phileas#44.
-  file      The known findings. Defaults to ${DEFAULT_KNOWN}.
+  file      The known findings. Defaults to ${DEFAULT_KNOWN}, or to
+            known-findings.json here when run from inside phileas/.
 
 known dismiss: mark a known finding a false alarm: Routes keep carrying past
   it, a Journey's summary counts it apart from bugs, and it is never added
@@ -146,6 +147,35 @@ known list: print every known finding: unfiled, filed and false alarms, each
 function refuse(message) {
   console.error(`phileas: ${message}\n\n${USAGE}`);
   process.exit(2);
+}
+
+/**
+ * Refuse with the reason alone, for a command that was understood and names
+ * a file or folder that is not there. The usage text after it buried the one
+ * line that said what was missing: reported on 2026-10-03 by the session
+ * building Bobolink Inbox's adapter, as `known dismiss` printing "the general
+ * usage text" and changing nothing.
+ * @param {string} message
+ * @returns {never}
+ */
+function fail(message) {
+  console.error(`phileas: ${message}`);
+  process.exit(2);
+}
+
+/**
+ * The known findings a `known` command reads: the one named, or by default
+ * `phileas/known-findings.json`, or `known-findings.json` in the folder the
+ * command runs from where only that one exists, since that folder is then the
+ * consumer's `phileas/` itself. Reported on 2026-10-03 from inside Bobolink
+ * Inbox's `phileas/`, where the default could not be found.
+ * @param {string} file
+ * @param {string} [dir]
+ * @returns {string}
+ */
+export function knownFileIn(file, dir = process.cwd()) {
+  if (file !== DEFAULT_KNOWN || fs.existsSync(path.join(dir, DEFAULT_KNOWN))) return file;
+  return fs.existsSync(path.join(dir, path.basename(DEFAULT_KNOWN))) ? path.basename(DEFAULT_KNOWN) : file;
 }
 
 /**
@@ -305,7 +335,7 @@ export function runReporter(passThrough) {
  */
 function run(config, settings, passThrough, { reporter = true } = {}) {
   if (!fs.existsSync(config)) {
-    refuse(
+    fail(
       config === DEFAULT_CONFIG
         ? `there is no ${DEFAULT_CONFIG}/ folder here; give the Playwright config to run`
         : `${config} does not exist`
@@ -412,7 +442,8 @@ function show(what) {
   try {
     found = journalsFor(what);
   } catch (error) {
-    refuse(/** @type {Error} */ (error).message);
+    // Every way this fails names what is not there, so the reason stands alone.
+    fail(/** @type {Error} */ (error).message);
   }
   console.log(`Journals in ${found.from}\n`);
   for (const file of found.files) {
@@ -428,7 +459,7 @@ function show(what) {
  */
 function knownAdd(id, issue, file) {
   if (!fs.existsSync(file)) {
-    refuse(`there is no ${file}; a Journey writes it when it ends, or give the file`);
+    fail(`there is no ${file}; a Journey writes it when it ends, or give the file`);
   }
   try {
     const filed = markFiled(file, id, issue);
@@ -448,7 +479,7 @@ function knownAdd(id, issue, file) {
  */
 function knownChange(action, id, file, reason) {
   if (!fs.existsSync(file)) {
-    refuse(`there is no ${file}; a Journey writes it when it ends, or give the file`);
+    fail(`there is no ${file}; a Journey writes it when it ends, or give the file`);
   }
   try {
     if (action === 'dismiss') {
@@ -467,7 +498,7 @@ function knownChange(action, id, file, reason) {
 /** @param {string} file */
 function knownList(file) {
   if (!fs.existsSync(file)) {
-    refuse(`there is no ${file}; a Journey writes it when it ends, or give the file`);
+    fail(`there is no ${file}; a Journey writes it when it ends, or give the file`);
   }
   try {
     for (const line of listKnownFindings(file, journalsBeside(file))) console.log(line);
@@ -489,10 +520,10 @@ function main() {
   else if (parsed.command === 'show') show(parsed.what);
   // One Route is enough to see the start, since every Route starts the same way.
   else if (parsed.command === 'survey') run(parsed.config, { PHILEAS_SURVEY: '1', PHILEAS_ROUTES: '1' }, [], { reporter: false });
-  else if (parsed.command === 'known-add') knownAdd(parsed.id, parsed.issue, parsed.file);
-  else if (parsed.command === 'known-dismiss') knownChange('dismiss', parsed.id, parsed.file, parsed.reason);
-  else if (parsed.command === 'known-remove') knownChange('remove', parsed.id, parsed.file);
-  else if (parsed.command === 'known-list') knownList(parsed.file);
+  else if (parsed.command === 'known-add') knownAdd(parsed.id, parsed.issue, knownFileIn(parsed.file));
+  else if (parsed.command === 'known-dismiss') knownChange('dismiss', parsed.id, knownFileIn(parsed.file), parsed.reason);
+  else if (parsed.command === 'known-remove') knownChange('remove', parsed.id, knownFileIn(parsed.file));
+  else if (parsed.command === 'known-list') knownList(knownFileIn(parsed.file));
   else run(parsed.config, parsed.settings, parsed.passThrough);
 }
 

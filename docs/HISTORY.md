@@ -25,6 +25,27 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-04: a `known` command works from inside `phileas/`, and a missing file is said alone
+
+Reported by the session building Bobolink Inbox's adapter: `phileas known
+dismiss`, run from the consumer's `phileas/` folder, "printed the general
+usage text and changed nothing", and worked with the file named. Every
+`known` command defaults to `phileas/known-findings.json`, which from
+inside that folder is not there. The refusal did name it, on its first
+line, and then printed the forty lines of usage after it.
+
+Asked to fix both, as its own change, from three offered. A command that
+was understood and names a file or folder that is not there now says so in
+one line, without the usage; that covers `known`, `run` with no config and
+`show` with no journals. And a `known` command run where
+`phileas/known-findings.json` is not there and `known-findings.json` is
+takes that one, since the folder is then `phileas/` itself.
+
+**Tested.** One new test, 379 in all: which file is taken from inside
+`phileas/`, from the consumer's root and from neither, a real `known
+dismiss` run from inside `phileas/`, and the one-line refusal where there
+is no file.
+
 ## 2026-10-04: the console check sets aside a line the engine's trace makes
 
 **Reported by the session building Bobolink Inbox's adapter,** as a console

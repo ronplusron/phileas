@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and seventy-eight tests, after a
+through, and `npm test` runs three hundred and seventy-nine tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -155,7 +155,9 @@ plain word for failure, the same through a Route, and a log's own pattern.
 Two more came with the menu drawn a level at a time: a menu Hop's draws
 pinned, and each top menu drawn alike with a deep entry rare. One more
 holds the console check to setting aside the line the engine's own trace
-makes in a sandboxed frame, and nothing else.
+makes in a sandboxed frame, and nothing else. One more runs a `known`
+command from inside `phileas/` and from a folder with no known findings,
+which it refuses in one line.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -384,7 +386,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and seventy-eight tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and seventy-nine tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
