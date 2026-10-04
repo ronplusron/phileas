@@ -687,9 +687,38 @@ the options offered:
   case R12 names without a second machine.
 
 **Placed on 2026-10-03:** the rest of replay comes after the menu bar's
-work, which `HISTORY.md` records. What was to be built first, each Fix step's content on its
-journal line, landed the same day, and `HISTORY.md` has it. `PLAN.md` has
-the order, under "Next".
+work, which `HISTORY.md` records. What was to be built first, each Fix
+step's content on its journal line, landed the same day, and `HISTORY.md`
+has it. `PLAN.md` has the order, under "Next".
+
+**Decided on 2026-10-04, how it is built,** from two questions asked and a
+list of defaults agreed as listed:
+
+- **`phileas replay` before the new step kinds,** chosen over the kinds
+  first, so a Route whose Fix has `code` steps can be replayed with
+  `--with-current-fix` from the start. The kinds come next, then the proof
+  under R 4.4.3.
+- **A replay chooser behind the choosing seam,** chosen over a replay
+  runner of its own: in place of a draw it picks the candidate whose role,
+  name and position, menu path or key match the recorded target exactly,
+  so the hop loop, its checks and its journal stay as they are. A value
+  seam types the recorded value. A target not on offer stops the replay as
+  could not replay, naming the Hop and what was there instead.
+- **The command:** `phileas replay <journal file> [config] [--whole]
+  [--with-current-fix]`, which runs the consumer's own spec with the
+  journal's seed and Route.
+- **The Fix:** its `act` steps from the journal; a `code` step refused
+  before anything launches, by name, unless `--with-current-fix`, where the
+  current Fix's step of the same number must carry the same label and
+  source hash.
+- **The finding replayed** is set aside from the known findings.
+- **How far:** to the Hop where the finding arrived and 3 more; `--whole`
+  replays every recorded Hop.
+- **Outcomes:** reproduced fails the test, as the finding does, and the
+  reporter says reproduced; not reproduced passes it and the reporter says
+  not reproduced, never a plain pass; could not replay fails it with the
+  reason. A Route that passed or stranded is reported as ending the same
+  way or not.
 
 ### 1.21 Surveying every window the application opens
 
