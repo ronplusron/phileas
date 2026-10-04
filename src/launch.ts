@@ -1,5 +1,7 @@
+import { execFile, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
 import type { AppUnderTest, UniversalCheck } from './app-under-test.js';
 import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle.js';
@@ -255,6 +257,9 @@ export type WindowMode =
    *
    * The useful default for watching, because the run does not take the screen
    * away from you: the window is there to be selected when you want it.
+   *
+   * Kept behind by handing the screen back, not by changing what the
+   * application does with its windows: see `handBackTheScreen`.
    */
   | 'back'
   /** On the screen and activated, so it comes forward and can be left. */
@@ -404,6 +409,110 @@ const TRANSPARENT_FROM_THE_FIRST_LINE = `(() => {
 /** How long the first-line install may take, from the process starting. */
 const FIRST_LINE_TIMEOUT_MS = 20_000;
 
+/**
+ * How long `back` mode waits for the application to take the screen before
+ * concluding it never will, from the main process being reached.
+ */
+const HAND_BACK_WINDOW_MS = 30_000;
+
+/** The application macOS lists as frontmost, read before a launch. */
+type FrontmostApp = {
+  /** Its application serial number, which macOS stops listing once it quits. */
+  readonly asn: string;
+  readonly name: string;
+  /** Missing for a process macOS lists without one, which cannot be addressed. */
+  readonly bundleId: string | undefined;
+};
+
+/** What `lsappinfo` prints for the arguments; `info -only <key>` prints `"key"="value"`. */
+function lsappinfo(args: string[]): string {
+  return execFileSync('lsappinfo', args, { encoding: 'utf8' });
+}
+
+/**
+ * The application that is frontmost right now, or nothing where that cannot
+ * be read: on another platform, or when macOS lists nothing as frontmost.
+ */
+export function frontmostApp(): FrontmostApp | undefined {
+  if (process.platform !== 'darwin') return undefined;
+  try {
+    const asn = lsappinfo(['front']).trim();
+    if (!asn) return undefined;
+    const read = (key: string) => lsappinfo(['info', '-only', key, asn]).match(/="(.*)"/)?.[1];
+    return { asn, name: read('name') ?? asn, bundleId: read('bundleid') };
+  } catch {
+    return undefined;
+  }
+}
+
+/** The pid of the frontmost application right now, as macOS lists it. */
+function frontmostPid(): number | undefined {
+  const pid = lsappinfo(['info', '-only', 'pid', lsappinfo(['front']).trim()]).match(/=\s*(\d+)/)?.[1];
+  return pid === undefined ? undefined : Number(pid);
+}
+
+/**
+ * Hand the screen back to whatever was frontmost before the launch, once the
+ * application has taken it.
+ *
+ * **Showing a window activates the application on this macOS, whoever
+ * launched it.** Measured on 2026-10-04 with buggy launched five ways, as a
+ * child of the engine's process, through a helper that disclaims
+ * responsibility for it, as a child of launchd, through `open -g`, which asks
+ * for exactly the opposite, and through plain `open`: the window came to the
+ * front within 20 ms every time. So the launch cannot be shaped so that macOS
+ * leaves the application behind. Keeping it behind from inside, by replacing
+ * show() with showInactive(), was weighed and declined the same day: the
+ * application's window would never be key, and it would never see the focus a
+ * real launch gives it, which changes the application under test.
+ *
+ * So the engine does what the person watching would do: the application comes
+ * forward as it does on any launch, and the moment it does, the application
+ * that was frontmost is asked to activate, by an Apple Event addressed to it
+ * alone, which needs no permission. The application under test is touched by
+ * nothing; it is no longer frontmost, exactly as if the person had clicked
+ * back to their work, and it sees the blur that would send. Measured through
+ * the engine the same day: buggy was frontmost for about 160 ms and Positron
+ * for about 230 ms, and each then stayed behind for the whole Route, its
+ * window still visible.
+ *
+ * **Once per launch and never again,** chosen on 2026-10-04 over handing back
+ * each time the application comes forward and over handing back only when a
+ * Hop caused it. An application that activates itself later in a Route cannot
+ * be told from a person clicking it to look; `docs/DEFECTS.md` has the one
+ * path found in Positron that can. Not awaited by the launch, since an
+ * application that never takes the screen, at a locked screen for one, would
+ * hold the launch for the whole window. Nothing is done when the previous
+ * application has quit, since activating it would launch it again, or when
+ * something else has come to the front in between, since the person has
+ * already moved on.
+ */
+export async function handBackTheScreen(app: ElectronApplication, previous: FrontmostApp): Promise<void> {
+  if (!previous.bundleId) return;
+  const taken = await app
+    .evaluate(
+      ({ app: electronApp, BrowserWindow }, windowMs) =>
+        new Promise<boolean>((resolve) => {
+          if (BrowserWindow.getFocusedWindow()) return resolve(true);
+          const never = setTimeout(() => resolve(false), windowMs);
+          electronApp.once('did-become-active', () => {
+            clearTimeout(never);
+            resolve(true);
+          });
+        }),
+      HAND_BACK_WINDOW_MS
+    )
+    // The application closed first: the Route ended before it ever took the
+    // screen, and there is nothing to report.
+    .catch(() => false);
+  if (!taken) return;
+  const pid = app.process().pid;
+  if (pid === undefined || frontmostPid() !== pid) return;
+  // Gone, or no longer listed: activating it would launch it.
+  if (!lsappinfo(['info', '-only', 'pid', previous.asn]).includes('pid')) return;
+  await promisify(execFile)('osascript', ['-e', `tell application id "${previous.bundleId}" to activate`]);
+}
+
 /** What Playwright says when the main process drops the answer to a call. */
 const DROPPED_ANSWER = 'Resulting promise was garbage collected';
 
@@ -543,6 +652,8 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
   }
 
   const mode = windowMode();
+  // Read before the launch, since the launch is what changes it.
+  const previous = mode === 'back' ? frontmostApp() : undefined;
 
   // Started before the launch and awaited after it, since each waits on the
   // other: the launch returns only once the application has gone on past its
@@ -592,6 +703,16 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
     // Before firstWindow(), which is the earliest the main process can be reached
     // and, for an app that defers display, before anything has been drawn.
     await prepareWindows(app, mode);
+
+    // Started here and left to run, before any window has been drawn and for
+    // as long as the launch takes; `handBackTheScreen` says why it is not
+    // awaited. A failure here changes nothing the Route does, so it is logged
+    // rather than thrown.
+    if (previous) {
+      void handBackTheScreen(app, previous).catch((error: unknown) => {
+        console.error(`back mode could not hand the screen back to ${previous.name}: ${String(error)}`);
+      });
+    }
 
     const launched: LaunchedApp = {
       app,

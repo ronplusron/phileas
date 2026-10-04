@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and eighty-six tests, after a
+through, and `npm test` runs three hundred and eighty-seven tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -152,7 +152,8 @@ printed. Two more came with exclusion groups: a group kept out unless a run
 lets it in, and a group the adapter does not declare refused. Three more
 came with the log check's wider rule: a line naming an error class or a
 plain word for failure, the same through a Route, and a log's own pattern.
-Two more came with the menu drawn a level at a time: a menu Hop's draws
+One more came with `back` handing the screen back, read from outside the
+process with `lsappinfo`, against `front` as its control. Two more came with the menu drawn a level at a time: a menu Hop's draws
 pinned, and each top menu drawn alike with a deep entry rare. One more
 holds the console check to setting aside the line the engine's own trace
 makes in a sandboxed frame, and nothing else. One more runs a `known`
@@ -288,12 +289,13 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Seventeen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
-late finding arrives, and one a Fix's fingerprint missing what the Fix
-does not itself contain. That file holds what is wrong, confirmed by reading the
+late finding arrives, one a Fix's fingerprint missing what the Fix
+does not itself contain, and one an application in `back` mode bringing
+itself forward partway through a Route. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
@@ -393,7 +395,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and eighty-six tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and eighty-seven tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
@@ -507,11 +509,15 @@ keeps it above every other window, which is genuinely hard to get away from.
 Anything else is refused by name rather than read as hidden.
 
 **Showing a window is not the same as activating the application**, which was
-measured rather than assumed: a process launched from a terminal does not
-become frontmost on macOS, so under `back` the window is drawn correctly and
+measured rather than assumed: under `back` the window is drawn correctly and
 sits behind what you are looking at, and does not appear at all if that is
 full-screen in its own Space. Every reading from inside the process says the
-window is fine.
+window is fine. **But on macOS 26 showing a window does activate it,**
+measured on 2026-10-04, so `back` now hands the screen back: the application
+comes forward for a fraction of a second at launch, and the engine then asks
+whatever was frontmost before to activate again, touching nothing in the
+application. Once per launch; an application that brings itself forward
+later stays in front, and `docs/DEFECTS.md` has the one such path found.
 
 `PHILEAS_HOP_DELAY_MS` pauses that many milliseconds after each Hop, Fix steps
 included, and after each listing `phileas survey` prints, so a run can be

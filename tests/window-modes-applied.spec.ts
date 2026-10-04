@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
@@ -21,6 +22,10 @@ import { launchOrRemove } from './scratch';
  * shell. It was confirmed by a person looking at the screen on 2026-09-22, and
  * that is the only evidence there is for it. A test asserting `front` works,
  * written from inside, would be asserting something it cannot see.
+ *
+ * **From outside, it can be seen,** found on 2026-10-04: macOS's `lsappinfo`
+ * names the frontmost application, which needs no screen access. The test
+ * of `back` handing the screen back reads it, with `front` as its control.
  */
 
 async function windowState(mode: string | undefined, cfg: AppUnderTest = buggy) {
@@ -39,7 +44,10 @@ async function windowState(mode: string | undefined, cfg: AppUnderTest = buggy) 
     // is worse than all three failing.
     await cfg.waitForReady(await launched.app.firstWindow());
 
-    return await launched.app.evaluate(({ BrowserWindow }) => {
+    // Long enough for back mode to have handed the screen back, which takes
+    // about 200 ms from the window appearing.
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+    const inside = await launched.app.evaluate(({ BrowserWindow }) => {
       const window = BrowserWindow.getAllWindows()[0];
       return {
         exists: window !== undefined,
@@ -47,6 +55,7 @@ async function windowState(mode: string | undefined, cfg: AppUnderTest = buggy) 
         alwaysOnTop: window?.isAlwaysOnTop() ?? false,
       };
     });
+    return { ...inside, frontmost: frontmostIs(launched.app.process().pid) };
   } finally {
     try {
       await closeApp(cfg, launched);
@@ -57,6 +66,29 @@ async function windowState(mode: string | undefined, cfg: AppUnderTest = buggy) 
     }
   }
 }
+
+/** Whether macOS lists this pid as the frontmost application, or 'locked' at a locked screen, where nothing can come forward. */
+function frontmostIs(pid: number | undefined): boolean | 'locked' {
+  const asn = execFileSync('lsappinfo', ['front'], { encoding: 'utf8' }).trim();
+  const read = (key: string) => execFileSync('lsappinfo', ['info', '-only', key, asn], { encoding: 'utf8' });
+  if (/loginwindow/.test(read('name'))) return 'locked';
+  return Number(read('pid').match(/=\s*(\d+)/)?.[1]) === pid;
+}
+
+test('back hands the screen back, and front, the control, keeps it', async () => {
+  // The control first: a reading that could not see activation would say
+  // "not frontmost" for back whatever happened.
+  const front = await windowState('front');
+  test.skip(front.frontmost === 'locked', 'The screen is locked, so no application can come forward to be measured.');
+  // Skipped rather than failed, and said: measured on 2026-10-04, front held
+  // the screen in 5 of 9 runs, and lost it, as far as could be told, to a
+  // person using the machine at the time, which no test can prevent.
+  test.skip(front.frontmost !== true, 'front did not hold the screen, most likely because someone was using the machine, so back cannot be measured against it.');
+
+  const back = await windowState('back');
+  expect(back.visible).toBe(true);
+  expect(back.frontmost).toBe(false);
+});
 
 test('hidden keeps the window off the screen', async () => {
   const state = await windowState(undefined);

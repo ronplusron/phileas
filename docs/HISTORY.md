@@ -25,6 +25,50 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-04: `back` hands the screen back
+
+**Found by a Journey.** A Positron run with `--show back`, started from the
+Claude app's Terminal panel, came to the front. Measured with a poller of
+`lsappinfo front`, which needs no screen access: `buggy` and Positron both
+came to the front about a second after launch in `back`, and neither did in
+`hidden`. The claim of focus that had just landed was not the cause, since
+Positron came forward the same with it switched off. The earlier finding
+that `back` stays behind was made from a stand-alone terminal, which could
+not be run again.
+
+**What was tried and declined.** Replacing `show()` with `showInactive()`
+kept `buggy` behind and not Positron, which creates its window already shown;
+installed at the first line, with `focus()` and `app.focus()` made inert,
+it still did not. It was declined anyway, in the words "I'm concerned that
+showInactive interferes with the app itself": the window would never be key,
+and the application would never see the focus a real launch gives it. Hiding
+the application and showing its windows inactive left Positron's window
+hidden.
+
+**What landed, found by a second model asked for a fix that changes nothing
+in the application or the testing:** the engine reads the frontmost
+application before the launch and, once the application under test has come
+forward, asks that one to activate with an Apple Event addressed to it
+alone, which needs no permission. `handBackTheScreen` in `src/launch.ts`. It
+measured that no way of launching keeps an application behind on macOS 26:
+`buggy` launched five ways, `open -g` among them, came forward within 20 ms
+each time. With the hand-back, `buggy` was in front for about 160 ms and
+Positron about 230 ms, each then behind for the whole Route with its window
+visible, and nothing happens at a locked screen.
+
+**Once per launch, chosen from three options weighed,** over handing back
+whenever a Hop caused the application to come forward and over switching
+off Positron's `debug.focusWindowOnBreak`. Reading Positron's code for every
+way it asks for focus found one a Route could reach alone, which
+`DEFECTS.md` now has.
+
+**Tested.** One new test, 387 in all: in `back` the application is not
+frontmost two seconds after it is ready, read from outside with
+`lsappinfo`, against `front` as the control, which is. Without the hand-back
+it fails. It skips, saying so, at a locked screen and when `front` cannot
+hold the screen, which it failed to in 4 of 9 runs, most likely to someone
+using the machine.
+
 ## 2026-10-04: an icon for the demos and the proving ground
 
 The two demos and `buggy` showed Electron's own icon in the Dock, because

@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
+**Seventeen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -319,6 +319,35 @@ finding, while every draw is the same. The failure says when the finding
 arrived and lists the steps before it, so a reader can see the two runs
 agree; nothing yet compares them, and R13 would read the second as a seed
 that no longer reproduces.
+
+## An application that brings itself forward partway through a Route stays in front
+
+**Filed 2026-10-04, confirmed by reading Positron's code.** `back` mode hands
+the screen back once, at launch, in `handBackTheScreen` in `src/launch.ts`.
+An application that brings itself forward later stays in front for the rest
+of the Route, which is the screen `back` exists not to take.
+
+**The one path found in Positron.** Of the 17 places its interface asks for
+focus, read the same day in
+`out/vs/workbench/workbench.desktop.main.js`, one can be reached by a Route
+alone: a debug session stopping at a breakpoint, with
+`debug.focusWindowOnBreak` on, asks for focus in its "Force" mode, which
+brings the application forward. A Route would have to set a breakpoint and
+start debugging something that hits it. The others need a person, a file
+dropped on the window, a link opened from outside, or Positron already
+having focus; the canvas's reveal of the main window asks in the default
+mode, and whether that brings it forward while behind is not measured.
+
+**Why it is a defect and not a limit.** The person watching loses the
+screen they were promised, and a Route then runs in front, so whatever it
+types reaches only the application, which is right, while the person's own
+keystrokes may reach it too, which is not.
+
+**What would close it, not decided:** handing back again whenever a Hop
+caused the application to come forward, which needs a measured threshold for
+"caused"; handing back every time was declined, since it cannot be told from
+a person clicking the window to look. Chosen on 2026-10-04 to hand back once
+and record this, from three options weighed.
 
 ## A Fix's fingerprint misses what the Fix does not itself contain
 
