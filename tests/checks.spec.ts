@@ -7,6 +7,7 @@ import {
   CHECK_ORDER,
   CheckFailure,
   LOG_FAILURE,
+  TRACE_SNAPSHOT_IN_SANDBOX,
   PageConnectionLost,
   FixFailure,
   RUN_VARIABLE,
@@ -642,6 +643,55 @@ writtenTest("a log's own failure pattern is read beside the engine's, and only f
   const { error, hops } = await logRoute(page, app, [refused], own);
   expect(hops[0]?.result).toBe('failed');
   expect(hops[0]?.observation).toMatch(/Google refused it: access_denied/);
+  expect(error).toBeInstanceOf(CheckFailure);
+});
+
+writtenTest("the console error the trace makes in a sandboxed frame is set aside, and nothing else is", async ({ page, app }) => {
+  // Bobolink Inbox's reader inserts a frame sandboxed without allow-scripts and
+  // gives it its content a moment later. The trace's DOM snapshot then runs
+  // script in it, and Chromium logs that it blocked it.
+  const seen: string[] = [];
+  page.on('console', (message) => seen.push(message.text()));
+  let hop = 0;
+  const chooser: Chooser = {
+    choose: async (candidates) => {
+      hop += 1;
+      if (hop === 1) {
+        await page.evaluate(() => {
+          const host = document.createElement('div');
+          host.innerHTML = '<iframe sandbox="" title="message"></iframe>';
+          document.body.append(host);
+          (host.querySelector('iframe') as HTMLIFrameElement).srcdoc = '<p>Hello</p>';
+        });
+      }
+      // The control: an application's own console error still fails the check.
+      if (hop === 2) await page.evaluate(() => console.error('the application broke'));
+      const target = candidates.find((candidate) => candidate.name === 'Summary' && candidate.source === 'page');
+      if (!target) throw new Error('Summary is not on offer');
+      return { target };
+    },
+  };
+  const root = scratch();
+  const error = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('sandbox-trace', 1),
+    journeySeed: 'sandbox-trace',
+    routeNumber: 1,
+    tripLength: 2,
+    journalsRoot: root,
+    chooser,
+    ...SHORT,
+  }).then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+  // The message really arrived, or the pass below would mean nothing.
+  expect(seen).toContain(TRACE_SNAPSHOT_IN_SANDBOX);
+  const hops = journalIn(root).filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  expect(hops.map((entry) => result(entry.checks, 'console-error')?.result)).toEqual(['passed', 'failed']);
+  expect(result(hops[1]?.checks ?? [], 'console-error')?.observation).toMatch(/the application broke/);
   expect(error).toBeInstanceOf(CheckFailure);
 });
 

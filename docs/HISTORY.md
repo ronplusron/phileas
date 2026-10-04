@@ -25,6 +25,36 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-04: the console check sets aside a line the engine's trace makes
+
+**Reported by the session building Bobolink Inbox's adapter,** as a console
+error under Phileas every time and never when the application was driven
+directly: "Blocked script execution in 'about:blank' because the
+document's frame is sandboxed and the 'allow-scripts' permission is not
+set." Inbox's reader inserts a frame sandboxed without `allow-scripts` and
+gives it its content a moment later, and every Route that opened a message
+failed on the line.
+
+**The cause was the engine.** The first reading, that the settle wait's
+repeated reads of the page reached into the frame, was wrong: on `buggy`,
+inserting such a frame five times logged the line five times with no read
+at all. Plain Playwright logged it none, and the difference was the trace
+every Route records with DOM snapshots, whose snapshotter runs script in
+every frame. Measured with plain Playwright, five frames each: a trace with
+snapshots 5, screenshots only 0, no trace 0.
+
+**What landed, chosen from three offered:** the console check sets aside
+exactly that line, `TRACE_SNAPSHOT_IN_SANDBOX` in `src/oracles/index.ts`,
+so traces keep their DOM snapshots. Chosen over tracing screenshots only,
+which would lose a failed Route's page structure at each step, and over
+leaving each adapter to narrow it. What it costs: an application that
+itself runs script into a blank sandboxed frame goes unseen by this check.
+
+**Tested.** One new test, 378 in all: a frame inserted as Inbox inserts it
+passes the console check while the line is shown to have arrived, and an
+application's own console error on the next Hop still fails it. With the
+line not set aside, it fails.
+
 ## 2026-10-03: the menu drawn a level at a time, and the demos' seeds searched again
 
 Part C of the menu bar's proposal. A menu Hop drew one entry evenly from

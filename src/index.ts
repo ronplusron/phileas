@@ -209,6 +209,7 @@ export {
   assertAppChecks,
   CHECK_ORDER,
   LOG_FAILURE,
+  TRACE_SNAPSHOT_IN_SANDBOX,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,
   STALLED,
   judgedByTheWatch,

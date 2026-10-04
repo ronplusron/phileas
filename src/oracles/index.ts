@@ -214,6 +214,25 @@ export interface WatchOptions {
 }
 
 /**
+ * The one console error the engine makes itself, which the console check sets
+ * aside, matched whole.
+ *
+ * Every Route records a Playwright trace with DOM snapshots, and the trace's
+ * snapshotter runs script in every frame. In a frame sandboxed without
+ * `allow-scripts`, Chromium blocks it and logs this line. Reported on
+ * 2026-10-03 from Bobolink Inbox, whose reader inserts such a frame and gives
+ * it its content a moment later, where every Route that opened a message
+ * failed on it and plain Playwright never saw it. Measured on `buggy` with five
+ * frames inserted each: a trace with snapshots logged it 5 times, one with
+ * screenshots only 0, and no trace 0. Chosen over tracing screenshots only,
+ * which would lose the page's structure at each step from a failed Route's
+ * trace. What it costs: an application that itself tries to run script in a
+ * blank sandboxed frame goes unseen by this check.
+ */
+export const TRACE_SNAPSHOT_IN_SANDBOX =
+  "Blocked script execution in 'about:blank' because the document's frame is sandboxed and the 'allow-scripts' permission is not set.";
+
+/**
  * What makes a log line a failure, for every application: a word ending in
  * "error", such as TypeError, GmailError or error itself, or one of fatal,
  * failed, failure, exception and panic.
@@ -324,7 +343,9 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     gone.push(arrived(`the main process exited${signal ? ` on ${signal}` : ` with code ${code}`}`))
   );
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push(arrived(message.text()));
+    if (message.type() === 'error' && message.text() !== TRACE_SNAPSHOT_IN_SANDBOX) {
+      consoleErrors.push(arrived(message.text()));
+    }
   });
   // A listener means Playwright no longer dismisses dialogs by itself, so this
   // one has to, or the page waits on a dialog nobody will answer.
