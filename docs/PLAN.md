@@ -999,15 +999,16 @@ the words "One branch, multiple commits."
 2. **Issue 88 tried in VS Code,** to say whether the bug is Positron's or
    VS Code's, since the Profiles editor comes from VS Code. Done the same
    day: it is VS Code's, and `HISTORY.md` has the measurement.
-3. **B of `OUTSTANDING.md` 1.23:** Positron's full menu reviewed against its
+3. **B of the menu bar's proposal:** Positron's full menu reviewed against its
    exclusions. Done the same day, with exclusion groups a run can let back
    in, asked for while choosing what to exclude; `HISTORY.md` has both.
 4. **Whether RStudio's and Bobolink Editor's menus widen with focus too,**
    and their exclusions reviewed if they do. Done the same day: neither
    does, so neither needed reviewing; `HISTORY.md` has how each was told.
-5. **C of 1.23:** the menu drawn a level at a time. Done the same day, for
+5. **C of the menu bar's proposal:** the menu drawn a level at a time. Done the same day, for
    every adapter; `HISTORY.md` has it, with the demos' seeds measured again.
-6. **A of 1.23:** the engine claiming focus for each Route's window.
+6. **A of the menu bar's proposal:** the engine claiming focus for each
+   Route's window. Done the same day; `HISTORY.md` has it.
 7. **The rest of replay from the journal:** the new step kinds, `phileas
    replay`, and the proof under R 4.4.3.
 

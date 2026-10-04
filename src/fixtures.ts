@@ -6,6 +6,7 @@ import { openedExternally } from './external.js';
 import { judgedByTheWatch, rendererObservation } from './oracles/index.js';
 import { answered } from './survey.js';
 import { endStrayProcesses } from './strays.js';
+import { claimFocus } from './menu.js';
 
 /** How long each diagnostic at a test's end may wait on the application. */
 const DIAGNOSTIC_TIMEOUT_MS = 5_000;
@@ -155,6 +156,9 @@ export function createTest(cfg: AppUnderTest) {
       let thrown: unknown;
       try {
         await cfg.waitForReady(page);
+        // After readiness, so a menu the application builds once it is up
+        // is built for a focused window. `claimFocus` says why.
+        await claimFocus(launched.app, page);
         await use(page);
       } catch (error) {
         // Held rather than allowed to propagate, so that the evidence below is

@@ -687,7 +687,7 @@ the options offered:
   case R12 names without a second machine.
 
 **Placed on 2026-10-03:** the rest of replay comes after the menu bar's
-work, 1.23. What was to be built first, each Fix step's content on its
+work, which `HISTORY.md` records. What was to be built first, each Fix step's content on its
 journal line, landed the same day, and `HISTORY.md` has it. `PLAN.md` has
 the order, under "Next".
 
@@ -721,67 +721,6 @@ it again; and what the checks read in a second window.
 it was put, "at some point, I'd even say given priority (another thing
 related to weighting)". That would weight the draw toward a window that has
 just opened, which belongs with weighting the draw toward new targets, 1.14.
-
-### 1.23 The menu bar: chance, flat, and uncontained
-
-Raised on 2026-10-03, after measuring Positron's menu bar, in the words "I
-think we need to do something about menubars", and agreed to be recorded
-with the proposal below.
-
-**What was measured, on Positron 2026.09.1.** Its application menu holds
-226 entries a person sees in the menu bar, at every level. With the Route's
-window hidden it has no focus, and only 18 are enabled, which leaves 6 on
-offer after the standard entries and the adapter's exclusions: 8 of 9
-recent Routes were offered 6. One Route of the 5×500 Journey, seed
-`d5665b418361`, Route 2, was offered 157 at its first Hop, rising to 186:
-its window had focus, from outside the engine. Its replay was offered 6.
-`DEFECTS.md` has that as a defect. A probe that made `getFocusedWindow` and
-`isFocused` answer for the hidden window and sent it its `focus` event
-enabled 195, and View > Run, disabled before, then ran; the window stayed
-hidden.
-
-**Three problems, from that:**
-
-- **Which menu a Route gets is chance,** as above, so it decides where a
-  seed goes on one Hop in eight.
-- **The full menu is flat.** 157 to 195 entries share the menu's eighth of
-  the draw evenly, so View > Appearance > Render Whitespace > Set Render
-  Whitespace to Selection is as likely as File > Save. 75 of the 157 sit
-  inside submenus, 52 three levels down and 23 four. View alone holds 70.
-  Of Route 2's 64 menu Hops, 13 changed the screen. Answered by C, the
-  menu drawn a level at a time since 2026-10-03.
-- **The containment never met it.** Route 2 drew Help > Toggle Developer
-  Tools, View > Editor Layout > Move Editor into New Window, Help > Show
-  Release Notes, Help > Positron Documentation, File > Save As... and Save
-  Workspace As..., none of which Positron's exclusions had seen, since none
-  is among the 6. Positron's exclusions were reviewed against its whole
-  menu on 2026-10-03, part B of the proposal, and `HISTORY.md` has it.
-  RStudio's and Bobolink Editor's menus do not depend on focus, found the
-  same day, so their exclusions already meet the whole of them.
-
-**Proposed, the parts agreed to be recorded:**
-
-- **A. The engine claims focus for each Route's window,** in every window
-  mode, so the menu is the same on every launch. It lands only after B and
-  C, since alone it makes the other two problems every Route's. Both B and
-  C have landed, so A is what is left of the proposal.
-
-**Ordered on 2026-10-03: B, then C, then A,** chosen from four orders
-offered, after asking whether this is an engine or an adapter change. A and
-C are the engine's, so they apply to every application; B is Positron's
-adapter alone. So before A lands, RStudio's and Bobolink Editor's menus are
-measured for whether focus widens them too, and their exclusions reviewed if
-it does, which came with the order chosen. `PLAN.md` has where these sit
-among the rest, under "Next". B, Positron's full menu reviewed against its
-exclusions, landed the same day, with exclusion groups a run can let back
-in, and so did the measurement before A: of the three applications, only
-Positron's menu depends on focus. C, the menu drawn a level at a time, landed
-the same day for every adapter, chosen over letting an adapter opt in.
-`HISTORY.md` has all of it.
-
-**An option, not proposed:** D, offering the menu bar only to an
-application that asks for it, for one whose menu mostly repeats its page,
-as Positron's View > Explorer repeats the Explorer tab.
 
 ## 2. Undecided
 
@@ -1385,6 +1324,17 @@ Left open when RStudio Routes were given the person's own R library on
   neither, since its home folder is its own. They can change anything R
   does, so bringing them in would make a Route depend on the person running
   it in ways a library list does not.
+
+### 2.25 Offering the menu bar only to an application that asks for it
+
+Recorded on 2026-10-03 as an option and not proposed, beside the menu bar's
+three parts, which have since landed and `HISTORY.md` records. Nothing is
+decided. Some applications' menus mostly repeat their page, as Positron's
+View > Explorer repeats the Explorer tab, so a menu Hop there spends a draw
+reaching what the page already offers. An application could ask for the
+menu bar to be offered, and one that does not would get none. With the menu
+now drawn a level at a time, how much of a Route goes to such repeats is
+unmeasured.
 
 ## 3. Declined
 

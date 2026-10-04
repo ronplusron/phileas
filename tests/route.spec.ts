@@ -26,6 +26,7 @@ import {
   surveyLines,
   showWindows,
   clickMenuItem,
+  claimFocus,
   takesTypedValue,
   NondeterministicExclusion,
   PageUnreachable,
@@ -352,11 +353,49 @@ test('a deterministic predicate is not accused of being one', async ({ page, app
   ).toEqual(['exclude()']);
 });
 
+test("the engine claims focus for the Route's window, which stays hidden", async ({ page, app }) => {
+  // Positron builds most of its menu from focus, which a hidden window never
+  // has, so a Route's menu depended on the machine. The claim answers for the
+  // window and sends the events a real focus sends.
+  const win = await app.browserWindow(page);
+  const answered = await app.evaluate(
+    ({ BrowserWindow }, handle) => {
+      const mine = handle as unknown as Electron.BrowserWindow;
+      return {
+        focusedIsMine: BrowserWindow.getFocusedWindow()?.id === mine.id,
+        isFocused: mine.isFocused(),
+        visible: mine.isVisible(),
+      };
+    },
+    win
+  );
+  expect(answered.focusedIsMine).toBe(true);
+  expect(answered.isFocused).toBe(true);
+  // Nothing real changed: the claim moves no window. Whether it really has
+  // focus is left alone, since another window launching can hand it that.
+  if (!showWindows()) expect(answered.visible).toBe(false);
+  // The events go out, for an application that builds its menu on them.
+  await app.evaluate(
+    ({ app: electronApp }, handle) => {
+      const mine = handle as unknown as Electron.BrowserWindow;
+      (globalThis as Record<string, unknown>).__heard = [];
+      const heard = (globalThis as Record<string, unknown>).__heard as string[];
+      mine.once('focus', () => heard.push('focus'));
+      electronApp.once('browser-window-focus', () => heard.push('browser-window-focus'));
+    },
+    win
+  );
+  await claimFocus(app, page);
+  const heard = (await app.evaluate(() => (globalThis as Record<string, unknown>).__heard)) as string[];
+  expect([...heard].sort()).toEqual(['browser-window-focus', 'focus']);
+  await win.dispose();
+});
+
 test('menu candidates are offered whether or not a window has focus', async ({ page, app }) => {
-  const focused = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getFocusedWindow() !== null);
-  // The condition that used to withhold them, confirmed rather than assumed.
-  // Under a shown mode a window may hold focus, and the offer must not care.
-  if (!showWindows()) expect(focused).toBe(false);
+  // Whether the window really has focus is not asserted: with windows
+  // hidden it usually has none, and with several launching at once one
+  // sometimes gets it from the operating system, which is the chance the
+  // engine's claim of focus removes from the menu. The offer must not care.
 
   const found = await survey({
     page,

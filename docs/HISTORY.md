@@ -25,6 +25,36 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-04: the engine claims focus for each Route's window
+
+Part A of the menu bar's proposal, the last of its three, and the defect it
+answered. Positron enables most of its menu only while its window has
+focus, and a Route's hidden window has none, so it was offered 6 menu
+entries; a window could have focus by chance, from outside the engine, and
+was then offered 157 or more, so one seed drew from a different menu on
+different runs and no replay could tell.
+
+`claimFocus` in `src/menu.ts`, run by the fixture once the application is
+ready, answers for the window as the engine already answers for outbound
+links and native dialogs: `getFocusedWindow` returns it while it lasts,
+`isFocused` says yes, and it is sent `focus`, which Electron passes on to
+the application as `browser-window-focus`. Nothing gives it real focus, so
+the window stays where the window mode put it. For every application, after
+RStudio's and Bobolink Editor's menus were found not to depend on focus, and
+neither `buggy` nor either demo listens for it, so their seeds do not move.
+Positron's do, once more.
+
+**Measured on Positron 2026.09.1:** two Routes of 3 Hops were each offered
+144 menu entries at their first Hop and 165 by their third, where 8 of 9
+earlier Routes had been offered 6. What it does not reach: a `blur` the
+operating system sends a shown window when the person switches away.
+
+**Tested.** One new test, 380 in all: the window is answered for and sent
+both events, and stays hidden. The test that the menu is offered whether or
+not a window has focus no longer asserts that a hidden window has none:
+with several applications launching at once, one sometimes got real focus
+from the operating system, the chance this removes from the menu.
+
 ## 2026-10-04: a `known` command works from inside `phileas/`, and a missing file is said alone
 
 Reported by the session building Bobolink Inbox's adapter: `phileas known

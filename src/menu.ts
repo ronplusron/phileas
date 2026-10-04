@@ -85,6 +85,48 @@ export async function clickMenuItem(
 }
 
 /**
+ * Treat the Route's window as the focused one, in every window mode, so an
+ * application that builds its menu from focus offers the same menu on every
+ * launch.
+ *
+ * A hidden window cannot take focus, and a shown one has it only when nothing
+ * else on the machine does. Positron enables most of its menu only while its
+ * window is focused: measured on 2026-10-03, 18 of 226 entries were enabled
+ * without focus and 195 with it, and which a Route got depended on the
+ * machine, so one seed drew from 6 menu entries on one run and 157 on
+ * another. So the engine answers for the window, as it answers for outbound
+ * links and native dialogs: `getFocusedWindow` returns it while it lasts,
+ * `isFocused` says yes, and it is sent the `focus` events a real focus would
+ * send. Nothing gives it real focus, so the window stays where the window
+ * mode put it. Decided on 2026-10-03 as part A of the menu bar's proposal,
+ * after reviewing Positron's whole menu against its exclusions and drawing
+ * the menu a level at a time, and for every application, since RStudio's and
+ * Bobolink Editor's menus were measured not to depend on focus.
+ *
+ * What it does not reach: a `blur` the operating system sends a shown window
+ * when the person switches away, which an application may answer by
+ * narrowing its menu again until the window has real focus.
+ */
+export async function claimFocus(app: ElectronApplication, page: Page): Promise<void> {
+  const win = await app.browserWindow(page);
+  try {
+    await app.evaluate(
+      ({ BrowserWindow }, handle) => {
+        const window = handle as unknown as Electron.BrowserWindow;
+        BrowserWindow.getFocusedWindow = () => (window.isDestroyed() ? null : window);
+        window.isFocused = () => !window.isDestroyed();
+        // Electron passes a window's focus on to the app as
+        // browser-window-focus by itself, so one emit sends both.
+        window.emit('focus');
+      },
+      win
+    );
+  } finally {
+    await win.dispose().catch(() => undefined);
+  }
+}
+
+/**
  * The labels directly under a submenu, for asserting a menu's shape.
  *
  * Refuses a path that does not exist rather than answering with no labels,

@@ -51,6 +51,7 @@ export {
 export { createTest, expect, rendererVerdict, screenshotWithin, type PhileasFixtures } from './fixtures.js';
 export {
   clickMenuItem,
+  claimFocus,
   menuLabels,
   menuEntries,
   type MenuEntry,
