@@ -25,6 +25,51 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-05: Positron under the wider log rule, and installing left out
+
+**Why it ran.** Asked as "What about doing the same, for Positron?" after
+RStudio's run. Since 2026-10-03 Positron's journals were almost all 3-Hop
+replays of one Route, and the trial resumes before weighting the draw, so
+what the wider log rule catches there was wanted first. 4 Routes of 50
+Hops, no Fix, windows hidden, the current release, seed `56fe37294277`.
+
+**What it found.** 3 Routes passed and 1 failed, 189 of 200 Hops. The log
+check passed on every Hop, so the wider rule added nothing; the errors
+behind the three frame findings removed the same day did not recur, so this
+run did not exercise that fix. Route 3 searched the Marketplace, installed
+"Python Snippets 3" (`EricSia.pythonsnippets3`), trusted its publisher and
+took its pre-release, and failed at hop 39 on two console errors,
+`c3204f3d` and `5195b0d7`: the extension's manifest names languages
+Positron does not know, and Positron reported it. **The bug is the
+extension author's, not Positron's,** so both were dismissed with that
+reason. Two more, known and unfiled since 2026-09-27, were carried past at
+hop 31 and dismissed the same day, asked for with "Dismiss both":
+`6e257d24` and `353fd565`, one error printed in two formats when the Route
+closed the dialog asking consent for an extension to sign in, so the
+extension host printed the refused request.
+
+**Installing from the Marketplace is now an exclusion group,** `marketplace`
+in Positron's adapter: Install, Install Pre-Release, Trust Publisher &
+Install and Install Specific Version..., every one of which Positron's
+journals had only in the Extensions view. It downloads third-party code and
+runs it in the Route, and the Marketplace changes daily, so no Route
+through it replays. Asked how that squares with a Route finding a bug that
+way, the answer proposed and taken with "y" was to leave installing out by
+default, `--allow marketplace` letting it in, with a fixed local set of
+extensions as the way back in, which `OUTSTANDING.md` has. "Install Python
+via uv", which downloads Python rather than an extension, stays allowed, in
+the words "Allow Python via uv".
+
+**Proved by replaying route 3.** The replay retraced hops 1 to 36, reached
+the same Extensions search view, and stopped at hop 37 as could not replay,
+`button "Install" is not on offer now`; the Route's original pools held
+`Install` 28 times, the replay's none.
+
+**`phileas replay --follow`,** asked for in the words "Give replay a
+--follow", after the replay above refused the flag: it prints each Hop as
+it happens, as for a run. The command's own test covers the flag, and a
+replay of the same Route with it printed every Hop.
+
 ## 2026-10-05: RStudio's first Journey under the wider log rule
 
 **Why it ran.** No RStudio Journey had run since the log rule was widened on

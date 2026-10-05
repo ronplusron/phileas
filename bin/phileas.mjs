@@ -8,7 +8,7 @@
 //   phileas known dismiss <id> --reason <why> [file]
 //   phileas known remove <id> [file]
 //   phileas known list [file]
-//   phileas replay <journal> [config] [--whole] [--with-current-fix]
+//   phileas replay <journal> [config] [--whole] [--with-current-fix] [--follow]
 //
 // `run` runs a Journey with its settings changed for one run. Real flags need
 // a command of their own, because Playwright refuses any it does not know
@@ -90,7 +90,7 @@ const USAGE = `Usage:
   phileas known dismiss <id> --reason <why> [file]
   phileas known remove <id> [file]
   phileas known list [file]
-  phileas replay <journal> [config] [--whole] [--with-current-fix]
+  phileas replay <journal> [config] [--whole] [--with-current-fix] [--follow]
 
 run: run a Journey, with its settings changed for this run only.
   config    A Playwright config file, or a folder holding playwright.config.ts.
@@ -148,6 +148,7 @@ replay: replay one Route from its journal, acting on each recorded target by
   --with-current-fix
             Run the current Fix's code steps, checked against those recorded,
             for a Fix with code steps, which a journal cannot hold.
+  --follow  As for run: print each Hop as it happens.
 
 known list: print every known finding: unfiled, filed and false alarms, each
   with when it was last met in the journals kept beside the file.
@@ -200,7 +201,7 @@ export function knownFileIn(file, dir = process.cwd()) {
  *   | { command: 'known-dismiss', id: string, reason: string, file: string }
  *   | { command: 'known-remove', id: string, file: string }
  *   | { command: 'known-list', file: string }
- *   | { command: 'replay', journal: string, config: string, whole: boolean, withCurrentFix: boolean }} Parsed
+ *   | { command: 'replay', journal: string, config: string, whole: boolean, withCurrentFix: boolean, follow: boolean }} Parsed
  */
 
 /**
@@ -229,8 +230,8 @@ export function parse(args) {
   }
   if (command === 'replay') {
     const flags = rest.filter((arg) => arg.startsWith('-'));
-    const unknown = flags.find((flag) => flag !== '--whole' && flag !== '--with-current-fix');
-    if (unknown) throw new Error(`replay takes --whole and --with-current-fix, and was given ${unknown}`);
+    const unknown = flags.find((flag) => !['--whole', '--with-current-fix', '--follow'].includes(flag));
+    if (unknown) throw new Error(`replay takes --whole, --with-current-fix and --follow, and was given ${unknown}`);
     const [journal, config, ...more] = rest.filter((arg) => !arg.startsWith('-'));
     if (!journal) throw new Error('replay needs the journal of the Route to replay');
     if (more.length) throw new Error(`replay takes a journal and a config, and was given ${more.join(' ')} as well`);
@@ -240,6 +241,7 @@ export function parse(args) {
       config: config ?? DEFAULT_CONFIG,
       whole: flags.includes('--whole'),
       withCurrentFix: flags.includes('--with-current-fix'),
+      follow: flags.includes('--follow'),
     };
   }
   if (command === 'known') {
@@ -468,9 +470,9 @@ export function journalsFor(what) {
  * Replay one Route from its journal: run its Journey with the journal's seed
  * and Route, and the variables a Route reads its replay from. Whether each
  * Fix step can be replayed is checked by the engine before anything launches.
- * @param {{ journal: string, config: string, whole: boolean, withCurrentFix: boolean }} asked
+ * @param {{ journal: string, config: string, whole: boolean, withCurrentFix: boolean, follow: boolean }} asked
  */
-function replay({ journal, config, whole, withCurrentFix }) {
+function replay({ journal, config, whole, withCurrentFix, follow }) {
   if (!fs.existsSync(journal) || !fs.statSync(journal).isFile()) fail(`${journal} is not a journal file`);
   /** @type {{ journeySeed?: string, routeNumber?: number, tripLength?: number, fix?: { name?: string } } | undefined} */
   let opening;
@@ -500,6 +502,7 @@ function replay({ journal, config, whole, withCurrentFix }) {
       PHILEAS_REPLAY: path.resolve(journal),
       ...(whole ? { PHILEAS_REPLAY_WHOLE: '1' } : {}),
       ...(withCurrentFix ? { PHILEAS_REPLAY_CURRENT_FIX: '1' } : {}),
+      ...(follow ? { PHILEAS_FOLLOW: '1' } : {}),
     },
     route > 1 ? ['--grep', `route ${route}$`] : []
   );

@@ -772,6 +772,28 @@ it was put, "at some point, I'd even say given priority (another thing
 related to weighting)". That would weight the draw toward a window that has
 just opened, which belongs with weighting the draw toward new targets, 1.14.
 
+### 1.22 Installing extensions from a fixed local set, not the Marketplace
+
+Agreed on 2026-10-05 as the way back in for installing, which Positron's
+`marketplace` exclusion group leaves out since the same day. A Route had
+installed a Marketplace extension and failed on that extension's own
+manifest error, which was its author's bug and not Positron's; and asked
+how that hazard squares with a Route finding a bug that way, the answer
+proposed and taken with "y" was to keep exploring Positron's install flow
+while controlling what it installs. `HISTORY.md` has the run.
+
+**What it would be:** Positron pointed at a small gallery of its own, or a
+folder of `.vsix` files, in place of the live Marketplace, so a Route can
+install with no network, runs only code that was chosen, and replays, since
+the live Marketplace's listings change daily. One deliberately broken
+extension among them would test the path the Route stumbled on: Positron
+reporting an extension's fault.
+
+**Not measured:** whether Positron can be pointed at a local gallery at all,
+by a setting or a launch argument, or only by editing its `product.json`.
+Browsing the Marketplace, which the group leaves allowed, still reaches the
+network until then.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

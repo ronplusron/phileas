@@ -441,7 +441,8 @@ journal's seed and Route, acts on each recorded target by name in place of
 drawing, and says whether the finding came back. It replays to the Hop the
 finding came on and 3 more, or every Hop with `--whole`. A Fix with `code`
 steps needs `--with-current-fix`, which runs the current Fix checked step by
-step against what was recorded. `docs/OUTSTANDING.md` 1.18 has what is left.
+step against what was recorded. `--follow` prints each Hop as it happens,
+as for a run. `docs/OUTSTANDING.md` 1.18 has what is left.
 
 **Reading a journal (R30)** goes through one renderer, `src/report/render.mjs`,
 moved forward from phase 7. `phileas run --follow` prints each Route's lines

@@ -14,11 +14,28 @@
     "source": "journey"
   },
   {
+    "id": "c3204f3d",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 [EricSia.pythonsnippets3]: Unknown language in `contributes.pythonsnippets3.language`. Provided value: django-html",
+    "added": "2026-10-05",
+    "source": "journey",
+    "falseAlarm": "A third-party extension's own bug, not Positron's: EricSia.pythonsnippets3 names languages Positron does not know, and Positron reports it. Installed from the Marketplace by a Route; the marketplace exclusion group now leaves installing out."
+  },
+  {
+    "id": "5195b0d7",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 [EricSia.pythonsnippets3]: Unknown language in `contributes.pythonsnippets3.language`. Provided value: django-txt",
+    "added": "2026-10-05",
+    "source": "journey",
+    "falseAlarm": "A third-party extension's own bug, not Positron's: EricSia.pythonsnippets3 names languages Positron does not know, and Positron reports it. Installed from the Marketplace by a Route; the marketplace exclusion group now leaves installing out."
+  },
+  {
     "id": "6e257d24",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 [Extension Host] Error: User did not consent to login. at MainThreadAuthentication.doGetSession (workbench.desktop.main.js)",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "Normal behavior, not a bug: an extension asked to sign in, the Route closed Positron's consent dialog, and the extension host prints the refused request as an error. One event printed in two formats."
   },
   {
     "id": "1759e6e8",
@@ -127,7 +144,8 @@
     "check": "console-error",
     "signature": "console-error: %c[Extension Host] %cError: User did not consent to login. at MainThreadAuthentication.doGetSession (workbench.desktop.main.js)",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "Normal behavior, not a bug: an extension asked to sign in, the Route closed Positron's consent dialog, and the extension host prints the refused request as an error. One event printed in two formats."
   },
   {
     "id": "23740607",

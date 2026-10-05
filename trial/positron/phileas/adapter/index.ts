@@ -203,6 +203,20 @@ export const positron: AppUnderTest = {
           ['Help', 'Show All Commands'],
         ],
       },
+      // A Route of Journey 56fe37294277 installed "Python Snippets 3" on
+      // 2026-10-05, trusting its publisher and taking its pre-release, and
+      // failed on that extension's own manifest error, not Positron's. Every
+      // Install button in Positron's journals that day was in the Extensions
+      // view. Browsing the Marketplace still reaches the network; only
+      // installing from it is left out. "Install Python via uv", which
+      // downloads Python rather than an extension, stays allowed, asked for in
+      // the words "Allow Python via uv".
+      marketplace: {
+        why:
+          'Each installs an extension from the Marketplace: it downloads third-party code and runs ' +
+          'it in the Route, and the Marketplace changes daily, so no Route through it replays.',
+        names: ['Install', 'Install Pre-Release', 'Trust Publisher & Install', 'Install Specific Version...'],
+      },
       'native-dialog': {
         why:
           'Raises a confirmation from the main process with showMessageBox, a native dialog ' +

@@ -68,10 +68,22 @@ test('the command reads its flags, a config, and what goes to Playwright', () =>
   });
   expect(parse(['run', '--fix', 'quarto'])).toMatchObject({ settings: { PHILEAS_FIX: 'quarto' } });
   expect(parse(['run', '--allow', 'new-windows'])).toMatchObject({ settings: { PHILEAS_ALLOW_EXCLUDED: 'new-windows' } });
-  expect(parse(['replay', 'r.jsonl'])).toEqual({ command: 'replay', journal: 'r.jsonl', config: 'phileas', whole: false, withCurrentFix: false });
-  expect(parse(['replay', 'r.jsonl', 'c', '--whole', '--with-current-fix'])).toMatchObject({ config: 'c', whole: true, withCurrentFix: true });
+  expect(parse(['replay', 'r.jsonl'])).toEqual({
+    command: 'replay',
+    journal: 'r.jsonl',
+    config: 'phileas',
+    whole: false,
+    withCurrentFix: false,
+    follow: false,
+  });
+  expect(parse(['replay', 'r.jsonl', 'c', '--whole', '--with-current-fix', '--follow'])).toMatchObject({
+    config: 'c',
+    whole: true,
+    withCurrentFix: true,
+    follow: true,
+  });
   expect(() => parse(['replay'])).toThrow(/needs the journal/);
-  expect(() => parse(['replay', 'r.jsonl', '--seed'])).toThrow(/takes --whole and --with-current-fix/);
+  expect(() => parse(['replay', 'r.jsonl', '--seed'])).toThrow(/takes --whole, --with-current-fix and --follow/);
 });
 
 test('the command refuses what it cannot read, by name', () => {
