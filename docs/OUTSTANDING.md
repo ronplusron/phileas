@@ -449,7 +449,9 @@ London."
 **Placed the same day,** asked for in the words "Let's do it sooner": right
 after the Positron trial, before the rest of phase 5, chosen over building
 it before the trial's remaining steps and over placing it beside recording a
-Fix. `PLAN.md` has it in the build order.
+Fix. `PLAN.md` has it in the build order, placed again on 2026-10-05 after
+the trial resumed: measured on Eighty Days' `screens` layout and against an
+unsteered Journey over `buggy` taken first under the uniform draw.
 
 **Notes, a reading and not a decision:**
 
@@ -723,13 +725,14 @@ confirmed the same day:
   way or not.
 
 **Built on 2026-10-04: the chooser and the command,** and `HISTORY.md` has
-them. Still to do, in this order:
+them. Still to do, in this order, which `PLAN.md` changed on 2026-10-05 to
+put the proof first and the rest after weighting the draw:
 
+- **The proof under R 4.4.3,** a recorded RStudio finding replayed with
+  another R on this machine, from a Journey with no Fix.
 - **The new step kinds,** `wait`, `press` and `type`, and an `act` step
   naming its target as data, so most Fixes' code becomes data a replay runs
   from the journal alone.
-- **The proof under R 4.4.3,** a recorded RStudio finding replayed with
-  another R on this machine.
 - **Two parts of the code-step decision above, not built:** saying how many
   steps ran from the current Fix, which the journal's opening line records
   only as the Fix having come from it; and stopping as could not replay

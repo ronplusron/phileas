@@ -25,6 +25,43 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-05: the order reviewed, to ask sooner whether the engine finds bugs
+
+**Asked for as "Review the order and priorities".** The review found the
+order adding to the engine ahead of the one question still open, whether it
+finds bugs on its own (`PRODUCT_REQUIREMENTS.md` section 11), and proposed
+four changes, taken together in the words "Let's do all of these." The
+reasons below are the proposal's, not given with the answer.
+
+- **The replay proof before the new step kinds,** reversing the order chosen
+  on 2026-10-04. The proof is what tests R12, the one Must still open, and a
+  finding from a Journey with no Fix replays today; the step kinds widen
+  replay to Fixes with `code` steps, which `--with-current-fix` already
+  covers meanwhile.
+- **Part of phase 8 brought forward:** one Journey finding `buggy`'s planted
+  defects by traveling, which is the only evidence the engine finds bugs,
+  and was otherwise three phases away.
+- **Weighting the draw given a place,** since it was placed after a trial
+  that had stopped with no word on resuming, so nothing scheduled it. It is
+  aimed at the defect that sank Loki, a uniform draw lost in screens that
+  replace the view.
+- **The stranded encoding first in phase 5,** since until it lands every
+  stranded Route reads as a failed test.
+
+Two smaller points came with it: the log check's stack frames, which make
+false findings to triage, fixed soon; and the paused trial needing a
+decision. That decision was asked twice. The first answer was to close it,
+then changed, after asking what the trial was, to "Resume before weighting",
+chosen over closing it and resuming after.
+
+**Where the baseline goes was weighed as pros and cons.** The baseline and
+weighting could come before or after the rest of replay. Offered first as
+giving a before and after, which was wrong, since both orders measure the
+baseline before weighting; the difference is only whether evidence on
+finding bugs or a finished replay comes first. Evidence first was
+recommended and taken with "OK let's do this." `PLAN.md` has the order,
+under "The order from 2026-10-05".
+
 ## 2026-10-04: `back` hands the screen back
 
 **Found by a Journey.** A Positron run with `--show back`, started from the

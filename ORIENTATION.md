@@ -185,15 +185,18 @@ found in it. The adapter declares no checks of its own yet, and no Fix.
 `docs/HISTORY.md` has why it moved and how, and the adapter that was in
 `trial/editor/` from 2026-09-30 is in this repository's history.
 
-**What comes next was ordered on 2026-10-03:** the rest of replay from the
-journal. The six steps before it have landed: each Fix step's content on
-its journal line, issue 88 tried in VS Code, Positron's whole menu reviewed
-against its exclusions, with exclusion groups a run can let back in, the
-finding that only Positron's menu depends on focus, the menu drawn a level
-at a time, and the engine claiming focus for each Route's window. `docs/PLAN.md` has the order and why, under "Next".
+**What comes next was reordered on 2026-10-05,** to answer sooner whether
+the engine finds bugs on its own: the replay proof under R 4.4.3; the log
+check reading a stack as part of its error; one Journey finding `buggy`'s
+planted defects unsteered, as a baseline; the Positron trial resumed;
+weighting the draw; the rest of replay; then the rest of phase 5, with the
+stranded encoding first. `docs/PLAN.md` has the order under "The order from
+2026-10-05", and `docs/HISTORY.md` has why. The order before it, from
+2026-10-03, landed all but the rest of replay.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
-carrying on with the Positron trial below, which stops where it stands.
+carrying on with the Positron trial below, which stopped where it stood
+until it was resumed on 2026-10-05.
 The adapter is in `trial/rstudio/`, pointed at a copy of the installed
 release with two fuses switched back on, since the installed release refuses
 the ordinary launch: for example
@@ -262,8 +265,8 @@ go.
 sets,** since none of them has `window.menuStyle`. With windows hidden,
 opening one froze nothing in twelve launches; with windows shown, that is
 unmeasured. Step 5 and the rest of step 6 were next when the trial stopped,
-then weighting the draw toward new targets, which `docs/PLAN.md` places
-after the trial; where that goes now is not decided.
+and **they resume under the order from 2026-10-05,** under the uniform draw
+the bar was set against, before weighting the draw toward new targets.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer
 keeps `known-findings.json` beside its spec; a Route that meets a finding in

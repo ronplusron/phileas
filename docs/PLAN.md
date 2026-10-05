@@ -879,7 +879,8 @@ Desktop." The Positron trial stops where it stands: steps 1 to 4 done as far
 as they go, step 5 not started, step 6 run in part and well short of its 500
 Routes, and the bar not judged. Nothing was said about whether or when it
 resumes, or about what this does to weighting the draw, which was placed
-right after the trial, below. Both are open, not settled.
+right after the trial, below. **Both settled on 2026-10-05:** the trial
+resumes before weighting the draw, under "The order from 2026-10-05" below.
 
 It also moves RStudio ahead of where `OUTSTANDING.md` 1.8 and phase 9 had it,
 after the two first consumers. The IDE items that list schedules for the
@@ -1011,7 +1012,8 @@ the words "One branch, multiple commits."
    Route's window. Done the same day; `HISTORY.md` has it.
 7. **The rest of replay from the journal:** the new step kinds, `phileas
    replay`, and the proof under R 4.4.3. The chooser and `phileas replay`
-   landed on 2026-10-04; `OUTSTANDING.md` 1.18 has what is left.
+   landed on 2026-10-04. **Split on 2026-10-05:** the proof comes first in
+   the order below, and the rest of replay after weighting the draw.
 
 The answer put step 4 before A. Placing it before C as well is a reading,
 not part of the answer: it keeps the two reviews of exclusions together.
@@ -1022,6 +1024,41 @@ findings so that it ends a Route, probing it again, and dismissing it. A
 recurrence prints as an unfiled finding and fails nothing, so it is seen
 only by someone reading the summary.
 
+### The order from 2026-10-05
+
+**Reviewed and reordered on 2026-10-05,** from four changes proposed
+together and taken in the words "Let's do all of these." What they share:
+the order kept adding to the engine ahead of the one question still open,
+whether it finds bugs on its own, which `PRODUCT_REQUIREMENTS.md` section 11
+asks. `HISTORY.md` has each change and why.
+
+1. **The replay proof under R 4.4.3,** a recorded RStudio finding replayed
+   with another R on this machine. A finding from a Journey with no Fix
+   needs no new step kind.
+2. **The log check reading a logged error's stack as part of it,** which
+   closes the `DEFECTS.md` entry. It makes false findings, so it is fixed
+   before anything below is measured.
+3. **Part of phase 8 brought forward:** one Journey over `buggy` with every
+   planted defect whose check exists switched on, finding them by traveling
+   rather than by being steered, under the uniform draw. It is the baseline
+   for step 5.
+4. **The Positron trial resumed,** steps 5 and 6 as numbered above, under
+   the uniform draw its bar was set against. Chosen in the words "Resume
+   before weighting", over closing it and over resuming it after.
+5. **Weighting the draw toward new targets,** below, measured on Eighty
+   Days' `screens` layout and against step 3's baseline.
+6. **The rest of replay from the journal,** as `OUTSTANDING.md` 1.18 lists
+   it, starting with the new step kinds.
+7. **The rest of phase 5,** with the stranded encoding first, then no
+   navigation away with its evidence from foreign processes, then the rest
+   in phase 5's own order.
+8. **Recording a Fix, then phases 6, 7, 8 in full, 9 and 10,** as below.
+
+Steps 3 and 5 were proposed in both orders around the rest of replay, and
+the one above was taken with "OK let's do this." after a recommendation.
+Placing step 4 after step 3 rather than before it is a reading, not part of
+the answer, which said only before weighting.
+
 ### After the trial: weighting the draw toward new targets
 
 **Placed 2026-09-27,** asked for in the words "Let's do it sooner", and
@@ -1030,7 +1067,9 @@ rest of phase 5. Chosen over building it before the trial's remaining steps
 and over placing it beside recording a Fix. The reason given with the
 proposal, not with the answer: before the trial ends, the trial would be
 measuring a chooser its bar was not set against. `OUTSTANDING.md` has the
-idea and what needs deciding before it is built.
+idea and what needs deciding before it is built. **Placed again on
+2026-10-05,** once the trial had stopped with no word on resuming: step 5
+of "The order from 2026-10-05", after the trial's remaining steps.
 
 It is a second chooser behind the choosing seam, so the hop loop does not
 change and the seeded draw stays available. Whether it replaces the seeded
@@ -1155,7 +1194,9 @@ place to stop inside it.** Take the parts in the order given: the checks, then
 the fixtures reshape, then the reset decision, then the stranded encoding, then
 the planted defects. Each earlier part is verifiable on its own even though the
 boundary is not reached until the last, and a slip is then a slip with
-something working rather than nothing.
+something working rather than nothing. **Changed on 2026-10-05:** the
+stranded encoding comes first of what is left, since every stranded Route
+reads as a failed test until it lands. "The order from 2026-10-05" has it.
 
 Boundary: **real.** A Journey with a small budget travels through `buggy` and
 reports, which is the last step of the wiring flow in
@@ -1298,6 +1339,10 @@ One Journey over the proving-ground application, with a budget it can find them 
 and a test asserting that each planted defect is found. Then the triage flow
 from `PRODUCT_REQUIREMENTS.md`, done cold: a second session reproduces a
 finding from the report alone.
+
+**Part of it comes first, since 2026-10-05:** one Journey finding the
+defects already planted, under the uniform draw, as step 3 of "The order
+from 2026-10-05". This phase still asserts every defect planted by then.
 
 Boundary: **real, and the only one that shows the engine does its job.** The
 engine's own tests up to here show that its parts behave as written. This is
