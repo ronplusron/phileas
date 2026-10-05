@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Seventeen defects are recorded.** The launch layer landed in phase 1, so this
+**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -254,20 +254,6 @@ stands would deliver Ctrl-C to Playwright twice, and a second interrupt makes
 Playwright quit without its teardown, which leaves profiles and processes
 behind. Starting Playwright in a process group of its own and forwarding
 once would close it, and needs measuring at a terminal as well as by pid.
-
-## The log check reads a logged error's stack as more errors
-
-**Filed 2026-09-27.** The log check takes every appended line holding the
-word "error". A logged error's stack follows it line by line, and a frame
-such as `at Object.error (…)` names a function called `error`, so one error
-in the log became up to three findings on Positron, each with a signature
-of its own and each ending a Route until filed. Reading a frame line as part
-of the error above it, rather than as one of its own, would close it.
-
-**Wider since 2026-10-03,** when a line began to fail on a word ending in
-"error" or on fatal, failed, failure, exception or panic. Counted on 6,533
-lines of real Positron and VS Code logs, frames that match went from 0 to
-5, each naming an exception in its function's or file's name.
 
 ## A determinism test failed once, and why is not known
 

@@ -1012,7 +1012,7 @@ the words "One branch, multiple commits."
    Route's window. Done the same day; `HISTORY.md` has it.
 7. **The rest of replay from the journal:** the new step kinds, `phileas
    replay`, and the proof under R 4.4.3. The chooser and `phileas replay`
-   landed on 2026-10-04. **Split on 2026-10-05:** the proof comes first in
+   landed on 2026-10-04. **Split on 2026-10-05:** the proof comes early in
    the order below, and the rest of replay after weighting the draw.
 
 The answer put step 4 before A. Placing it before C as well is a reading,
@@ -1032,12 +1032,15 @@ the order kept adding to the engine ahead of the one question still open,
 whether it finds bugs on its own, which `PRODUCT_REQUIREMENTS.md` section 11
 asks. `HISTORY.md` has each change and why.
 
-1. **The replay proof under R 4.4.3,** a recorded RStudio finding replayed
+1. **The log check reading a logged error's stack as part of it.** It made
+   false findings, so it is fixed before anything below is measured. Landed
+   the same day; `HISTORY.md` has it. Then a short RStudio Journey, since
+   none had run under the log rule widened on 2026-10-03, with what it finds
+   filed or dismissed, so the proof is not stopped by a normal line the
+   wider rule now fails on.
+2. **The replay proof under R 4.4.3,** a recorded RStudio finding replayed
    with another R on this machine. A finding from a Journey with no Fix
    needs no new step kind.
-2. **The log check reading a logged error's stack as part of it,** which
-   closes the `DEFECTS.md` entry. It makes false findings, so it is fixed
-   before anything below is measured.
 3. **Part of phase 8 brought forward:** one Journey over `buggy` with every
    planted defect whose check exists switched on, finding them by traveling
    rather than by being steered, under the uniform draw. It is the baseline
@@ -1053,6 +1056,11 @@ asks. `HISTORY.md` has each change and why.
    navigation away with its evidence from foreign processes, then the rest
    in phase 5's own order.
 8. **Recording a Fix, then phases 6, 7, 8 in full, 9 and 10,** as below.
+
+**Steps 1 and 2 swapped the same day,** proposed when asked whether the proof
+would take the wider log rule into account, and taken with "y": every RStudio
+journal predated that rule, so the proof would have been its first RStudio
+run.
 
 Steps 3 and 5 were proposed in both orders around the rest of replay, and
 the one above was taken with "OK let's do this." after a recommendation.

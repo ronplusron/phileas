@@ -7,6 +7,8 @@ import {
   CHECK_ORDER,
   CheckFailure,
   LOG_FAILURE,
+  STACK_FRAME,
+  logLineFails,
   TRACE_SNAPSHOT_IN_SANDBOX,
   PageConnectionLost,
   FixFailure,
@@ -616,6 +618,47 @@ test('a log line fails on an error class name and on the plain words for failure
   ]) {
     expect(LOG_FAILURE.test(line), line).toBe(false);
   }
+});
+
+test('a stack frame is never a failure of its own, and what follows it on its line is read', () => {
+  // Invented, in each shape measured in real Positron, VS Code and RStudio
+  // logs on 2026-10-05: spaces or a tab before "at", a frame in parentheses,
+  // a bare path with spaces in it, an async frame, a frame with no position,
+  // and a Rust frame with a line and no column. Each names a word the rule
+  // fails on, so each would be a finding read as a line of its own.
+  for (const frame of [
+    '    at Object.error (/opt/app/out/main.js:12:34)',
+    '\tat new TypeError (node:internal/errors:496:5)',
+    '    at /Applications/Some Editor.app/Contents/x/failure.js:5:6',
+    '    at async /opt/app/exception-handler.js:7:8',
+    '    at async Exception.wrap (index 0)',
+    '       at crates/lsp/src/panic.rs:263',
+  ]) {
+    expect(LOG_FAILURE.test(frame), `the control: ${frame}`).toBe(true);
+    expect(STACK_FRAME.test(frame), frame).toBe(true);
+    expect(logLineFails(frame), frame).toBe(false);
+  }
+  // A logger writing its next message onto the last frame of a stack, as
+  // measured; the frame goes, and the message still fails.
+  expect(logLineFails('    at process.processImmediate (node:internal/timers:574:21) [Agent] Failed to refresh models')).toBe(true);
+  // A log's own pattern is read past the frame the same way.
+  expect(logLineFails('    at refusedIt (/opt/app/x.js:1:2)', /refused/i)).toBe(false);
+  expect(logLineFails('    at x (/opt/app/x.js:1:2) Google refused it', /refused/i)).toBe(true);
+  // An ordinary line beginning with "at" is not a frame.
+  expect(logLineFails('at 09:30 the save failed')).toBe(true);
+});
+
+writtenTest("a logged error's stack is one finding, not one per frame naming an error", async ({ page, app }) => {
+  fs.writeFileSync(WRITTEN, '');
+  const { error, hops } = await logRoute(page, app, [
+    'ERROR the deactivation threw: TypeError: x is undefined\n' +
+      '    at Object.error (/opt/app/out/main.js:12:34)\n' +
+      '    at ErrorReporter.onUnexpectedError (/opt/app/out/main.js:56:78)\n',
+  ]);
+  expect(hops[0]?.result).toBe('failed');
+  expect(hops[0]?.findings).toHaveLength(1);
+  expect(hops[0]?.observation).toMatch(/the deactivation threw/);
+  expect(error).toBeInstanceOf(CheckFailure);
 });
 
 writtenTest('a line naming an error class fails the log check on a Route', async ({ page, app }) => {

@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and eighty-seven tests, after a
+through, and `npm test` runs three hundred and eighty-nine tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -165,6 +165,10 @@ a renamed control stopping the replay at its Hop, and a target matched
 only exactly. Three more came with `phileas replay`: a finding reproduced
 and, fixed, not reproduced; a `code` step refused and the current Fix
 checked against the recording; and a replay offered again as a replay.
+Two more came with a logged error's stack read as part of it: each shape of
+frame measured in real logs never failing alone, while a message written
+onto a frame's line still does, and a stack through a Route making one
+finding rather than one per frame.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -292,7 +296,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Seventeen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
@@ -398,7 +402,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and eighty-seven tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and eighty-nine tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

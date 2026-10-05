@@ -303,27 +303,6 @@
     "issue": "ronplusron/phileas#44"
   },
   {
-    "id": "7557abd4",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: at gNe.error (<profile>/extensions/posit.assistant-1.3.1/dist/extension.js:3215:86)",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "466bfd99",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: at Object.error (<profile>/extensions/posit.assistant-1.3.1/dist/extension.js:3250:6318)",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "8afe79ae",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: at Object.error (file:///Applications/Positron.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:63115:9)",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
     "id": "fb1bc714",
     "check": "no-error-notification",
     "signature": "no-error-notification: error notification: Error running command openremotessh.explorer.configure: A system error occurred (ENOENT: no such file or directory, open '<profile>/home/.ssh/config'). This is likely caused by the extension that contributes openremotessh.explorer.configure.",

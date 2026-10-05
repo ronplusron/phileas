@@ -25,6 +25,43 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-05: a logged error's stack is read as part of it
+
+**The defect.** The log check read every appended line on its own, so a
+stack frame such as `at Object.error (…)`, which names a function called
+error, was a finding of its own: on Positron on 2026-09-27 one logged error
+became up to three, each ending Routes until filed. Fixed first in the
+order of 2026-10-05, since it makes false findings, and before the first
+RStudio run under the rule widened on 2026-10-03.
+
+**Measured before the fix,** on every log on this machine from Positron, VS
+Code and RStudio, 6,591 lines and 255 frames. Frames come indented by
+spaces or a tab, in parentheses or as a bare path with spaces in it, async,
+with no position at all, and as Rust frames with a line and no column. **The
+five frames the rule matched did not match on a function's or file's name.**
+Each was the last frame of a stack with the logger's next message written
+onto its line, "[Copilot] Failed to refresh models", which is a failure of
+its own. Skipping frame lines would have hidden it. The entry this closes
+had read the five as naming exceptions; whether the earlier count, on 6,533
+lines, read them the same way is not known.
+
+**What landed.** `STACK_FRAME` in `src/oracles/index.ts` takes a frame off
+the start of a line, and `logLineFails` judges what is left by
+`LOG_FAILURE` and the log's own `failsOn`. The pattern matches all 255
+frames, and no line's verdict on those logs changed: 507 failed before and
+after. A finding's text is still the whole line, so no signature moved.
+
+**Tested.** Two new tests, 389 in all: a frame of each measured shape, each
+holding a word the rule fails on, never fails alone, while a message after a
+frame still does; and an error with two such frames, written to `buggy`'s
+log through a Route, makes one finding. The control: with the frame left on
+the line, the same Route made three.
+
+**Three known findings removed** from Positron's file with `phileas known
+remove`, asked for with "y": `7557abd4`, `466bfd99` and `8afe79ae`, each
+an `.error` frame from the extension host log added unfiled by a Journey on
+2026-09-27, which nothing can produce any more.
+
 ## 2026-10-05: the order reviewed, to ask sooner whether the engine finds bugs
 
 **Asked for as "Review the order and priorities".** The review found the

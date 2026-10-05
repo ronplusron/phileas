@@ -250,6 +250,33 @@ export const TRACE_SNAPSHOT_IN_SANDBOX =
 export const LOG_FAILURE = /\w*error\b|\b(?:fatal|failed|failure|exception|panic)\b/i;
 
 /**
+ * A stack frame at the start of a log line: `at fn (file:1:2)`, `at
+ * file:1:2`, `at async Promise.all (index 0)`, or a Rust frame's `at
+ * file.rs:263`. Measured on 2026-10-05 against every frame in 6,591 lines of
+ * real Positron, VS Code and RStudio logs, 255 frames, and it matched all of
+ * them, a tab or spaces before each and paths with spaces in them included.
+ * The bare form is tried first, so a frame in parentheses never reaches past
+ * its own closing one.
+ */
+export const STACK_FRAME = /^\s+at\s+(?:[^()\n]*?:\d+(?::\d+)?(?=\s|$)|[^()\n]*\([^()]*\))/;
+
+/**
+ * Whether a log line is a failure, by `LOG_FAILURE` or the log's own pattern.
+ *
+ * **A stack frame is read as part of the error above it, never as one of its
+ * own.** A frame such as `at Object.error (…)` names a function called error,
+ * and on Positron on 2026-09-27 one logged error became up to three findings
+ * that way, each ending Routes until filed. What follows a frame on its line
+ * is still read: the same measurement found a logger writing its next message
+ * onto the last frame of a stack, "[Copilot] Failed to refresh models", which
+ * is a failure of its own.
+ */
+export function logLineFails(line: string, own?: RegExp): boolean {
+  const read = line.replace(STACK_FRAME, '');
+  return LOG_FAILURE.test(read) || own?.test(read) === true;
+}
+
+/**
  * The logs to read, from a list or from the Route's profile folder.
  *
  * Refuses when the adapter names its logs by folder and no folder was given,
@@ -454,7 +481,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
           const since = unreadSince.get(file) ?? watchedFrom;
           const own = failsOn.get(file);
           for (const line of buffer.subarray(0, end).toString('utf8').split('\n')) {
-            if (!LOG_FAILURE.test(line) && !own?.test(line)) continue;
+            if (!logLineFails(line, own)) continue;
             const logged = loggedAt(file, line);
             const arrival: Arrival = { after: since, before: readAt, ...(logged === undefined ? {} : { loggedAt: logged }) };
             found.push({ text: `${file}: ${line.trim()}`, arrival });
