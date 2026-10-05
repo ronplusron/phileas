@@ -1041,7 +1041,8 @@ asks. `HISTORY.md` has each change and why.
    `HISTORY.md` has it.
 2. **The replay proof under R 4.4.3,** a recorded RStudio finding replayed
    with another R on this machine. A finding from a Journey with no Fix
-   needs no new step kind.
+   needs no new step kind. Passed the same day, once a replay could skip a
+   Hop recorded as abandoned; `HISTORY.md` has it.
 3. **Part of phase 8 brought forward:** one Journey over `buggy` with every
    planted defect whose check exists switched on, finding them by traveling
    rather than by being steered, under the uniform draw. It is the baseline

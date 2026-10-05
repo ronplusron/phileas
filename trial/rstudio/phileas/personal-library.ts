@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { rscript } from './which-r';
 
 /**
  * Whether a Route's R sees the R library of the person running the Journey.
@@ -38,12 +39,13 @@ export type PersonalLibrary =
  * R's own default personal library for the person running the Journey: what
  * R makes of R_LIBS_USER under the real home folder and its startup files,
  * with any value in this process's environment set aside, as the R library
- * guard reads it. Throws when R cannot say.
+ * guard reads it, asked of the R RStudio starts (`which-r.ts`). Throws when R
+ * cannot say.
  */
 export function rDefaultPersonalLibrary(): string[] {
   let said: string;
   try {
-    said = execFileSync('Rscript', ['-e', 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'], {
+    said = execFileSync(rscript(), ['-e', 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'], {
       encoding: 'utf8',
       env: { ...process.env, R_LIBS_USER: '' },
     });

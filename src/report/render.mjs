@@ -49,6 +49,14 @@ export const JOURNEY_END = Symbol.for('phileas.journeyEnd');
  */
 export const REPORTER_PRESENT = Symbol.for('phileas.reporterPresent');
 
+/**
+ * How a replay's skipped Hop's `abandoned` begins: one recorded as abandoned
+ * whose target is not on offer now, skipped in its place. The replay writes
+ * it and the reporter counts it, so a replay is never said to have landed
+ * every Hop when it skipped one.
+ */
+export const REPLAY_SKIPPED = 'replayed as recorded';
+
 /** Whether the engine's reporter is in this process, waiting for a Journey's end. */
 export function reporterPresent() {
   return /** @type {Record<symbol, unknown>} */ (globalThis)[REPORTER_PRESENT] === true;

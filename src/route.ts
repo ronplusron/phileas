@@ -13,6 +13,7 @@ import {
   type HopAction,
   type JournaledCandidate,
   type JournaledCheck,
+  type TripHopEntry,
 } from './journal.js';
 import { requireRun } from './journey.js';
 import { clickMenuItem } from './menu.js';
@@ -58,7 +59,22 @@ import {
  * reach for the simplification.
  */
 export interface Chooser {
-  choose(candidates: readonly SurveyedCandidate[], rng: Rng): Choice | Promise<Choice>;
+  choose(candidates: readonly SurveyedCandidate[], rng: Rng): Choice | Skip | Promise<Choice | Skip>;
+}
+
+/**
+ * What a replay's chooser returns in place of a target, for a recorded Hop
+ * that was abandoned and whose target is not on offer now. The Hop keeps its
+ * place, so every Hop after it lines up with its recording, and is journaled
+ * as abandoned again, with why. Its recorded action never landed, so acting
+ * on nothing is what the recording did. Measured on 2026-10-05: an RStudio
+ * Route's hop 4 drew a control from a survey taken before a dialog had
+ * opened, the click timed out, and a replay surveying after the dialog found
+ * the control covered and stopped there.
+ */
+export interface Skip {
+  readonly skip: string;
+  readonly recorded: TripHopEntry;
 }
 
 /**
@@ -213,7 +229,7 @@ export function keepsRouteGoing(candidate: SurveyedCandidate): boolean {
  * second draw points at within the side the first chose, in pool order. The
  * draw is taken as a fraction of 2^32 and read by sideOfShareDraw.
  */
-export function createSeededChooser(shares: Shares): Chooser {
+export function createSeededChooser(shares: Shares): SeededChooser {
   return {
     choose: (candidates, rng) => {
       // One draw, wanted for its raw value: sideOfShareDraw reads the side from it.
@@ -273,8 +289,13 @@ export function drawMenuByLevel<T extends { readonly menuPath: readonly string[]
   }
 }
 
+/** A chooser that always draws a target, as the seeded one does, and never skips. */
+export interface SeededChooser extends Chooser {
+  choose(candidates: readonly SurveyedCandidate[], rng: Rng): Choice;
+}
+
 /** The seeded chooser with the engine's default shares. */
-export const seededChooser: Chooser = createSeededChooser({
+export const seededChooser: SeededChooser = createSeededChooser({
   keyShare: DEFAULT_KEY_SHARE,
   menuShare: DEFAULT_MENU_SHARE,
 });
@@ -950,18 +971,23 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       }
 
       const startedAt = new Date();
-      const { target, draw, shareDraw, menuDraws } = await chooser.choose(found.candidates, streams.trip);
+      const choice = await chooser.choose(found.candidates, streams.trip);
+      // A replay's Hop recorded as abandoned, whose target is not on offer:
+      // journaled in its place as abandoned again, acting on nothing. See Skip.
+      const skipped = 'skip' in choice ? choice : undefined;
+      const { target, draw, shareDraw, menuDraws }: Partial<Choice> = 'skip' in choice ? {} : choice;
       // The chooser is a seam other implementations will fill. One that hands
       // back something the survey did not offer would have the journal record
       // a Hop against a pool that does not hold its target (R10).
-      if (!found.candidates.includes(target)) {
-        throw new Error(`The chooser returned ${target.role} "${target.name}", which is not among the candidates it was given.`);
+      if (!skipped && (!target || !found.candidates.includes(target))) {
+        throw new Error(`The chooser returned ${target?.role} "${target?.name}", which is not among the candidates it was given.`);
       }
-      lastTarget = `${target.role} "${target.name}"`;
-      const action = await actionFor(target, hopTimeoutMs);
+      const recordedTarget = skipped ? skipped.recorded.target : journaled(target!);
+      lastTarget = skipped ? targetText(recordedTarget) : `${target!.role} "${target!.name}"`;
+      const action = skipped ? skipped.recorded.action : await actionFor(target!, hopTimeoutMs);
       const span: StepSpan = {
         name: `hop ${hops + 1}`,
-        what: `${action} ${targetText(journaled(target))}`,
+        what: `${action} ${targetText(recordedTarget)}`,
         startedAt: startedAt.getTime(),
       };
       timeline.push(span);
@@ -970,8 +996,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // way regardless of which control was the target. A value drawn only for a
       // text box would make every later draw depend on what the survey happened
       // to offer, and two runs of one seed would diverge at the first hop that
-      // chose a button where the other chose a field.
-      const value = values.generate(target, streams.trip);
+      // chose a button where the other chose a field. A replay's skipped Hop
+      // draws nothing: a replay draws nothing from the stream at all.
+      const value = skipped ? (skipped.recorded.value ?? '') : values.generate(target!, streams.trip);
 
       // A bounded action that ran out of time ends the Hop, not the Route. The
       // measured case is an outbound link: the click schedules a navigation the
@@ -985,15 +1012,17 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // Timed from this side too, through the watch: an application that has
       // stopped answering holds back even the action's own timeout, and how
       // long it held it back is what the still-responding check reads.
-      let abandoned: string | undefined;
+      let abandoned: string | undefined = skipped?.skip;
       let interceptedBy: string | undefined;
       try {
-        const acted = await watch.bounded(
-          `hop ${hops + 1}'s ${action} on ${lastTarget}`,
-          act(app, page, target, action, value, hopTimeoutMs),
-          hopTimeoutMs
-        );
-        if (acted === STALLED) abandoned = 'the application stopped answering';
+        if (!skipped) {
+          const acted = await watch.bounded(
+            `hop ${hops + 1}'s ${action} on ${lastTarget}`,
+            act(app, page, target!, action, value, hopTimeoutMs),
+            hopTimeoutMs
+          );
+          if (acted === STALLED) abandoned = 'the application stopped answering';
+        }
       } catch (error) {
         // Only what an action can meet in a working engine: running out of
         // time, the target gone from a menu or page since the survey, or the
@@ -1029,7 +1058,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       journal.write({
         kind: 'trip-hop',
         hop: hops + 1,
-        target: journaled(target),
+        target: recordedTarget,
         action,
         pool,
         ...(draw === undefined ? {} : { draw }),

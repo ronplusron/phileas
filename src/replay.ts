@@ -1,5 +1,5 @@
 import { readJournal, sourceHash, type FixStepEntry, type JournaledCandidate, type JournalEntry, type TripHopEntry } from './journal.js';
-import { targetText } from './report/render.mjs';
+import { REPLAY_SKIPPED, targetText } from './report/render.mjs';
 import type { Chooser, Fix, FixStep, ValueGenerator } from './route.js';
 import type { SurveyedCandidate } from './survey.js';
 
@@ -211,7 +211,6 @@ export function replayOf(
   count = hops.length
 ): { chooser: Chooser; values: ValueGenerator } {
   let chosen = 0;
-  let valued = 0;
   const chooser: Chooser = {
     choose: (candidates) => {
       const recorded = hops[chosen];
@@ -220,16 +219,23 @@ export function replayOf(
         throw new Error(`The replay was asked for hop ${chosen}, and replays ${Math.min(count, hops.length)}.`);
       }
       const match = candidates.find((candidate) => sameTarget(journaled(candidate), recorded.target));
-      if (!match) throw new CouldNotReplay(recorded.hop, recorded.target, candidates.map(journaled));
-      return { target: match };
+      if (match) return { target: match };
+      // A Hop that was abandoned did nothing, so a target no longer on offer
+      // costs the replay nothing: the Hop keeps its place and is skipped. Its
+      // pool was likely read while the page was still changing. See Skip.
+      if (recorded.abandoned !== undefined) {
+        return {
+          skip: `${REPLAY_SKIPPED}: abandoned then (${recorded.abandoned}), and its target is not on offer now`,
+          recorded,
+        };
+      }
+      throw new CouldNotReplay(recorded.hop, recorded.target, candidates.map(journaled));
     },
   };
+  // The value of the Hop just chosen, rather than a count of its own, so a
+  // skipped Hop, which asks for no value, never shifts the ones after it.
   const values: ValueGenerator = {
-    generate: () => {
-      const recorded = hops[valued];
-      valued += 1;
-      return recorded?.value ?? '';
-    },
+    generate: () => hops[chosen - 1]?.value ?? '',
   };
   return { chooser, values };
 }

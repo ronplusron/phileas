@@ -725,11 +725,10 @@ confirmed the same day:
   way or not.
 
 **Built on 2026-10-04: the chooser and the command,** and `HISTORY.md` has
-them. Still to do, in this order, which `PLAN.md` changed on 2026-10-05 to
-put the proof first and the rest after weighting the draw:
+them, and **the proof under R 4.4.3 passed on 2026-10-05,** which
+`HISTORY.md` has too. Still to do, in this order, after weighting the draw,
+as `PLAN.md` placed it on 2026-10-05:
 
-- **The proof under R 4.4.3,** a recorded RStudio finding replayed with
-  another R on this machine, from a Journey with no Fix.
 - **The new step kinds,** `wait`, `press` and `type`, and an `act` step
   naming its target as data, so most Fixes' code becomes data a replay runs
   from the journal alone.

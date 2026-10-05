@@ -58,7 +58,7 @@ phases are marked by number.
 | Journey seed | The one seed a run is defined by, settled once before any Route starts. `phileas run --seed`, or `PHILEAS_SEED`, replays it, and wins over a seed pinned in the Journey file. |
 | Route seed | Derived from the Journey seed and the Route's number, so any Route can be replayed on its own. Routes are numbered from 1, in the seed as everywhere else. |
 | Fix stream / Trip stream | Two separate seeded streams of numbers per Route, so editing the Fix never shifts the Trip's draws. |
-| Replay | Retracing a recorded Route. From the journal, `phileas replay <journal>`, since 2026-10-04: each Hop acts on its recorded target by name in place of drawing, so a changed application or another machine does not send it elsewhere, and it ends reproduced, not reproduced, or could not replay, never a plain pass. From the seed, re-running it with `--seed`, which retraces only the same build. A longer Trip retraces a shorter one's Hops and then carries on. Since 2026-09-24 the window mode no longer changes what is offered, though a replay across modes has not been measured. The hop delay changes nothing. |
+| Replay | Retracing a recorded Route. From the journal, `phileas replay <journal>`, since 2026-10-04: each Hop acts on its recorded target by name in place of drawing, so a changed application or another machine does not send it elsewhere, and it ends reproduced, not reproduced, or could not replay, never a plain pass. A Hop recorded as abandoned whose target is not on offer is skipped in its place, since it did nothing then either, and journaled as abandoned again. From the seed, re-running it with `--seed`, which retraces only the same build. A longer Trip retraces a shorter one's Hops and then carries on. Since 2026-09-24 the window mode no longer changes what is offered, though a replay across modes has not been measured. The hop delay changes nothing. |
 
 ## Recording
 
@@ -67,7 +67,7 @@ phases are marked by number.
 | Journal | One file per Route, at `<root>/<journey seed>/<run>/`, where only the root is the consumer's, one JSON object per line, flushed to disk as each is written so it survives a crash. Includes one entry per Hop. Made for the engine and for replay; a person reads it through `phileas run --follow` or `phileas show`, one line per Hop (R30). |
 | Line kinds | `route` (the opening line), `pool`, `fix-step` (written `fix-hop` before 2026-09-29, and read as `fix-step`), `trip-hop`, `note` (such as the menu being unavailable, which only a launch path with no main process would cause), `outcome` (the closing line, absent if the Route died). |
 | Effect | What a Hop did to the screen: whether anything changed, and which headings appeared and went away (R31), recorded on every Fix step and Trip hop. An effect that could not be read says so rather than claiming nothing changed. |
-| Abandoned | A trip hop whose action timed out. It's still recorded, and the Route continues. Where a click timed out because something was drawn over its target, the journal names what took it, as `interceptedBy`. |
+| Abandoned | A trip hop whose action timed out. It's still recorded, and the Route continues. Where a click timed out because something was drawn over its target, the journal names what took it, as `interceptedBy`. A replay's skipped Hop is abandoned too, its reason beginning "replayed as recorded". |
 
 ## Checking (phase 5 onward)
 

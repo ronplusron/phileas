@@ -24,6 +24,7 @@ import {
 } from '../src/index';
 import { launchOrRemove, removeScratch, scratch } from './scratch';
 import { readEnding, replayVerdict } from '../src/report/reporter.mjs';
+import { REPLAY_SKIPPED } from '../src/report/render.mjs';
 
 /**
  * Replaying a Route from its journal (R12): the replay chooser acts on each
@@ -221,4 +222,60 @@ test("a code step is refused unless the current Fix runs, and the current Fix mu
   // And one that takes another step first.
   const other: Fix = async ({ step }) => step({ kind: 'act', target: 'button "Inventory"' });
   await expect(replayFix(plan, other)?.(context as never) ?? Promise.resolve()).rejects.toThrow(/step 1 is button "Inventory", and the recorded one was "button \"Summary\""/);
+});
+
+test('a Hop recorded as abandoned, whose target is not on offer now, is skipped in its place and the replay goes on', async () => {
+  test.setTimeout(180_000);
+  const recorded = await record('replay-record');
+  expect(recorded.hops).toHaveLength(10);
+  // As measured on RStudio: the last Hop drew a control from a pool read
+  // before the page had finished changing, and its click timed out. Its
+  // target is renamed here to one no launch offers.
+  const last = recorded.hops[9]!;
+  const missing = { ...last.target, source: 'page' as const, role: 'button', name: 'Read while the page was still changing' };
+  const abandonedThen = { ...last, target: missing, action: 'click' as const, abandoned: 'locator.click: Timeout 3000ms exceeded.' };
+  const replayedHops = async (hops: readonly TripHopEntry[]) => {
+    const root = scratch('phileas-replay-test-');
+    const plan = { recorded: { ...recorded, hops }, count: 10, whole: true, withCurrentFix: false, setAside: [] };
+    const ended = await inLaunch((page, app) =>
+      runRoute({ page, app, cfg: buggy, streams: deriveRouteStreams('skipped', 1), journeySeed: 'skipped', routeNumber: 1, tripLength: 10, journalsRoot: root, replay: plan }).then(
+        () => undefined,
+        (error: unknown) => error
+      )
+    );
+    return { ended, file: journalOf(root, 'skipped') };
+  };
+
+  const skipped = await replayedHops([...recorded.hops.slice(0, 9), abandonedThen]);
+  expect(skipped.ended).toBeUndefined();
+  const replayed = readRecorded(skipped.file);
+  expect(what(replayed.hops.slice(0, 9))).toEqual(what(recorded.hops.slice(0, 9)));
+  // In its place, with the recorded target, and abandoned again, saying why.
+  expect(replayed.hops[9]).toMatchObject({ hop: 10, target: missing, action: 'click' });
+  expect(replayed.hops[9]?.abandoned).toMatch(new RegExp(`^${REPLAY_SKIPPED}: abandoned then \\(locator\\.click: Timeout`));
+  expect(replayVerdict(readEnding(skipped.file))).toBe(
+    'replayed all 10 recorded Hops, 1 skipped as abandoned when recorded; the recorded Route passed after 10 hops'
+  );
+
+  // The control: the same Hop, not abandoned when recorded, stops the replay.
+  const landedThen = await replayedHops([...recorded.hops.slice(0, 9), { ...abandonedThen, abandoned: undefined }]);
+  expect(landedThen.ended).toBeInstanceOf(CouldNotReplay);
+  expect((landedThen.ended as CouldNotReplay).hop).toBe(10);
+});
+
+test("a skipped Hop does not shift the values typed by the Hops after it", () => {
+  const button = { source: 'page' as const, role: 'button', name: 'Gone' };
+  const box = { source: 'page' as const, role: 'textbox', name: 'Notes' };
+  const effect = { readable: true, changed: false, appeared: [], appearedMore: 0, wentAway: [], wentAwayMore: 0 };
+  const hop = (n: number, target: object, extra: object) =>
+    ({ kind: 'trip-hop', hop: n, target, pool: 'p', startedAt: '', durationMs: 1, settled: true, settleMs: 1, effect, checks: [], ...extra }) as unknown as TripHopEntry;
+  const hops = [hop(1, button, { action: 'click', abandoned: 'timed out' }), hop(2, box, { action: 'type', value: 'travel' })];
+  const { chooser, values } = replayOf(hops, (candidate) => candidate as never);
+  const offered = [box as never];
+  const first = chooser.choose(offered, undefined as never);
+  expect(first).toMatchObject({ skip: expect.stringMatching(new RegExp(`^${REPLAY_SKIPPED}`)) });
+  // The loop asks no value for a skipped Hop; the next Hop still types its own.
+  const second = chooser.choose(offered, undefined as never);
+  expect(second).toMatchObject({ target: box });
+  expect(values.generate(box as never, undefined as never)).toBe('travel');
 });

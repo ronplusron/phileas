@@ -27,7 +27,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { renderJourneyFindings } from '../known.mjs';
 import { currentEntry } from '../legacy.mjs';
-import { JOURNEY_END, REPORTER_PRESENT, firstSentence, routeLabel, targetText } from './render.mjs';
+import { JOURNEY_END, REPLAY_SKIPPED, REPORTER_PRESENT, firstSentence, routeLabel, targetText } from './render.mjs';
 
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
 /** @typedef {import('../known.mjs').JourneyFindings} JourneyFindings */
@@ -37,14 +37,14 @@ const JOURNAL_ANNOTATION = 'phileas-journal';
 
 /**
  * A Route's journal, read for its ending: the opening line, the last Fix step
- * or Hop, and the outcome line where the Route wrote one. A line cut off
- * mid-write, by a Route that died, is skipped.
+ * or Hop, the outcome line where the Route wrote one, and how many Hops a
+ * replay skipped. A line cut off mid-write, by a Route that died, is skipped.
  * @param {string} file
- * @returns {{ opening?: Extract<JournalEntry, { kind: 'route' }>, last?: Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' }>, outcome?: Extract<JournalEntry, { kind: 'outcome' }>, hops: number }}
+ * @returns {{ opening?: Extract<JournalEntry, { kind: 'route' }>, last?: Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' }>, outcome?: Extract<JournalEntry, { kind: 'outcome' }>, hops: number, skipped: number }}
  */
 export function readEnding(file) {
   /** @type {ReturnType<typeof readEnding>} */
-  const ending = { hops: 0 };
+  const ending = { hops: 0, skipped: 0 };
   let text;
   try {
     text = fs.readFileSync(file, 'utf8');
@@ -64,6 +64,7 @@ export function readEnding(file) {
     else if (entry.kind === 'trip-hop' || entry.kind === 'fix-step') {
       ending.last = entry;
       if (entry.kind === 'trip-hop') ending.hops = entry.hop;
+      if (entry.kind === 'trip-hop' && entry.abandoned?.startsWith(REPLAY_SKIPPED)) ending.skipped += 1;
     } else if (entry.kind === 'outcome') {
       ending.outcome = entry;
       ending.hops = entry.hops;
@@ -129,7 +130,7 @@ function failedCheckLines(last) {
  */
 export function routeLines(result, { follow, cwd }) {
   const journal = result.annotations.find((note) => note.type === JOURNAL_ANNOTATION)?.description;
-  const ending = journal ? readEnding(journal) : { hops: 0 };
+  const ending = journal ? readEnding(journal) : { hops: 0, skipped: 0 };
   const routeNumber = ending.opening?.routeNumber ?? Number(/route (\d+)/.exec(result.title)?.[1] ?? 0);
   // A test that is not a Route, such as a probe a person runs through the
   // same config, has no number, and is named by its title.
@@ -219,15 +220,19 @@ export function replayVerdict(ending) {
     if (seen.some((signature) => wanted.has(signature))) return 'reproduced: the finding came back';
     return wanted.size ? 'not reproduced, and failed on something else' : 'failed, where the recorded Route did not fail on a check';
   }
+  // A Hop skipped as abandoned when recorded did nothing either time, so it
+  // is said rather than counted as having landed.
+  const skipped = ending.skipped ? `, ${ending.skipped} skipped as abandoned when recorded` : '';
   if (wanted.size) {
-    return `not reproduced: all ${replays.hops} replayed Hops landed, and the finding did not come back`;
+    const landed = ending.skipped ? `${replays.hops - ending.skipped} of ${replays.hops}` : `all ${replays.hops}`;
+    return `not reproduced: ${landed} replayed Hops landed${skipped}, and the finding did not come back`;
   }
   // No finding to look for. A replay stops after the recorded Hops, so it
   // never strands where the recorded Route did; said beside how that one
   // ended, so a stranded Route's replay is not read as a plain pass.
   const recorded = readEnding(replays.journal).outcome;
   const then = recorded ? `${recorded.outcome} after ${recorded.hops} hops` : 'did not finish';
-  return `replayed all ${replays.hops} recorded Hops; the recorded Route ${then}`;
+  return `replayed all ${replays.hops} recorded Hops${skipped}; the recorded Route ${then}`;
 }
 
 /** @param {string} text */

@@ -25,6 +25,66 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-05: replay proved under another R
+
+**The proof R12 names, without a second machine:** an RStudio finding
+recorded under R 4.6 replayed under R 4.4.3, on the same release of RStudio.
+It reproduced. Planned on 2026-10-02 and placed second in the order of
+2026-10-05.
+
+**A journal had to be made first.** Every RStudio Route that had failed on a
+finding ran a Fix and predated 2026-10-03, so its Fix steps were never
+recorded and it cannot be replayed; the Routes with no Fix that failed did
+so on other things. A replay of seed `68b1f1210035` route 1, which passed in
+the record by carrying past issue 18976 as known, showed it: hops 1 to 19
+retraced, the finding came back at hop 18 in the session log, and with
+nothing set aside the replay had nothing to call reproduced. So the seed was
+run again with 18976 taken out of the known findings for that one run and
+the file restored afterwards, as asked with "Go ahead". The draw went
+elsewhere than on 2026-09-29, since the engine had changed, and the Route
+failed at hop 12 on 18976: `68b1f1210035/2026-10-05T09-58-55-051Z`.
+
+**A replay could not get past an abandoned Hop.** Replayed under R 4.6 as
+the control, it stopped at hop 4 as could not replay: hop 4 had drawn
+"Modified" from a survey read before the New Project dialog that hop 3
+opened had appeared, and its click timed out against the dialog; the
+replay, surveying after the dialog, found it covered and left out. Any
+Route with an abandoned Hop can meet this. Chosen from two ways on, over
+recording another Route: a Hop recorded as abandoned whose target is not on
+offer is skipped in its place and journaled as abandoned again, its reason
+beginning "replayed as recorded", since its recorded action never landed.
+`Skip` in `src/route.ts`, returned by the replay chooser in `src/replay.ts`;
+the Hop keeps its number, so every Hop after it lines up with its recording,
+and the values typed after it follow the Hop chosen rather than a count of
+their own. The reporter counts skipped Hops rather than saying every Hop
+landed.
+
+**The runs.** Under R 4.6 the control reproduced; hop 4's survey caught the
+page mid-change again, so it was abandoned again rather than skipped, which
+timing decides. Under R 4.4.3, chosen with `RSTUDIO_WHICH_R`, it reproduced
+twice, both times skipping hop 4, with the finding at hop 12 as recorded.
+**Which R ran was read from outside,** by a watcher listing the R framework
+each `rsession` had loaded, since a variable merely set proves nothing:
+`Versions/4.6` for the control and `Versions/4.4-arm64` for the proof's
+second run. Its first run went unwatched, the watcher having timed out
+waiting for it to start.
+
+**What the proof found in the adapter.** The RStudio adapter asked the
+`Rscript` on the PATH about R's libraries whatever RStudio started, so under
+R 4.4.3 the R library guard watched 4.6's library and reported nothing
+changed, and each Route's personal library was 4.6's, while 4.4's exists.
+Raised before the commit and fixed on the same branch, asked for with "y":
+`trial/rstudio/phileas/which-r.ts` gives both the `Rscript` beside the R
+`RSTUDIO_WHICH_R` names, refusing one that names no R rather than falling
+back to the PATH's.
+
+**Tested.** Four new tests, 393 in all: a recorded abandoned Hop skipped in
+a launch, with the same Hop not abandoned as the control, stopping the
+replay; the values after a skip unshifted; the Rscript beside a named R and
+the refusals; and the guard reading R 4.4.3's library under the variable,
+against the PATH's R as the control, skipped by name where R 4.4.3 is not
+installed.
+
 ## 2026-10-05: Positron under the wider log rule, and installing left out
 
 **Why it ran.** Asked as "What about doing the same, for Positron?" after

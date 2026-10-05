@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { rscript } from './which-r';
 
 /**
  * Whether a Journey changed the machine's R package libraries.
@@ -26,13 +27,13 @@ export type LibrarySnapshot = ReadonlyMap<string, ReadonlyMap<string, string>>;
 /**
  * The machine's R libraries, as R itself lists them for the person running
  * the Journey: the same HOME and startup files RStudio would read without the
- * adapter's redirect. Throws when R cannot say, since a guard with nothing to
+ * adapter's redirect, asked of the R RStudio starts (`which-r.ts`). Throws when R cannot say, since a guard with nothing to
  * watch must not read as one that watched.
  */
 export function machineLibraries(): string[] {
   let listed: string;
   try {
-    listed = execFileSync('Rscript', ['-e', 'cat(.libPaths(), sep = "\\n")'], {
+    listed = execFileSync(rscript(), ['-e', 'cat(.libPaths(), sep = "\\n")'], {
       encoding: 'utf8',
       env: { ...process.env, R_LIBS_USER: '' },
     });
