@@ -9,6 +9,7 @@
 //   phileas known remove <id> [file]
 //   phileas known list [file]
 //   phileas replay <journal> [config] [--whole] [--with-current-fix] [--follow]
+//   phileas --version
 //
 // `run` runs a Journey with its settings changed for one run. Real flags need
 // a command of their own, because Playwright refuses any it does not know
@@ -91,6 +92,7 @@ const USAGE = `Usage:
   phileas known remove <id> [file]
   phileas known list [file]
   phileas replay <journal> [config] [--whole] [--with-current-fix] [--follow]
+  phileas --version
 
 run: run a Journey, with its settings changed for this run only.
   config    A Playwright config file, or a folder holding playwright.config.ts.
@@ -194,6 +196,7 @@ export function knownFileIn(file, dir = process.cwd()) {
 
 /**
  * @typedef {{ command: 'help' }
+ *   | { command: 'version' }
  *   | { command: 'run', config: string, settings: Record<string, string>, passThrough: string[] }
  *   | { command: 'show', what: string | undefined }
  *   | { command: 'survey', config: string }
@@ -215,6 +218,10 @@ export function parse(args) {
   const beforeSeparator = rest.includes('--') ? rest.slice(0, rest.indexOf('--')) : rest;
   if (command === '--help' || command === '-h' || beforeSeparator.some((a) => a === '--help' || a === '-h')) {
     return { command: 'help' };
+  }
+  if (command === '--version') {
+    if (rest.length) throw new Error(`--version takes nothing, and was given ${rest.join(' ')}`);
+    return { command: 'version' };
   }
   if (command === 'show') {
     if (rest.length > 1) throw new Error(`show takes one thing to show, and was given ${rest.length}`);
@@ -285,7 +292,7 @@ export function parse(args) {
   }
   if (command !== 'run') {
     throw new Error(
-      command ? `unknown command ${command}; the commands are run, show, survey and known` : 'no command given'
+      command ? `unknown command ${command}; the commands are run, show, survey, known and replay` : 'no command given'
     );
   }
 
@@ -581,6 +588,15 @@ function knownList(file) {
   }
 }
 
+/**
+ * The engine's version, from its own package.json beside this command, so a
+ * journal or a finding can be matched to the engine that made it.
+ * @returns {string}
+ */
+export function version() {
+  return JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
+}
+
 function main() {
   /** @type {Parsed} */
   let parsed;
@@ -590,6 +606,7 @@ function main() {
     refuse(/** @type {Error} */ (error).message);
   }
   if (parsed.command === 'help') console.log(USAGE);
+  else if (parsed.command === 'version') console.log(`phileas ${version()}`);
   else if (parsed.command === 'show') show(parsed.what);
   // One Route is enough to see the start, since every Route starts the same way.
   else if (parsed.command === 'survey') run(parsed.config, { PHILEAS_SURVEY: '1', PHILEAS_ROUTES: '1' }, [], { reporter: false });

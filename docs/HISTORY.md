@@ -85,6 +85,14 @@ the refusals; and the guard reading R 4.4.3's library under the variable,
 against the PATH's R as the control, skipped by name where R 4.4.3 is not
 installed.
 
+**`phileas --version`,** asked as "Is there a way for `phileas` to return its
+version?" before this branch merged, and put on it with "this branch": it
+prints `phileas` and the version in the engine's own `package.json`. Looking
+for it found an unknown command told "the commands are run, show, survey and
+known", which left out `replay`; it now names all five. One more test, 394
+in all, runs the command for its version and holds the refusal to every
+command.
+
 ## 2026-10-05: Positron under the wider log rule, and installing left out
 
 **Why it ran.** Asked as "What about doing the same, for Positron?" after

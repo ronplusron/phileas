@@ -231,3 +231,13 @@ test('the command runs a Journey with its settings changed, and the file unchang
   expect(output.trim().split('\n').at(-1)).toMatch(/^Run it again: phileas run proving-ground\/buggy\/phileas --seed cmd-seed --routes 1 --trip-length 2$/);
   expect(fs.readFileSync(journeyFile, 'utf8')).toBe(before);
 });
+
+test("the command says the engine's version, and an unknown command is told every command there is", () => {
+  const { version } = JSON.parse(fs.readFileSync(path.join(repo, 'package.json'), 'utf8')) as { version: string };
+  const said = spawnSync(process.execPath, [command, '--version'], { cwd: repo, encoding: 'utf8', timeout: 30_000 });
+  expect(said.status, said.stderr).toBe(0);
+  expect(said.stdout.trim()).toBe(`phileas ${version}`);
+  expect(() => parse(['--version', 'extra'])).toThrow(/--version takes nothing/);
+  // Every command the command has, replay included, which this line once left out.
+  expect(() => parse(['nope'])).toThrow(/the commands are run, show, survey, known and replay/);
+});
