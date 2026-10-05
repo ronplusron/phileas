@@ -1037,7 +1037,8 @@ asks. `HISTORY.md` has each change and why.
    the same day; `HISTORY.md` has it. Then a short RStudio Journey, since
    none had run under the log rule widened on 2026-10-03, with what it finds
    filed or dismissed, so the proof is not stopped by a normal line the
-   wider rule now fails on.
+   wider rule now fails on. Run the same day, and it found nothing to file;
+   `HISTORY.md` has it.
 2. **The replay proof under R 4.4.3,** a recorded RStudio finding replayed
    with another R on this machine. A finding from a Journey with no Fix
    needs no new step kind.

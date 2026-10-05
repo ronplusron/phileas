@@ -25,6 +25,25 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-05: RStudio's first Journey under the wider log rule
+
+**Why it ran.** No RStudio Journey had run since the log rule was widened on
+2026-10-03, so the replay proof would have been the first, and a normal line
+the wider rule now fails on could have stopped it short of the finding it
+replays. Asked for as 4 Routes of 50 Hops, run with no Fix and windows
+hidden, seed `7e6f03cecb10`.
+
+**What it found: nothing.** All 4 Routes passed, 200 of 200 Hops, and the
+log check passed on every Hop rather than reporting that it did not run. No
+new finding, so nothing to file or dismiss, and none of the 5 known findings
+was met. The home folder and R library guards found nothing written.
+
+**What that does not show.** The session log is named as created on its first
+write, so a Route that never wrote to it also reads as passed; only
+`rdesktop.log`, which exists from launch, is known to have been read. The
+replay proof replays a finding from the session log, which makes it the
+positive control for this one.
+
 ## 2026-10-05: a logged error's stack is read as part of it
 
 **The defect.** The log check read every appended line on its own, so a
