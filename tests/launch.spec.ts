@@ -9,6 +9,8 @@ import {
   resolveBundle,
   assertBundleFresh,
   reachMainProcess,
+  retryDropped,
+  hideWindows,
   prepareWindows,
   MAIN_PROCESS_ATTEMPTS,
 } from '../src/index';
@@ -383,4 +385,42 @@ test('a main process that keeps dropping answers is given up on, and the error s
     `dropped the answer to ${MAIN_PROCESS_ATTEMPTS} calls in a row`
   );
   expect(main.calls()).toBe(MAIN_PROCESS_ATTEMPTS);
+});
+
+test("any call's dropped answer is tried again, and what it answers is returned", async () => {
+  let calls = 0;
+  const answer = await retryDropped(async () => {
+    calls += 1;
+    if (calls < 3) throw new Error(DROPPED);
+    return 'answered';
+  });
+  expect(answer).toBe('answered');
+  expect(calls).toBe(3);
+  // The control: any other failure is thrown at once.
+  calls = 0;
+  await expect(
+    retryDropped(async () => {
+      calls += 1;
+      throw new Error('Target page, context or browser has been closed');
+    })
+  ).rejects.toThrow('has been closed');
+  expect(calls).toBe(1);
+});
+
+test('hiding the windows a second time does nothing, as a retried call may', async () => {
+  // A hidden launch has hidden the windows once already.
+  await withApp(buggy, async (launched) => {
+    const listeners = () =>
+      launched.app.evaluate(({ app }) => app.listenerCount('browser-window-created'));
+    const before = await listeners();
+    await hideWindows(launched.app);
+    expect(await listeners()).toBe(before);
+    // The control: the mark is what stopped it, since removing it lets a
+    // second run add its listener again.
+    await launched.app.evaluate(({ BrowserWindow }) => {
+      delete (BrowserWindow as unknown as { phileasHidden?: boolean }).phileasHidden;
+    });
+    await hideWindows(launched.app);
+    expect(await listeners()).toBe(before + 1);
+  });
 });

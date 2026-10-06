@@ -17,6 +17,9 @@ const ADDED = ['', 'Text added by the Fix.', '', '```{r}', 'x <- c(3, 1, 2)', 'm
 export const rMarkdownFurther: Fix = async ({ page, step }) => {
   await step({ kind: 'act', target: 'button "New File"' });
   await step({ kind: 'act', target: 'menuitem "R Markdown..."' });
+  await step({ kind: 'act', target: 'textbox "Title:"', value: 'Trip report' });
+  await step({ kind: 'act', target: 'textbox "Author:"', value: 'Phileas' });
+  await step({ kind: 'act', target: 'radio "HTML"' });
   await step({ kind: 'act', target: 'button "OK"' });
   await step({
     kind: 'code',

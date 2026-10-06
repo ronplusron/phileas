@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and ninety-seven tests, after a
+through, and `npm test` runs three hundred and ninety-nine tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -95,7 +95,8 @@ known-findings refusals, and the guarantees in `tests/guarantees.spec.ts`: a
 pinned draw order, the Fix's own stream, a fresh process per Route, a flush
 per Hop, and replay across launches. Three retry the first call into an
 application's main process, whose answer Positron 2024.11 drops on most
-launches. Five came with checks an adapter declares: `buggy`'s own firing on
+launches, and two more, since 2026-10-06, retry every call the launch makes
+and hide the windows only once, since Positron 2025.02 dropped later ones. Five came with checks an adapter declares: `buggy`'s own firing on
 a planted miscount, a declaration refused by name, a check that hangs or
 throws, and one matched against a known finding. Two came from the first
 step-6 run on Positron: a shortcut printed as an arrow, and a text box that
@@ -306,7 +307,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Fifteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
@@ -412,7 +413,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and ninety-seven tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and ninety-nine tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

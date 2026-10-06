@@ -25,6 +25,88 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-06: part of another branch's RStudio changes brought in, and the rest left out
+
+**What it was.** A branch, `rstudio-trial-updates`, one commit of
+2026-10-05 never merged, changed four RStudio trial files and recorded
+nothing in these documents. Asked whether it had been merged, then to bring
+it in, and, once its contents were laid out, to "Only bring in what you
+suggest, then trash that branch."
+
+**Brought in.** RStudio's `r-markdown-further` Fix fills in the R Markdown
+dialog, Title "Trip report", Author "Phileas" and HTML, before OK; checked
+the same day with `phileas survey`, every one of its 10 steps ran and the
+document opened. And RStudio's Routes wait 5 seconds for a Hop's action,
+up from the engine's 3: on 2026-10-01 the `r-markdown` Fix's menu item had
+not appeared within 3 seconds on one Route of two.
+
+**Left out.** Three known findings a Journey had added unfiled on
+2026-10-01, all still-responding: the main process and the renderer
+unreachable once "browser has been closed", and "the window closed". They
+record a renderer crash on one Route and RStudio's window closing on three
+Routes of one `r-markdown` Journey, neither looked into; filed as known,
+the next crash or closed window would be reported as known rather than new,
+which is what the engine is for finding. And the trial's lockfile, which
+recorded the engine as 0.2.0.
+
+## 2026-10-06: the Positron trial's step 5, answered by probes, and every launch call retried
+
+**Why probes first.** Step 5 runs three known bugs on the releases that have
+them, as positive controls: 5460 on 2024.11, a notebook restart that times
+out; 6029 on 2025.01, stale sessions in the Variables menu; 6480 on 2025.02,
+a data explorer that stays as it was when its session quits. Reading the
+three reports before any run found no check likely to see any of them: 5460
+shows only a notification, which the adapter's check reads on the current
+release only; 6029 needs the session check dropped on 2026-09-27 for false
+alarms; 6480 is reported as showing no error at all. So one probe per bug
+was proposed, reproducing it by scripted steps and recording what every
+check saw, before spending Journeys on it, and asked for with "yes, start".
+The probes are in `trial/positron/probes/`, apart from the Journey.
+
+**6480, probed.** The session Fix starts R, the probe shows `mtcars` and
+ends the session, and one Trip hop runs every check after it. On 2025.02,
+"Connection Closed" never showed, in 7 runs ending with `q()` and 4 with
+"Restart console"; on the current release, the control, it showed in all 7.
+After `q()` on 2025.02 the console check fired on a TypeError from the
+session supervisor, `Cannot read properties of undefined (reading
+'sessionId')`, in 3 of 7, and on the current release on a different error
+in 2 of 4. After "Restart console", the one ending a Route can reach, since
+it cannot type `q()`, no check fired in 4. **So 6480 is reachable by
+traveling and noticed by no check,** a miss by the trial's own rule that a
+known bug no check reaches is a miss. Read for the first time on 2025.02:
+its console's input is the code editor's text area outside any tab panel,
+and its restart button is named "Restart console" rather than "Restart R".
+
+**5460 and 6029, not probed,** agreed with "Agree with both" once the cost
+of the old releases was plain: neither is a bug any check here could
+notice, as above, so each is recorded as a miss without a run. **Step 5 is
+0 of 3,** and the bar's first clause, 2 of 3, is not met. What that measures
+is the checks the trial has, not the search; the bar was set knowing a miss
+is an answer too.
+
+**Every call the launch makes is now retried on a dropped answer.** The old
+releases' launches failed often: on 2025.02, 7 of 16 died before anything
+ran, each on a call into the main process whose answer was dropped,
+"Resulting promise was garbage collected", from the window hiding and each
+of the four stubs in turn. Only the first call had been retried, since
+2026-09-27. `retryDropped` in `src/launch.ts` now wraps every one, and
+`hideWindows` marks itself done, since a dropped call may already have run
+its body and a second run would leave full screen through the replaced
+function. With it, 8 of 8 launches on 2025.02 succeeded; at the old rate
+that would happen about 1 time in 100. This closes the `DEFECTS.md` entry
+for a dropped answer after the first call.
+
+**A candidate on the current release,** `OUTSTANDING.md` 1.24: quitting R
+with `q()` there logged "Sending request failed" from the extension host on
+2 of 4 runs, with nothing wrong on screen; asked whether it meant an error
+in the current release, the answer was that it might, and it is recorded to
+be looked into.
+
+**Tested.** Two new tests, 399 in all: any call's dropped answer retried and
+its answer returned, any other failure thrown at once; and hiding the
+windows a second time adding nothing, with removing the mark as the
+control.
+
 ## 2026-10-06: buggy's plants found by traveling, and what that shows
 
 **What was asked.** Step 3 of the order of 2026-10-05, part of phase 8

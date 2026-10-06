@@ -345,6 +345,13 @@ export function showWindows(): boolean {
  */
 export async function hideWindows(app: ElectronApplication): Promise<void> {
   await app.evaluate(({ app: electronApp, BrowserWindow }) => {
+    // **Once only.** The launch retries a call whose answer was dropped, and
+    // the body may already have run: a second run would keep the replaced
+    // setFullScreen below as the one to leave full screen with, and a window
+    // that got there would stay.
+    const marked = BrowserWindow as unknown as { phileasHidden?: boolean };
+    if (marked.phileasHidden) return;
+    marked.phileasHidden = true;
     BrowserWindow.prototype.show = function () {};
     // **Full screen, too.** On macOS it gives a window a Space of its own,
     // which hiding does not reach: measured on Positron on 2026-09-27, where
@@ -538,10 +545,24 @@ export async function reachMainProcess(
   app: Pick<ElectronApplication, 'evaluate'>,
   attempts: number = MAIN_PROCESS_ATTEMPTS
 ): Promise<void> {
+  await retryDropped(() => app.evaluate(() => undefined), attempts);
+}
+
+/**
+ * A call into the main process, tried again while its answer is dropped.
+ *
+ * **Every call the launch makes, not only the first.** Measured on
+ * 2026-10-06: Positron 2025.02 dropped the answer to a later call on 7 of 16
+ * launches, from the window hiding and each of the four stubs in turn, after
+ * the first call had answered; 2024.11 had done so on about 1 launch in 12.
+ * Each call it wraps is safe to run twice, since its body may already have
+ * run when the answer was dropped: the stubs replace functions and reset
+ * their recorders, and the window hiding marks itself as done.
+ */
+export async function retryDropped<T>(call: () => Promise<T>, attempts: number = MAIN_PROCESS_ATTEMPTS): Promise<T> {
   for (let attempt = 1; ; attempt++) {
     try {
-      await app.evaluate(() => undefined);
-      return;
+      return await call();
     } catch (error) {
       if (!String(error).includes(DROPPED_ANSWER)) throw error;
       if (attempt >= attempts) {
@@ -702,7 +723,7 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
 
     // Before firstWindow(), which is the earliest the main process can be reached
     // and, for an app that defers display, before anything has been drawn.
-    await prepareWindows(app, mode);
+    await retryDropped(() => prepareWindows(app, mode));
 
     // Started here and left to run, before any window has been drawn and for
     // as long as the launch takes; `handBackTheScreen` says why it is not
@@ -725,10 +746,10 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
 
     app.process().stderr?.on('data', (chunk) => launched.stderr.push(String(chunk)));
 
-    await stubOpenExternal(app);
-    await stubOpenPaths(app);
-    await stubSelfLaunch(app);
-    await stubNativeDialogs(app);
+    await retryDropped(() => stubOpenExternal(app));
+    await retryDropped(() => stubOpenPaths(app));
+    await retryDropped(() => stubSelfLaunch(app));
+    await retryDropped(() => stubNativeDialogs(app));
 
     // Which page is the application, rather than which window appeared first: an
     // application with a splash has more than one, and firstWindow() would hand
@@ -741,7 +762,7 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
 
     // After a window exists, which is what activation needs and hiding could not
     // wait for.
-    await activateWindows(app, mode);
+    await retryDropped(() => activateWindows(app, mode));
 
     return launched;
   } catch (error) {

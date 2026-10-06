@@ -1054,7 +1054,12 @@ asks. `HISTORY.md` has each change and why.
    phase 8 proper.
 4. **The Positron trial resumed,** steps 5 and 6 as numbered above, under
    the uniform draw its bar was set against. Chosen in the words "Resume
-   before weighting", over closing it and over resuming it after.
+   before weighting", over closing it and over resuming it after. **Step 5
+   answered on 2026-10-06, by probes rather than Journeys:** none of its
+   three known bugs is one a Route can both reach and have a check notice,
+   so by the trial's own rule each is a miss, and the bar's first clause, 2
+   of 3, is not met. `HISTORY.md` has the probes and the reasoning. Step 6
+   is next.
 5. **Weighting the draw toward new targets,** below, measured on Eighty
    Days' `screens` layout.
 6. **The rest of replay from the journal,** as `OUTSTANDING.md` 1.18 lists

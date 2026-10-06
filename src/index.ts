@@ -35,6 +35,7 @@ export {
   DEFAULT_PROFILE_WATCH_MS,
   hideWindows,
   reachMainProcess,
+  retryDropped,
   MAIN_PROCESS_ATTEMPTS,
   showWindows,
   windowMode,

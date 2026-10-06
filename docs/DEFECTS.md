@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
+**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -224,22 +224,6 @@ as divergence rather than a silent change of value; and keep the list the
 value draw picks from a fixed length, filling the range's places with fixed
 entries when no range is read, so a failed read changes a value and never an
 index. It waits for a real application to show the need.
-
-## A dropped answer can still fail a launch after the first call
-
-**Filed 2026-09-27, seen once.** `reachMainProcess` retries the first call
-into the main process when Playwright reports "Resulting promise was
-garbage collected", which Positron 2024.11 does on most launches. On one
-launch of 2024.11 in about a dozen that day, the same error came from a
-later call during the launch, after the first had answered, and the launch
-failed. The retry covers only the first call, and which later call dropped
-its answer was not captured. Three launches repeated to catch it did not.
-Retrying the launch's other main-process calls the same way, each of which
-either changes nothing or can be made safe to repeat, would close it.
-Seen again on 2026-09-28, from the native-dialog stub, on 1 Route in 6 with
-the first-line pause and 1 in 6 with its script doing nothing; whether the
-pause itself raises the rate was not measured, since 2024.11 was set aside
-in favor of the current release.
 
 ## A stop sent to the `phileas` command alone does not stop the run
 

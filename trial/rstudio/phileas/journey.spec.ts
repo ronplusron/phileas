@@ -41,6 +41,9 @@ for (const routeNumber of routeNumbers(journey)) {
       userDataDir,
       // Bugs already found, which a Route records and carries on past.
       knownFindings,
+      // Up from the engine's 3 s: on 2026-10-01 the r-markdown Fix's menu item
+      // did not appear within 3 s on one Route of two.
+      hopTimeoutMs: 5_000,
     });
 
     // Only a survey was asked for, so nothing was traveled and there is no

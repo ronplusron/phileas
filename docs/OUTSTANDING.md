@@ -798,6 +798,17 @@ by a setting or a launch argument, or only by editing its `product.json`.
 Browsing the Marketplace, which the group leaves allowed, still reaches the
 network until then.
 
+### 1.24 "Sending request failed" when R quits, on the current release
+
+Seen on 2026-10-06 by the step-5 probes, and asked to be looked into after
+the launch fix: on Positron's current release, quitting R with `q()` while a
+data explorer showed `mtcars` logged `[Extension Host] Sending request
+failed.` as a console error on 2 of 4 runs, with nothing wrong on screen.
+It is no known finding. Not yet known: which extension sent the request,
+and whether it is a bug or the noise of a session ending. A Route cannot
+type `q()`, so a Journey has never met it; Restart R, which a Route can
+click, logged nothing in 3 runs.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

@@ -255,8 +255,8 @@ export function createSeededChooser(shares: Shares): SeededChooser {
  * in. Drawn evenly, Positron's 165 offered entries put about four menu Hops in
  * ten somewhere in View, and Set Render Whitespace to All, four levels down,
  * was as likely as File > Save; a level at a time, each top menu has an equal
- * chance and an entry deep in a submenu is rare. `docs/OUTSTANDING.md` 1.23
- * has the measurement.
+ * chance and an entry deep in a submenu is rare. `docs/HISTORY.md` has the
+ * measurement, under 2026-10-03.
  *
  * Only branches holding an offered entry are drawn from, since `entries` is
  * what the survey offered. Each level takes one draw, even where it has one
