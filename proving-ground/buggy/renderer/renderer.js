@@ -82,7 +82,8 @@ const PLANTED = {
   'main-throw': ['Strap the trunk', () => window.buggy.plant('main-throw')],
   'console-error': ['Check the tickets', () => console.error('the tickets could not be checked')],
   'renderer-hang': ['Wait for the tide', () => {
-    const until = Date.now() + 6000;
+    // As long as the main process's hang, HANG_MS in main.cjs.
+    const until = Date.now() + 12000;
     while (Date.now() < until) {
       // Busy on purpose: the renderer answers nothing until this ends.
     }

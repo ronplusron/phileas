@@ -41,7 +41,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const journalsRoot = path.join(here, '.phileas-journals');
 
 for (const routeNumber of routeNumbers(exploration)) {
-  test(`route ${routeNumber}`, async ({ page, app }, testInfo) => {
+  test(`route ${routeNumber}`, async ({ page, app, userDataDir }, testInfo) => {
     const journeySeed = requireSeed();
     const run = requireRun();
     const streams = deriveRouteStreams(journeySeed, routeNumber);
@@ -73,6 +73,9 @@ for (const routeNumber of routeNumbers(exploration)) {
       routeNumber,
       tripLength: exploration.tripLength,
       journalsRoot,
+      // The Route's profile folder, which an adapter naming its logs or its
+      // environment from that folder needs, as buggy's does with plants on.
+      userDataDir,
     });
 
     // Only a survey was asked for, so nothing was traveled and there is no

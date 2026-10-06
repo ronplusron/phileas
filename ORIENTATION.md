@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and ninety-four tests, after a
+through, and `npm test` runs three hundred and ninety-seven tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -174,7 +174,10 @@ its control, and the values typed after it unshifted. Two more came with
 `RSTUDIO_WHICH_R`: the Rscript beside the R it names, and the library guard
 reading R 4.4.3's library under it and another without it. One more came
 with `phileas --version`, which also holds an unknown command's refusal to
-naming every command.
+naming every command. Three more came with the phase 8 baseline:
+`BUGGY_PLANT` becoming launch flags, every plant's button checked against
+`buggy`'s renderer with a renamed one as its control, and a finding put down
+to the plant whose check it is, a late one included.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -409,7 +412,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and ninety-four tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own three hundred and ninety-seven tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

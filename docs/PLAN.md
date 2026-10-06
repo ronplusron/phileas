@@ -1045,13 +1045,18 @@ asks. `HISTORY.md` has each change and why.
    Hop recorded as abandoned; `HISTORY.md` has it.
 3. **Part of phase 8 brought forward:** one Journey over `buggy` with every
    planted defect whose check exists switched on, finding them by traveling
-   rather than by being steered, under the uniform draw. It is the baseline
-   for step 5.
+   rather than by being steered, under the uniform draw. Done on 2026-10-06,
+   and `HISTORY.md` has it: every plant was found, once two hang plants were
+   made long enough to find. **It is a coverage check, not step 5's
+   baseline,** agreed the same day: every plant sits on `buggy`'s opening
+   screen, so Routes ended within a few Hops and it measured how often a draw
+   lands on a plant, not how well a Route explores. Moving plants deeper is
+   phase 8 proper.
 4. **The Positron trial resumed,** steps 5 and 6 as numbered above, under
    the uniform draw its bar was set against. Chosen in the words "Resume
    before weighting", over closing it and over resuming it after.
 5. **Weighting the draw toward new targets,** below, measured on Eighty
-   Days' `screens` layout and against step 3's baseline.
+   Days' `screens` layout.
 6. **The rest of replay from the journal,** as `OUTSTANDING.md` 1.18 lists
    it, starting with the new step kinds.
 7. **The rest of phase 5,** with the stranded encoding first, then no

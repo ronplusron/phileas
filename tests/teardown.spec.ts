@@ -20,7 +20,7 @@ import { launchOrRemove, removeScratch, scratch } from './scratch';
 /**
  * Closing an application that will never answer again.
  *
- * `buggy`'s ordinary planted hangs end after six seconds, so the process
+ * `buggy`'s ordinary planted hangs end after twelve seconds, so the process
  * answers again before teardown and every test passed while the teardown was
  * unbounded. `endless-hang` never ends, which is the case measured on Positron
  * on 2026-09-26: the Route found the hang, then the Journey sat at teardown,

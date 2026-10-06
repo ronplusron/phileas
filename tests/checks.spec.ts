@@ -82,7 +82,7 @@ function planted(plant: string, extra: Partial<AppUnderTest> = {}): AppUnderTest
   return { ...buggy, launchArgs: [`--buggy-plant=${plant}`], ...extra };
 }
 
-/** Short waits, so a planted hang of six seconds outlasts every one of them. */
+/** Short waits, so a planted hang of twelve seconds outlasts every one of them. */
 const SHORT = { hopTimeoutMs: 1_000, settleTimeoutMs: 1_000, responsiveTimeoutMs: 1_000 };
 
 function result(checks: readonly JournaledCheck[], name: string): JournaledCheck | undefined {

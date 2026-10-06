@@ -25,6 +25,57 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-06: buggy's plants found by traveling, and what that shows
+
+**What was asked.** Step 3 of the order of 2026-10-05, part of phase 8
+brought forward: a Journey over `buggy` with every planted defect whose
+check exists switched on, finding them by traveling under the uniform draw,
+proposed with four points and agreed to in full. Journey terms: three seeds,
+`baseline-1` to `baseline-3`, each 30 Routes with a Trip length of 20,
+windows hidden.
+
+**What it needed.** `BUGGY_PLANT`, a list of plants the adapter turns into
+`--buggy-plant` flags, as Eighty Days' `EIGHTY_DAYS_PLANT` does; a name
+`buggy` does not know is refused by `buggy` as it boots. With plants on, the
+adapter names a log in each Route's profile, `BUGGY_LOG`, for the two log
+plants; decided as the adapter loads, since a log named from the profile
+folder needs `runRoute` to be handed that folder, and the engine's own tests
+run `buggy` without one. A smoke run found the spec handing it none either,
+as the Eighty Days and RStudio specs do, so it now does. 14 plants counted;
+`full-screen`, `native-dialog` and `second-window` left out, since they test
+containment rather than a check. `proving-ground/buggy/measure.mjs` reads a
+run's journals and puts each Route's finding down to the plant clicked most
+recently, at or before the failing Hop, whose own check failed; it refuses
+when a button it names is not in `buggy`'s renderer.
+
+**First run: 12, 11 and 11 of 14,** after the measure's first version, which
+took the last plant clicked, blamed `main-hang` twice for an alarm's late
+throw that arrived on the Hop clicking it; corrected, with a test. **Two
+plants could not be found at all:** `renderer-hang` and `main-hang`, clicked
+on 17 and 10 Routes. Each hung for 6 seconds, and still-responding needs a
+stall past the Hop's 3 seconds and the answer's 5; their tests had passed on
+shortened timeouts. Lengthened to 12 seconds, as Eighty Days' hang plant is,
+agreed with "agreed to both".
+
+**Run again: 13, 13 and 12 of 14,** every plant found by at least one seed.
+Missed only by some seeds: `late-renderer-throw` and `late-log-error`, whose
+errors arrive a Hop after the click, while the Route has often ended on
+another plant. All 90 Routes failed, after a median of 2 or 3 Hops and 92,
+90 and 106 Hops in all.
+
+**What that shows, agreed the same day:** the checks catch every plant a
+Route reaches, and not that a Route searches well. With all 14 buttons on
+the opening screen, a Route ends within a few Hops, so the numbers measure
+how often a draw lands on a plant. So it is a coverage check, not the
+baseline for weighting the draw, which is measured on Eighty Days' `screens`
+layout; moving plants deeper into `buggy` is phase 8 proper.
+
+**Tested.** Three new tests, 397 in all: `BUGGY_PLANT` becoming flags and
+nothing when unset; the measure's buttons checked against the renderer, a
+renamed one refused as the control; and the measure's attribution, a late
+plant read on another plant's Hop included. The two hang plants' own tests
+and the endless hang's pass at 12 seconds.
+
 ## 2026-10-06: Journey terms, in place of budget
 
 **The question.** Proposing the phase 8 baseline, the agent called a

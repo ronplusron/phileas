@@ -109,9 +109,13 @@ for (const plant of plants) {
   if (!PLANTS.includes(plant)) throw new Error(`--buggy-plant=${plant} is not a planted defect: ${PLANTS.join(', ')}`);
 }
 
-// How long a planted hang lasts. Long enough to outlast a test's shortened
-// waits, and finite, so a test that sets it off can still close the application.
-const HANG_MS = 6000;
+// How long a planted hang lasts. Long enough to outlast the waits of a Journey
+// on default terms, not only a test's shortened ones, and finite, so a test that
+// sets it off can still close the application. It was 6 seconds until
+// 2026-10-06, when the baseline found that no Journey could find it: the
+// still-responding check needs a stall past the Hop's 3 seconds and the
+// answer's 5. Twelve, as Eighty Days' own hang plant is.
+const HANG_MS = 12_000;
 
 ipcMain.handle('plants:list', () => plants);
 

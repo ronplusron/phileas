@@ -40,7 +40,11 @@ defects are planted in it**, each behind its own launch flag: thirteen make the
 universal checks fire, two of them 1,500 ms after their click so the error
 arrives during a later Hop, and one makes the check `buggy`'s adapter declares
 fire. A test steers a Route straight to each, which proves the
-check and not the search, so nothing here yet shows a Journey finds anything.
+check and not the search. **Since 2026-10-06 Journeys found every one by
+traveling,** `BUGGY_PLANT` switching them on and `proving-ground/buggy/measure.mjs`
+reading what each Route found; but every plant sits on the opening screen,
+so that shows the checks catch what a Route reaches, not that a Route
+searches well. `HISTORY.md` has the numbers.
 `PLAN.md` plants the rest across phases 5, 6 and 8, and phase 8 is where one
 Journey has to find them all.
 
@@ -450,8 +454,9 @@ London."
 after the Positron trial, before the rest of phase 5, chosen over building
 it before the trial's remaining steps and over placing it beside recording a
 Fix. `PLAN.md` has it in the build order, placed again on 2026-10-05 after
-the trial resumed: measured on Eighty Days' `screens` layout and against an
-unsteered Journey over `buggy` taken first under the uniform draw.
+the trial resumed: measured on Eighty Days' `screens` layout. An unsteered
+Journey over `buggy` was to be its second measure, and turned out too
+shallow for one, which `HISTORY.md` has.
 
 **Notes, a reading and not a decision:**
 

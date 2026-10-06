@@ -20,8 +20,37 @@ import type { Page } from '@playwright/test';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, '..', '..');
 
+/**
+ * The planted defects a Journey switches on, from BUGGY_PLANT, a list
+ * separated by commas, each passed to buggy as its own --buggy-plant flag.
+ * Added on 2026-10-05 for the baseline that phase 8 brought forward: one
+ * Journey finding the plants by traveling rather than by being steered.
+ * A name buggy does not know is refused by buggy itself as it boots, in its
+ * own words, so the list lives in one place, main.cjs.
+ */
+export const PLANT_VARIABLE = 'BUGGY_PLANT';
+export const plantsAsked = (): string[] =>
+  (process.env[PLANT_VARIABLE] ?? '').split(',').map((name) => name.trim()).filter(Boolean);
+
+/** The log the log plants write to, in a Route's own profile folder. */
+const plantLog = (userDataDir: string) => path.join(userDataDir, 'buggy.log');
+
 export const buggy: AppUnderTest = {
   productName: 'Buggy',
+
+  launchArgs: () => plantsAsked().map((plant) => `--buggy-plant=${plant}`),
+
+  // Named only while plants are on, so the log check of every other Route of
+  // buggy reports that it did not run, as it always has. Created on its first
+  // write, since only a plant writes to it. Decided as the adapter loads, not
+  // per call, because a log named from the profile folder needs runRoute to
+  // be handed that folder, and the engine's own tests run buggy without one.
+  ...(plantsAsked().length
+    ? {
+        env: (userDataDir: string) => ({ BUGGY_LOG: plantLog(userDataDir) }),
+        logPaths: (userDataDir: string) => [{ path: plantLog(userDataDir), createdOnFirstWrite: true }],
+      }
+    : {}),
 
   // Required since phase 1: no default layout is worth having, because two
   // real consumers package into two different ones and neither matched.
