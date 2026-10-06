@@ -10,7 +10,8 @@ phases are marked by number.
 
 | Term | Meaning |
 |---|---|
-| Journey | One run of the engine, defined by a seed, a number of Routes, a Trip length, and optionally a Journey deadline and a Route deadline. |
+| Journey | One run of the engine, defined by its Journey terms. |
+| Journey terms | What defines a Journey (R1): its seed, a number of Routes, a Trip length, and optionally a Journey deadline and a Route deadline. Stated in a consumer's `journeys/` with `defineJourney`, and changed for one run by `phileas run`'s flags. "A Journey on these terms: 30 Routes, a Trip length of 20." Called the budget in the requirements until 2026-10-06. |
 | Route | One pass through the application, and one Playwright test with its own verdict, deadline and trace. Routes know nothing of each other. |
 | Fix | The fixed opening of every Route: a script of Fix steps, written in advance by the Journey's author and the same every time. Each step is one call of `step()`, which names its kind: `act` on a target as `phileas survey` prints it, or `code` with Playwright code. A consumer keeps each in `phileas/fixes/`, listed by name in `fixes/index.ts` with `defineFixes`; the Journey's terms name the one it opens with, `--fix` chooses another for one run, and each Route's journal records its name and a fingerprint of its source. |
 | Trip | The unpredictable rest of a Route after its Fix. A Route with no Fix is all Trip. |

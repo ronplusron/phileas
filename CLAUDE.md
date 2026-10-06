@@ -359,10 +359,12 @@ followed.
 **Call it the engine, not the tool.** "Tool" reads as a standalone utility
 somebody runs; this is a component consumed by the application under test.
 
-**Wager** was proposed for the terms of a Journey and is parked rather than
-rejected. It failed a use-it-in-a-sentence test: "a journey of 10 routes"
-reads, "a journey for which the wager was 10 routes" does not, and is
-inaccurate besides. `docs/OUTSTANDING.md` holds it.
+**Journey terms** names what defines a Journey: its seed, Route count, Trip
+length and deadlines, chosen on 2026-10-06 over "budget", which fits the
+counts and not the seed. **Wager** had been parked as the candidate, after
+failing a use-it-in-a-sentence test: "a journey of 10 routes" reads, "a
+journey for which the wager was 10 routes" does not. `docs/HISTORY.md` has
+both.
 
 ## Packaging, and what a consuming repository looks like
 

@@ -151,10 +151,10 @@ never named, since his name is the engine's Fix; and the wager is the Reform
 Club's, £20,000 on eighty days. **"Phileas"** stays out, since it is the
 engine's name: the traveler is Fogg and never Phileas Fogg, or a watcher
 hears the engine named inside the application it is exploring. **On
-"wager":** `OUTSTANDING.md` 2.3 holds the word parked as a possible name for
-a Journey's terms, and that stays parked; if it is ever adopted, the
-application's use of it is the collision to resolve then, and this
-paragraph is where to find it.
+"wager":** it was parked as a possible name for a Journey's terms, and on
+2026-10-06 they were named Journey terms instead, so the game's wager
+collides with nothing. The game shows the word "terms" nowhere; its
+Ledger's card holds them under a data key of that name.
 
 **The clock starts at 8:45 in the evening of 2 October 1872**, decided the
 same day, the moment Fogg leaves the Reform Club, and the wager is won at the

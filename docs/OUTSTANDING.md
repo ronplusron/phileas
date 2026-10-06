@@ -892,17 +892,6 @@ temporarily, it'll be back to private soon." A git dependency still
 installs once it is private, over the machine's own GitHub access; the
 measurement on 2026-10-01 already went through SSH.
 
-### 2.3 Wager, as a name for the terms of a Journey
-
-Proposed, then parked rather than rejected, on an explicit request to hold on
-to it in case it proves useful. It failed a use-it-in-a-sentence test: "a
-journey of 10 routes" reads, "a journey for which the wager was 10 routes"
-does not, and is inaccurate besides.
-
-Kept here rather than under Declined because parking it was deliberate. If
-the terms of a Journey ever need a collective noun, this is the candidate
-already considered.
-
 ### 2.4 Different Fixes for different Routes of one Journey
 
 `../CLAUDE.md` names this as a wanted option, raised when the Fix was

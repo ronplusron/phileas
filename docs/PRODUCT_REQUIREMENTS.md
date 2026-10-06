@@ -128,9 +128,9 @@ jobs, which may be the same person on different days.
 - **A written record of the route.** Every hop is recorded as it happens: what
   was chosen, what else was available, and what the checks said. Answers: what
   the tester did being lost by the time the bug is filed.
-- **A budget.** A run is bounded by a number of routes and the length of each
-  route's trip, and optionally by a deadline for the whole journey, for each
-  route, or both. Answers: an unbounded route being unusable in practice.
+- **Journey terms.** A run is bounded by a number of routes and the length of
+  each route's trip, and optionally by a deadline for the whole journey, for
+  each route, or both. Answers: an unbounded route being unusable in practice.
 
 ## 6. User flows
 
@@ -139,7 +139,7 @@ jobs, which may be the same person on different days.
 1. State how to start the application and how to tell when it is ready.
 2. List anything that must never be interacted with, such as a control that
    quits the application or a link that leaves it.
-3. Run a journey with a small budget and confirm it travels through and reports.
+3. Run a journey on small terms and confirm it travels through and reports.
 
 **Running a journey**
 
@@ -467,7 +467,7 @@ Stated as what must be true for someone using it.
 - **What does a journey do when it finds the same defect on several routes?**
   Reporting it five times and reporting it once are both defensible and
   nobody has chosen.
-- **Who decides the budget for a scheduled run?** A deadline that is too short
+- **Who decides the terms of a scheduled run?** A deadline that is too short
   finds nothing and still reports green.
 - **Should a journey report what it never reached?** Nobody has weighed this.
   Where the application's source is available, what exists can be enumerated,

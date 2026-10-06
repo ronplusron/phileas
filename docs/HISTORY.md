@@ -25,6 +25,27 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-06: Journey terms, in place of budget
+
+**The question.** Proposing the phase 8 baseline, the agent called a
+Journey's size its "budget", and was asked: "I thought we replaced 'budget'
+with something else." The project's own word was already "the Journey's
+terms", in `CLAUDE.md`, the glossary and `journey.ts`; "budget" survived
+only in three places in the requirements. Asked for alternatives, twenty of
+one word and twenty of two, then the best five of each, the answer was "I
+like Journey Terms. Let's use it."
+
+**Weighed against budget** as pros and cons on request, then recommended:
+a seed decides what a Journey is as much as its counts do, and R1 lists them
+together, while a seed is no budget; and "budget" already names the settle
+wait's time limit in this file. Taken with "OK let's do Journey Terms."
+
+**What changed.** The glossary defines Journey terms, and a Journey by them.
+The requirements' three uses of budget say terms. **Wager,** parked as the
+candidate name for the terms since 2026-09-20, is closed, asked for by
+choosing to close it over keeping it parked; the Eighty Days plan's note on
+the game's own wager now says it collides with nothing.
+
 ## 2026-10-05: replay proved under another R
 
 **The proof R12 names, without a second machine:** an RStudio finding
