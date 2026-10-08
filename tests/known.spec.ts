@@ -134,6 +134,24 @@ test('an id made fresh each time, a UUID or eight or more hex digits, is taken o
   expect(said('failed: 0xC0000005')).not.toBe(said('failed: 0xC0000409'));
 });
 
+test("a source file's line is taken out, so a release that moves code keeps the finding; a host's port is kept", () => {
+  const said = (text: string) => signatureOf('log-error', text, 'ann');
+  // RStudio's issue 14985 in 2026.09.1 and 2026.10.0, measured 2026-10-08.
+  const before = said(
+    'ERROR system error 100 (Protocol error); OCCURRED AT Error readProjectFile() src/cpp/core/r_util/RProjectFile.cpp:569; LOGGED FROM: void startup() src/cpp/session/projects/SessionProjects.cpp:1206'
+  );
+  const after = said(
+    'ERROR system error 100 (Protocol error); OCCURRED AT Error readProjectFile() src/cpp/core/r_util/RProjectFile.cpp:569; LOGGED FROM: void startup() src/cpp/session/projects/SessionProjects.cpp:1216'
+  );
+  expect(after).toBe(before);
+  expect(after).toContain('SessionProjects.cpp:<line>');
+  // A line and column, as JavaScript writes them.
+  expect(said('failed in render.ts:42:7')).toBe(said('failed in render.ts:51:13'));
+  // The control: another file is another finding, and a host and port is not a file.
+  expect(said('failed in SessionProjects.cpp:1206')).not.toBe(said('failed in SessionPPM.cpp:1206'));
+  expect(said('could not reach 127.0.0.1:26339')).toBe('log-error: could not reach 127.0.0.1:26339');
+});
+
 test('an adapter pattern runs before the engine, so its own choice stands', () => {
   const handle: readonly [RegExp, string] = [/Unknown handle: "[0-9A-F]{8}"/g, 'Unknown handle: "<handle>"'];
   expect(signatureOf('log-error', 'Unknown handle: "3968F855"', 'ann', [handle])).toBe('log-error: Unknown handle: "<handle>"');

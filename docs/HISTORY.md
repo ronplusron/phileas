@@ -25,6 +25,32 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-08: a signature leaves out a source file's line
+
+**Found in the RStudio batch of the same day.** `session-data` Route 35 failed
+on a new finding, `838adead`, which was RStudio's issue 14985, filed and
+known as `e0fe2964`. The two signatures differed in one place, the line
+RStudio logged the error from: `SessionProjects.cpp:1206` in 2026.09.1 and
+`:1216` in 2026.10.0. Signatures already left out a JavaScript stack
+frame's position, and nothing took out a source file's line written into a
+message. Any finding that names one would have come back as new on every
+release that moves code.
+
+**Decided from two offered,** in the engine over in RStudio's adapter, since
+any application can log a file and line. A name ending in a source file's
+extension, followed by a line and optionally a column, becomes
+`<name>:<line>`, in `VARYING` in `src/known.mjs`. A name with no such
+extension is left alone, so a host and port stays as it is.
+
+**What it did to RStudio's file.** A one-Route Journey's end re-signed the
+entries under the new rule: `e0fe2964` and `838adead` merged into `97900178`,
+still filed as 14985, and three entries naming a C++ line were re-signed
+with their issues kept, 64, 18976 and 97.
+
+**Tested.** One new test, 405 in all: the two releases' signatures for 14985
+agree, a line and column agree across releases, and as the control, another
+file stays another finding and `127.0.0.1:26339` is kept.
+
 ## 2026-10-08: a blank window must last to fail, and a brief one is counted
 
 **Found in the RStudio batch of the same day.** Four of its 600 Routes

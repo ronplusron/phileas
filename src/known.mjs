@@ -58,6 +58,16 @@ const VARYING = [
   [/^[^\s:]*\/([^/\s:]+\.log): /, '$1: '],
   // Timestamps, as logs and ISO dates write them.
   [/\b\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?\s*/g, ''],
+  // A source file's line, and column where one is given, as a log names where
+  // it was written from: the line moves between releases while the file and
+  // the function mostly do not. Measured on RStudio on 2026-10-08, where
+  // `SessionProjects.cpp:1206` in 2026.09.1 was `:1216` in 2026.10.0, and a
+  // filed bug, its issue 14985, came back as a new finding for it. Only a
+  // name ending in a source file's extension, so a host and port is kept.
+  [
+    /\b([\w.-]+\.(?:c|cc|cpp|cxx|h|hh|hpp|m|mm|rs|go|java|kt|swift|cs|py|rb|R|r|js|mjs|cjs|ts|mts|cts|jsx|tsx)):\d+(?::\d+)?\b/g,
+    '$1:<line>',
+  ],
   // Process ids, as Node prints them in a warning.
   [/\(node:\d+\)/g, '(node:N)'],
   // Which Hop it happened on, and how long anything took.
