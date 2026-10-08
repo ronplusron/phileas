@@ -830,84 +830,96 @@ async function outOfReachAmong(
   const covered: CoveredCandidate[] = [...labeled.covered];
   const hidden: HiddenCandidate[] = [...labeled.hidden];
   const layered: LayeredCandidate[] = [];
-  for (const [index, suspect] of suspects.entries()) {
-    const control = tested[index];
-    if (!suspect || !control) continue;
-    // Tested against the element itself, and at the center of the part of it
-    // that shows: inside the window and inside every container that clips
-    // it. A container that clips and has no area hides it, R32. Otherwise
-    // none showing means it is scrolled out of sight inside one of them,
-    // not covered, since the click scrolls it into view first; measured on
-    // Bobolink Editor on 2026-09-30, where a link in a preview pane read as
-    // covered by whatever was drawn where it would have been. A control this
-    // cannot reach, or a page that does not answer in time, stays in the draw.
-    const verdict = await control.locator
-      .evaluate(
-        (element, typed): { hidden: string } | { layered: string } | { covered: string; dialog: boolean } | null => {
-          const up = (node: Element): Element | null => {
-            const root = node.getRootNode();
-            return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
-          };
-          const describe = (node: Element): string => {
-            const attributes = ['role', 'aria-label', 'id', 'class']
-              .map((name) => [name, node.getAttribute(name)] as const)
-              .filter(([, value]) => value)
-              .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
-              .join('');
-            const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
-            return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
-          };
-          const own = element.getBoundingClientRect();
-          let [x0, y0, x1, y1] = [
-            Math.max(0, own.left),
-            Math.max(0, own.top),
-            Math.min(window.innerWidth, own.right),
-            Math.min(window.innerHeight, own.bottom),
-          ];
-          // The root's overflow, and the body's when the root's is visible and
-          // it passes up, applies to the window, which is already the starting
-          // box, rather than to the element's own box. RStudio's html is 1200
-          // by 0 with overflow hidden: read as a container, it trimmed every
-          // control there to nothing, so none could be found covered, and it
-          // hid four working Console controls on the first try at R32.
-          // Measured on 2026-10-02.
-          const rootStyle = getComputedStyle(document.documentElement);
-          const bodyPassesUp = rootStyle.overflowX === 'visible' && rootStyle.overflowY === 'visible';
-          for (let node = up(element); node; node = up(node)) {
-            if (node === document.documentElement || (node === document.body && bodyPassesUp)) continue;
-            const style = getComputedStyle(node);
-            if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
-            const clip = node.getBoundingClientRect();
-            if (clip.width < 1 || clip.height < 1) return { hidden: describe(node) };
-            [x0, y0, x1, y1] = [Math.max(x0, clip.left), Math.max(y0, clip.top), Math.min(x1, clip.right), Math.min(y1, clip.bottom)];
-          }
-          if (x1 - x0 < 1 || y1 - y0 < 1) return null;
-          const [x, y] = [(x0 + x1) / 2, (y0 + y1) / 2];
+  // All at once rather than one after another, so a survey waits at most one
+  // timeout however many controls fail to answer. Measured on RStudio
+  // 2026.10.0 on 2026-10-08: under "Preparing profiler...", 29 of 45
+  // suspects never answered, and in turn they held one survey for 146 s.
+  // The verdicts are read back in the controls' order, so nothing the draw
+  // sees depends on which answered first.
+  const verdicts = await Promise.all(
+    suspects.map(async (suspect, index) => {
+      const control = tested[index];
+      if (!suspect || !control) return null;
+      // Tested against the element itself, and at the center of the part of it
+      // that shows: inside the window and inside every container that clips
+      // it. A container that clips and has no area hides it, R32. Otherwise
+      // none showing means it is scrolled out of sight inside one of them,
+      // not covered, since the click scrolls it into view first; measured on
+      // Bobolink Editor on 2026-09-30, where a link in a preview pane read as
+      // covered by whatever was drawn where it would have been. A control this
+      // cannot reach, or a page that does not answer in time, stays in the draw.
+      return control.locator
+        .evaluate(
+          (element, typed): { hidden: string } | { layered: string } | { covered: string; dialog: boolean } | null => {
+            const up = (node: Element): Element | null => {
+              const root = node.getRootNode();
+              return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+            };
+            const describe = (node: Element): string => {
+              const attributes = ['role', 'aria-label', 'id', 'class']
+                .map((name) => [name, node.getAttribute(name)] as const)
+                .filter(([, value]) => value)
+                .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
+                .join('');
+              const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+              return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
+            };
+            const own = element.getBoundingClientRect();
+            let [x0, y0, x1, y1] = [
+              Math.max(0, own.left),
+              Math.max(0, own.top),
+              Math.min(window.innerWidth, own.right),
+              Math.min(window.innerHeight, own.bottom),
+            ];
+            // The root's overflow, and the body's when the root's is visible and
+            // it passes up, applies to the window, which is already the starting
+            // box, rather than to the element's own box. RStudio's html is 1200
+            // by 0 with overflow hidden: read as a container, it trimmed every
+            // control there to nothing, so none could be found covered, and it
+            // hid four working Console controls on the first try at R32.
+            // Measured on 2026-10-02.
+            const rootStyle = getComputedStyle(document.documentElement);
+            const bodyPassesUp = rootStyle.overflowX === 'visible' && rootStyle.overflowY === 'visible';
+            for (let node = up(element); node; node = up(node)) {
+              if (node === document.documentElement || (node === document.body && bodyPassesUp)) continue;
+              const style = getComputedStyle(node);
+              if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
+              const clip = node.getBoundingClientRect();
+              if (clip.width < 1 || clip.height < 1) return { hidden: describe(node) };
+              [x0, y0, x1, y1] = [Math.max(x0, clip.left), Math.max(y0, clip.top), Math.min(x1, clip.right), Math.min(y1, clip.bottom)];
+            }
+            if (x1 - x0 < 1 || y1 - y0 < 1) return null;
+            const [x, y] = [(x0 + x1) / 2, (y0 + y1) / 2];
 
-          let top = document.elementFromPoint(x, y);
-          while (top?.shadowRoot) {
-            const inner = top.shadowRoot.elementFromPoint(x, y);
-            if (!inner || inner === top) break;
-            top = inner;
-          }
-          if (!top) return null;
-          for (let node: Element | null = top; node; node = up(node)) {
-            if (node === element) return null;
-            if (node instanceof HTMLLabelElement && node.control === element) return null;
-          }
-          // A text box under a layer of its own widget: what is on top sits
-          // inside the text box's parent. Measured on RStudio on 2026-10-02:
-          // its code editor, Ace, keeps the real text box under its content
-          // layer, and a click there focuses it, as a person typing does.
-          // Kept, and recorded, since it rests on how the page is built.
-          const parent = up(element);
-          if (typed && parent && parent.contains(top)) return { layered: describe(top) };
-          return { covered: describe(top), dialog: top.closest('[role="dialog"], [role="alertdialog"], dialog') !== null };
-        },
-        takesTypedValue(control),
-        timeoutMs === undefined ? {} : { timeout: timeoutMs }
-      )
-      .catch(() => null);
+            let top = document.elementFromPoint(x, y);
+            while (top?.shadowRoot) {
+              const inner = top.shadowRoot.elementFromPoint(x, y);
+              if (!inner || inner === top) break;
+              top = inner;
+            }
+            if (!top) return null;
+            for (let node: Element | null = top; node; node = up(node)) {
+              if (node === element) return null;
+              if (node instanceof HTMLLabelElement && node.control === element) return null;
+            }
+            // A text box under a layer of its own widget: what is on top sits
+            // inside the text box's parent. Measured on RStudio on 2026-10-02:
+            // its code editor, Ace, keeps the real text box under its content
+            // layer, and a click there focuses it, as a person typing does.
+            // Kept, and recorded, since it rests on how the page is built.
+            const parent = up(element);
+            if (typed && parent && parent.contains(top)) return { layered: describe(top) };
+            return { covered: describe(top), dialog: top.closest('[role="dialog"], [role="alertdialog"], dialog') !== null };
+          },
+          takesTypedValue(control),
+          timeoutMs === undefined ? {} : { timeout: timeoutMs }
+        )
+        .catch(() => null);
+    })
+  );
+  for (const [index, verdict] of verdicts.entries()) {
+    const control = tested[index];
+    if (!control) continue;
     if (verdict && 'hidden' in verdict) hidden.push({ candidate: control, by: verdict.hidden });
     else if (verdict && 'layered' in verdict) layered.push({ candidate: control, by: verdict.layered });
     else if (verdict) covered.push({ candidate: control, by: verdict.covered, ...(verdict.dialog ? { underDialog: true } : {}) });
@@ -964,57 +976,63 @@ async function throughLabels(
   const flat = controls.filter(
     (control) => control.box !== undefined && !hasArea(control.box) && CLICKED_ROLES.has(control.role)
   );
-  for (const control of flat) {
-    const verdict = await control.locator
-      .evaluate(
-        (element):
-          | { labeled: string; inside: boolean; id: string }
-          | { covered: string; dialog: boolean }
-          | { hidden: string }
-          | null => {
-          const describe = (node: Element): string => {
-            const attributes = ['role', 'aria-label', 'id', 'class']
-              .map((name) => [name, node.getAttribute(name)] as const)
-              .filter(([, value]) => value)
-              .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
-              .join('');
-            const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
-            return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
-          };
-          const area = (node: Element) => {
-            const rect = node.getBoundingClientRect();
-            return rect.width >= 1 && rect.height >= 1;
-          };
-          // Something inside it with area, as `display: contents` lays out:
-          // Playwright clicks that, so it is no case for a label.
-          if ([...element.querySelectorAll('*')].some(area)) return null;
-          const labels = [...((element as HTMLInputElement).labels ?? [])].filter(area);
-          if (!labels.length) return { hidden: `${describe(element)}, with no label that shows,` };
-          let cover: Element | null = null;
-          for (const label of labels) {
-            const rect = label.getBoundingClientRect();
-            const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
-            const y = Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1);
-            let top = document.elementFromPoint(x, y);
-            while (top?.shadowRoot) {
-              const inner = top.shadowRoot.elementFromPoint(x, y);
-              if (!inner || inner === top) break;
-              top = inner;
+  // All at once, for the reason the covered test in `outOfReachAmong` gives.
+  const verdicts = await Promise.all(
+    flat.map((control) =>
+      control.locator
+        .evaluate(
+          (element):
+            | { labeled: string; inside: boolean; id: string }
+            | { covered: string; dialog: boolean }
+            | { hidden: string }
+            | null => {
+            const describe = (node: Element): string => {
+              const attributes = ['role', 'aria-label', 'id', 'class']
+                .map((name) => [name, node.getAttribute(name)] as const)
+                .filter(([, value]) => value)
+                .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
+                .join('');
+              const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+              return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
+            };
+            const area = (node: Element) => {
+              const rect = node.getBoundingClientRect();
+              return rect.width >= 1 && rect.height >= 1;
+            };
+            // Something inside it with area, as `display: contents` lays out:
+            // Playwright clicks that, so it is no case for a label.
+            if ([...element.querySelectorAll('*')].some(area)) return null;
+            const labels = [...((element as HTMLInputElement).labels ?? [])].filter(area);
+            if (!labels.length) return { hidden: `${describe(element)}, with no label that shows,` };
+            let cover: Element | null = null;
+            for (const label of labels) {
+              const rect = label.getBoundingClientRect();
+              const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
+              const y = Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1);
+              let top = document.elementFromPoint(x, y);
+              while (top?.shadowRoot) {
+                const inner = top.shadowRoot.elementFromPoint(x, y);
+                if (!inner || inner === top) break;
+                top = inner;
+              }
+              if (top && (label.contains(top) || top === element)) {
+                return { labeled: describe(label), inside: label.contains(element), id: element.id };
+              }
+              cover ??= top;
             }
-            if (top && (label.contains(top) || top === element)) {
-              return { labeled: describe(label), inside: label.contains(element), id: element.id };
-            }
-            cover ??= top;
-          }
-          return cover
-            ? { covered: describe(cover), dialog: cover.closest('[role="dialog"], [role="alertdialog"], dialog') !== null }
-            : null;
-        },
-        undefined,
-        timeoutMs === undefined ? {} : { timeout: timeoutMs }
-      )
-      .catch(() => null);
-    if (!verdict) continue;
+            return cover
+              ? { covered: describe(cover), dialog: cover.closest('[role="dialog"], [role="alertdialog"], dialog') !== null }
+              : null;
+          },
+          undefined,
+          timeoutMs === undefined ? {} : { timeout: timeoutMs }
+        )
+        .catch(() => null)
+    )
+  );
+  for (const [index, verdict] of verdicts.entries()) {
+    const control = flat[index];
+    if (!verdict || !control) continue;
     decided.add(control);
     if ('labeled' in verdict) {
       // The label around it, or the one naming it by id.
@@ -1045,17 +1063,26 @@ async function focusedExcluded(
   excludedControls: ReadonlyMap<PageCandidate, string>,
   timeoutMs: number | undefined
 ): Promise<string> {
-  for (const control of excludedControls.keys()) {
-    const focused = await control.locator
-      .evaluate(
-        (element) => element.contains(document.activeElement),
-        undefined,
-        timeoutMs === undefined ? {} : { timeout: timeoutMs }
-      )
-      // **Fails closed.** A focus that could not be read might be on the
-      // excluded control, and reading "not focused" would leave Enter in the
-      // draw on a focused outbound link: the way past the rail this closes.
-      .catch((error: unknown) => `unknown (${error instanceof Error ? error.message.split('\n')[0] : String(error)})`);
+  // All at once, for the reason the covered test in `outOfReachAmong` gives,
+  // and read back in order, so the answer is the one asking in turn gave.
+  const controls = [...excludedControls.keys()];
+  const answers = await Promise.all(
+    controls.map((control) =>
+      control.locator
+        .evaluate(
+          (element) => element.contains(document.activeElement),
+          undefined,
+          timeoutMs === undefined ? {} : { timeout: timeoutMs }
+        )
+        // **Fails closed.** A focus that could not be read might be on the
+        // excluded control, and reading "not focused" would leave Enter in the
+        // draw on a focused outbound link: the way past the rail this closes.
+        .catch((error: unknown) => `unknown (${error instanceof Error ? error.message.split('\n')[0] : String(error)})`)
+    )
+  );
+  for (const [index, focused] of answers.entries()) {
+    const control = controls[index];
+    if (!control) continue;
     if (typeof focused === 'string') return `${control.name}, ${focused}`;
     if (focused) return control.name;
   }

@@ -25,6 +25,40 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-08: a survey waits one timeout, not one per control that does not answer
+
+**Found on the RStudio batch's first Journey,** on 2026.10.0, Route 7 of seed
+`efced381fe0f`: Hop 8 chose Profile > Start Profiling, and Hop 9 started 3
+minutes 45 seconds later. Replaying the Route from its journal stalled
+again, for 196 seconds, so it was not chance. Timing the survey by hand,
+in a build not kept, put 145.8 of those seconds in the test for covered
+controls: "Preparing profiler..." lay over the page, the first pass found
+45 controls under something, and each was then tested against its own
+element in turn. 29 of them never answered, and each waited out the full
+5-second timeout before the next began. Why they did not answer is not
+known; a reading, not measured, is that RStudio hides the page behind
+the popup from the accessibility tree, so their locators found nothing.
+
+**Why it mattered more than a slow Hop.** A survey's cost was the number
+of controls that did not answer times the timeout, with no limit of its
+own, and a Journey with no Route deadline waits it out. The pool it
+produced was more than two minutes old by the time Hop 9 drew from it, so
+Hop 9 typed into a text box that no longer answered either.
+
+**The repair:** the three tests a survey makes one control at a time, a
+control against its own element, a control with no area against its
+label, and whether an excluded control has focus, now ask every control
+at once and read the answers back in the controls' order. A survey waits
+at most about one timeout however many fail to answer, and what the draw
+sees does not depend on which answered first. A control that does not
+answer stays in the draw, as before.
+
+**Tested.** One new test, 402 in all: twelve buttons covered, then removed
+once the first pass has looked, so each one's own test waits out a
+1-second timeout. Before the repair the survey took 12,103 ms; it must
+now end within 3 seconds, with all twelve kept in the draw. Its control,
+the same buttons left in place, finds all twelve covered.
+
 ## 2026-10-08: Booking, in place of Journey terms
 
 **The name.** What a Journey is defined by is its **Booking**, chosen on

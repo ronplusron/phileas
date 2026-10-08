@@ -1063,7 +1063,9 @@ asks. `HISTORY.md` has each change and why.
    done on 2026-10-07:** 500 Routes, seven bug candidates filed, each
    shortened by a probe, none followed by hand, and triage taking hours
    rather than minutes. `HISTORY.md` has the runs, the triage and the
-   reading against the bar. The trial is finished; step 5 below is next.
+   reading against the bar. The trial is finished. An RStudio batch comes
+   next, placed on 2026-10-08 and described below the list, and then step
+   5.
 5. **Weighting the draw toward new targets,** below, measured on Eighty
    Days' `screens` layout.
 6. **The rest of replay from the journal,** as `OUTSTANDING.md` 1.18 lists
@@ -1082,6 +1084,28 @@ Steps 3 and 5 were proposed in both orders around the rest of replay, and
 the one above was taken with "OK let's do this." after a recommendation.
 Placing step 4 after step 3 rather than before it is a reading, not part of
 the answer, which said only before weighting.
+
+**An RStudio batch before step 5, placed on 2026-10-08.** Raised in the
+words "We did a ton of extensive testing with Positron. It feels like we
+didn't do nearly as much with RStudio", and asked for with "Let's take care
+of that". Counted the same day from the Route journals kept: 828 for
+Positron and 169 for RStudio, and only 13 of RStudio's written since
+2026-10-01, so nearly every RStudio Route predates covered and hidden
+controls, the menu drawn a level at a time, the engine claiming focus, the
+wider log rule and stacks read as part of their error. Positron had filed 13
+bugs and RStudio 4, about the same rate per Route. Each choice below was
+taken from options offered:
+
+- **The current release,** 2026.10.0, in a fused copy made with
+  `prepare-app.mjs`, over the 2026.09.1 copy every earlier RStudio Route ran
+  on. Its fuse wires read as 2026.09.1's did.
+- **100 Routes from each start,** no Fix and each of the five Fixes, 600 in
+  all.
+- **A Trip of 20 Hops,** asked for as "Whatever we did for Positron",
+  which was 20 in step 6.
+- **No bar set in advance.**
+- **Under the uniform draw,** a reading rather than part of the answer: it
+  goes before weighting, as the Positron trial did, so the two compare.
 
 ### After the trial: weighting the draw toward new targets
 

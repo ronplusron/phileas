@@ -1655,6 +1655,59 @@ test('a covered control leaves the draw, and is recorded with what covers it', a
   expect(names(await surveyed(page, app))).toContain('Summary');
 });
 
+test('a survey with many covered controls whose own test never answers waits one timeout, not one each', async ({ page, app }) => {
+  // Measured on RStudio 2026.10.0 on 2026-10-08: Profile > Start Profiling
+  // put "Preparing profiler..." over the page, 45 controls were suspected
+  // covered, and 29 of them never answered their own test, each taking the
+  // full 5 s in turn, so one survey took 146 s. Here twelve buttons are
+  // covered and then removed once the first pass has looked, so each one's
+  // own test waits out its timeout, as there.
+  const timeoutMs = 1_000;
+  const coverTwelve = (removeAfterFirstPass: boolean) =>
+    page.evaluate((remove) => {
+      for (let i = 1; i <= 12; i++) {
+        const button = document.createElement('button');
+        button.textContent = `Probe ${i}`;
+        button.className = 'probe-button';
+        button.style.cssText = `position: fixed; left: ${20 + i * 30}px; top: 300px; width: 24px; height: 24px; z-index: 1;`;
+        document.body.append(button);
+      }
+      const cover = document.createElement('div');
+      cover.id = 'probe-cover';
+      cover.textContent = 'In the way';
+      cover.style.cssText = 'position: fixed; left: 0; top: 290px; width: 600px; height: 50px; background: white; z-index: 99;';
+      document.body.append(cover);
+      if (!remove) return;
+      const original = document.elementFromPoint.bind(document);
+      document.elementFromPoint = (x: number, y: number) => {
+        setTimeout(() => document.querySelectorAll('.probe-button').forEach((button) => button.remove()), 0);
+        return original(x, y);
+      };
+    }, removeAfterFirstPass);
+  const timedSurvey = async () => {
+    const started = Date.now();
+    const found = await survey({ page, app, exclusions: {}, hopIndex: 0, tally: createExclusionTally({}), timeoutMs });
+    return { found, ms: Date.now() - started };
+  };
+  const probes = (entries: readonly { candidate: { name: string } }[]) =>
+    entries.map((entry) => entry.candidate.name).filter((name) => name.startsWith('Probe '));
+
+  // The control: each test answers, so all twelve are found covered, quickly.
+  await coverTwelve(false);
+  const answering = await timedSurvey();
+  expect(probes(answering.found.covered)).toHaveLength(12);
+  expect(answering.ms).toBeLessThan(3 * timeoutMs);
+  await page.evaluate(() => document.querySelectorAll('.probe-button, #probe-cover').forEach((element) => element.remove()));
+
+  // None answers: each stays in the draw, as a control the test cannot answer
+  // for does, and the survey still ends within about one timeout.
+  await coverTwelve(true);
+  const silent = await timedSurvey();
+  expect(probes(silent.found.covered)).toEqual([]);
+  expect(silent.found.candidates.filter((c) => c.source === 'page' && c.name.startsWith('Probe '))).toHaveLength(12);
+  expect(silent.ms).toBeLessThan(3 * timeoutMs);
+});
+
 test('a cover that lets clicks through, and a control out of view, are not covered', async ({ page, app }) => {
   await coverWith(page, '#view-summary', 'pointer-events: none;');
   await page.evaluate(() => {

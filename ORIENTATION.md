@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs four hundred and one tests, after a
+through, and `npm test` runs four hundred and two tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -182,7 +182,9 @@ to the plant whose check it is, a late one included. Two more came with
 the Booking: a Journey file naming the exclusion groups it lets in, which
 `--allow` replaces and `--allow none` empties, and `startJourney` refusing
 an undeclared group by where it came from and handing the rest to every
-Route.
+Route. One more holds a survey with many covered controls that never
+answer their own test to about one timeout, against the same controls
+answering as its control.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -211,7 +213,9 @@ weighting the draw; the rest of replay; then the rest of phase 5, with the
 stranded encoding first. `docs/PLAN.md` has the order under "The order from
 2026-10-05", and `docs/HISTORY.md` has why. The order before it, from
 2026-10-03, landed all but the rest of replay. Its first four steps are
-done, the Positron trial last, on 2026-10-07; weighting the draw is next.
+done, the Positron trial last, on 2026-10-07. An RStudio batch of 600
+Routes on its current release was placed before weighting the draw on
+2026-10-08; `docs/PLAN.md` has it under that order.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stopped where it stood
@@ -423,7 +427,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own four hundred and one tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own four hundred and two tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
