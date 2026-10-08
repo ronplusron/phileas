@@ -89,6 +89,13 @@ export interface JournaledCheck {
     readonly seenBefore?: string;
     readonly loggedAt?: string;
   }[];
+  /**
+   * Where window-showing-content read the window blank and then, within its
+   * wait, read it showing something again: how long after the blank reading.
+   * The check passes, and the Hop's line and the Journey's summary say so,
+   * since a brief blank can still be a bug. Since 2026-10-08.
+   */
+  readonly recovered?: { readonly afterMs: number };
 }
 
 /**

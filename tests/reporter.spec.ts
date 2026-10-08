@@ -181,6 +181,21 @@ test('the summary counts the Routes by outcome and Hops, prints the known findin
   expect(lines.at(-1)).toMatch(/^Route 2 alone: /);
 });
 
+test('brief blank windows are counted in the summary, and a Journey with none says nothing of them', () => {
+  const run = (routes: Parameters<typeof summaryLines>[0]['routes']) =>
+    summaryLines({ routes, endErrors: [], config: 'phileas', env: { PHILEAS_SEED: 's' } }).join('\n');
+  const with2 = run([
+    { outcome: 'passed', routeNumber: 3, hops: 20, tripLength: 20, blanks: [310] },
+    { outcome: 'passed', routeNumber: 8, hops: 20, tripLength: 20, blanks: [420] },
+    { outcome: 'passed', routeNumber: 9, hops: 20, tripLength: 20, blanks: [] },
+  ]);
+  expect(with2).toContain(
+    'Brief blank windows: 2 steps, in Routes 3, 8; each showed something again, at most 420 ms later, and failed nothing.'
+  );
+  // The control: no blanks, no line.
+  expect(run([{ outcome: 'passed', routeNumber: 1, hops: 20, tripLength: 20, blanks: [] }])).not.toMatch(/blank/i);
+});
+
 test('the Route named alone is the lowest-numbered that did not pass, whatever order they finished in', () => {
   // Measured on 2026-10-03: Routes run two at a time finished 1, 2's partner
   // 3, then 2, and the hint named Route 3.

@@ -91,6 +91,7 @@ const PLANTS = [
   'main-hang',
   'endless-hang',
   'blank',
+  'blank-briefly',
   'dialog',
   'log-error',
   'renderer-crash',

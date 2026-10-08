@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
+**Eighteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -387,6 +387,68 @@ name reaches.
 its ".." inside the Route's home, by a predicate exclusion or by stubbing
 the dialog's file service; or a guard that compares the whole disk's
 writable folders before and after, which would report rather than prevent.
+
+## A known finding with nothing particular in it matches every finding of its check
+
+**Filed 2026-10-08, measured.** A finding's signature is what its check
+observed, with what varies taken out. For a log line or an error that keeps
+a message, a path and a stack, which tells one bug from another. The blank
+window check observes only that the window shows nothing, so every blank
+window, whatever caused it, has one signature: "window-showing-content: the
+window shows nothing a screen reader could read: no text and no named
+element". Route 53 of the RStudio batch's `session-data` Journey,
+`479042e5c405`, blanked the window as a new project opened, and the
+Journey's end added that signature as known, `f7ded365`. From the next
+Journey on, every Route that blanked the window for any reason would have
+recorded it as that finding and carried on.
+
+**Why it is a defect and not a limit.** A known finding is meant to let a
+Route travel past one filed bug. Here it switched a whole check off, with
+nothing said: the Hop's line reads as a known finding met, which is what it
+reads when the filing is right. A hang ends the Route even when known, so
+the still-responding check does not suffer this. Window-showing-content has
+one fixed observation, in `src/oracles/index.ts`; no-unexpected-dialog's
+names the dialog's type and message, so it is as bare only for a dialog
+with no message, which is unmeasured.
+
+**What was done, and what would close it.** The entry was removed by hand
+with `phileas known remove` before the batch's later Journeys started.
+Nothing stops it being added again at any Journey's end. What would close
+it, not decided: refusing to add or file a signature that names nothing in
+particular, with the check's whole observation as the test; or giving such a
+finding more to tell it by, such as the Hop's target and the screen's last
+heading, which would also make it less likely to match across Routes.
+
+## The log check keeps only the lines of an error that look like errors
+
+**Filed 2026-10-08, confirmed by reading the code.** The log check reads what
+a log gained since the last Hop one line at a time, in `startWatching` in
+`src/oracles/index.ts`, and keeps a line only when `logLineFails` says it
+reads as an error; every other line is dropped. An error written over
+several lines loses each line between the ones that match. Measured on
+RStudio 2026.10.0, `session-data` Route 83 of `479042e5c405`: the session
+log's error from `enqueCachedVulnerabilities` was kept as three lines,
+`ERROR r error 4 (Error in installed.packages(priority = "NA") :`, then
+`) [errormsg: Error in installed.packages(priority = "NA") :`, then the
+`OCCURRED AT` line, and R's own message, written between them, was not
+kept. The Route's profile, and the log with it, is deleted when the Route
+ends, so nothing holds the rest. A replay paused with
+`PHILEAS_HOP_DELAY_MS`, its session log copied before the Route ended,
+showed the line dropped, twice over: `could not find function
+"installed.packages"`, the whole of what the error said.
+
+**Why it is a defect and not a limit.** A finding is filed from what the
+journal kept, and here that leaves out what the error said. It also makes
+one error several findings, three here, each with an id and a signature of
+its own, which `OUTSTANDING.md` 2.23 records from another cause. And a
+signature built from part of a message tells two errors apart only by what
+the dropped lines did not say.
+
+**What would close it, not decided:** keeping an error together with the
+lines that continue it, up to the next line with a timestamp, which is how
+RStudio's session log starts each entry; or keeping the whole stretch a log
+gained around a matching line, bounded, in the finding while matching on
+the first line alone.
 
 ## Two things that will look like candidates, and are not
 

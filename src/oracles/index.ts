@@ -596,13 +596,23 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
             case 'still-responding':
               return judge(check, roundTrips);
             case 'window-showing-content':
-              return judge(check, () =>
-                tree === undefined
-                  ? { notRun: 'the page did not answer, so what it shows could not be read' }
-                  : showsNothing(tree)
-                    ? ['the window shows nothing a screen reader could read: no text and no named element']
-                    : []
-              );
+              return judge(check, async () => {
+                if (tree === undefined) return { notRun: 'the page did not answer, so what it shows could not be read' };
+                if (!showsNothing(tree)) return [];
+                // **A blank must last to fail.** Measured on RStudio 2026.10.0
+                // on 2026-10-08: Session > Terminate R, then Yes, blanked the
+                // page while it redrew for the session that went away, and the
+                // next Hop, 0.3 s on, surveyed a full page; four Routes of 600
+                // failed on it, and replays met it 2 times in 3. So the window
+                // is read again until it shows something, for up to
+                // BLANK_RECOVERY_MS, and only a window still blank fails. One
+                // that recovers passes, recorded with how long it took, so a
+                // brief blank that is a bug is still seen and counted.
+                const afterMs = await shownAgainWithin(page, BLANK_RECOVERY_MS);
+                return afterMs === undefined
+                  ? [BLANK]
+                  : { recovered: { afterMs, observation: `${BLANK}, and showed something again ${afterMs} ms later` } };
+              });
             case 'no-unexpected-dialog':
               return judge(check, () => dialogs.splice(0));
             case 'log-error':
@@ -725,7 +735,43 @@ async function runAppCheck(check: AppCheck, context: AppCheckContext, responsive
  * is stamped with when it arrived where the check knows; a bare string was
  * seen when the check ran.
  */
-type Verdict = (string | Observed)[] | { notRun: string };
+type Verdict =
+  | (string | Observed)[]
+  | { notRun: string }
+  | { recovered: { afterMs: number; observation: string } };
+
+/** What window-showing-content observes of a window that shows nothing. */
+const BLANK = 'the window shows nothing a screen reader could read: no text and no named element';
+
+/**
+ * How long a blank window is read again before window-showing-content fails
+ * it, and how often. Two seconds is a reading, not a measurement: RStudio's
+ * blank on ending its R session was gone within 0.3 s, and this leaves room
+ * for a slower machine without holding a Hop long.
+ */
+export const BLANK_RECOVERY_MS = 2_000;
+const BLANK_REREAD_MS = 200;
+
+/**
+ * How many milliseconds after now the page showed something again, read every
+ * `BLANK_REREAD_MS`, or undefined if it was still blank, or never answered,
+ * when `waitMs` ran out. Bounded: each read is given only what is left.
+ */
+async function shownAgainWithin(page: Page, waitMs: number): Promise<number | undefined> {
+  const started = Date.now();
+  for (;;) {
+    const left = waitMs - (Date.now() - started);
+    if (left <= 0) return undefined;
+    await new Promise((resolve) => setTimeout(resolve, Math.min(BLANK_REREAD_MS, left)));
+    const remaining = waitMs - (Date.now() - started);
+    if (remaining <= 0) return undefined;
+    const tree = await page
+      .locator('body')
+      .ariaSnapshotJSON({ timeout: remaining })
+      .catch(() => undefined);
+    if (tree !== undefined && !showsNothing(tree)) return Date.now() - started;
+  }
+}
 
 /**
  * One check's verdict, with the adapter's narrowing applied (R19).
@@ -745,7 +791,13 @@ async function judged(
   }
 
   const verdict = await run();
-  if (!Array.isArray(verdict)) return { check, result: 'not-run', observation: verdict.notRun };
+  if (!Array.isArray(verdict)) {
+    if ('recovered' in verdict) {
+      const { afterMs, observation } = verdict.recovered;
+      return { check, result: 'passed', observation, recovered: { afterMs }, ...(narrowing ? { narrowed: narrowing.reason } : {}) };
+    }
+    return { check, result: 'not-run', observation: verdict.notRun };
+  }
   const checkedAt = Date.now();
   const observed = verdict.map((entry): Observed => (typeof entry === 'string' ? { text: entry, arrival: { at: checkedAt } } : entry));
 

@@ -1100,12 +1100,30 @@ taken from options offered:
   `prepare-app.mjs`, over the 2026.09.1 copy every earlier RStudio Route ran
   on. Its fuse wires read as 2026.09.1's did.
 - **100 Routes from each start,** no Fix and each of the five Fixes, 600 in
-  all.
+  all. **Changed the same day,** while the first Journey ran, in the words
+  "let's skip r-markdown, but add a Fix for the Data Viewer, counterpart to
+  Positron's data-explorer": `r-markdown` is left out, and a `data-viewer`
+  Fix, `View(mtcars)` run in the console, runs last, once `phileas survey`
+  has shown what of it a Trip can reach, since the viewer's grid is drawn in
+  a frame the survey does not read (`OUTSTANDING.md` 1.9). Still 600.
+- **Two Routes at a time,** measured first, asked for as "Measure two at a
+  time": `HISTORY.md` has the measurement.
 - **A Trip of 20 Hops,** asked for as "Whatever we did for Positron",
   which was 20 in step 6.
 - **No bar set in advance.**
 - **Under the uniform draw,** a reading rather than part of the answer: it
   goes before weighting, as the Positron trial did, so the two compare.
+
+**Reading inside frames, placed after the RStudio batch on 2026-10-08,**
+also before step 5. Asked for in the words "Let's move reading inside frames
+forward", once the batch's data viewer Fix showed RStudio's grid drawn in a
+frame the survey does not read, and placed from three offered, right after
+the batch, over after weighting the draw and after the rest of replay. It
+had been scheduled at the IDEs' turn, after phase 9; `OUTSTANDING.md` 1.9
+has what was measured. The reason given with the proposal, not with the
+answer: the data viewer's 100 Routes can be run again with frames read, as
+a direct measure, and weighting is measured on Eighty Days, which has no
+frames, so neither waits on the other.
 
 ### After the trial: weighting the draw toward new targets
 

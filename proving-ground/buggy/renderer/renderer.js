@@ -91,6 +91,14 @@ const PLANTED = {
   'main-hang': ['Wait at the port', () => window.buggy.plant('main-hang')],
   'endless-hang': ['Wait for the last ferry', () => window.buggy.plant('endless-hang')],
   blank: ['Fold the map', () => document.body.replaceChildren()],
+  // Blank for a moment and then back, as RStudio's page is while it redraws
+  // for an R session that went away: longer than the settle wait's quiet
+  // window, so a Hop reads it blank, and shorter than BLANK_RECOVERY_MS.
+  'blank-briefly': ['Refold the map', () => {
+    const kept = [...document.body.childNodes];
+    document.body.replaceChildren();
+    setTimeout(() => document.body.replaceChildren(...kept), 1200);
+  }],
   dialog: ['Ring the bell', () => alert('the bell rang')],
   'log-error': ['Write in the logbook', () => window.buggy.plant('log-error')],
   'renderer-crash': ['Drop the lantern', () => window.buggy.plant('renderer-crash')],

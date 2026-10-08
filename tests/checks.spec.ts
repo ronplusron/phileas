@@ -23,6 +23,8 @@ import {
   signatureOf,
   AdapterCheckError,
   assertAppChecks,
+  BLANK_RECOVERY_MS,
+  renderEntry,
   type AppCheck,
   type AppUnderTest,
   type Chooser,
@@ -159,6 +161,39 @@ firesOn('dialog', 'Ring the bell', 'no-unexpected-dialog', /alert: the bell rang
 firesOn('renderer-crash', 'Drop the lantern', 'still-responding', /the renderer crashed/);
 // Which of its signs arrives first varies, and any of them is the finding.
 firesOn('main-exit', 'Miss the boat', 'still-responding', /the window closed|the main process exited|the application closed/);
+// A window blank only for a moment does not fail, and is recorded. Measured on
+// RStudio 2026.10.0 on 2026-10-08, whose page blanked while it redrew for an R
+// session that went away. The planted `blank` above, which stays blank, is the
+// control: it still fails, after the same wait.
+{
+  const cfg = planted('blank-briefly');
+  const test = createTest(cfg);
+  test.afterEach(removeScratch);
+  test('a window blank for a moment passes, recorded with how long it took to show something again', async ({ page, app }) => {
+    const root = scratch();
+    await runRoute({
+      page,
+      app,
+      cfg,
+      streams: deriveRouteStreams('plant-blank-briefly', 1),
+      journeySeed: 'plant-blank-briefly',
+      routeNumber: 1,
+      tripLength: 2,
+      journalsRoot: root,
+      chooser: always('Refold the map'),
+      ...SHORT,
+    });
+    const hops = journalIn(root).filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+    expect(hops).toHaveLength(2);
+    const first = result(hops[0]?.checks ?? [], 'window-showing-content');
+    expect(first?.result).toBe('passed');
+    expect(first?.recovered?.afterMs).toBeGreaterThan(0);
+    expect(first?.recovered?.afterMs).toBeLessThan(BLANK_RECOVERY_MS);
+    expect(first?.observation).toMatch(/shows nothing .*showed something again \d+ ms later/);
+    expect(renderEntry(hops[0] as TripHopEntry, 1)).toMatch(/window blank, then showed something again \d+ ms later/);
+  });
+}
+
 // A check of buggy's own, declared in its adapter (R18): the heading above the
 // list stops agreeing with the list beneath it.
 firesOn('miscount', 'Count the luggage', 'count-matches-list', /the heading says \d+ items and the list shows \d+/);

@@ -25,6 +25,44 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-08: a blank window must last to fail, and a brief one is counted
+
+**Found in the RStudio batch of the same day.** Four of its 600 Routes
+failed window-showing-content, each right after RStudio's R session ended or
+switched: Session > Terminate R and Yes three times, Create Project in an
+existing folder once. On `r-markdown-further` Route 8, which carried past the
+same blank while it was a known finding, the next Hop started 0.3 s after the
+blank reading and surveyed 343 candidates, as many as before. Replaying
+`zoomed-plots` Route 30 met it 2 times in 3. Which runs meet it is decided by
+the settle wait: in the three runs where it ended within 0.74 to 0.96 s of
+the click, the check read the page blank, and in the ten where it ended at
+1.31 s or later, the page was back.
+
+**Decided from three offered,** over a narrowing in RStudio's adapter and
+over dismissing the finding, each of which would have stopped any blank
+window in RStudio being found, since the blank check's observation names
+nothing in particular (`DEFECTS.md`). Asked, of the remaining cost, "But
+what about 'A real bug that blanks the window only briefly is missed, in
+every application'", and answered by recording a brief blank rather than
+passing it silently, taken with "y".
+
+**What it does.** A window read blank is read again every 200 ms for up to
+2 s, `BLANK_RECOVERY_MS` in `src/oracles/index.ts`. Still blank, it fails as
+before. Showing something again, the check passes and records
+`recovered: { afterMs }` on its line; the Hop's line says "window blank,
+then showed something again N ms later", and the Journey's summary counts
+such steps by Route, with the longest. Two seconds is a reading, not a
+measurement.
+
+**Tested.** Two new tests, 404 in all. `buggy` has a plant, behind its own
+flag, that blanks its page for 1.2 s and restores it: a Hop on it passes,
+recorded with how long the page took to come back, and the planted `blank`,
+which stays blank, still fails, as the control. And the summary counts brief
+blanks by Route, and says nothing of them where there were none. On RStudio,
+nine replays of Route 30 one at a time never met the blank, all settling
+late; twelve two at a time met it twice, each back in 223 and 232 ms, and
+passed.
+
 ## 2026-10-08: a survey waits one timeout, not one per control that does not answer
 
 **Found on the RStudio batch's first Journey,** on 2026.10.0, Route 7 of seed

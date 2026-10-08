@@ -40,11 +40,12 @@ const JOURNAL_ANNOTATION = 'phileas-journal';
  * or Hop, the outcome line where the Route wrote one, and how many Hops a
  * replay skipped. A line cut off mid-write, by a Route that died, is skipped.
  * @param {string} file
- * @returns {{ opening?: Extract<JournalEntry, { kind: 'route' }>, last?: Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' }>, outcome?: Extract<JournalEntry, { kind: 'outcome' }>, hops: number, skipped: number }}
+ * Also how long each brief blank window lasted, for the summary.
+ * @returns {{ opening?: Extract<JournalEntry, { kind: 'route' }>, last?: Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' }>, outcome?: Extract<JournalEntry, { kind: 'outcome' }>, hops: number, skipped: number, blanks: number[] }}
  */
 export function readEnding(file) {
   /** @type {ReturnType<typeof readEnding>} */
-  const ending = { hops: 0, skipped: 0 };
+  const ending = { hops: 0, skipped: 0, blanks: [] };
   let text;
   try {
     text = fs.readFileSync(file, 'utf8');
@@ -65,6 +66,8 @@ export function readEnding(file) {
       ending.last = entry;
       if (entry.kind === 'trip-hop') ending.hops = entry.hop;
       if (entry.kind === 'trip-hop' && entry.abandoned?.startsWith(REPLAY_SKIPPED)) ending.skipped += 1;
+      const recovered = entry.checks?.find((check) => check.recovered)?.recovered;
+      if (recovered) ending.blanks.push(recovered.afterMs);
     } else if (entry.kind === 'outcome') {
       ending.outcome = entry;
       ending.hops = entry.hops;
@@ -126,11 +129,11 @@ function failedCheckLines(last) {
  * the Route ended without writing one.
  * @param {RouteResult} result
  * @param {{ follow: boolean, cwd: string }} options
- * @returns {{ lines: string[], outcome: 'passed' | 'failed' | 'stranded' | 'skipped' | 'unfinished', routeNumber?: number, hops: number, tripLength?: number, journal?: string }}
+ * @returns {{ lines: string[], outcome: 'passed' | 'failed' | 'stranded' | 'skipped' | 'unfinished', routeNumber?: number, hops: number, tripLength?: number, journal?: string, blanks?: number[] }}
  */
 export function routeLines(result, { follow, cwd }) {
   const journal = result.annotations.find((note) => note.type === JOURNAL_ANNOTATION)?.description;
-  const ending = journal ? readEnding(journal) : { hops: 0, skipped: 0 };
+  const ending = journal ? readEnding(journal) : { hops: 0, skipped: 0, blanks: [] };
   const routeNumber = ending.opening?.routeNumber ?? Number(/route (\d+)/.exec(result.title)?.[1] ?? 0);
   // A test that is not a Route, such as a probe a person runs through the
   // same config, has no number, and is named by its title.
@@ -150,7 +153,7 @@ export function routeLines(result, { follow, cwd }) {
     // Passed with no outcome line: a test that wrote no journal, since a Route
     // that passes always closes one. Said as passed, never as failed, which
     // is what this said before 2026-10-02 of a probe that passed.
-    return { lines: [`${route}  passed${journal ? '' : ', with no journal'}`], outcome: 'passed', routeNumber, hops: ending.hops, tripLength, journal };
+    return { lines: [`${route}  passed${journal ? '' : ', with no journal'}`], outcome: 'passed', routeNumber, hops: ending.hops, tripLength, journal, blanks: ending.blanks };
   }
   if (!outcome) {
     // No outcome line: cut off by its deadline, stopped, or failed before its
@@ -195,7 +198,7 @@ export function routeLines(result, { follow, cwd }) {
   if (result.status !== 'passed' && result.status !== 'skipped') lines.push(...attachmentLines(result, cwd));
   /** @type {'passed' | 'failed' | 'stranded' | 'unfinished'} */
   const kind = outcome ? outcome.outcome : 'unfinished';
-  return { lines, outcome: kind, routeNumber, hops: ending.hops, tripLength, journal };
+  return { lines, outcome: kind, routeNumber, hops: ending.hops, tripLength, journal, blanks: ending.blanks };
 }
 
 /**
@@ -298,7 +301,7 @@ function rerunFlags(env) {
  * to the known findings, any failure at the Journey's end, and the commands
  * to run it again.
  * @param {{
- *   routes: { outcome: string, routeNumber?: number, hops: number, tripLength?: number, journal?: string }[],
+ *   routes: { outcome: string, routeNumber?: number, hops: number, tripLength?: number, journal?: string, blanks?: readonly number[] }[],
  *   journeyEnd?: { findings: JourneyFindings, file: string },
  *   endErrors: readonly { message?: string }[],
  *   config: string,
@@ -325,6 +328,19 @@ export function summaryLines({ routes, journeyEnd, endErrors, config, env, cwd =
 
   const journal = routes.find((route) => route.journal)?.journal;
   if (journal) lines.push(`Journals: ${shown(path.dirname(journal), cwd)}`);
+
+  // A blank window that showed something again within the check's wait failed
+  // nothing, and is counted here so it is never lost: a brief blank can still
+  // be a bug, and only a person reading this decides.
+  const blanked = routes.filter((route) => route.blanks?.length);
+  if (blanked.length) {
+    const all = blanked.flatMap((route) => route.blanks ?? []);
+    const where = blanked.map((route) => (route.routeNumber ? String(route.routeNumber) : '?')).join(', ');
+    lines.push(
+      `Brief blank windows: ${all.length} step${all.length === 1 ? '' : 's'}, in Route${blanked.length === 1 ? '' : 's'} ${where}; ` +
+        `each showed something again, at most ${Math.max(...all)} ms later, and failed nothing. phileas show prints each.`
+    );
+  }
 
   if (journeyEnd) lines.push(...renderJourneyFindings(journeyEnd.findings, journeyEnd.file));
 

@@ -210,6 +210,18 @@ function knownText(checks) {
 }
 
 /**
+ * A window found blank and then showing something again within the check's
+ * wait, as a suffix to the step's line, or nothing. Printed, since the check
+ * passed and a brief blank can still be a bug.
+ * @param {readonly { recovered?: { afterMs: number } }[] | undefined} checks
+ * @returns {string}
+ */
+export function recoveredText(checks) {
+  const recovered = (checks ?? []).find((check) => check.recovered)?.recovered;
+  return recovered ? `   (window blank, then showed something again ${recovered.afterMs} ms later)` : '';
+}
+
+/**
  * What took an abandoned Hop's click, as `; under <element>`, or the empty
  * string where the journal does not say. Shortened, since Playwright names
  * the element with its attributes and the element around it.
@@ -305,6 +317,7 @@ export function renderEntry(entry, routeNumber, { brief = false } = {}) {
         column(shortened(entry.label, 43), 44),
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
         caughtText(entry.caught, step),
+        recoveredText(entry.checks),
         knownText(entry.checks),
         failedText(entry.checks, step, brief),
       ].join('');
@@ -320,6 +333,7 @@ export function renderEntry(entry, routeNumber, { brief = false } = {}) {
         effectText(entry.effect),
         entry.abandoned ? `   (gave up: ${entry.abandoned}${underText(entry.interceptedBy)})` : '',
         caughtText(entry.caught, step),
+        recoveredText(entry.checks),
         knownText(entry.checks),
         failedText(entry.checks, step, brief),
       ].join('');

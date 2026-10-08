@@ -283,6 +283,8 @@ by approving a proposal made at the end of the session that recorded them:
   reading inside frames and webviews, decided 2026-09-24 once the probes
   showed the need. Nothing earlier is known to need it, though whether the
   proving ground's siblings or the two first consumers use frames is unmeasured.
+  **Moved forward on 2026-10-08,** frames at least: right after the RStudio
+  batch of that day, before weighting the draw. `PLAN.md` has it.
 - **At the IDEs' turn, asked for 2026-09-24:** revisit the draw shares for
   the keys and the menu, 1.11, once a Journey has run against either IDE.
 - **In phase 5, where `PLAN.md` already has them:** native dialogs, and bugs
@@ -309,7 +311,10 @@ repeating it.
   none of their controls reach the survey, 57 of them in the data viewer
   alone, which is where one of RStudio's recorded bugs sits. Positron's Help
   and Viewer are webviews and equally out of reach; its data explorer is drawn
-  in the page and is reachable. Scheduled above, at the IDEs' turn.
+  in the page and is reachable. Scheduled above, now right after the
+  RStudio batch of 2026-10-08. On RStudio 2026.10.0 the data viewer's own
+  toolbar, seven controls, is drawn outside its frame and is reached; the
+  grid inside it is not.
 - **The debugging-port launch** that a hardened release needs is named in the
   engine's types and has never been built. RStudio no longer needs it: since
   2026-09-28 a copy of its release with two fuses switched back on launches

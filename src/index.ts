@@ -217,6 +217,7 @@ export {
   logLineFails,
   TRACE_SNAPSHOT_IN_SANDBOX,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,
+  BLANK_RECOVERY_MS,
   STALLED,
   judgedByTheWatch,
   rendererObservation,

@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs four hundred and two tests, after a
+through, and `npm test` runs four hundred and four tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -184,7 +184,10 @@ the Booking: a Journey file naming the exclusion groups it lets in, which
 an undeclared group by where it came from and handing the rest to every
 Route. One more holds a survey with many covered controls that never
 answer their own test to about one timeout, against the same controls
-answering as its control.
+answering as its control. Two more came with a blank window having to
+last: a window blank for a moment passing, recorded with how long it took
+to come back, against `buggy`'s lasting blank still failing, and the
+summary counting brief blanks by Route.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -215,7 +218,8 @@ stranded encoding first. `docs/PLAN.md` has the order under "The order from
 2026-10-03, landed all but the rest of replay. Its first four steps are
 done, the Positron trial last, on 2026-10-07. An RStudio batch of 600
 Routes on its current release was placed before weighting the draw on
-2026-10-08; `docs/PLAN.md` has it under that order.
+2026-10-08, and reading inside frames after the batch, also before
+weighting; `docs/PLAN.md` has both under that order.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stopped where it stood
@@ -320,14 +324,16 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Eighteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
 late finding arrives, one a Fix's fingerprint missing what the Fix
 does not itself contain, one an application in `back` mode bringing
-itself forward partway through a Route, and one a Positron Route saving
-outside its home folder. That file holds what is wrong, confirmed by reading the
+itself forward partway through a Route, one a Positron Route saving
+outside its home folder, one a known finding with nothing particular
+in it matching every finding of its check, and one the log check keeping
+only the lines of an error that look like errors. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
@@ -427,7 +433,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own four hundred and two tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own four hundred and four tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
