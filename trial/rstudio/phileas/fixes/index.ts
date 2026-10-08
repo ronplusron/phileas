@@ -1,4 +1,5 @@
 import { defineFixes } from '@drugstoresushi/phileas';
+import { dataViewer } from './data-viewer';
 import { script } from './script';
 import { rMarkdown } from './r-markdown';
 import { rMarkdownFurther } from './r-markdown-further';
@@ -11,8 +12,9 @@ import { zoomedPlots } from './zoomed-plots';
  * in the console that leaves objects, history and a plot. `r-markdown` opens
  * the dialog for creating an R Markdown document, and `r-markdown-further`
  * creates the document and adds text and an R chunk at its end.
- * `zoomed-plots` zooms the Plots pane, hiding the others. `--fix none`, or
- * no `--fix`, starts wherever RStudio starts.
+ * `zoomed-plots` zooms the Plots pane, hiding the others. `data-viewer` shows
+ * `mtcars` in the data viewer. `--fix none`, or no `--fix`, starts wherever
+ * RStudio starts.
  */
 export const fixes = defineFixes({
   script,
@@ -20,4 +22,5 @@ export const fixes = defineFixes({
   'r-markdown': rMarkdown,
   'r-markdown-further': rMarkdownFurther,
   'zoomed-plots': zoomedPlots,
+  'data-viewer': dataViewer,
 });

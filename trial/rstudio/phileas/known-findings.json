@@ -1,5 +1,13 @@
 [
   {
+    "id": "6657b6fa",
+    "check": "log-error",
+    "signature": "log-error: rsession-<user>.log: ) [errormsg: Error in installed.packages(priority = \"NA\") :",
+    "added": "2026-10-08",
+    "source": "journey",
+    "issue": "ronplusron/phileas#97"
+  },
+  {
     "id": "3607f429",
     "check": "log-error",
     "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR CLIENT EXCEPTION (rsession-<user>): (TypeError) : Cannot set properties of null (setting 'resultsCount'); org/rstudio/studio/client/workbench/views/output/find/FindOutputPresenter.java::findInFilesBeginFind",
@@ -16,27 +24,43 @@
     "falseAlarm": "Help > Diagnostics > Import Editor Contents..., a developer diagnostics tool, saved with nothing entered; dismissed on review 2026-09-29"
   },
   {
-    "id": "e0fe2964",
+    "id": "223c8305",
     "check": "log-error",
-    "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR system error 100 (Protocol error) [project-file: <profile>/home, user-msg: The project file did not include a Version attribute (it may have been created by a more recent version of RStudio)]; OCCURRED AT Error rstudio::core::r_util::readProjectFile(const FilePath &, const RProjectConfig &, const RProjectBuildDefaults &, RProjectConfig *, bool *, std::string *) src/cpp/core/r_util/RProjectFile.cpp:569; LOGGED FROM: void rstudio::session::projects::startup(const std::string &) src/cpp/session/projects/SessionProjects.cpp:1206",
+    "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR r error 4 (Error in installed.packages(priority = \"NA\") :",
+    "added": "2026-10-08",
+    "source": "journey",
+    "issue": "ronplusron/phileas#97"
+  },
+  {
+    "id": "97900178",
+    "check": "log-error",
+    "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR system error 100 (Protocol error) [project-file: <profile>/home, user-msg: The project file did not include a Version attribute (it may have been created by a more recent version of RStudio)]; OCCURRED AT Error rstudio::core::r_util::readProjectFile(const FilePath &, const RProjectConfig &, const RProjectBuildDefaults &, RProjectConfig *, bool *, std::string *) src/cpp/core/r_util/RProjectFile.cpp:<line>; LOGGED FROM: void rstudio::session::projects::startup(const std::string &) src/cpp/session/projects/SessionProjects.cpp:<line>",
     "added": "2026-09-28",
     "source": "journey",
     "issue": "rstudio/rstudio#14985"
   },
   {
-    "id": "6f037ab8",
+    "id": "048fa7ba",
     "check": "log-error",
-    "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR system error 2 (No such file or directory) [path: ]; OCCURRED AT Error rstudio::core::FilePath::openForRead(std::shared_ptr<std::istream> &) const src/cpp/shared_core/FilePath.cpp:1747; LOGGED FROM: void rstudio::session::modules::connections::(anonymous namespace)::ConnectionsRegistry::add(const std::string &, const FilePath &) src/cpp/session/modules/connections/ConnectionsIndexer.cpp:131",
+    "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR system error 2 (No such file or directory) [path: ]; OCCURRED AT Error rstudio::core::FilePath::openForRead(std::shared_ptr<std::istream> &) const src/cpp/shared_core/FilePath.cpp:<line>; LOGGED FROM: void rstudio::session::modules::connections::(anonymous namespace)::ConnectionsRegistry::add(const std::string &, const FilePath &) src/cpp/session/modules/connections/ConnectionsIndexer.cpp:<line>",
     "added": "2026-09-29",
     "source": "journey",
     "issue": "ronplusron/phileas#64"
   },
   {
-    "id": "451feaf9",
+    "id": "881d63db",
     "check": "log-error",
-    "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR system error 57 (Socket is not connected) [description: Unknown handle: \"<handle>\"]; OCCURRED AT Error rstudio::session::console_process::ConsoleProcessSocket::sendRawText(const std::string &, const std::string &) src/cpp/session/SessionConsoleProcessSocket.cpp:283; LOGGED FROM: void rstudio::session::console_process::ConsoleProcess::enqueOutputEvent(const std::string &) src/cpp/session/SessionConsoleProcess.cpp:763",
+    "signature": "log-error: rsession-<user>.log: [rsession-<user>] ERROR system error 57 (Socket is not connected) [description: Unknown handle: \"<handle>\"]; OCCURRED AT Error rstudio::session::console_process::ConsoleProcessSocket::sendRawText(const std::string &, const std::string &) src/cpp/session/SessionConsoleProcessSocket.cpp:<line>; LOGGED FROM: void rstudio::session::console_process::ConsoleProcess::enqueOutputEvent(const std::string &) src/cpp/session/SessionConsoleProcess.cpp:<line>",
     "added": "2026-09-28",
     "source": "journey",
     "issue": "rstudio/rstudio#18976"
+  },
+  {
+    "id": "3b833139",
+    "check": "log-error",
+    "signature": "log-error: rsession-<user>.log: ]; OCCURRED AT Error rstudio::r::exec::(anonymous namespace)::evaluateExpressionsUnsafe(SEXP, SEXP, SEXP *, sexp::Protect *, EvalType) src/cpp/r/RExec.cpp:<line>; LOGGED FROM: void rstudio::session::modules::ppm::(anonymous namespace)::enqueCachedVulnerabilities() src/cpp/session/modules/SessionPPM.cpp:<line>",
+    "added": "2026-10-08",
+    "source": "journey",
+    "issue": "ronplusron/phileas#97"
   }
 ]

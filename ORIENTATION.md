@@ -228,7 +228,8 @@ until it was resumed on 2026-10-05.
 The adapter is in `trial/rstudio/`, pointed at a copy of the installed
 release with two fuses switched back on, since the installed release refuses
 the ordinary launch: for example
-`PHILEAS_APP_DIR=~/Applications/RStudio-2026.09.1-fuses.app phileas run trial/rstudio/phileas`.
+`PHILEAS_APP_DIR=~/Applications/RStudio-2026.10.0-fuses.app phileas run trial/rstudio/phileas`,
+the current release since 2026-10-08; the 2026.09.1 copy is still there.
 **On a machine without that copy,** `node trial/rstudio/prepare-app.mjs`
 makes one from `/Applications/RStudio.app` and prints where it put it; the
 machine needs R, with `Rscript` on the PATH, for the trial's R library guard.
@@ -244,14 +245,21 @@ on 2026-09-29, once two escapes were closed: a Route climbing out of its
 home through the file dialog's "Folder .." row, and "Open Project in New
 Session..." starting a second RStudio, which the engine now stubs. The
 command palette is excluded, for now. 79 of the batch's 80 Routes passed,
-and the one failure was issue 64. Every entry in its `known-findings.json`
-is settled: four filed, and one dismissed as a false alarm.
+and the one failure was issue 64. **A batch of 600 on 2026.10.0** followed
+on 2026-10-08, 100 Routes of 20 Hops from each of six starts, two at a
+time: 594 passed, and its one new RStudio bug, detaching utils breaking the
+package vulnerability check, is `ronplusron/phileas` issue 97.
+`docs/HISTORY.md` has it, and the engine repairs it led to. Every entry in
+its `known-findings.json` is settled: seven entries filed against five
+issues, issue 97's one error being three entries, and one dismissed as a
+false alarm.
 `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
 R script with code in it; `session-data`, code run in the console;
 `r-markdown`, the dialog for a new R Markdown document;
 `r-markdown-further`, that document created, with text and an R chunk
-added at its end; or `zoomed-plots`, the Plots pane zoomed so the other
-panes are hidden. Its Journey fails the run when the machine's R libraries
+added at its end; `zoomed-plots`, the Plots pane zoomed so the other
+panes are hidden; or `data-viewer`, `mtcars` shown in the data viewer,
+whose grid a Trip cannot reach until frames are read. Its Journey fails the run when the machine's R libraries
 changed. Its Routes see the person's own R library after their own, so an
 install still lands in the Route's; `PHILEAS_R_PERSONAL_LIBRARY=0` leaves
 it out, a folder's path names another, and the Journey's start says which.

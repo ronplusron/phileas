@@ -1108,6 +1108,10 @@ taken from options offered:
   a frame the survey does not read (`OUTSTANDING.md` 1.9). Still 600.
 - **Two Routes at a time,** measured first, asked for as "Measure two at a
   time": `HISTORY.md` has the measurement.
+
+**Done on 2026-10-08:** 594 of 600 passed, one RStudio bug filed, and four
+engine repairs or defects found along the way; `HISTORY.md` has the runs
+and the triage. Reading inside frames is next, then step 5.
 - **A Trip of 20 Hops,** asked for as "Whatever we did for Positron",
   which was 20 in step 6.
 - **No bar set in advance.**

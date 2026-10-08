@@ -1176,7 +1176,11 @@ Seen in the RStudio batch of 2026-09-29; neither is measured.
   and the journal does not record it, so this rests on the run's output as
   read at the time. Whether they would have exited by themselves, as
   `HISTORY.md`'s entry of 2026-09-28 already asked of one R session, is
-  unmeasured.
+  unmeasured. **Seen again on 2026.10.0 on 2026-10-08,** far more often
+  after a Fix that runs code: 31 of the 32 `session-data` Routes whose
+  output was still on screen, and 3 of the last 39 with no Fix. Counted
+  from the terminal, since the sweep still journals nothing, so the rest of
+  the 600 cannot be counted now.
 
 ### 2.15 Printing one Hop's whole pool
 

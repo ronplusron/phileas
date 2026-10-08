@@ -25,6 +25,85 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-08: RStudio's batch of 600 on its current release, and its triage
+
+**Why.** Raised as RStudio having had far less than Positron: 169 RStudio
+Route journals kept against 828, and only 13 of RStudio's since
+2026-10-01, so nearly all predated a week of engine changes. `PLAN.md` has
+the choices, made from options offered: 2026.10.0, 100 Routes from each
+start, Trips of 20 as Positron's step 6 had, no bar.
+
+**What ran.** 600 Routes of 20 Hops on a fused copy of RStudio 2026.10.0,
+made with `prepare-app.mjs`, whose fuse wires read as 2026.09.1's had;
+windows hidden; 594 passed, 6 failed, none stranded; 116 of 11,933 Trip
+hops abandoned.
+
+| Fix | Seed | Passed | Failed | Abandoned Hops |
+| --- | --- | --- | --- | --- |
+| none | `fb3d0140c520` | 100 | 0 | 26 |
+| script | `c0b1c368e5b1` | 100 | 0 | 13 |
+| session-data | `479042e5c405` | 97 | 3 | 25 |
+| r-markdown-further | `796b3c6084e7` | 100 | 0 | 14 |
+| zoomed-plots | `56539bff891c` | 98 | 2 | 19 |
+| data-viewer | `ba3a62016eb1` | 99 | 1 | 19 |
+
+**Changed while it ran.** The first attempt, one Route at a time, stopped
+at Route 7, where a survey took 146 s; the repair, a survey waiting one
+timeout, is its own entry. Two at a time was then measured, 10 `script`
+Routes: a load of 6.6 at most on 8 cores, a median Hop of 480 ms against
+492 ms one at a time, 1 of 200 Hops abandoned. Taken as RStudio's setting,
+in its `playwright.config.ts`, after "Measure two at a time". While the
+first Journey ran, `r-markdown` was left out and a `data-viewer` Fix added,
+`View(mtcars)` run in the console, asked for in the words "let's skip
+r-markdown, but add a Fix for the Data Viewer, counterpart to Positron's
+data-explorer"; its 100 ran last, once `phileas survey` had shown that a
+Trip reaches the viewer's toolbar, seven controls, and none of the grid,
+which is drawn in a frame. Reading inside frames was moved forward on the
+strength of it; `PLAN.md` has where.
+
+**The six failures, triaged:**
+
+- **Four blank windows,** each as the R session ended or switched: a false
+  alarm, the window back within 0.3 s. The repair, a blank having to last,
+  is its own entry.
+- **RStudio's issue 14985, Open Project with nothing chosen,** still in
+  2026.10.0. It failed as new only because a line number in its signature
+  moved; that repair is its own entry too, and the two entries are one
+  again, `97900178`.
+- **Detaching utils from the Packages pane** makes the next Refresh Package
+  listing log `could not find function "installed.packages"` from RStudio's
+  package vulnerability check. Shortened by replaying an edited copy of the
+  journal to three steps, against a control without unchecking utils: 3 of
+  3, and 0 of 3. Filed as ronplusron/phileas issue 97, after its full text
+  was copied from a replay's session log, since the log check had dropped
+  the line that said it, which `DEFECTS.md` now carries.
+
+**Not met in 600 Routes:** none of the earlier RStudio findings, filed or
+not: 18976, closing a terminal; issue 62, Find in Files; issue 64, odbc; and
+the import-editor-contents false alarm.
+
+**Seen and not failing anything:** R sessions left running when RStudio
+closed, ended by the stray sweep. The sweep prints and does not journal, so
+only the output still on screen was counted: 31 of the 32 `session-data`
+Routes it covered, and 3 of the last 39 with no Fix. `OUTSTANDING.md` 2.14
+has it.
+
+**The home folder guard fired once,** at the no-Fix Journey's end, on 102
+files written between 06:24:30 and 06:24:49 local time: an RStudio opened
+by hand during the run, by the person running it, which the installed
+RStudio's own log showed starting at 06:24:31. No Route wrote there.
+
+**Against Positron's step 6:** with this batch, about 800 RStudio Routes
+have filed five RStudio bugs, against Positron's 13 from about 830 Route
+journals kept; a reading, both counts floors, and RStudio's earlier batch
+ran an older engine.
+
+**Found in the engine along the way,** each its own entry or in
+`DEFECTS.md`: the survey's stall, the blank window, a source line in a
+signature, a known finding with nothing particular in it matching every
+blank window, and the log check dropping the lines of an error that do not
+look like errors.
+
 ## 2026-10-08: a signature leaves out a source file's line
 
 **Found in the RStudio batch of the same day.** `session-data` Route 35 failed
