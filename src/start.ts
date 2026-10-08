@@ -1,4 +1,4 @@
-import { overriddenTerms, requireRun, requireSeed, resolveRun, resolveSeed, SEED_VARIABLE, type Journey } from './journey.js';
+import { overriddenInBooking, requireRun, requireSeed, resolveRun, resolveSeed, SEED_VARIABLE, type Journey } from './journey.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -10,7 +10,7 @@ import type { AppUnderTest } from './app-under-test.js';
 import { fixFor, type Fixes } from './fixes.js';
 import { allowStaleFromEnvironment } from './bundle.js';
 import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route.js';
-import { allowedGroupsFromEnvironment } from './survey.js';
+import { ALLOW_EXCLUDED_VARIABLE } from './survey.js';
 import { replayFromEnvironment } from './replay.js';
 
 /**
@@ -57,9 +57,18 @@ export function startJourney(
   const follow = followFromEnvironment();
   const surveyOnly = surveyFromEnvironment();
   const allowStale = allowStaleFromEnvironment();
-  // Here too, so a group the adapter does not declare is refused before
-  // anything launches, not once per Route.
-  const allowedGroups = allowedGroupsFromEnvironment(application.exclusions);
+  // The groups the Booking lets in, after any --allow, checked against the
+  // adapter here so a group it does not declare is refused before anything
+  // launches, naming where it came from. Groups the Journey file lets in are
+  // handed to every Route in the one channel that reaches Playwright's
+  // workers, the environment, which a run's --allow already uses; so the
+  // command to run it again repeats them, which retraces the same Routes
+  // even if the file changes. Nothing is written when nothing is let in, so
+  // that command stays as short as the run was.
+  const allowedGroups = allowedGroupsOf(journey, application);
+  if (allowedGroups.length && !overriddenInBooking(journey).includes('allow')) {
+    process.env[ALLOW_EXCLUDED_VARIABLE] = allowedGroups.join(',');
+  }
   const groups = Object.keys(application.exclusions.groups ?? {});
   // Read here too, so a journal that cannot be replayed, such as one whose
   // Fix has code steps, is refused before anything launches.
@@ -68,7 +77,7 @@ export function startJourney(
   // the consumer's is refused before anything launches, not once per Route.
   fixFor(journey, fixes);
 
-  const forThisRun = new Set<string>(overriddenTerms(journey));
+  const forThisRun = new Set<string>(overriddenInBooking(journey));
   const mark = (term: string) => (forThisRun.has(term) ? 'set for this run' : '');
   const deadline = (ms: number | undefined) => (ms === undefined ? 'none' : `${ms} ms`);
 
@@ -92,7 +101,7 @@ export function startJourney(
       !groups.length
         ? 'none declared'
         : groups.map((group) => `${group} ${allowedGroups.includes(group) ? 'let in' : 'excluded'}`).join(', '),
-      allowedGroups.length ? 'set for this run' : '',
+      mark('allow') || (allowedGroups.length ? 'in the Journey file' : ''),
     ],
     // Printed, so a PHILEAS_SURVEY left set in the shell is seen at the top of
     // a run that would otherwise travel nowhere.
@@ -290,4 +299,27 @@ export function finishJourney(
   };
   runEveryCheck([recordFindings, checkLeftovers]);
   return findings;
+}
+
+/**
+ * The exclusion groups a Journey's Booking lets in, after any `--allow`,
+ * each one checked against the groups the adapter declares.
+ *
+ * A name the adapter does not declare is refused, naming the groups it does
+ * and where the name came from: a mistyped group would otherwise be let in by
+ * nobody and the run would read as having allowed it.
+ */
+export function allowedGroupsOf(journey: Journey, application: AppUnderTest): readonly string[] {
+  const asked = journey.allow ?? [];
+  const declared = Object.keys(application.exclusions.groups ?? {});
+  const unknown = asked.filter((name) => !declared.includes(name));
+  if (unknown.length) {
+    const from = overriddenInBooking(journey).includes('allow') ? ALLOW_EXCLUDED_VARIABLE : "the Journey's allow";
+    throw new Error(
+      `${from} names ${unknown.map((name) => JSON.stringify(name)).join(', ')}, ` +
+        `which the adapter does not declare as an exclusion group. ` +
+        (declared.length ? `It declares: ${declared.join(', ')}.` : 'It declares none.')
+    );
+  }
+  return asked;
 }

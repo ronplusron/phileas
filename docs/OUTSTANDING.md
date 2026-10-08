@@ -809,25 +809,6 @@ and whether it is a bug or the noise of a session ending. A Route cannot
 type `q()`, so a Journey has never met it; Restart R, which a Route can
 click, logged nothing in 3 runs.
 
-### 1.25 Booking, in place of Journey terms
-
-Agreed on 2026-10-06, to be built on a branch of its own once step 6 of the
-Positron trial is done: what a Journey is set up with is named its
-**Booking**, in place of "Journey terms", chosen over Manifest, Docket and
-Charter. Asked for as "Let's use Booking", after "terms" kept being read as
-words or meanings.
-
-- **It covers seven things,** agreed with the recommendation: the seed, the
-  number of Routes, the Trip length, the two optional deadlines, the Fix,
-  and the exclusion groups a run lets in. R1 is changed in the same branch,
-  since it lists five and says they are enough to repeat a run, which the
-  Fix and the groups have made untrue.
-- **The Eighty Days demo keeps its "Book" button and "Booked" stamp,** as a
-  verb the game's plan allows, while the noun stays out of the game; the
-  plan records the exception. Renaming them would move every pinned seed.
-- **Everywhere the term appears changes with it:** the glossary, `CLAUDE.md`,
-  the requirements and any code comment.
-
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -934,7 +915,7 @@ designed, and it was not tracked here until 2026-09-23. A Journey has one Fix
 today, applied fresh to every Route. Wanted: Routes of one Journey starting
 from different Fixes.
 
-Since 2026-09-28 the Journey's terms name its Fix, from the consumer's
+Since 2026-09-28 the Journey's Booking names its Fix, from the consumer's
 `fixes/index.ts`, and each Route's journal records which Fix it opened with.
 So a Route given a different Fix would already say so; what remains is how it
 would be given one.
@@ -1466,9 +1447,10 @@ less likely. Asked to be recorded, as an allow-list where that makes more
 sense. Nothing is decided.
 
 **What exists today:** exclusions belong to the adapter, the same for every
-Journey through it. A run can only let a group back in, with `--allow`, and
-`defineJourney` takes no exclusions at all. A predicate exclusion can
-already express an area, so an adapter could build one by hand.
+Journey through it. Since 2026-10-08 a Journey's Booking can let a group back
+in, with `allow`, as a run can with `--allow`, but nothing lets a Journey
+add an exclusion of its own. A predicate exclusion can already express an
+area, so an adapter could build one by hand.
 
 **Notes, a reading and not a decision:**
 
@@ -1489,8 +1471,8 @@ already express an area, so an adapter could build one by hand.
   it suits a Journey aimed at one area, beside unconstrained ones.
 - **A softer way to the same end** is weighting the draw toward the Fix's
   area rather than forbidding the rest, which belongs with 1.14.
-- **It is close to 1.25:** the groups a run lets in are already counted
-  among what a Journey is set up with, its Booking, and an area would sit
+- **It would be part of the Booking:** since 2026-10-08 a Journey's
+  Booking names the exclusion groups it lets in, and an area would sit
   beside them.
 
 ### 2.28 A Positron menu whose items are never offered strands the Route

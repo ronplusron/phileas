@@ -1,4 +1,4 @@
-import { FIX_OVERRIDE_VARIABLE, overriddenTerms, type Journey } from './journey.js';
+import { FIX_OVERRIDE_VARIABLE, overriddenInBooking, type Journey } from './journey.js';
 import type { Fix } from './route.js';
 
 /**
@@ -46,14 +46,14 @@ export function defineFixes(fixes: Record<string, Fix>): Fixes {
 }
 
 /**
- * The Fix a Journey opens with: the one its terms name, or the one this run's
+ * The Fix a Journey opens with: the one its Booking names, or the one this run's
  * `--fix` names instead. Undefined for no Fix. A name not in `fixes` is refused,
  * listing those that are, and so is a Journey that names a Fix with no list to
  * find it in.
  */
 export function fixFor(journey: Journey, fixes: Fixes | undefined): Fix | undefined {
   if (journey.fix === undefined) return undefined;
-  const from = overriddenTerms(journey).includes('fix') ? ` (from ${FIX_OVERRIDE_VARIABLE})` : '';
+  const from = overriddenInBooking(journey).includes('fix') ? ` (from ${FIX_OVERRIDE_VARIABLE})` : '';
   if (fixes === undefined) {
     throw new Error(`The Journey names the Fix "${journey.fix}"${from}, but no Fixes were given to look it up in.`);
   }

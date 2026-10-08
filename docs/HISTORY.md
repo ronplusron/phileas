@@ -25,6 +25,46 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-08: Booking, in place of Journey terms
+
+**The name.** What a Journey is defined by is its **Booking**, chosen on
+2026-10-06 over Manifest, Docket and Charter, asked for as "Let's use
+Booking" after "Journey terms" kept being read as words or meanings, and
+built once the Positron trial's step 6 was done, as asked. The type
+`JourneyTerms` is now `Booking`, and `overriddenTerms` is
+`overriddenInBooking`; asked whether to rename the exported type, the
+answer was yes. Bobolink Editor's adapter, the one consumer outside this
+repository, calls `defineJourney` and names neither, checked against its
+source with `defineJourney` found as the control.
+
+**Seven things, and R1 with them.** A Booking holds the seed, the Route
+count, the Trip length, the two optional deadlines, the Fix and the
+exclusion groups it lets in. R1 listed the first five and said they were
+enough to repeat a run, which the Fix and the groups had made untrue; it
+now lists all seven.
+
+**A Journey names its groups.** Asked whether a Journey file should name the
+exclusion groups it lets in, as it names its Fix, the answer was yes. So
+`defineJourney` takes `allow`, a list of group names; `--allow` replaces it
+for one run, and `--allow none` lets none in, as `--fix none` does for the
+Fix. `startJourney` refuses a name the adapter does not declare, saying
+whether it came from the Journey file or the run, and hands the groups to
+every Route in `PHILEAS_ALLOW_EXCLUDED`, the channel `--allow` already used.
+Writing it whenever a Journey started was tried first and put `--allow
+none` on the end of every command to run a Journey again; it is written
+only when the file lets a group in.
+
+**What stays.** Eighty Days keeps its "Book" button and "Booked" stamp, a
+verb and a mark in the game, since renaming them would move every pinned
+seed; its plan records the exception. HISTORY keeps "Journey terms" where it
+was recorded.
+
+**Tested.** Two new tests, 401 in all: a Booking's groups taken from the file, sorted
+and without repeats, replaced by `--allow` and emptied by `--allow none`,
+with an empty name and `none` in the file refused; and `startJourney`
+refusing an undeclared group by where it came from, handing the file's
+groups on, and writing nothing when none is let in, as the control.
+
 ## 2026-10-07: the Positron trial's step 6, and its triage
 
 **What ran.** 500 Routes of 20 Hops on the current release, 2026.09.1-2,
@@ -94,9 +134,10 @@ probe print another's findings, now numbered from each probe's own name.
 verdict agreed:
 
 - **At least 2 of the 3 known bugs:** 0 of 3, at step 5. Not met.
-- **At least one new real bug in the current release:** seven filed, each
-  reproduced by script against a control. None has been followed by hand or
-  confirmed upstream, so whether any is a real bug is not yet known.
+- **At least one new real bug in the current release:** met. Seven were
+  filed, each reproduced by script against a control, and judged on
+  2026-10-08 in the words "The trial found several real bugs." None has
+  been followed by hand or confirmed upstream.
 - **False alarms few enough to triage in minutes rather than hours:** not
   met. Triage took the better part of a day, most of it shortening Routes
   into probes and finding which step mattered, which `OUTSTANDING.md`

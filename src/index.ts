@@ -81,13 +81,13 @@ export {
   resolveRun,
   OVERRIDE_VARIABLES,
   FIX_OVERRIDE_VARIABLE,
-  overriddenTerms,
+  overriddenInBooking,
   requireRun,
   RUN_VARIABLE,
   type Journey,
-  type JourneyTerms,
+  type Booking,
 } from './journey.js';
-export { startJourney, finishJourney, runEveryCheck, startTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start.js';
+export { startJourney, allowedGroupsOf, finishJourney, runEveryCheck, startTempFolder, ALLOW_TEMP_LEFTOVERS_VARIABLE } from './start.js';
 export { staleSources, requireFreshBuild, ALLOW_STALE_BUILD_VARIABLE } from './fresh-build.js';
 export {
   guardHome,
@@ -137,6 +137,7 @@ export {
   neverMatched,
   allowedGroupsFromEnvironment,
   ALLOW_EXCLUDED_VARIABLE,
+  NO_GROUPS,
   NondeterministicExclusion,
   ApplicationStoppedAnswering,
   HOPPABLE_ROLES,

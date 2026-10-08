@@ -44,7 +44,7 @@ export type PhileasFixtures = {
  * House rule that follows: no spec may use the `context` or `browser` fixtures.
  *
  * Each Route is already a test built on this, with its own timeout from the
- * Journey's terms. Not done yet: the Fix as a `beforeEach`, each Hop as a
+ * Journey's Booking. Not done yet: the Fix as a `beforeEach`, each Hop as a
  * `test.step`, and a way to show a stranded Route as neither passed nor
  * failed, which phase 5 schedules.
  */

@@ -128,9 +128,12 @@ jobs, which may be the same person on different days.
 - **A written record of the route.** Every hop is recorded as it happens: what
   was chosen, what else was available, and what the checks said. Answers: what
   the tester did being lost by the time the bug is filed.
-- **Journey terms.** A run is bounded by a number of routes and the length of
-  each route's trip, and optionally by a deadline for the whole journey, for
-  each route, or both. Answers: an unbounded route being unusable in practice.
+- **A journey's booking.** A run is bounded by a number of routes and the
+  length of each route's trip, and optionally by a deadline for the whole
+  journey, for each route, or both; it also names the fix its routes open
+  with and anything normally kept out that it lets in. Answers: an unbounded
+  route being unusable in practice, and a run that cannot be repeated because
+  how it started was never written down.
 
 ## 6. User flows
 
@@ -139,7 +142,7 @@ jobs, which may be the same person on different days.
 1. State how to start the application and how to tell when it is ready.
 2. List anything that must never be interacted with, such as a control that
    quits the application or a link that leaves it.
-3. Run a journey on small terms and confirm it travels through and reports.
+3. Run a journey on a small booking and confirm it travels through and reports.
 
 **Running a journey**
 
@@ -206,10 +209,14 @@ and the runner runs all of them after every hop.
 
 ### Running a journey
 
-- **R1 (Must)** A journey is defined by a seed, a number of routes, the length
-  of each route's trip in hops, and optionally a deadline for the whole journey
-  and one for each route. Stating these is enough to repeat the run. Without
-  deadlines, a journey takes as long as its routes take.
+- **R1 (Must)** A journey is defined by its booking: a seed, a number of
+  routes, the length of each route's trip in hops, optionally a deadline for
+  the whole journey and one for each route, the fix its routes open with, if
+  any, and which of the things normally kept out of reach it lets in. Stating
+  these is enough to repeat the run. Without deadlines, a journey takes as
+  long as its routes take. Widened on 2026-10-08 from the first five, once
+  the fix and what a run lets in had each been shown to change where a route
+  goes.
 - **R2 (Must)** Routes within a journey are independent. Re-running a single
   route on its own produces the same route it produced inside the full journey.
 - **R3 (Must)** Where a fix is defined, it runs fresh at the start of every
@@ -467,7 +474,7 @@ Stated as what must be true for someone using it.
 - **What does a journey do when it finds the same defect on several routes?**
   Reporting it five times and reporting it once are both defensible and
   nobody has chosen.
-- **Who decides the terms of a scheduled run?** A deadline that is too short
+- **Who decides the booking of a scheduled run?** A deadline that is too short
   finds nothing and still reports green.
 - **Should a journey report what it never reached?** Nobody has weighed this.
   Where the application's source is available, what exists can be enumerated,

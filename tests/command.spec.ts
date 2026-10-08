@@ -7,9 +7,10 @@ import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   defineJourney,
   finishJourney,
-  overriddenTerms,
+  overriddenInBooking,
   startJourney,
   FIX_OVERRIDE_VARIABLE,
+  ALLOW_EXCLUDED_VARIABLE,
   OVERRIDE_VARIABLES,
   SEED_VARIABLE,
   RUN_VARIABLE,
@@ -34,6 +35,7 @@ const command = path.join(repo, 'bin', 'phileas.mjs');
 const TOUCHED = [
   ...Object.values(OVERRIDE_VARIABLES),
   FIX_OVERRIDE_VARIABLE,
+  ALLOW_EXCLUDED_VARIABLE,
   SEED_VARIABLE,
   RUN_VARIABLE,
   WINDOW_MODE_VARIABLE,
@@ -110,14 +112,14 @@ test('an override replaces the Journey file for this run, and is recorded as one
     expect(journey.routes).toBe(3);
     expect(journey.tripLength).toBe(20);
     expect(journey.routeDeadlineMs).toBe(60000);
-    expect(overriddenTerms(journey)).toEqual(['routes', 'routeDeadlineMs']);
+    expect(overriddenInBooking(journey)).toEqual(['routes', 'routeDeadlineMs']);
   });
 
   // The positive control: with nothing set, the file stands and nothing is marked.
   withEnvironment({}, () => {
     const journey = defineJourney({ routes: 5, tripLength: 20 });
     expect(journey.routes).toBe(5);
-    expect(overriddenTerms(journey)).toEqual([]);
+    expect(overriddenInBooking(journey)).toEqual([]);
   });
 });
 
@@ -149,6 +151,62 @@ test('startJourney refuses a bad window mode or hop delay before anything launch
   withEnvironment({ PHILEAS_HOP_DELAY_MS: 'soon' }, () => {
     expect(() => startJourney(journey, buggy)).toThrow(/PHILEAS_HOP_DELAY_MS="soon" is not a delay/);
   });
+});
+
+test("a Journey's Booking names the groups it lets in, and --allow replaces them for one run", () => {
+  withEnvironment({}, () => {
+    const journey = defineJourney({ routes: 1, tripLength: 1, allow: ['views', ' new-windows', 'views'] });
+    expect(journey.allow).toEqual(['new-windows', 'views']);
+    expect(overriddenInBooking(journey)).toEqual([]);
+  });
+  withEnvironment({ [ALLOW_EXCLUDED_VARIABLE]: 'outside' }, () => {
+    const journey = defineJourney({ routes: 1, tripLength: 1, allow: ['views'] });
+    expect(journey.allow).toEqual(['outside']);
+    expect(overriddenInBooking(journey)).toEqual(['allow']);
+  });
+  // none lets no group in, over a Journey that lets some in, as --fix none does.
+  withEnvironment({ [ALLOW_EXCLUDED_VARIABLE]: 'none' }, () => {
+    expect(defineJourney({ routes: 1, tripLength: 1, allow: ['views'] }).allow).toEqual([]);
+  });
+  withEnvironment({}, () => {
+    expect(() => defineJourney({ routes: 1, tripLength: 1, allow: [' '] })).toThrow(/allow names an exclusion group that is not a name/);
+    expect(() => defineJourney({ routes: 1, tripLength: 1, allow: ['none'] })).toThrow(/allow names "none"/);
+  });
+});
+
+test("startJourney refuses a group the adapter does not declare, naming where it came from, and hands the rest to every Route", () => {
+  const declaring = { ...buggy, exclusions: { ...buggy.exclusions, groups: { views: { why: 'for the test', names: ['A view'] } } } };
+  withEnvironment({}, () => {
+    const journey = defineJourney({ routes: 1, tripLength: 1, allow: ['vews'] });
+    expect(() => startJourney(journey, declaring)).toThrow(
+      /the Journey's allow names "vews", which the adapter does not declare as an exclusion group\. It declares: views\./
+    );
+  });
+  withEnvironment({ [ALLOW_EXCLUDED_VARIABLE]: 'vews' }, () => {
+    const journey = defineJourney({ routes: 1, tripLength: 1, allow: ['views'] });
+    expect(() => startJourney(journey, declaring)).toThrow(/PHILEAS_ALLOW_EXCLUDED names "vews"/);
+  });
+
+  // Let in from the file: the Routes read it from the environment, and the
+  // printout says where it came from.
+  const fromFile = withEnvironment({ PHILEAS_SEED: 'given' }, () => {
+    const { settings } = startJourney(defineJourney({ routes: 1, tripLength: 1, allow: ['views'] }), declaring);
+    const handedOn = process.env[ALLOW_EXCLUDED_VARIABLE];
+    finishJourney();
+    return { settings, handedOn };
+  });
+  expect(fromFile.handedOn).toBe('views');
+  expect(fromFile.settings.find((l) => l.startsWith('Exclusion groups:'))).toMatch(/views let in\s+in the Journey file$/);
+
+  // The control: none let in writes nothing, so the command to run it again
+  // stays as short as the run was.
+  const none = withEnvironment({ PHILEAS_SEED: 'given' }, () => {
+    startJourney(defineJourney({ routes: 1, tripLength: 1 }), declaring);
+    const handedOn = process.env[ALLOW_EXCLUDED_VARIABLE];
+    finishJourney();
+    return handedOn;
+  });
+  expect(none).toBeUndefined();
 });
 
 test('startJourney prints every setting, and marks each one set for this run', () => {

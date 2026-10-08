@@ -60,7 +60,7 @@ src/
   external.ts          stub shell.openExternal, record what was opened (lifted)
   menu.ts              reach the application menu by label path (lifted)
   fixtures.ts          Route as the test, Fix as beforeEach (lifted, reshaped)
-  journey.ts           the terms of a Journey, and per-Route seed derivation
+  journey.ts           a Journey's Booking, and per-Route seed derivation
   random.ts            the seedable generator and the hash; the only source of randomness
   survey.ts            discovery by role, with the exclusion list applied
   route.ts             one Route: Fix, hops, stop rules, stranded; exports runRoute()
@@ -342,10 +342,11 @@ reports what is missing when it is not (R24), and stays off the screen (C5).
 Stopping here leaves a working launch layer as a package, which is what the
 kit was in its origin and is now consumable.
 
-### Phase 3: the terms of a Journey, and seeds
+### Phase 3: a Journey's Booking, and seeds
 
 `journey.ts` holds what defines a Journey under R1: seed, routes, Trip length,
-and the optional Journey and Route deadlines. `random.ts` holds a small
+and the optional Journey and Route deadlines, joined later by the Fix and the
+exclusion groups let in, and named its Booking on 2026-10-08. `random.ts` holds a small
 seedable generator and the per-Route derivation
 `routeSeed = hash(journeySeed, routeNumber)`, split into a Fix stream and a Trip
 stream, exactly as `../CLAUDE.md` decides.

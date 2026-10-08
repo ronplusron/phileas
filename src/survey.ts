@@ -402,12 +402,21 @@ export interface ExclusionTally {
   predicate: number;
 }
 
-/** The variable `phileas run --allow` travels in: the exclusion groups let back in for a run. */
+/**
+ * The variable the exclusion groups let back in travel in: set by `phileas
+ * run --allow` for one run, or by `startJourney` from the Journey's Booking.
+ */
 export const ALLOW_EXCLUDED_VARIABLE = 'PHILEAS_ALLOW_EXCLUDED';
 
 /**
+ * What `--allow` takes to let no exclusion group in, overriding a Journey
+ * that lets some in, as `--fix none` is for the Fix.
+ */
+export const NO_GROUPS = 'none';
+
+/**
  * The exclusion groups this run lets back in, from `PHILEAS_ALLOW_EXCLUDED`,
- * a comma-separated list of group names, sorted.
+ * a comma-separated list of group names, sorted, or `none`.
  *
  * A name the adapter does not declare is refused, naming those it does: a
  * mistyped group would otherwise be let in by nobody and the run would read
@@ -415,7 +424,7 @@ export const ALLOW_EXCLUDED_VARIABLE = 'PHILEAS_ALLOW_EXCLUDED';
  */
 export function allowedGroupsFromEnvironment(exclusions: Exclusions): string[] {
   const raw = (process.env[ALLOW_EXCLUDED_VARIABLE] ?? '').trim();
-  if (!raw) return [];
+  if (!raw || raw === NO_GROUPS) return [];
   const declared = Object.keys(exclusions.groups ?? {});
   const asked = [...new Set(raw.split(',').map((name) => name.trim()).filter(Boolean))].sort();
   const unknown = asked.filter((name) => !declared.includes(name));

@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs three hundred and ninety-nine tests, after a
+through, and `npm test` runs four hundred and one tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -178,7 +178,11 @@ with `phileas --version`, which also holds an unknown command's refusal to
 naming every command. Three more came with the phase 8 baseline:
 `BUGGY_PLANT` becoming launch flags, every plant's button checked against
 `buggy`'s renderer with a renamed one as its control, and a finding put down
-to the plant whose check it is, a late one included.
+to the plant whose check it is, a late one included. Two more came with
+the Booking: a Journey file naming the exclusion groups it lets in, which
+`--allow` replaces and `--allow none` empties, and `startJourney` refusing
+an undeclared group by where it came from and handing the rest to every
+Route.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -419,7 +423,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own three hundred and ninety-nine tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own four hundred and one tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
@@ -434,7 +438,10 @@ every setting in force, marking those set for this run.
 editing its file: `phileas run [config] --routes 3 --trip-length 50 --seed
 abc --show back --hop-delay-ms 300`, and `--route-deadline-ms` and
 `--journey-deadline-ms`. `--allow new-windows` lets one of the adapter's
-exclusion groups back in for the run, such as Positron's new windows. The config defaults to `phileas/`, the consumer
+exclusion groups back in for the run, such as Positron's new windows,
+replacing those the Journey file's `allow` lets in, and `--allow none` lets
+none in. What a Journey is defined by is its Booking, named so on
+2026-10-08; `docs/GLOSSARY.md` has what it holds. The config defaults to `phileas/`, the consumer
 layout's folder, and anything after `--` goes to Playwright. From this
 repository, `npm run journey -- --routes 1` passes flags through. A replay
 needs the seed, and enough of the rest to reach what it is retracing: the Route

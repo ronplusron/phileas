@@ -1,8 +1,11 @@
+import { ALLOW_EXCLUDED_VARIABLE, NO_GROUPS } from './survey.js';
+
 /**
- * The terms of a Journey, and where its seed comes from.
+ * A Journey's Booking, and where its seed comes from.
  *
- * R1: a Journey is a seed, a number of Routes, a Trip length each Route is
- * meant to reach, and optional Journey and Route deadlines. Stating those is
+ * R1: a Journey is booked with a seed, a number of Routes, a Trip length each
+ * Route is meant to reach, optional Journey and Route deadlines, the Fix its
+ * Routes open with, and the exclusion groups it lets in. Stating those is
  * enough to repeat the run, which is the whole reason this file holds them
  * together rather than letting them accumulate as arguments.
  *
@@ -13,13 +16,14 @@
  */
 
 /**
- * What a Journey is defined by.
+ * What a Journey is defined by: its Booking. Named "Journey terms" until
+ * 2026-10-08.
  *
  * Both deadlines are durations rather than moments in time, because a Journey's
  * definition has to be repeatable. A wall-clock deadline would describe one
  * afternoon and nothing else.
  */
-export interface JourneyTerms {
+export interface Booking {
   /**
    * Pinned only for a replay.
    *
@@ -74,6 +78,16 @@ export interface JourneyTerms {
    * for one run, and `--fix none` none.
    */
   fix?: string;
+
+  /**
+   * The adapter's exclusion groups every Route lets back in, by name. Left
+   * out means none: every group stays excluded, which is what a group is for.
+   * `phileas run --allow <names>` lets in another set for one run, replacing
+   * this one, and `--allow none` none. `startJourney` refuses a name the
+   * adapter does not declare, since a mistyped group would otherwise be let
+   * in by nobody and the run would read as having allowed it.
+   */
+  allow?: readonly string[];
 }
 
 /**
@@ -88,11 +102,11 @@ export const SHORTEST_DEADLINE_MS = 1_000;
 declare const checked: unique symbol;
 
 /**
- * A Journey whose terms have been checked.
+ * A Journey whose Booking has been checked.
  *
  * Branded, so that `defineJourney` is the only way to make one. TypeScript's
  * types are structural and `readonly` does not affect assignability, so
- * `Readonly<JourneyTerms>` alone let a hand-written object typecheck as a
+ * `Readonly<Booking>` alone let a hand-written object typecheck as a
  * Journey and skip every check below: `{ routes: 0, tripLength: 0 }` compiled,
  * registered no tests at all, and reported green having traveled nowhere. That
  * is the failure the comment on `defineJourney` calls the one this engine is
@@ -102,10 +116,10 @@ declare const checked: unique symbol;
  * The brand is a compile-time marker and nothing exists at run time. Taken
  * deliberately as an API decision while no consumer writes a Journey by hand.
  */
-export type Journey = Readonly<JourneyTerms> & { readonly [checked]: true };
+export type Journey = Readonly<Booking> & { readonly [checked]: true };
 
 /**
- * The environment variables that override a Journey's terms for one run.
+ * The environment variables that override a Journey's Booking for one run.
  *
  * The `phileas` command sets them from its flags, because they are the only
  * channel that reaches Playwright's workers, and every process that loads the
@@ -129,19 +143,24 @@ type OverridableTerm = keyof typeof OVERRIDE_VARIABLES;
  */
 export const FIX_OVERRIDE_VARIABLE = 'PHILEAS_FIX';
 
-/** A term a run can set, the counted ones and the Fix. */
-type OverriddenTerm = OverridableTerm | 'fix';
+/** Group names trimmed, without repeats, and sorted, so one set is one list. */
+function groupNames(names: readonly string[]): string[] {
+  return [...new Set(names.map((name) => name.trim()).filter(Boolean))].sort();
+}
 
-/** Which terms each Journey took from the environment, for startJourney to mark. */
+/** What in a Booking a run can set: the counted ones, the Fix and the groups let in. */
+type OverriddenTerm = OverridableTerm | 'fix' | 'allow';
+
+/** What each Journey took from the environment, for startJourney to mark. */
 const overridden = new WeakMap<Journey, readonly OverriddenTerm[]>();
 
-/** The terms a Journey took from the environment for this run, rather than from its file. */
-export function overriddenTerms(journey: Journey): readonly OverriddenTerm[] {
+/** What in its Booking a Journey took from the environment for this run, rather than from its file. */
+export function overriddenInBooking(journey: Journey): readonly OverriddenTerm[] {
   return overridden.get(journey) ?? [];
 }
 
 /**
- * Check a Journey's terms and freeze them, after applying any overrides for
+ * Check a Journey's Booking and freeze it, after applying any overrides for
  * this run.
  *
  * The checks are deliberately unforgiving. A Journey of zero Routes, or a Route
@@ -151,8 +170,8 @@ export function overriddenTerms(journey: Journey): readonly OverriddenTerm[] {
  * notice about itself. An override is checked the same way, and a refusal names
  * the variable it came from, since the Journey file is not where it is wrong.
  */
-export function defineJourney(fileTerms: JourneyTerms): Journey {
-  const terms: JourneyTerms = { ...fileTerms };
+export function defineJourney(booking: Booking): Journey {
+  const terms: Booking = { ...booking };
   const fromEnvironment: OverriddenTerm[] = [];
   for (const [term, variable] of Object.entries(OVERRIDE_VARIABLES) as [OverridableTerm, string][]) {
     const raw = process.env[variable];
@@ -184,6 +203,22 @@ export function defineJourney(fileTerms: JourneyTerms): Journey {
     fromEnvironment.push('fix');
   } else if (terms.fix !== undefined && terms.fix.length === 0) {
     throw new RangeError('fix was given as an empty string; leave it out for no Fix');
+  }
+
+  // Whether each name is a group the adapter declares is startJourney's to
+  // check, since only it is handed the adapter.
+  const allowGiven = (process.env[ALLOW_EXCLUDED_VARIABLE] ?? '').trim();
+  if (allowGiven) {
+    terms.allow = allowGiven === NO_GROUPS ? [] : groupNames(allowGiven.split(','));
+    fromEnvironment.push('allow');
+  } else if (terms.allow !== undefined) {
+    if (!Array.isArray(terms.allow) || terms.allow.some((name) => typeof name !== 'string' || !name.trim())) {
+      throw new RangeError('allow names an exclusion group that is not a name; give each group by its name');
+    }
+    if (terms.allow.some((name) => name.trim() === NO_GROUPS)) {
+      throw new RangeError(`allow names "${NO_GROUPS}"; leave allow out, or empty, to let no group in`);
+    }
+    terms.allow = groupNames(terms.allow);
   }
 
   const journey = Object.freeze(terms) as Journey;

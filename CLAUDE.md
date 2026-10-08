@@ -25,9 +25,9 @@ costs the whole reporting model:
 
 | Phileas | Playwright | Why it has to be this one |
 | --- | --- | --- |
-| Journey | the run | Holds the seed, the route count, the Trip length, and the optional Journey and Route deadlines |
+| Journey | the run | Holds its Booking: the seed, the route count, the Trip length, the optional Journey and Route deadlines, the Fix, and the exclusion groups let in |
 | Route | a test | The unit with a verdict, the fixture scope, the timeout boundary, the retry unit, the trace boundary |
-| Fix | `beforeEach` | Anchors every Route's start. Named in the Journey's terms, applied at the start of each Route. Optional, and usually present |
+| Fix | `beforeEach` | Anchors every Route's start. Named in the Journey's Booking, applied at the start of each Route. Optional, and usually present |
 | Hop | `test.step` | Hops nest in the trace without each becoming a separate pass or fail |
 
 Journey was claimed to be the test early on and that was wrong. If the Journey
@@ -359,12 +359,13 @@ followed.
 **Call it the engine, not the tool.** "Tool" reads as a standalone utility
 somebody runs; this is a component consumed by the application under test.
 
-**Journey terms** names what defines a Journey: its seed, Route count, Trip
-length and deadlines, chosen on 2026-10-06 over "budget", which fits the
-counts and not the seed. **Wager** had been parked as the candidate, after
-failing a use-it-in-a-sentence test: "a journey of 10 routes" reads, "a
-journey for which the wager was 10 routes" does not. `docs/HISTORY.md` has
-both.
+**Booking** names what defines a Journey: its seed, Route count, Trip
+length, deadlines, Fix and the exclusion groups it lets in, chosen on
+2026-10-06 over Manifest, Docket and Charter, after "Journey terms" kept
+being read as words or meanings. Before that, "budget" fit the counts and
+not the seed, and **Wager** failed a use-it-in-a-sentence test: "a journey
+of 10 routes" reads, "a journey for which the wager was 10 routes" does
+not. `docs/HISTORY.md` has all three.
 
 ## Packaging, and what a consuming repository looks like
 
@@ -375,7 +376,7 @@ following the `cypress/` and `.storybook/` precedent:
 ```
 phileas/
   adapter/            that application's AppUnderTest implementation
-  journeys/           the Journey's terms, naming the Fix it opens with
+  journeys/           the Journey's Booking, naming the Fix it opens with
   fixes/              one file per Fix, and index.ts listing them by name
   journey.spec.ts     the spec Playwright collects
 tests/                the scripted suite, keeping Playwright's default meaning
