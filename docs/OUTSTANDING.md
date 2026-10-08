@@ -809,6 +809,25 @@ and whether it is a bug or the noise of a session ending. A Route cannot
 type `q()`, so a Journey has never met it; Restart R, which a Route can
 click, logged nothing in 3 runs.
 
+### 1.25 Booking, in place of Journey terms
+
+Agreed on 2026-10-06, to be built on a branch of its own once step 6 of the
+Positron trial is done: what a Journey is set up with is named its
+**Booking**, in place of "Journey terms", chosen over Manifest, Docket and
+Charter. Asked for as "Let's use Booking", after "terms" kept being read as
+words or meanings.
+
+- **It covers seven things,** agreed with the recommendation: the seed, the
+  number of Routes, the Trip length, the two optional deadlines, the Fix,
+  and the exclusion groups a run lets in. R1 is changed in the same branch,
+  since it lists five and says they are enough to repeat a run, which the
+  Fix and the groups have made untrue.
+- **The Eighty Days demo keeps its "Book" button and "Booked" stamp,** as a
+  verb the game's plan allows, while the noun stays out of the game; the
+  plan records the exception. Renaming them would move every pinned seed.
+- **Everywhere the term appears changes with it:** the glossary, `CLAUDE.md`,
+  the requirements and any code comment.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -1434,6 +1453,67 @@ read. The finding stays known and unfiled, `81072f59`.
 
 **Seen once beside it:** a hidden window made visible after ⇧⌘H, in a probe
 that launched two Positrons at once; 4 single launches did not repeat it.
+
+### 2.27 Keeping a Route inside the area its Fix opened
+
+Raised on 2026-10-07, first as a question, "Is it possible to do custom
+exclusions on a per-Journey basis?", and then as an idea, close to how it
+was put: pre-defined exclusion lists that create a constrained section of
+the application. The example given was RStudio's R Markdown Fix, which
+opens an R Markdown document, after which a Route "will pretty quickly hop
+away from it after a few hops"; an R Markdown exclusion would make that
+less likely. Asked to be recorded, as an allow-list where that makes more
+sense. Nothing is decided.
+
+**What exists today:** exclusions belong to the adapter, the same for every
+Journey through it. A run can only let a group back in, with `--allow`, and
+`defineJourney` takes no exclusions at all. A predicate exclusion can
+already express an area, so an adapter could build one by hand.
+
+**Notes, a reading and not a decision:**
+
+- **An allow-list fits better than a list of exclusions.** RStudio offers
+  hundreds of controls outside the R Markdown editor, and listing every one
+  to leave out would not hold; "only what is inside the Source pane, and
+  these menu entries" would.
+- **It would be the Journey's choice, never the planner's.** A Journey
+  choosing its area is like choosing its Fix. The planner giving Routes
+  different areas would be the route bias declined in 3.1.
+- **The menu bar and the keys need it too,** or their quarter of the draw
+  still carries a Route out through View or File.
+- **A small area strands sooner,** which is an honest reading of that area
+  rather than a fault.
+- **Replay needs it recorded:** it is an input to the draw, so each Route's
+  opening line would name the list in force, as it names the groups let in.
+- **What it gives up:** bugs met on the way out of the area and back in. So
+  it suits a Journey aimed at one area, beside unconstrained ones.
+- **A softer way to the same end** is weighting the draw toward the Fix's
+  area rather than forbidding the rest, which belongs with 1.14.
+- **It is close to 1.25:** the groups a run lets in are already counted
+  among what a Journey is set up with, its Booking, and an area would sit
+  beside them.
+
+### 2.28 A Positron menu whose items are never offered strands the Route
+
+Seen twice in step 6 of the Positron trial, route 48 of the session rerun,
+`cb0e45cbca68`, on 2026-10-06, and route 20 of the quarto Journey,
+`4a630dab6903`, on 2026-10-07. Nothing is decided. Each Route opened the
+Profiles editor, Positron > Preferences > Profiles, and clicked its More
+Actions... button. The menu that opens laid its overlay,
+`div.context-view-block`, over the page, so every control was covered and
+left out of the pool; but none of the menu's own items was offered either,
+and the Route stranded, with "No candidate was available on the page".
+
+**Not yet known, and the first thing to measure:** why the menu's items were
+not found. Positron draws its menus in the page here, since the adapter sets
+`window.menuStyle` to `custom`, so they should read as a `menu` with
+`menuitem`s; whether this one is empty, drawn somewhere the survey does not
+read, or read and then covered by its own overlay, is unmeasured.
+
+**A second question it raises:** Escape would most likely have closed the
+menu, but the common keys never keep a Route from stranding, by design
+(`GLOSSARY.md`, "Common keys"). Whether a stranding a key would undo is
+still a stranding is part of what this needs deciding.
 
 ## 3. Declined
 

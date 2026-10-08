@@ -1058,8 +1058,11 @@ asks. `HISTORY.md` has each change and why.
    answered on 2026-10-06, by probes rather than Journeys:** none of its
    three known bugs is one a Route can both reach and have a check notice,
    so by the trial's own rule each is a miss, and the bar's first clause, 2
-   of 3, is not met. `HISTORY.md` has the probes and the reasoning. Step 6
-   is next.
+   of 3, is not met. `HISTORY.md` has the probes and the reasoning. **Step 6
+   done on 2026-10-07:** 500 Routes, seven bug candidates filed, each
+   shortened by a probe, none followed by hand, and triage taking hours
+   rather than minutes. `HISTORY.md` has the runs, the triage and the
+   reading against the bar. The trial is finished; step 5 below is next.
 5. **Weighting the draw toward new targets,** below, measured on Eighty
    Days' `screens` layout.
 6. **The rest of replay from the journal,** as `OUTSTANDING.md` 1.18 lists

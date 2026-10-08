@@ -206,7 +206,8 @@ planted defects unsteered, as a baseline; the Positron trial resumed;
 weighting the draw; the rest of replay; then the rest of phase 5, with the
 stranded encoding first. `docs/PLAN.md` has the order under "The order from
 2026-10-05", and `docs/HISTORY.md` has why. The order before it, from
-2026-10-03, landed all but the rest of replay.
+2026-10-03, landed all but the rest of replay. Its first four steps are
+done, the Positron trial last, on 2026-10-07; weighting the draw is next.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stopped where it stood
@@ -252,8 +253,9 @@ releases carrying known bugs, judged against a bar set in advance.
 phase 5 waits for its answer. Its first two steps, the checks and the
 adapter, are done: the adapter is in `trial/positron/`, three Routes of
 twenty Hops each passed through it on the current release, and one Route on
-each old release. Six Positron bug candidates have
-been found and filed, `ronplusron/phileas` issues 44, 46, 53, 54, 87 and 88.
+each old release. Thirteen Positron bug candidates have been found and
+filed, `ronplusron/phileas` issues 44, 46, 53, 54, 87, 88, and 90 to 96
+from step 6.
 Only 87, Remote Explorer's Configure failing when the home folder has no
 `.ssh` folder, has been followed by hand and read in the code; 88, the
 Profiles editor logging a file it could not find when MCP Servers is opened
@@ -279,9 +281,12 @@ go.
 **On the old releases, context menus are native whatever the adapter
 sets,** since none of them has `window.menuStyle`. With windows hidden,
 opening one froze nothing in twelve launches; with windows shown, that is
-unmeasured. Step 5 and the rest of step 6 were next when the trial stopped,
-and **they resume under the order from 2026-10-05,** under the uniform draw
-the bar was set against, before weighting the draw toward new targets.
+unmeasured. **The trial finished on 2026-10-07:** step 5 found 0 of its 3
+known bugs, and step 6 ran 500 Routes on the current release and filed seven
+candidates, none yet followed by hand. `docs/HISTORY.md` has the reading
+against the bar. Step-6 probes, each steering a Route straight to a
+candidate's steps against a control, are in `trial/positron/probes/`, run
+with `npx playwright test -c probes <name>` from `trial/positron`.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer
 keeps `known-findings.json` beside its spec; a Route that meets a finding in
@@ -307,13 +312,14 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Fifteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Sixteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
 late finding arrives, one a Fix's fingerprint missing what the Fix
-does not itself contain, and one an application in `back` mode bringing
-itself forward partway through a Route. That file holds what is wrong, confirmed by reading the
+does not itself contain, one an application in `back` mode bringing
+itself forward partway through a Route, and one a Positron Route saving
+outside its home folder. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the

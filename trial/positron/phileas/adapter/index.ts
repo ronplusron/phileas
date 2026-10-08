@@ -26,6 +26,15 @@ const BOOT_ERROR_WATCH_MS = 1_000;
  */
 const ERROR_NOTIFICATION = '.notification-list-item:has(.codicon-error) .notification-list-item-message';
 
+/**
+ * A language server's request cancelled because the document changed under
+ * it, as "Request textDocument/hover (5) is canceled due to subsequent
+ * mutation": the language client prints it as an error, though dropping a
+ * stale request is what it is meant to do. Met on 2026-10-07 in step 6's
+ * quarto Journey, 4a630dab6903.
+ */
+const CANCELED_FOR_MUTATION = /Request [\w$/]+ \(\d+\) is canceled due to subsequent mutation/;
+
 const bundleDir = requireAppDir();
 
 /**
@@ -178,8 +187,13 @@ export const positron: AppUnderTest = {
           ['Help', 'Toggle Developer Tools'],
         ],
         // In the Profiles editor. A Route of the 5x500 Journey clicked it twice,
-        // two Hops before the page stopped answering, finding a06c57c5.
-        names: ['Open New Window with this Profile'],
+        // two Hops before the page stopped answering, finding a06c57c5. And an
+        // editor tab's own "Move into new window", which the menu entry above
+        // did not reach: two Routes of step 6's no-Fix Journey, 4e4d35901181,
+        // clicked it on 2026-10-06, each failing on finding 3705d320.
+        // And Switch Window's "Close Active Window", which closed the only
+        // window on route 87 of step 6's session rerun, cb0e45cbca68.
+        names: ['Open New Window with this Profile', 'Move into new window', 'Close Active Window'],
       },
       outside: {
         why: 'Each opens a page outside the application, or reaches the network.',
@@ -215,7 +229,20 @@ export const positron: AppUnderTest = {
         why:
           'Each installs an extension from the Marketplace: it downloads third-party code and runs ' +
           'it in the Route, and the Marketplace changes daily, so no Route through it replays.',
-        names: ['Install', 'Install Pre-Release', 'Trust Publisher & Install', 'Install Specific Version...'],
+        // "Install extension..." is offered in Run Without Debugging's list of
+        // debuggers. Route 41 of step 6's session rerun, cb0e45cbca68, chose it
+        // on 2026-10-06: it opened the Marketplace, and Positron tried to
+        // install the built-in js-debug and refused, finding 366f73ed.
+        names: ['Install', 'Install Pre-Release', 'Trust Publisher & Install', 'Install Specific Version...', 'Install extension...'],
+      },
+      assistant: {
+        why:
+          'Each asks Positron Assistant or the notebook AI for an answer, which needs a signed-in ' +
+          'model the trial does not have, so it only fails: 36 error notifications and a sign-in ' +
+          'error in step 6, every one met just after one of these, on 2026-10-06.',
+        // "Ask Assistant" opens the notebook's menu of prompts, such as Explain
+        // This Notebook and Fix Errors and Issues.
+        names: ['Ask Assistant', 'Generate AI Suggestions'],
       },
       'native-dialog': {
         why:
@@ -248,13 +275,33 @@ export const positron: AppUnderTest = {
       kind: 'narrowed',
       reason:
         "Positron's extension host prints Node's deprecation warnings to the console as errors " +
-        'at every launch; measured on 2026-09-26 as the only console errors while idle.',
-      // Only Node's own deprecation warnings, raised in the extension host.
-      // Known bugs are not narrowed here: they are known findings, in
-      // known-findings.json beside this folder's spec.
-      accept: (message) => /\[Extension Host\].*\(node:\d+\) \[DEP\d+\] DeprecationWarning:/.test(message),
+        'at every launch; measured on 2026-09-26 as the only console errors while idle. And a ' +
+        "language server's request cancelled because the document changed under it, which the " +
+        'language client prints as an error: ordinary while typing, met on 2026-10-07.',
+      // Only Node's own deprecation warnings, raised in the extension host, and
+      // a request cancelled for a later edit. Known bugs are not narrowed here:
+      // they are known findings, in known-findings.json beside this folder's spec.
+      accept: (message) =>
+        /\[Extension Host\].*\(node:\d+\) \[DEP\d+\] DeprecationWarning:/.test(message) ||
+        CANCELED_FOR_MUTATION.test(message),
+    },
+    'log-error': {
+      kind: 'narrowed',
+      reason:
+        "A language server's request cancelled because the document changed under it, which the " +
+        'language client logs as an error: ordinary while typing. Step 6 of the trial met it on ' +
+        '9 of 100 quarto Routes on 2026-10-07, with nothing wrong on screen.',
+      accept: (line) => CANCELED_FOR_MUTATION.test(line),
     },
   },
+
+  varyingInSignatures: [
+    // A language server request's number, which counts up through a session:
+    // "Request textDocument/hover (5) is canceled" and "(6)" are one finding.
+    // Kept, it made 13 known findings of one in step 6's quarto Journey,
+    // 4a630dab6903, on 2026-10-07, each ending a Route the first time it came.
+    [/Request ([\w$/]+) \(\d+\)/g, 'Request $1 (<n>)'],
+  ],
 
   checks: [
     {

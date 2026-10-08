@@ -1,5 +1,13 @@
 [
   {
+    "id": "db8599cb",
+    "check": "console-error",
+    "signature": "console-error: [positron.positron-r]Cannot read properties of undefined (reading 'uri')",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#92"
+  },
+  {
     "id": "686711d1",
     "check": "console-error",
     "signature": "console-error: [vscode.positron-r]Client is not running and can't be stopped. It's current state is: starting",
@@ -12,6 +20,14 @@
     "signature": "console-error: [vscode.positron-r]Pending response rejected since connection got disposed",
     "added": "2026-09-27",
     "source": "journey"
+  },
+  {
+    "id": "99eecde5",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 [backup tracker] error saving modified working copies: Error: Unable to write file '/sbin/Untitled-1.ipynb' (NoPermissions (FileSystemError): Error: EPERM: operation not permitted, open '/sbin/Untitled-1.ipynb')",
+    "added": "2026-10-06",
+    "source": "journey",
+    "falseAlarm": "Positron correctly reporting a write the operating system refused: route 39 of step 6's notebook Journey, a1725d030547, saved its notebook into /sbin on 2026-10-06. How the Route reached /sbin is a defect in the trial, recorded in DEFECTS.md, not a Positron bug."
   },
   {
     "id": "c3204f3d",
@@ -54,11 +70,58 @@
     "issue": "ronplusron/phileas#87"
   },
   {
+    "id": "60069d0a",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 An unknown error occurred. Please consult the log for more details.",
+    "added": "2026-10-06",
+    "source": "journey"
+  },
+  {
+    "id": "2e42da9c",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Canceled: Canceled at canceled (workbench.desktop.main.js)",
+    "added": "2026-10-06",
+    "source": "command",
+    "falseAlarm": "A promise cancelled as the window reloads, which Positron treats as ordinary control flow. Met by the save-workspace probe on 2026-10-06, on 6 of 15 runs, each at a reload by Open Folder or Save Workspace As, with nothing wrong on screen; added by hand, since probes write no known findings."
+  },
+  {
     "id": "0f31d456",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 Cannot read properties of undefined (reading 'id'): TypeError: Cannot read properties of undefined (reading 'id') at ViewDescriptorService.loadCustomViewDescriptor (workbench.desktop.main.js)",
     "added": "2026-09-27",
     "source": "journey"
+  },
+  {
+    "id": "f8b9b486",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Cannot show Console: Session Python 3.14.2 (System) (python-notebook-<id>) from runtime <id> (language: Python name: Python 3.14.2 (System) version: 3.14.2) became active, but a REPL instance for it is not running.",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#94"
+  },
+  {
+    "id": "3266fe2f",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Cannot show Console: Session R 4.6.0 (r-<id>) from runtime <id> (language: R name: R 4.6.0 version: 4.6.0) became active, but a REPL instance for it is not running.",
+    "added": "2026-10-07",
+    "source": "journey",
+    "issue": "ronplusron/phileas#94"
+  },
+  {
+    "id": "07b43a23",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Cannot show Variables: python-<id> became active, but a Variables instance for it is not running.",
+    "added": "2026-10-07",
+    "source": "journey",
+    "issue": "ronplusron/phileas#94"
+  },
+  {
+    "id": "0b9a5ca7",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Cannot show Variables: r-<id> became active, but a Variables instance for it is not running.",
+    "added": "2026-10-07",
+    "source": "journey",
+    "issue": "ronplusron/phileas#94"
   },
   {
     "id": "ea8d959d",
@@ -76,11 +139,19 @@
     "issue": "ronplusron/phileas#54"
   },
   {
+    "id": "366f73ed",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Extension 'ms-vscode.js-debug' is a built-in extension and not allowed to be updated in the current product quality 'releases'.: Incompatible: Extension 'ms-vscode.js-debug' is a built-in extension and not allowed to be updated in the current product quality 'releases'. at InstallExtensionInProfileTask.doRun (sharedProcessMain.js)",
+    "added": "2026-10-06",
+    "source": "journey"
+  },
+  {
     "id": "35c1a4a1",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 Failed to open Posit Assistant chat Error: No model selected. Cannot submit prompt programmatically.",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
   },
   {
     "id": "39df2721",
@@ -89,6 +160,13 @@
     "added": "2026-10-03",
     "source": "journey",
     "issue": "ronplusron/phileas#88"
+  },
+  {
+    "id": "3705d320",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Invalid model for label change, rebuilding",
+    "added": "2026-10-06",
+    "source": "journey"
   },
   {
     "id": "b282aad0",
@@ -105,39 +183,44 @@
     "source": "journey"
   },
   {
-    "id": "0ed6a90d",
+    "id": "7e4dd35a",
     "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Request textDocument/hover (1) is canceled due to subsequent mutation: Error: Request textDocument/hover (1) is canceled due to subsequent mutation at dn (extension.js)",
-    "added": "2026-09-27",
-    "source": "journey"
+    "signature": "console-error: %c  ERR color: #f33 Request workspace/symbol failed with message: Cannot read properties of undefined (reading 'scheme'): Error: Request workspace/symbol failed with message: Cannot read properties of undefined (reading 'scheme') at Ae (main.js)",
+    "added": "2026-10-07",
+    "source": "journey",
+    "issue": "ronplusron/phileas#93"
   },
   {
-    "id": "6f8d684f",
+    "id": "9ae31df5",
     "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Request textDocument/hover (11) is canceled due to subsequent mutation: Error: Request textDocument/hover (11) is canceled due to subsequent mutation at dn (extension.js)",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "be79f7e9",
-    "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Request textDocument/hover (2) is canceled due to subsequent mutation: Error: Request textDocument/hover (2) is canceled due to subsequent mutation at dn (extension.js)",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "f08f5ce3",
-    "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Request textDocument/hover (3) is canceled due to subsequent mutation: Error: Request textDocument/hover (3) is canceled due to subsequent mutation at dn (extension.js)",
-    "added": "2026-09-27",
-    "source": "journey"
+    "signature": "console-error: %c  ERR color: #f33 Session Session R 4.4.3 (r-<id>) from runtime <id> (language: R name: R 4.4.3 version: 4.4.3) is not active.",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#95"
   },
   {
     "id": "68834758",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 Session Session R 4.6.0 (r-<id>) from runtime <id> (language: R name: R 4.6.0 version: 4.6.0) is not active.",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "issue": "ronplusron/phileas#95"
+  },
+  {
+    "id": "201bb0fc",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Unable to resolve resource output:tasks: Error: Unable to resolve resource output:tasks at ResourceModelCollection.doCreateReferencedObject (workbench.desktop.main.js)",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#96"
+  },
+  {
+    "id": "980b8973",
+    "check": "console-error",
+    "signature": "console-error: %c  ERR color: #f33 Unable to write file '/sbin/Untitled-1.ipynb' (NoPermissions (FileSystemError): Error: EPERM: operation not permitted, open '/sbin/Untitled-1.ipynb'): Error: Unable to write file '/sbin/Untitled-1.ipynb' (NoPermissions (FileSystemError): Error: EPERM: operation not permitted, open '/sbin/Untitled-1.ipynb') at FileService.writeFile (workbench.desktop.main.js)",
+    "added": "2026-10-06",
+    "source": "journey",
+    "falseAlarm": "Positron correctly reporting a write the operating system refused: route 39 of step 6's notebook Journey, a1725d030547, saved its notebook into /sbin on 2026-10-06. How the Route reached /sbin is a defect in the trial, recorded in DEFECTS.md, not a Positron bug."
   },
   {
     "id": "353fd565",
@@ -164,6 +247,14 @@
     "issue": "ronplusron/phileas#87"
   },
   {
+    "id": "4db2abb1",
+    "check": "console-error",
+    "signature": "console-error: Error: [invokeFunction] unknown service 'editorProgressService' at _InstantiationService._throwIfStrict (workbench.desktop.main.js)",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#90"
+  },
+  {
     "id": "45698e51",
     "check": "console-error",
     "signature": "console-error: Error: Client is not running and can't be stopped. It's current state is: starting at R.shutdown (extension.js)",
@@ -178,6 +269,14 @@
     "source": "journey"
   },
   {
+    "id": "f3ea7713",
+    "check": "console-error",
+    "signature": "console-error: Failed to generate suggestions: sign-in-required",
+    "added": "2026-10-06",
+    "source": "journey",
+    "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
+  },
+  {
     "id": "725da6de",
     "check": "console-error",
     "signature": "console-error: Pending response rejected since connection got disposed",
@@ -189,7 +288,8 @@
     "check": "console-error",
     "signature": "console-error: Posit Assistant could not be opened: No model selected. Cannot submit prompt programmatically.",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
   },
   {
     "id": "0cbcc9de",
@@ -199,11 +299,66 @@
     "source": "journey"
   },
   {
+    "id": "bf494c2e",
+    "check": "console-error",
+    "signature": "console-error: Request workspace/symbol failed.",
+    "added": "2026-10-07",
+    "source": "journey",
+    "issue": "ronplusron/phileas#93"
+  },
+  {
+    "id": "1f506e5c",
+    "check": "console-error",
+    "signature": "console-error: Splitview: Failed to layout view",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#91"
+  },
+  {
+    "id": "ab9b70f3",
+    "check": "console-error",
+    "signature": "console-error: TypeError: Cannot read properties of undefined (reading 'style') at ViewWelcomeController.layout (workbench.desktop.main.js)",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#91"
+  },
+  {
+    "id": "8a3ccd98",
+    "check": "console-error",
+    "signature": "console-error: TypeError: Cannot read properties of undefined (reading 'uri') at Jk (extension.js)",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#92"
+  },
+  {
+    "id": "4af7172a",
+    "check": "console-error",
+    "signature": "console-error: Unable to write into user settings because the file has unsaved changes. Please save the user settings file first and then try again.",
+    "added": "2026-10-07",
+    "source": "journey",
+    "falseAlarm": "Positron correctly refusing to write a setting while the user settings file has unsaved edits, and saying so; met in step 6's quarto Journey, 4a630dab6903, on 2026-10-07."
+  },
+  {
     "id": "471a1b2f",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] [meta.pyrefly] provider FAILED",
     "added": "2026-09-27",
     "source": "journey"
+  },
+  {
+    "id": "a6d6a45f",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] [positron.positron-r] provider FAILED",
+    "added": "2026-10-06",
+    "source": "journey"
+  },
+  {
+    "id": "d528d1ec",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] [quarto.quarto] provider FAILED",
+    "added": "2026-10-07",
+    "source": "journey",
+    "issue": "ronplusron/phileas#93"
   },
   {
     "id": "075cce19",
@@ -242,6 +397,13 @@
     "source": "journey"
   },
   {
+    "id": "b557285f",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] Error: DisposableStore is missing...",
+    "added": "2026-10-06",
+    "source": "journey"
+  },
+  {
     "id": "c1b4b0ef",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] Error: ENOENT: no such file or directory, open '<profile>/home/.ssh/config'",
@@ -261,7 +423,8 @@
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] Error: No model selected. Cannot submit prompt programmatically.",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
   },
   {
     "id": "ecc397a2",
@@ -271,32 +434,12 @@
     "source": "journey"
   },
   {
-    "id": "bbb15253",
+    "id": "7d4e1759",
     "check": "log-error",
-    "signature": "log-error: exthost.log: [error] Error: Request textDocument/hover (1) is canceled due to subsequent mutation",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "35f80a14",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: [error] Error: Request textDocument/hover (11) is canceled due to subsequent mutation",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "819f8314",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: [error] Error: Request textDocument/hover (2) is canceled due to subsequent mutation",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "338b929e",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: [error] Error: Request textDocument/hover (3) is canceled due to subsequent mutation",
-    "added": "2026-09-27",
-    "source": "journey"
+    "signature": "log-error: exthost.log: [error] Error: Request workspace/symbol failed with message: Cannot read properties of undefined (reading 'scheme')",
+    "added": "2026-10-07",
+    "source": "journey",
+    "issue": "ronplusron/phileas#93"
   },
   {
     "id": "773eeea0",
@@ -313,12 +456,36 @@
     "source": "journey"
   },
   {
+    "id": "0acce60e",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] ProxyResolver#resolveProxy DIRECT Canceled: Canceled",
+    "added": "2026-10-06",
+    "source": "command",
+    "falseAlarm": "A proxy lookup cancelled as the window reloads. Met once by the save-workspace probe on 2026-10-06, at the reload after Save Workspace As, with nothing wrong on screen; added by hand, since probes write no known findings."
+  },
+  {
     "id": "1f937235",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] TypeError: Cannot read properties of undefined (reading 'subscriptions')",
     "added": "2026-09-27",
     "source": "command",
     "issue": "ronplusron/phileas#44"
+  },
+  {
+    "id": "c19fec08",
+    "check": "log-error",
+    "signature": "log-error: exthost.log: [error] TypeError: Cannot read properties of undefined (reading 'uri')",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#92"
+  },
+  {
+    "id": "52aa5839",
+    "check": "no-error-notification",
+    "signature": "no-error-notification: error notification: [invokeFunction] unknown service 'editorProgressService'",
+    "added": "2026-10-06",
+    "source": "journey",
+    "issue": "ronplusron/phileas#90"
   },
   {
     "id": "fb1bc714",
@@ -329,11 +496,36 @@
     "issue": "ronplusron/phileas#87"
   },
   {
+    "id": "6a97d80b",
+    "check": "no-error-notification",
+    "signature": "no-error-notification: error notification: Failed to generate suggestions: sign-in-required",
+    "added": "2026-10-06",
+    "source": "journey",
+    "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
+  },
+  {
     "id": "db19254a",
     "check": "no-error-notification",
     "signature": "no-error-notification: error notification: Posit Assistant could not be opened: No model selected. Cannot submit prompt programmatically.",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
+  },
+  {
+    "id": "ae542218",
+    "check": "no-error-notification",
+    "signature": "no-error-notification: error notification: Request workspace/symbol failed.",
+    "added": "2026-10-07",
+    "source": "journey",
+    "issue": "ronplusron/phileas#93"
+  },
+  {
+    "id": "cbb4b09c",
+    "check": "no-error-notification",
+    "signature": "no-error-notification: error notification: Unable to write into user settings because the file has unsaved changes. Please save the user settings file first and then try again.",
+    "added": "2026-10-07",
+    "source": "journey",
+    "falseAlarm": "Positron correctly refusing to write a setting while the user settings file has unsaved edits, and saying so; met in step 6's quarto Journey, 4a630dab6903, on 2026-10-07."
   },
   {
     "id": "28da4349",
@@ -354,6 +546,14 @@
     "check": "still-responding",
     "signature": "still-responding: the renderer could not be reached: page.evaluate: Target page, context or browser has been closed",
     "added": "2026-09-27",
+    "source": "journey",
+    "falseAlarm": "The Route closed Positron's only window through Switch Window's Close Active Window, at hop 4 of route 87 of step 6's session Journey, cb0e45cbca68, on 2026-10-06. Closing it is what that control does; it is now excluded in the new-windows group."
+  },
+  {
+    "id": "394a41c4",
+    "check": "still-responding",
+    "signature": "still-responding: the renderer did not answer within N ms",
+    "added": "2026-10-06",
     "source": "journey"
   },
   {

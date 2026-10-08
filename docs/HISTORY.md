@@ -25,6 +25,83 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-07: the Positron trial's step 6, and its triage
+
+**What ran.** 500 Routes of 20 Hops on the current release, 2026.09.1-2,
+100 from each start, windows hidden: 466 passed, 32 failed, 2 stranded.
+
+| Fix | Seed | Passed | Failed | Stranded |
+| --- | --- | --- | --- | --- |
+| none | `4e4d35901181` | 97 | 3 | 0 |
+| session | `cb0e45cbca68` | 89 | 10 | 1 |
+| notebook | `a1725d030547` | 96 | 4 | 0 |
+| quarto | `4a630dab6903` | 85 | 14 | 1 |
+| data-explorer | `879e429c55ca` | 99 | 1 | 0 |
+
+The session Journey's first run, `365dbfb533b9`, is not among them: its Fix
+clicked R in an interpreter list still filling in and started Python on 17
+of 100 Routes. The Fix now types the machine's R version into the list's
+filter and presses Enter, refusing by name any other interpreter that
+starts; a rerun on R 4.4.3 was taken as the session's 100, asked for as
+"Count it as 100, move on". `Move into new window` and `Close Active
+Window` joined the `new-windows` exclusion group, each after a Route
+reached it.
+
+**Filed, each shortened by a probe in `trial/positron/probes/` with a
+control and counted, none followed by hand:**
+
+- ronplusron/phileas#90: Go to References with R running, an unknown
+  service; 5 of 6, none with nothing running.
+- #91: opening a folder with the Testing view showing, a TypeError in
+  `ViewWelcomeController.layout`; 3 of 3, none without the view.
+- #92: positron-r reading `uri` from a workspace with no folders, after
+  Save Workspace As; 4 of 4, none with a folder open. The frame was read in
+  the installed extension.
+- #93: Go to Symbol in Workspace with a Quarto document open, the Quarto
+  language server failing; 3 of 3, none with nothing open or a notebook.
+- #94: Cannot show Console and Variables after a reload with an R session
+  running; 12 of 12, with and without a data explorer, none of 3 without
+  the reload.
+- #95: Delete Session logging that a running R session is not active; 6 of
+  6, none with the session left running.
+- #96: "Unable to resolve resource output:tasks" after a reload with the
+  kernel's output channel shown; 6 of 6, none without that channel.
+
+**Not reproduced,** and left unfiled: a TypeError choosing the Assistant
+Layout, 0 of 9; "DisposableStore is missing" from Console Information, 0 of
+6; the renderer not answering through a reload with R running, 0 of 4; and
+a guess that a session starting with its view hidden causes #94's errors, 0
+of 9, before replaying a Route found the reload.
+
+**Dismissed:** two cancellations at a reload; a refused write to `/sbin`; a
+refusal to write settings with unsaved changes; six from Positron Assistant
+and the notebook AI, which need a signed-in model, and whose controls are
+now the `assistant` exclusion group; and a closed window, which Close Active
+Window did. A language server's request "canceled due to subsequent
+mutation", 9 of the quarto failures, is narrowed in the adapter as ordinary,
+once its request number was taken out of signatures by `varyingInSignatures`:
+kept, it made 13 known findings of one. "Install extension..." joined the
+`marketplace` group after a Route reached the Marketplace through Run
+Without Debugging.
+
+**Found about the trial itself:** a Route saved outside its home folder
+through Positron's in-page dialog, recorded in `DEFECTS.md`; a menu in the
+Profiles editor stranding two Routes, `OUTSTANDING.md`; and the probes'
+Route numbers colliding between two probe files run together, which made a
+probe print another's findings, now numbered from each probe's own name.
+
+**Against the bar set on 2026-09-26.** Measured, and a reading rather than a
+verdict agreed:
+
+- **At least 2 of the 3 known bugs:** 0 of 3, at step 5. Not met.
+- **At least one new real bug in the current release:** seven filed, each
+  reproduced by script against a control. None has been followed by hand or
+  confirmed upstream, so whether any is a real bug is not yet known.
+- **False alarms few enough to triage in minutes rather than hours:** not
+  met. Triage took the better part of a day, most of it shortening Routes
+  into probes and finding which step mattered, which `OUTSTANDING.md`
+  records as unbuilt (shortening a failing Route).
+
 ## 2026-10-06: part of another branch's RStudio changes brought in, and the rest left out
 
 **What it was.** A branch, `rstudio-trial-updates`, one commit of

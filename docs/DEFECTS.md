@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Fifteen defects are recorded.** The launch layer landed in phase 1, so this
+**Sixteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -363,6 +363,30 @@ step kinds that let typed text sit on the line as data rather than as a
 name inside code. Until a replay exists nothing compares the recorded
 content either, so a changed Fix shows only to someone reading two
 journals side by side.
+
+## A Positron Route can save outside its home folder
+
+**Filed 2026-10-07, measured.** Each Positron Route gets a home folder of
+its own, so that its in-page file dialogs start there. Nothing keeps them
+there. Route 39 of step 6's notebook Journey, `a1725d030547`, typed
+"Carpet" into Save Notebook As's folder path at hop 8, and the dialog
+showed the root of the disk; hop 9 chose `sbin` and hop 10 clicked OK.
+macOS refused the write, and Positron logged the refusal, which is how it
+was seen at all.
+
+**Why it is a defect and not a limit.** A folder the person running the
+Journey can write to would have taken the file, and nothing would have
+said so: the home folder guard reads only the real home folder's top level
+and the folders the adapter names, so a file written deeper in the home
+folder, or anywhere else on the disk, passes it. RStudio's Routes climbed
+out the same way through its file dialog's ".." row, and that row is
+excluded; Positron's dialog also takes a typed path, which no exclusion by
+name reaches.
+
+**What would close it, not decided:** keeping the dialog's typed path and
+its ".." inside the Route's home, by a predicate exclusion or by stubbing
+the dialog's file service; or a guard that compares the whole disk's
+writable folders before and after, which would report rather than prevent.
 
 ## Two things that will look like candidates, and are not
 

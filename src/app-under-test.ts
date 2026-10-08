@@ -474,7 +474,7 @@ export interface AppUnderTest {
 
   /**
    * What varies from run to run in this application's own messages, taken out
-   * of a finding's signature after what the engine takes out itself: each a
+   * of a finding's signature before what the engine takes out itself: each a
    * pattern with the `g` flag and what to put in its place.
    *
    * A known finding matches by signature, so an id the application makes
