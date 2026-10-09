@@ -71,6 +71,14 @@ listener leak `PLAN.md` watches for; `0f31d456` and `b557285f` with
 `a6d6a45f`, already probed 0 of 9 and 0 of 6; and `202b0770`, a channel
 closed at a reload, met once.
 
+**Seen once and left alone:** `4a1618ea`, which step 6's handoff named and
+no known findings file holds, since a probe writes none. On 2026-10-07 the
+output-reload probe opened a folder, and at the reload a fresh profile
+logged "Unable to delete nonexistent file
+'…/CachedProfilesData/__default__profile__/extensions.builtin.cache'": a
+cache never written, cleared. Once in the 81 kept Routes that met a reload,
+and in no Journey; a reading, not measured further.
+
 **Extension auto-update, turned off in Positron's adapter.** The pyrefly
 probe found a Route's profile holding pyrefly 1.3.2, where the release ships
 1.2.0: a fresh profile installs the 14 bootstrap extensions `product.json`
