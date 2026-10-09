@@ -15,15 +15,12 @@ phases are marked by number.
 | Route | One pass through the application, and one Playwright test with its own verdict, deadline and trace. Routes know nothing of each other. |
 | Fix | The fixed opening of every Route: a script of Fix steps, written in advance by the Journey's author and the same every time. Each step is one call of `step()`, which names its kind: `act` on a target as `phileas survey` prints it, or `code` with Playwright code. A consumer keeps each in `phileas/fixes/`, listed by name in `fixes/index.ts` with `defineFixes`; the Journey's Booking names the one it opens with, `--fix` chooses another for one run, and each Route's journal records its name and a fingerprint of its source. |
 | Trip | The unpredictable rest of a Route after its Fix. A Route with no Fix is all Trip. |
-| Semirandom | A known start and an unpredictable continuation: what a Fix followed by a Trip makes a Route. A Route with no Fix is random instead. |
 | Hop | One jump of the Trip: one interaction with the application, drawn from the seed and made by the Route. Numbered from 1. Also called a Trip hop. A Fix has steps, not Hops. |
 | Fix step | One step of a Fix's script: `{ kind: 'act', target, value? }`, performed the way a Trip hop is, or `{ kind: 'code', label, action }`, which runs whatever the author wrote. Each is settled after, checked, and journaled as its own line, which since 2026-10-03 records its kind, an `act` step's target as data and any value, and a `code` step's source text with a hash of it. Numbered from 1 within the Fix. Called a fix hop, and journaled as `fix-hop`, before 2026-09-29. |
 | Trip length | How many Hops each Route's Trip takes, as `tripLength`; Fix steps don't count. A Route is meant to complete its Trip, and one that doesn't strands. |
 | Journey deadline | How long, in clock time, the whole Journey may run, as `journeyDeadlineMs`. Optional, with no limit when unset, which is the common case. When it passes, finished Routes are reported, the running one is cut off, and the rest never start. |
 | Route deadline | How long, in clock time, one Route may run, as `routeDeadlineMs`. Optional, with no limit when unset. A Route that reaches it is cut off. |
-| Planner | The for-loop in a Journey's spec file that registers one Playwright test per Route. It decides how many Routes there are, and must never decide what they explore. |
 | Passed / failed / stranded | A Route's three outcomes. Stranded means it ran out of moves before completing its Trip, or that every Hop it attempted was abandoned; that is neither a pass nor a failure. In the journal it is its own outcome; until phase 5 gives Playwright a way to show it, a stranded Route's test fails, with the reason. |
-| Surveyed | What a Route reports when `PHILEAS_SURVEY=1` asked only for a survey. Not a pass, so a Journey run with the variable left over cannot read green. |
 
 ## Choosing a move
 
@@ -45,7 +42,6 @@ phases are marked by number.
 | Map | What someone who knows the application can hand the engine about it, full or partial. Never required; discovery covers whatever it leaves out (R29). *Planned, phase 10*; what an entry does is still open. |
 | Menu source | The entries of the menu bar as candidates, offered in every window mode, standard entries skipped by default. A menu hop hands its handler the Route's window, as a person's click would. Together they get an eighth of the draw, or what the adapter sets as `menuShare`, and they never keep a Route from stranding, since the menu bar is on offer on every screen. An in-app menu built in the page is page controls, and native popup menus are not reached. |
 | Pool | The candidates at one moment, after exclusions and covered and hidden controls are left out. The draw is made over it, and the journal writes each distinct pool once, with the covered and hidden controls, the layered text boxes and the labeled controls, where there were any. |
-| Chooser | The named seam that picks a target from the pool. Today it's always the seeded draw. |
 | Draw | The number from the seeded stream that picked the target, recorded as a raw 32-bit integer. Each Hop takes a share draw deciding between the common keys, the menu bar and the page, then a draw picking within that side; on the menu bar, since 2026-10-03, one draw per level instead, a top menu first and then an item within it, recorded as `menuDraws`. |
 | Target | What a Hop acted on, or tried to: one candidate, chosen by the draw on a Trip hop or by name in a Fix's `act` step. So a target can be a control, a menu entry or a key, and a control is a target only in the action that picked it. An `act` step takes a target as the survey prints it. |
 | Action | What was done to the target: `click`, `type`, `press`, `select`, `focus` or `menu-click`. `type` empties a field and presses one key per character; it replaced `fill`, which set a value without pressing keys and appears only in older journals. `press` presses one key on whatever has focus. In a native dropdown, `select` chooses an option without opening the list, and `focus` reaches the dropdown itself, since clicking it opens a list the engine cannot use. While a native dropdown has focus, the arrows and Enter are withheld, since on macOS they open its list on the real screen. |
@@ -76,12 +72,10 @@ phases are marked by number.
 |---|---|
 | Check | A test of the application run after every Hop and every Fix step. The first failure ends the Route. Each Hop's journal line records every check as passed, failed, or not run with the reason, so a check that did not run never reads as one that passed. |
 | Universal checks | Checks that assume nothing about the application: no uncaught error, no console error, still responding, still showing something, read again for up to 2 seconds before a blank window fails and recorded where it came back, no navigation away, no unexpected dialog, every control named, and no error in a log the adapter names, which does not run where it names none; a log line counts as an error when it holds a word ending in "error", or fatal, failed, failure, exception or panic, or matches that log's own `failsOn` pattern, read past a stack frame at its start, so a frame is part of the error above it and never one of its own. The console check sets aside one line the engine's own trace makes, `TRACE_SNAPSHOT_IN_SANDBOX`. The requirements call this tier **implicit** (R17). No navigation away and every control named are not built yet. |
-| Planted defect | A fault built into a proving-ground application on purpose, each switched on by its own launch flag, such as `buggy`'s `--buggy-plant=dialog`, so that a check can be shown to fire. Off by default, so the application stays the unbroken baseline. |
 | Structural check | Two things on the page agreeing with each other, such as a count matching its list (R18), declared by the adapter. Pulled forward from phase 6 for the Positron trial. |
 | Metamorphic check | The application agreeing with itself over time, such as search then clear restoring the list (R20). Phase 6. |
 | Specified check, or oracle | An expected result computed independently of the application and compared against what the page shows (R21). It must never share logic with what it judges. |
 | Probe hop | A Hop the engine takes itself to test a relation, such as clearing a search it just made, marked as such in the journal. *Planned, phase 6.* |
-| Positive control | Running a check against something known to be there before trusting a check that found nothing, since a broken check also finds nothing. |
 | Narrowing | An adapter switching off or loosening one universal check for its own application, with a required reason that reaches the report (R19). For what is normal for that application; a known bug is a known finding instead. |
 | Finding | One violation a check saw, named by its signature and a short id taken from it, with when it arrived: when the engine saw it, or for a log line the two reads it was written between and the log's own time where the adapter reads one. Each Hop's journal line lists the findings of each check. A check reads what arrived since it last ran, so the Hop it runs after is not always the one that caused it; a failure says which step was running when the finding arrived and lists the steps before it, and each Hop's line says how far into that Hop, or how long before it, its finding arrived. What the stubs caught carries the same times. |
 | Signature | A finding with what varies from run to run taken out: temporary folders, timestamps, process ids, durations and Hop numbers, a stack frame's position, a source file's line where a message names one, as in `SessionProjects.cpp:<line>`, an id made fresh each time, a UUID or eight or more hex digits standing alone, which becomes `<id>`, the name of the user running it, which becomes `<user>`, and whatever the adapter names in `varyingInSignatures`, applied first. Two runs of the same bug share one; a message worded differently is a different finding. When the rules change, a Route matches stored entries under the new ones, and a Journey's end rewrites the file under them, merging entries that now agree. |
@@ -98,7 +92,6 @@ phases are marked by number.
 | Deployment shape | Where an adapter lives relative to the application: in the application's own repository, in a repository of its own beside a checkout someone builds, or beside an installed binary. `CLAUDE.md` has what each one loses. |
 | Adapter | The application-specific code implementing `AppUnderTest`: how to launch, how to tell it's ready, what to exclude. It judges nothing itself. |
 | Staleness guard | Refuses to run when a file in the packaged build differs in content from the source it was built from, naming each file (R23). Without source it can't run at all, and the run says so. |
-| Proving ground | Applications built to be tested. `buggy` is the ordinary one, where defects are planted in later phases. |
 
 ## Settings
 
@@ -111,7 +104,7 @@ phases are marked by number.
 | `PHILEAS_RUN` | The run's name, which `startJourney` in global setup sets fresh on every run, while printing every setting in force, and each Route reads to find its journal folder. Not set by hand: one left over in the environment is replaced. |
 | `PHILEAS_SHOW` | `hidden` (default), `back` (shown behind: the application comes forward for a moment at launch and the engine hands the screen back to whatever was frontmost), `front` (shown and activated), or `top` (always on top). Set by `--show`. |
 | `PHILEAS_HOP_DELAY_MS` | Pauses after each Hop, Fix steps included, and after each listing `phileas survey` prints, so a Route can be watched. It changes no draw. Set by `--hop-delay-ms`. |
-| `PHILEAS_SURVEY` | `1` makes a Route print what it sees at its start, run its Fix printing each step, print what it sees after, and stop, with no Trip or journal. Set by `phileas survey`. |
+| `PHILEAS_SURVEY` | `1` makes a Route print what it sees at its start, run its Fix printing each step, print what it sees after, and stop, with no Trip or journal. The Route then returns `surveyed`, which is not a pass: a consumer's spec marks its test skipped, so a run with the variable left over cannot read green. Set by `phileas survey`. |
 | `PHILEAS_FOLLOW` | `1` prints each Route's journal as it is written, one line per Hop; `0` or unset, one line per Route. Changes no draw. Set by `--follow`. |
 | `PHILEAS_ALLOW_STALE` | `1` runs against a build the staleness guard finds stale, and the printed settings say the guard is off. Anything but `1` or `0` is refused. |
 | `PHILEAS_FIX` | Which of the consumer's Fixes every Route opens with for this run, by name, over the one the Journey names; `none` for no Fix. A name the consumer does not list is refused before anything launches. Set by `--fix`. |
@@ -120,3 +113,17 @@ phases are marked by number.
 | `PHILEAS_TEMP_FOLDER` | The run's own folder in the system temp folder, `phileas-<application>-<random>`, which `startJourney` in global setup makes and every Route's profile goes inside, so two runs at once never see each other's folders. Not set by hand: a profile asked for with it unset is refused by name. |
 | `PHILEAS_REPORTER` | `1` when the engine's reporter prints the run, set by `phileas run` and not by hand: a followed failed Hop's line then leaves out what its checks saw, which the Route's ending says once. The Journey's end hands its known findings to the reporter only when the reporter is there, whatever this says. |
 | `PHILEAS_APP_DIR` | Where the application's checkout is, for an adapter that lives outside it. Read through `requireAppDir()`, which refuses by name when it is unset or not a folder. |
+
+## Design terms
+
+Words the design documents use for how the engine is built and tested, which
+a user of the engine never meets.
+
+| Term | Meaning |
+|---|---|
+| Semirandom | A known start and an unpredictable continuation: what a Fix followed by a Trip makes a Route. A Route with no Fix is random instead. |
+| Planner | The for-loop in a Journey's spec file that registers one Playwright test per Route. It decides how many Routes there are, and must never decide what they explore. |
+| Chooser | The named seam that picks a target from the pool. Today it's always the seeded draw. |
+| Positive control | Running a check against something known to be there before trusting a check that found nothing, since a broken check also finds nothing. |
+| Proving ground | Applications built to be tested. `buggy` is the ordinary one, where defects are planted in later phases. |
+| Planted defect | A fault built into a proving-ground application on purpose, each switched on by its own launch flag, such as `buggy`'s `--buggy-plant=dialog`, so that a check can be shown to fire. Off by default, so the application stays the unbroken baseline. |
