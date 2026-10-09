@@ -25,6 +25,49 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-08: RStudio's Posit Assistant is excluded by any name naming it
+
+Seen while measuring the shutdown below: a `session-data` Route's last Hop
+clicked "Show Posit Assistant in a separate window", past an exclusion that
+named Posit Assistant exactly, and the data viewer's survey had offered View
+> Panes > Zoom Posit Assistant the same way. Asked whether to match the name
+as Copilot's exclusion does, the answer was yes: anything whose name holds
+"Posit Assistant" is now left out, in RStudio's adapter. One new test, 406
+in all, with a name holding only "Assistant" kept as the control.
+
+## 2026-10-08: RStudio's R sessions were not left running; its close was forced
+
+**The question.** In the RStudio batch of the same day, the stray sweep
+ended an R session after 31 of the 32 `session-data` Routes whose output was
+still on screen, and 3 of the last 39 with no Fix; on 2026-09-29, 5 of 20.
+Asked whether that was a bug to report, and triaged with a probe in the
+new `trial/rstudio/probes/`, which launches RStudio through the engine's own
+fixture, closes it with the engine's own `closeApp`, and then watches the R
+session for a minute without touching it.
+
+**What it showed.** With code run, as `session-data` runs it, every close
+was forced, 3 of 3: RStudio was still open after the engine's 10 s and was
+killed, and its R session exited 0.1 to 0.5 s after the kill, which is when
+the sweep had looked. With nothing run, every close was orderly and the R
+session was gone at once. A screenshot of the page 3 s after asking the
+window to close showed why: "Quit R Session: Save workspace image to
+~/.RData?", with Save, Don't Save and Cancel, drawn in the page, which the
+probe's `getByRole('dialog')` did not find. Ordinary RStudio, so nothing to
+report. What it cost: about 10 s at the end of every Route with anything in
+R's environment, a forced kill each time, which leaves a passing Route green
+as `DEFECTS.md` already carries, and a sweep notice that read as a bug.
+
+**The repair, in RStudio's adapter,** chosen from two offered over setting
+RStudio never to save the workspace, so a Route that meets the question
+some other way still sees it: a `shutdown` that asks the window to close and
+clicks Don't Save if the question comes, a second time if neither the
+question nor the close came, within 5 s in all, before the engine's own
+close. Measured: 12 of 12 code-run closes orderly, each asked on the first
+request and answered within 0.1 s, about 3 s a close against 13; once in an
+earlier 6, before the second request was added, neither came, and that
+close was forced. Then 10 `session-data` Routes: no stray R session, and
+all passed.
+
 ## 2026-10-08: RStudio's batch of 600 on its current release, and its triage
 
 **Why.** Raised as RStudio having had far less than Positron: 169 RStudio
@@ -36,7 +79,9 @@ start, Trips of 20 as Positron's step 6 had, no bar.
 **What ran.** 600 Routes of 20 Hops on a fused copy of RStudio 2026.10.0,
 made with `prepare-app.mjs`, whose fuse wires read as 2026.09.1's had;
 windows hidden; 594 passed, 6 failed, none stranded; 116 of 11,933 Trip
-hops abandoned.
+hops abandoned. **Its journals are gone:** they were in the branch's
+worktree, which git does not track, and were deleted with it once the branch
+merged, uncopied. The seeds below rerun their Routes on the same builds.
 
 | Fix | Seed | Passed | Failed | Abandoned Hops |
 | --- | --- | --- | --- | --- |

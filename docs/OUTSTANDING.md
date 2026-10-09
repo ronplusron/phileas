@@ -1153,9 +1153,11 @@ Fix, both versions, the application's version, and the fused copy each person
 makes; and Journeys do not gate pushes, so someone has to own triage or the
 queue only grows.
 
-### 2.14 Two things RStudio did in the batch, not explained
+### 2.14 A native Open File dialog RStudio raised in the batch, not explained
 
-Seen in the RStudio batch of 2026-09-29; neither is measured.
+Seen in the RStudio batch of 2026-09-29, and not measured. A second thing
+seen then, R sessions left running after a close, was explained and
+repaired on 2026-10-08; `HISTORY.md` has it.
 
 - **A native Open File dialog, with web dialogs on.** The no-Fix Journey's
   Route 1 pressed ⌘O at hop 28, the shortcut printed in "Open an existing
@@ -1170,17 +1172,6 @@ Seen in the RStudio batch of 2026-09-29; neither is measured.
   Open and Cancel all in their pools. What differed between the two
   presses is not known; which control had focus is one candidate, and
   unmeasured.
-- **R sessions left running after a close.** In 5 of one Journey's 20
-  Routes, RStudio left `rsession` and a terminal's `bash` running after it
-  closed, and the stray sweep ended them. The sweep's printout was not kept
-  and the journal does not record it, so this rests on the run's output as
-  read at the time. Whether they would have exited by themselves, as
-  `HISTORY.md`'s entry of 2026-09-28 already asked of one R session, is
-  unmeasured. **Seen again on 2026.10.0 on 2026-10-08,** far more often
-  after a Fix that runs code: 31 of the 32 `session-data` Routes whose
-  output was still on screen, and 3 of the last 39 with no Fix. Counted
-  from the terminal, since the sweep still journals nothing, so the rest of
-  the 600 cannot be counted now.
 
 ### 2.15 Printing one Hop's whole pool
 

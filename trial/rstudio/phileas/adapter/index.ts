@@ -23,6 +23,13 @@ const bundleDir = requireAppDir();
 const WORKBENCH_WINDOW_TIMEOUT_MS = 60_000;
 
 /**
+ * How long the shutdown waits for RStudio to close or to ask about saving the
+ * workspace. Within the engine's own 10 s close, so a shutdown that hears
+ * neither leaves that close its time.
+ */
+const SAVE_QUESTION_MS = 5_000;
+
+/**
  * The workbench is served by RStudio's own session on the loopback address.
  * The splash is a file inside the bundle.
  */
@@ -276,6 +283,10 @@ export const rstudio: AppUnderTest = {
     // closed by hand. Print entries appear only once a document is open, so
     // by name rather than by path; `&` is taken out so "Pr&int..." matches.
     //
+    // And anything naming Posit Assistant, as for Copilot: its exact name was
+    // excluded from the start, and on 2026-10-08 a Route still clicked "Show
+    // Posit Assistant in a separate window" on 2026.10.0.
+    //
     // And screen reader support. Turning it on asks to restart RStudio, and
     // on 2026-09-28 a Route answered Yes: RStudio relaunched itself without
     // the engine's arguments, so the new copy ran visibly, used the real
@@ -286,6 +297,7 @@ export const rstudio: AppUnderTest = {
     exclude: (candidate) =>
       (candidate.source === 'page' && / used by R session\b/.test(candidate.name)) ||
       /copilot/i.test(candidate.name.replace(/&/g, '')) ||
+      /posit assistant/i.test(candidate.name.replace(/&/g, '')) ||
       (candidate.source === 'page' && candidate.role === 'option' && /\/R\.framework\//.test(candidate.name)) ||
       (candidate.source === 'page' && candidate.role === 'link' && isAboveHome(candidate.name)) ||
       /\bprint\b/i.test(candidate.name.replace(/&/g, '')) ||
@@ -328,6 +340,45 @@ export const rstudio: AppUnderTest = {
       }
       await app.waitForEvent('window', { timeout: Math.min(left, 1_000) }).catch(() => undefined);
     }
+  },
+
+  /**
+   * Close RStudio as a person would, answering Don't Save if it asks whether
+   * to save the workspace, before the engine's own close.
+   *
+   * Measured on 2026-10-08 on 2026.10.0: with anything in R's environment,
+   * asking RStudio to close raises "Quit R Session: Save workspace image to
+   * ~/.RData?" in its page, and nothing answered it. The engine's close then
+   * waited its 10 s and killed RStudio, and its R session a moment after,
+   * which the stray sweep read as R left running: 31 of 32 `session-data`
+   * Routes in that day's batch. With nothing in the environment it closed at
+   * once. Answered here rather than by setting RStudio never to ask, so a
+   * Route that meets the question some other way still sees it, chosen from
+   * the two offered.
+   */
+  async shutdown(app: ElectronApplication): Promise<void> {
+    const page = app.windows().find(isWorkbench);
+    if (!page || page.isClosed()) return;
+    const dontSave = page.getByRole('button', { name: /^Don.t Save$/ });
+    let what: 'closed' | 'asked' | 'neither' = 'neither';
+    let tries = 0;
+    for (; what === 'neither' && tries < 2; tries++) {
+      const closed = page.waitForEvent('close', { timeout: SAVE_QUESTION_MS / 2 }).then(() => 'closed' as const);
+      const asked = dontSave.waitFor({ state: 'visible', timeout: SAVE_QUESTION_MS / 2 }).then(() => 'asked' as const);
+      await app.evaluate(({ BrowserWindow }) => {
+        for (const window of BrowserWindow.getAllWindows()) window.close();
+      });
+      what = await Promise.race([closed, asked]).catch(() => 'neither' as const);
+      closed.catch(() => undefined);
+      asked.catch(() => undefined);
+    }
+    // Asked a second time where the first went unanswered, still within the
+    // wait: once in 12 measured runs the first request brought neither the
+    // question nor a close, and the close was forced. The second has not yet
+    // been measured doing better.
+    if (what === 'asked') await dontSave.click({ timeout: SAVE_QUESTION_MS }).catch(() => undefined);
+    // Otherwise closed, or neither within the wait, and the engine's close
+    // goes on as it would have: bounded, and ending in a kill if it must.
   },
 
   /**

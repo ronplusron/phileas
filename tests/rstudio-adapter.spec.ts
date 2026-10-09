@@ -103,6 +103,14 @@ test('screen reader support is excluded, since turning it on restarts RStudio ou
   expect(await excluded({ source: 'menu', role: 'menuitem', name: 'Accessibility &Options...', menuPath: ['&Help', '&Accessibility', 'Accessibility &Options...'] })).toBe(false);
 });
 
+test('anything naming Posit Assistant is excluded, as Copilot is, and a plain Assistant word elsewhere is not', async () => {
+  // Measured 2026-10-08 on 2026.10.0: a Route clicked this one past the exact-name exclusion.
+  expect(await excluded({ source: 'page', role: 'button', name: 'Show Posit Assistant in a separate window' })).toBe(true);
+  expect(await excluded({ source: 'menu', role: 'menuitem', name: 'Zoom Pos&it Assistant', menuPath: ['&View', 'P&anes', 'Zoom Pos&it Assistant'] })).toBe(true);
+  // The control: a name with only one of the words stays.
+  expect(await excluded({ source: 'page', role: 'button', name: 'Accessibility Assistant' })).toBe(false);
+});
+
 test("the file dialog's parent-folder row is excluded, since it climbs out of the home as the links do", async () => {
   // Excluded by name, which the survey applies, rather than by the predicate.
   expect(rstudio.exclusions.names).toContain('Folder ..');
