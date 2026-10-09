@@ -152,6 +152,15 @@ export const positron: AppUnderTest = {
           // whoever ran the Journey on 2026-09-27. The engine blocks full
           // screen too; this keeps Zen Mode itself explorable.
           'zenMode.fullScreen': false,
+          // The extensions the release ships, never newer ones. A fresh profile
+          // installs the 14 bootstrap extensions bundled in the app, and with
+          // auto-update on it then fetched newer ones from the gallery
+          // product.json names: measured on 2026-10-09, pyrefly shipped as
+          // 1.2.0 and a Route ran 1.3.2, so a Route's code depended on the day,
+          // and "js-debug is a built-in extension and not allowed to be
+          // updated" was logged by the updating itself. Turned off as asked.
+          'extensions.autoUpdate': false,
+          'extensions.autoCheckUpdates': false,
           // Only for the early releases, which cannot run the machine's R.
           ...(positronFamily === 'early' ? { 'positron.r.customBinaries': [EARLY_R_BINARY] } : {}),
         },

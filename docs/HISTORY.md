@@ -25,6 +25,64 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-09: Positron's unfiled known findings triaged, and its extensions held to the release's
+
+**Why.** Positron's `known-findings.json` held 29 unfiled entries, more than
+the seven step 6's handoff named, and the triage was asked to cover all of
+them, grouped where they share a cause, one group at a time.
+
+**Removed, so each comes back as new if it is met on a supported setup:**
+- Ten added on 2026-09-27 when 2024.11 first ran with R 4.6.0, its R
+  language server failing to connect and the client stopping while it
+  started, as that day's entry already read it; the old releases have run R
+  4.4.3 since, and none of the ten messages is in any journal kept since.
+- `28da4349` and `80fa5f67`, a click on Manage hanging while Positron's menus
+  were native, and Playwright's own connection closing; neither met since
+  2026-09-27.
+- `b282aad0` and `23032475`, added the same day and not met since.
+- `81072f59`, `394a41c4` and `a06c57c5`, still-responding findings whose
+  signatures name nothing in particular, so a new hang would have been
+  reported as known; `DEFECTS.md` widens its entry on bare signatures for
+  them. OUTSTANDING 2.26 keeps the closed window it records open.
+- `366f73ed`, js-debug's update refused, made by extension auto-update, below.
+
+**Dismissed:** `773eeea0` and `d9b83954`, 2024.11 and 2025.01 not shipping
+the `pet` binary 2025.02 does; and `471a1b2f`, below.
+
+**Probed, each against a control, in `trial/positron/probes/`:**
+- `ea8d959d`: running a new notebook's empty cell logs "Could not find a
+  notebook editor for session", 6 of 6, with or without ⌘J first, and 0 of 3
+  without Run Cell. Filed as ronplusron/phileas issue 99.
+- `3705d320`: moving the Welcome page into a new window logs "Invalid model
+  for label change, rebuilding", 3 of 3, and 0 of 3 opening Welcome alone,
+  run with the `new-windows` group let in. VS Code's issue 161788 met the
+  message on another path. Filed as issue 100.
+- `471a1b2f`: inserting a code cell into a new Quarto document logs
+  "[meta.pyrefly] provider FAILED", 4 of 5, and 0 of 3 without the click.
+  The extension host log, copied before the Route ended, showed the next
+  line to be the stale request cancellation the adapter narrows as ordinary.
+  Dismissed, its reason saying it also covers a real pyrefly failure, since
+  the log check reads one line at a time and no narrowing could tell the two
+  apart; `DEFECTS.md` has that.
+
+**Left unfiled, each for its reason:** `60069d0a`, "An unknown error
+occurred", always with issue 92 and too generic to file; `65d8aff3`, the
+listener leak `PLAN.md` watches for; `0f31d456` and `b557285f` with
+`a6d6a45f`, already probed 0 of 9 and 0 of 6; and `202b0770`, a channel
+closed at a reload, met once.
+
+**Extension auto-update, turned off in Positron's adapter.** The pyrefly
+probe found a Route's profile holding pyrefly 1.3.2, where the release ships
+1.2.0: a fresh profile installs the 14 bootstrap extensions `product.json`
+lists, bundled in the app, and auto-update, which the adapter left on, then
+fetched newer ones from the gallery `product.json` names. So a Route's code
+depended on the day, a run reached the network, and the refused js-debug
+update above was the updating itself. Asked to be laid out with its
+pros and cons, and answered "Turn it off": `extensions.autoUpdate` and
+`extensions.autoCheckUpdates` are false before launch. Two launches since
+kept 1.2.0 and logged no refused update. **Every Positron finding before
+this ran on whatever extensions were current that day.**
+
 ## 2026-10-08: RStudio's Posit Assistant is excluded by any name naming it
 
 Seen while measuring the shutdown below: a `session-data` Route's last Hop

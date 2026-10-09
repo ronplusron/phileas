@@ -8,20 +8,6 @@
     "issue": "ronplusron/phileas#92"
   },
   {
-    "id": "686711d1",
-    "check": "console-error",
-    "signature": "console-error: [vscode.positron-r]Client is not running and can't be stopped. It's current state is: starting",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "16ecbeaf",
-    "check": "console-error",
-    "signature": "console-error: [vscode.positron-r]Pending response rejected since connection got disposed",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
     "id": "99eecde5",
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 [backup tracker] error saving modified working copies: Error: Unable to write file '/sbin/Untitled-1.ipynb' (NoPermissions (FileSystemError): Error: EPERM: operation not permitted, open '/sbin/Untitled-1.ipynb')",
@@ -128,7 +114,8 @@
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 Could not find a notebook editor for session 'python-notebook-<id>'",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "issue": "ronplusron/phileas#99"
   },
   {
     "id": "be0fbc95",
@@ -137,13 +124,6 @@
     "added": "2026-09-27",
     "source": "journey",
     "issue": "ronplusron/phileas#54"
-  },
-  {
-    "id": "366f73ed",
-    "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 Extension 'ms-vscode.js-debug' is a built-in extension and not allowed to be updated in the current product quality 'releases'.: Incompatible: Extension 'ms-vscode.js-debug' is a built-in extension and not allowed to be updated in the current product quality 'releases'. at InstallExtensionInProfileTask.doRun (sharedProcessMain.js)",
-    "added": "2026-10-06",
-    "source": "journey"
   },
   {
     "id": "35c1a4a1",
@@ -166,14 +146,8 @@
     "check": "console-error",
     "signature": "console-error: %c  ERR color: #f33 Invalid model for label change, rebuilding",
     "added": "2026-10-06",
-    "source": "journey"
-  },
-  {
-    "id": "b282aad0",
-    "check": "console-error",
-    "signature": "console-error: %c  ERR color: #f33 lock() request could not be registered.: InvalidStateError: lock() request could not be registered.",
-    "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "issue": "ronplusron/phileas#100"
   },
   {
     "id": "65d8aff3",
@@ -255,20 +229,6 @@
     "issue": "ronplusron/phileas#90"
   },
   {
-    "id": "45698e51",
-    "check": "console-error",
-    "signature": "console-error: Error: Client is not running and can't be stopped. It's current state is: starting at R.shutdown (extension.js)",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "2e183de7",
-    "check": "console-error",
-    "signature": "console-error: Error: Pending response rejected since connection got disposed at Object.dispose (extension.js)",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
     "id": "f3ea7713",
     "check": "console-error",
     "signature": "console-error: Failed to generate suggestions: sign-in-required",
@@ -277,26 +237,12 @@
     "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
   },
   {
-    "id": "725da6de",
-    "check": "console-error",
-    "signature": "console-error: Pending response rejected since connection got disposed",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
     "id": "fff1c768",
     "check": "console-error",
     "signature": "console-error: Posit Assistant could not be opened: No model selected. Cannot submit prompt programmatically.",
     "added": "2026-09-27",
     "source": "journey",
     "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
-  },
-  {
-    "id": "0cbcc9de",
-    "check": "console-error",
-    "signature": "console-error: Positron R Language Server (4.6.0) client: couldn't create connection to server.",
-    "added": "2026-09-27",
-    "source": "journey"
   },
   {
     "id": "bf494c2e",
@@ -343,7 +289,8 @@
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] [meta.pyrefly] provider FAILED",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "The header line of a language server request cancelled because the document changed under it: inserting a code cell in a new Quarto document left a pending hover request, and pyrefly logged provider FAILED then Request textDocument/hover is canceled due to subsequent mutation, the line the adapter already narrows as ordinary. Probed 2026-10-09: 4 of 5 with the click, 0 of 3 without. Broad on purpose and noted: the log check reads one line at a time, so this also covers a real pyrefly provider failure until it keeps an error's following lines (docs/DEFECTS.md)."
   },
   {
     "id": "a6d6a45f",
@@ -361,13 +308,6 @@
     "issue": "ronplusron/phileas#93"
   },
   {
-    "id": "075cce19",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: [error] {\"code\":-32603,\"message\":\"The channel positron-ui-r-1-<id> (positron.ui)  was closed before the RPC completed.\",\"name\":\"Error\",\"data\":{}}",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
     "id": "baa530b2",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] An error occurred when deactivating the extension 'positron.positron-connections':",
@@ -376,23 +316,9 @@
     "issue": "ronplusron/phileas#44"
   },
   {
-    "id": "f7aa5c97",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: [error] Ark LSP client stopped before initialization",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
     "id": "202b0770",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] Error: Channel has been closed",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "c38ad77b",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: [error] Error: Client is not running and can't be stopped. It's current state is: starting",
     "added": "2026-09-27",
     "source": "journey"
   },
@@ -412,26 +338,12 @@
     "issue": "ronplusron/phileas#87"
   },
   {
-    "id": "23032475",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: [error] Error: ENOENT: no such file or directory, stat 'Untitled-1.ipynb'",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
     "id": "f7295b15",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] Error: No model selected. Cannot submit prompt programmatically.",
     "added": "2026-09-27",
     "source": "journey",
     "falseAlarm": "Positron Assistant and the notebook AI need a signed-in model, which the trial does not have, so asking one only fails. Met in step 6's notebook Journey, a1725d030547, on 2026-10-06; their controls are now in the assistant exclusion group."
-  },
-  {
-    "id": "ecc397a2",
-    "check": "log-error",
-    "signature": "log-error: exthost.log: [error] Error: Pending response rejected since connection got disposed",
-    "added": "2026-09-27",
-    "source": "journey"
   },
   {
     "id": "7d4e1759",
@@ -446,14 +358,16 @@
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] Error: spawn /Applications/Positron-2024.11.app/Contents/Resources/app/extensions/positron-python/python-env-tools/bin/pet ENOENT",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "Positron 2024.11 and 2025.01 do not ship python-env-tools/bin/pet, which 2025.02 does, so both log a failure to start it at every launch: a gap in those releases, fixed by 2025.02, and not something a Route did. Recorded on 2026-09-27, dismissed on review 2026-10-09."
   },
   {
     "id": "d9b83954",
     "check": "log-error",
     "signature": "log-error: exthost.log: [error] Error: spawn /Applications/Positron-2025.01.app/Contents/Resources/app/extensions/positron-python/python-env-tools/bin/pet ENOENT",
     "added": "2026-09-27",
-    "source": "journey"
+    "source": "journey",
+    "falseAlarm": "Positron 2024.11 and 2025.01 do not ship python-env-tools/bin/pet, which 2025.02 does, so both log a failure to start it at every launch: a gap in those releases, fixed by 2025.02, and not something a Route did. Recorded on 2026-09-27, dismissed on review 2026-10-09."
   },
   {
     "id": "0acce60e",
@@ -528,46 +442,11 @@
     "falseAlarm": "Positron correctly refusing to write a setting while the user settings file has unsaved edits, and saying so; met in step 6's quarto Journey, 4a630dab6903, on 2026-10-07."
   },
   {
-    "id": "28da4349",
-    "check": "still-responding",
-    "signature": "still-responding: hop N's click on button \"Manage\" was bounded to N ms and had not returned after N ms: the application stopped answering",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "80fa5f67",
-    "check": "still-responding",
-    "signature": "still-responding: the main process could not be reached: electronApplication.evaluate: Target page, context or browser has been closed",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
     "id": "5000fa21",
     "check": "still-responding",
     "signature": "still-responding: the renderer could not be reached: page.evaluate: Target page, context or browser has been closed",
     "added": "2026-09-27",
     "source": "journey",
     "falseAlarm": "The Route closed Positron's only window through Switch Window's Close Active Window, at hop 4 of route 87 of step 6's session Journey, cb0e45cbca68, on 2026-10-06. Closing it is what that control does; it is now excluded in the new-windows group."
-  },
-  {
-    "id": "394a41c4",
-    "check": "still-responding",
-    "signature": "still-responding: the renderer did not answer within N ms",
-    "added": "2026-10-06",
-    "source": "journey"
-  },
-  {
-    "id": "a06c57c5",
-    "check": "still-responding",
-    "signature": "still-responding: the settle wait was bounded to N ms and had not returned after N ms: the application stopped answering",
-    "added": "2026-09-27",
-    "source": "journey"
-  },
-  {
-    "id": "81072f59",
-    "check": "still-responding",
-    "signature": "still-responding: the window closed",
-    "added": "2026-09-27",
-    "source": "journey"
   }
 ]

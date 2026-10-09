@@ -275,9 +275,11 @@ releases carrying known bugs, judged against a bar set in advance.
 phase 5 waits for its answer. Its first two steps, the checks and the
 adapter, are done: the adapter is in `trial/positron/`, three Routes of
 twenty Hops each passed through it on the current release, and one Route on
-each old release. Thirteen Positron bug candidates have been found and
-filed, `ronplusron/phileas` issues 44, 46, 53, 54, 87, 88, and 90 to 96
-from step 6.
+each old release. Fifteen Positron bug candidates have been found and
+filed, `ronplusron/phileas` issues 44, 46, 53, 54, 87, 88, 90 to 96 from
+step 6, and 99 and 100 from triaging its known findings on 2026-10-09,
+when extension auto-update was also turned off in the adapter, so every
+Route runs the extensions the release ships. `docs/HISTORY.md` has both.
 Only 87, Remote Explorer's Configure failing when the home folder has no
 `.ssh` folder, has been followed by hand and read in the code; 88, the
 Profiles editor logging a file it could not find when MCP Servers is opened
@@ -334,7 +336,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Eighteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Nineteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
@@ -343,7 +345,8 @@ does not itself contain, one an application in `back` mode bringing
 itself forward partway through a Route, one a Positron Route saving
 outside its home folder, one a known finding with nothing particular
 in it matching every finding of its check, and one the log check keeping
-only the lines of an error that look like errors. That file holds what is wrong, confirmed by reading the
+only the lines of an error that look like errors, and one the home folder
+guard blaming a Journey for a copy of the application it did not see. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the

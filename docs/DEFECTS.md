@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Eighteen defects are recorded.** The launch layer landed in phase 1, so this
+**Nineteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -406,7 +406,11 @@ recorded it as that finding and carried on.
 Route travel past one filed bug. Here it switched a whole check off, with
 nothing said: the Hop's line reads as a known finding met, which is what it
 reads when the filing is right. A hang ends the Route even when known, so
-the still-responding check does not suffer this. Window-showing-content has
+the still-responding check never carries a Route past one; but several of its
+observations are as bare, "the window closed", "the renderer did not answer
+within N ms", "the settle wait was bounded to N ms and had not returned", and
+a known one makes the summary call a new hang known. Three such entries were
+removed from Positron's file on 2026-10-09 for that. Window-showing-content has
 one fixed observation, in `src/oracles/index.ts`; no-unexpected-dialog's
 names the dialog's type and message, so it is as bare only for a dialog
 with no message, which is unmeasured.
@@ -444,11 +448,49 @@ its own, which `OUTSTANDING.md` 2.23 records from another cause. And a
 signature built from part of a message tells two errors apart only by what
 the dropped lines did not say.
 
+**Met again on Positron on 2026-10-09,** and it stopped a narrowing. Pyrefly
+logged "[meta.pyrefly] provider FAILED" and, on the next line, the stale
+request cancellation Positron's adapter already narrows as ordinary. Read one
+line at a time, the first line was a finding of its own, `471a1b2f`, and no
+narrowing could accept it without accepting every pyrefly provider failure.
+It was dismissed instead, its reason saying it is that broad.
+
 **What would close it, not decided:** keeping an error together with the
 lines that continue it, up to the next line with a timestamp, which is how
 RStudio's session log starts each entry; or keeping the whole stretch a log
 gained around a matching line, bounded, in the finding while matching on
 the first line alone.
+
+## The home folder guard can blame a Journey for a copy of the application it did not see
+
+**Filed 2026-10-09, measured twice.** `guardHome` in `src/home-guard.ts`
+checks for a copy of the application that is not a Route's, whose writes it
+cannot tell from a run's, only twice: when the Journey starts and when it
+ends, by `outsideCopies`, which matches the adapter's executable in `ps`.
+When it sees none it says the writes "came from the run".
+
+- **A copy opened and closed between the two looks is never seen.** On
+  2026-10-08 the person running the RStudio batch opened the installed
+  RStudio at 06:24 and closed it within a minute, during the no-Fix Journey.
+  The guard listed 102 files written between 06:24:30 and 06:24:49 and
+  said "No other RStudio was running, so these came from the run", which was
+  wrong.
+- **A copy the match does not recognize is never seen either.** Reported on
+  2026-10-09 by the session working on Bobolink Inbox, engine 0.6.9: the
+  installed Inbox, open throughout, wrote four cache files under its real
+  Application Support folder, and the guard blamed the Journey; with it quit,
+  the same Journey came back clean. Which line the guard printed there was
+  not reported; a reading, not confirmed, is that its adapter's executable
+  did not match the installed copy's.
+
+**Why it is a defect and not a limit.** It fails loud, which is right, but
+the alarm names the wrong cause with confidence, and the person then looks
+for a leak in the adapter or the engine that is not there.
+
+**What would close it, not decided:** looking for outside copies throughout
+the Journey rather than at its two ends; refusing to start, or warning, when
+one is already running; and saying beside each write whether an outside copy
+was seen near its time.
 
 ## Two things that will look like candidates, and are not
 
