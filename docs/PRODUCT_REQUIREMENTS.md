@@ -244,8 +244,10 @@ and the runner runs all of them after every hop.
 - **R6 (Should)** A journey reports its stranded routes separately from its
   failures, with enough of the journal to tell the two causes apart.
 - **R32 (Must)** A hop acts only on what a person could see at that moment,
-  or bring into view by scrolling or by bringing its own window to the
-  front. A control the application has hidden,
+  or bring into view by bringing its own window to the front. A control
+  scrolled out of sight, in the window, a pane or a frame, is not offered:
+  reaching it takes a scroll, which is a move of its own. A control the
+  application has hidden,
   such as one in a pane another pane has been zoomed over, is never offered.
   A hop spent on something no person could reach finds nothing a person
   would meet, and wastes the hop besides. Measured on RStudio on 2026-10-01:
@@ -257,7 +259,13 @@ and the runner runs all of them after every hop.
   on RStudio, a document shown in a new window floated over the main one,
   and the next hops clicked controls behind it. A person reaches those by
   moving the floating window aside, or by clicking the main window, which
-  brings it to the front.
+  brings it to the front. **Corrected on 2026-10-12:** as written on
+  2026-10-01 it also allowed what a person could "bring into view by
+  scrolling", which the words it was raised in do not say. Asked, close to
+  how it was put, "when did we say that a control that's out of sight
+  counts as reachable? That's a terrible idea", once Help showing "Writing
+  R Extensions" put 5,297 links scrolled out of sight in one pool; and
+  offering only what shows was taken with "YES".
 - **R33 (Must)** A route explores every window the application opens, not
   only the first: a floating window, such as a document RStudio shows in a
   new window, is surveyed and traveled through like the main one. Measured

@@ -1,4 +1,4 @@
-import type { ElectronApplication, Frame, Locator, Page } from '@playwright/test';
+import type { ElectronApplication, ElementHandle, Frame, Locator, Page } from '@playwright/test';
 import type { Candidate, Exclusions, FrameName } from './app-under-test.js';
 import { originKey, readFramed, readTree, withoutBoxes, type AriaNode, type ReadFrame, type UnreadFrame } from './frames.js';
 import { menuEntries } from './menu.js';
@@ -114,6 +114,8 @@ export interface PageCandidate {
   readonly frame?: readonly FrameName[];
   /** The frame's document it lives in, for the tests run inside it; absent for the window's own page. */
   readonly document?: Frame;
+  /** Where the survey found it, so its element is fetched with its role's; see `Elements`. */
+  readonly found?: FoundIn;
   /**
    * For a link in a frame whose address leaves the application, the scheme
    * and host it goes to, which keeps it out of the draw; see `survey`.
@@ -604,6 +606,88 @@ export async function answered<T>(what: string, call: Promise<T>, timeoutMs: num
 }
 
 /**
+ * Where the survey found a control: the element its document was read from,
+ * its place among every element of its role there, named or not, and how
+ * many of that role the snapshot held. Filled in as the walk goes, so the
+ * totals are complete once it ends.
+ */
+export interface FoundIn {
+  readonly root: Locator;
+  readonly roleIndex: number;
+  readonly roleTotals: ReadonlyMap<string, number>;
+}
+
+/**
+ * Each control's element, found once per role and document rather than once
+ * per control.
+ *
+ * **Why.** A control's locator finds its element by role, name and position,
+ * which searches the whole document every time, so testing every control
+ * one at a time costs the square of how many there are. Measured on RStudio
+ * 2026.10.0 on 2026-10-12: Help showing "Writing R Extensions" holds 7,581
+ * links in a frame, and a survey there took about 45 minutes.
+ *
+ * **How.** One call per role fetches every element of that role in the
+ * document, in document order, which is the order the snapshot lists them
+ * in. It is used only when it holds as many as the snapshot found, so a
+ * page that changed in between, or a role counted differently, falls back
+ * to finding each control by its own locator, never to a wrong pairing.
+ * Every element fetched is released when the survey ends.
+ */
+class Elements {
+  private readonly lists = new Map<Locator, Map<string, Promise<ElementHandle[] | undefined>>>();
+  private readonly fetched: ElementHandle[] = [];
+
+  constructor(private readonly timeoutMs: number | undefined) {}
+
+  /** Each control's element, or null where it cannot be found in time. */
+  async of(controls: readonly PageCandidate[]): Promise<(ElementHandle | null)[]> {
+    return Promise.all(
+      controls.map(async (control) => {
+        const listed = control.found ? (await this.list(control.found, control.role))?.[control.found.roleIndex] : undefined;
+        if (listed) return listed;
+        const one = await answered(
+          'a control, asked for its element,',
+          control.locator.elementHandle(this.timeoutMs === undefined ? {} : { timeout: this.timeoutMs }),
+          this.timeoutMs
+        ).catch(() => null);
+        if (one) this.fetched.push(one);
+        return one;
+      })
+    );
+  }
+
+  private list(found: FoundIn, role: string): Promise<ElementHandle[] | undefined> {
+    let byRole = this.lists.get(found.root);
+    if (!byRole) {
+      byRole = new Map();
+      this.lists.set(found.root, byRole);
+    }
+    let listing = byRole.get(role);
+    if (!listing) {
+      listing = answered(
+        'the page, asked for every control of one role,',
+        found.root.getByRole(role as Parameters<Page['getByRole']>[0]).elementHandles(),
+        this.timeoutMs
+      ).then(
+        (all) => {
+          this.fetched.push(...all);
+          return all.length === found.roleTotals.get(role) ? all : undefined;
+        },
+        () => undefined
+      );
+      byRole.set(role, listing);
+    }
+    return listing;
+  }
+
+  /** Release every element fetched, so the page does not keep them alive. */
+  async dispose(): Promise<void> {
+    await Promise.all(this.fetched.map((element) => element.dispose().catch(() => undefined)));
+  }
+}
+
+/**
  * What a Route may act on right now.
  *
  * The exclusion list is applied BEFORE the result is returned, so the draw a
@@ -612,9 +696,18 @@ export async function answered<T>(what: string, call: Promise<T>, timeoutMs: num
  * changes the stream position and breaks the replay R8 asks for.
  */
 export async function survey(options: SurveyOptions): Promise<SurveyResult> {
+  const elements = new Elements(options.timeoutMs);
+  try {
+    return await surveyWith(options, elements);
+  } finally {
+    await elements.dispose();
+  }
+}
+
+async function surveyWith(options: SurveyOptions, elements: Elements): Promise<SurveyResult> {
   const { page, app, exclusions, hopIndex, tally, timeoutMs } = options;
 
-  const { candidates: pageCandidates, unnamed, tree, frames, unread } = await surveyPage(page, timeoutMs);
+  const { candidates: pageCandidates, unnamed, tree, frames, unread } = await surveyPage(page, timeoutMs, elements);
   const { menuCandidates, menuSource } = await surveyMenu(app, timeoutMs);
 
   const found: SurveyedCandidate[] = [
@@ -648,7 +741,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
       // link follows it, so a Tab that moved focus onto an excluded control
       // would otherwise hand the next Enter a way past the rail.
       if (!rule && candidate.role === 'key') {
-        focusOnExcluded ??= await focusedExcluded(excludedControls, timeoutMs);
+        focusOnExcluded ??= await focusedExcluded(page, excludedControls, timeoutMs, elements);
         if (focusOnExcluded) rule = `focus: ${focusOnExcluded}`;
       }
 
@@ -685,7 +778,8 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   const { covered, hidden, layered, labeled: reached } = await outOfReachInEachDocument(
     page,
     candidates.filter((c): c is PageCandidate => c.source === 'page'),
-    timeoutMs
+    timeoutMs,
+    elements
   );
   // A printed shortcut whose every control is covered by a dialog leaves the
   // draw too, recorded as covered by what covers the first of them; see
@@ -742,7 +836,8 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
 async function outOfReachInEachDocument(
   page: Page,
   controls: readonly PageCandidate[],
-  timeoutMs: number | undefined
+  timeoutMs: number | undefined,
+  elements: Elements
 ): Promise<Awaited<ReturnType<typeof outOfReachAmong>>> {
   const main = page.mainFrame();
   const groups = new Map<Frame, PageCandidate[]>();
@@ -754,7 +849,7 @@ async function outOfReachInEachDocument(
   }
   const results = await Promise.all(
     [...groups].map(async ([where, group]) => {
-      const inside = await outOfReachAmong(where, group, timeoutMs);
+      const inside = await outOfReachAmong(where, group, timeoutMs, elements);
       if (where === main) return inside;
       const out = new Set<PageCandidate | KeyCandidate>([...inside.covered, ...inside.hidden].map((entry) => entry.candidate));
       const outside = await throughFrames(
@@ -952,14 +1047,15 @@ async function throughFrames(
 async function outOfReachAmong(
   doc: Frame,
   controls: readonly PageCandidate[],
-  timeoutMs: number | undefined
+  timeoutMs: number | undefined,
+  elements: Elements
 ): Promise<{
   covered: CoveredCandidate[];
   hidden: HiddenCandidate[];
   layered: LayeredCandidate[];
   labeled: (LabeledCandidate & { via: Locator })[];
 }> {
-  const labeled = await throughLabels(doc, controls, timeoutMs);
+  const labeled = await throughLabels(doc, controls, timeoutMs, elements);
   const tested = controls.filter((control) => control.box !== undefined && !labeled.decided.has(control));
   if (!tested.length && !labeled.decided.size) return { covered: [], hidden: [], layered: [], labeled: [] };
 
@@ -1022,27 +1118,33 @@ async function outOfReachAmong(
   const covered: CoveredCandidate[] = [...labeled.covered];
   const hidden: HiddenCandidate[] = [...labeled.hidden];
   const layered: LayeredCandidate[] = [];
-  // All at once rather than one after another, so a survey waits at most one
-  // timeout however many controls fail to answer. Measured on RStudio
-  // 2026.10.0 on 2026-10-08: under "Preparing profiler...", 29 of 45
-  // suspects never answered, and in turn they held one survey for 146 s.
-  // The verdicts are read back in the controls' order, so nothing the draw
-  // sees depends on which answered first.
-  const verdicts = await Promise.all(
-    suspects.map(async (suspect, index) => {
-      const control = tested[index];
-      if (!suspect || !control) return null;
-      // Tested against the element itself, and at the center of the part of it
-      // that shows: inside the window and inside every container that clips
-      // it. A container that clips and has no area hides it, R32. Otherwise
-      // none showing means it is scrolled out of sight inside one of them,
-      // not covered, since the click scrolls it into view first; measured on
-      // Bobolink Editor on 2026-09-30, where a link in a preview pane read as
-      // covered by whatever was drawn where it would have been. A control this
-      // cannot reach, or a page that does not answer in time, stays in the draw.
-      return control.locator
-        .evaluate(
-          (element, typed): { hidden: string } | { layered: string } | { covered: string; dialog: boolean } | null => {
+  // Every suspect in one call, with each element found once per role
+  // (`Elements`), rather than one call per control. Measured on RStudio
+  // 2026.10.0 on 2026-10-12: Help showing "Writing R Extensions" puts 7,581
+  // links in a frame, most of them outside the window and so suspects, and
+  // a call per control, each finding its element again by role and name
+  // across the whole page, held one survey for about 45 minutes. One call
+  // also waits at most one timeout however many controls fail to answer,
+  // which a call per control had to run all at once to get: measured on
+  // 2026-10-08, under "Preparing profiler...", 29 of 45 suspects never
+  // answered and held one survey for 146 s. The verdicts come back in the
+  // controls' order, so nothing the draw sees depends on timing.
+  //
+  // Each is tested against the element itself, and at the center of the
+  // part of it that shows: inside the window and inside every container
+  // that clips it. A container that clips and has no area hides it, R32.
+  // Otherwise none showing means it is scrolled out of sight inside one of
+  // them, not covered, since the click scrolls it into view first; measured
+  // on Bobolink Editor on 2026-09-30, where a link in a preview pane read as
+  // covered by whatever was drawn where it would have been. A control this
+  // cannot reach, or a page that does not answer in time, stays in the draw.
+  const asked = tested.filter((_control, index) => suspects[index]);
+  const handles = await elements.of(asked);
+  const answers = await answered(
+    'the page, asked what is on top of each suspect control,',
+    doc.evaluate(
+      ({ found, typedAll }) => {
+        const verdictOf = (element: Element, typed: boolean): { hidden: string } | { layered: string } | { covered: string; dialog: boolean } | null => {
             const up = (node: Element): Element | null => {
               const root = node.getRootNode();
               return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
@@ -1102,13 +1204,15 @@ async function outOfReachAmong(
             const parent = up(element);
             if (typed && parent && parent.contains(top)) return { layered: describe(top) };
             return { covered: describe(top), dialog: top.closest('[role="dialog"], [role="alertdialog"], dialog') !== null };
-          },
-          takesTypedValue(control),
-          timeoutMs === undefined ? {} : { timeout: timeoutMs }
-        )
-        .catch(() => null);
-    })
-  );
+          };
+        return found.map((element, index) => (element ? verdictOf(element as Element, typedAll[index] === true) : null));
+      },
+      { found: handles, typedAll: asked.map(takesTypedValue) }
+    ),
+    timeoutMs
+  ).catch(() => asked.map(() => null));
+  const byControl = new Map(asked.map((control, index) => [control, answers[index] ?? null]));
+  const verdicts = tested.map((control) => byControl.get(control) ?? null);
   for (const [index, verdict] of verdicts.entries()) {
     const control = tested[index];
     if (!control) continue;
@@ -1154,7 +1258,8 @@ const CLICKED_ROLES = new Set(['button', 'checkbox', 'link', 'menuitem', 'menuit
 async function throughLabels(
   doc: Frame,
   controls: readonly PageCandidate[],
-  timeoutMs: number | undefined
+  timeoutMs: number | undefined,
+  elements: Elements
 ): Promise<{
   reached: (LabeledCandidate & { via: Locator })[];
   covered: CoveredCandidate[];
@@ -1168,60 +1273,59 @@ async function throughLabels(
   const flat = controls.filter(
     (control) => control.box !== undefined && !hasArea(control.box) && CLICKED_ROLES.has(control.role)
   );
-  // All at once, for the reason the covered test in `outOfReachAmong` gives.
-  const verdicts = await Promise.all(
-    flat.map((control) =>
-      control.locator
-        .evaluate(
-          (element):
-            | { labeled: string; inside: boolean; id: string }
-            | { covered: string; dialog: boolean }
-            | { hidden: string }
-            | null => {
-            const describe = (node: Element): string => {
-              const attributes = ['role', 'aria-label', 'id', 'class']
-                .map((name) => [name, node.getAttribute(name)] as const)
-                .filter(([, value]) => value)
-                .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
-                .join('');
-              const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
-              return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
-            };
-            const area = (node: Element) => {
-              const rect = node.getBoundingClientRect();
-              return rect.width >= 1 && rect.height >= 1;
-            };
-            // Something inside it with area, as `display: contents` lays out:
-            // Playwright clicks that, so it is no case for a label.
-            if ([...element.querySelectorAll('*')].some(area)) return null;
-            const labels = [...((element as HTMLInputElement).labels ?? [])].filter(area);
-            if (!labels.length) return { hidden: `${describe(element)}, with no label that shows,` };
-            let cover: Element | null = null;
-            for (const label of labels) {
-              const rect = label.getBoundingClientRect();
-              const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
-              const y = Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1);
-              let top = document.elementFromPoint(x, y);
-              while (top?.shadowRoot) {
-                const inner = top.shadowRoot.elementFromPoint(x, y);
-                if (!inner || inner === top) break;
-                top = inner;
-              }
-              if (top && (label.contains(top) || top === element)) {
-                return { labeled: describe(label), inside: label.contains(element), id: element.id };
-              }
-              cover ??= top;
+  // One call for them all, each element found once per role, for the reason
+  // `Elements` gives; a control whose element is not found is left undecided.
+  const handles = await elements.of(flat);
+  const verdicts = await answered(
+    'the page, asked for the labels of controls with no area,',
+    doc.evaluate((found) => {
+      const verdictOf = (element: Element):
+          | { labeled: string; inside: boolean; id: string }
+          | { covered: string; dialog: boolean }
+          | { hidden: string }
+          | null => {
+          const describe = (node: Element): string => {
+            const attributes = ['role', 'aria-label', 'id', 'class']
+              .map((name) => [name, node.getAttribute(name)] as const)
+              .filter(([, value]) => value)
+              .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
+              .join('');
+            const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+            return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
+          };
+          const area = (node: Element) => {
+            const rect = node.getBoundingClientRect();
+            return rect.width >= 1 && rect.height >= 1;
+          };
+          // Something inside it with area, as `display: contents` lays out:
+          // Playwright clicks that, so it is no case for a label.
+          if ([...element.querySelectorAll('*')].some(area)) return null;
+          const labels = [...((element as HTMLInputElement).labels ?? [])].filter(area);
+          if (!labels.length) return { hidden: `${describe(element)}, with no label that shows,` };
+          let cover: Element | null = null;
+          for (const label of labels) {
+            const rect = label.getBoundingClientRect();
+            const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
+            const y = Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1);
+            let top = document.elementFromPoint(x, y);
+            while (top?.shadowRoot) {
+              const inner = top.shadowRoot.elementFromPoint(x, y);
+              if (!inner || inner === top) break;
+              top = inner;
             }
-            return cover
-              ? { covered: describe(cover), dialog: cover.closest('[role="dialog"], [role="alertdialog"], dialog') !== null }
-              : null;
-          },
-          undefined,
-          timeoutMs === undefined ? {} : { timeout: timeoutMs }
-        )
-        .catch(() => null)
-    )
-  );
+            if (top && (label.contains(top) || top === element)) {
+              return { labeled: describe(label), inside: label.contains(element), id: element.id };
+            }
+            cover ??= top;
+          }
+          return cover
+            ? { covered: describe(cover), dialog: cover.closest('[role="dialog"], [role="alertdialog"], dialog') !== null }
+            : null;
+        };
+      return found.map((element) => (element ? verdictOf(element as Element) : null));
+    }, handles),
+    timeoutMs
+  ).catch(() => flat.map(() => null));
   for (const [index, verdict] of verdicts.entries()) {
     const control = flat[index];
     if (!verdict || !control) continue;
@@ -1252,29 +1356,42 @@ function hasArea(box: Box): boolean {
  * once however many keys it reaches.
  */
 async function focusedExcluded(
+  page: Page,
   excludedControls: ReadonlyMap<PageCandidate, string>,
-  timeoutMs: number | undefined
+  timeoutMs: number | undefined,
+  elements: Elements
 ): Promise<string> {
-  // All at once, for the reason the covered test in `outOfReachAmong` gives,
-  // and read back in order, so the answer is the one asking in turn gave.
+  // One call per document, each control's element found once per role, for
+  // the reason `Elements` gives, and read back in the controls' order, so the
+  // answer is the one asking in turn gave.
   const controls = [...excludedControls.keys()];
-  const answers = await Promise.all(
-    controls.map((control) =>
-      control.locator
-        .evaluate(
-          (element) => element.contains(document.activeElement),
-          undefined,
-          timeoutMs === undefined ? {} : { timeout: timeoutMs }
-        )
-        // **Fails closed.** A focus that could not be read might be on the
+  const main = page.mainFrame();
+  const documents = new Map<Frame, PageCandidate[]>();
+  for (const control of controls) {
+    const where = control.document ?? main;
+    documents.set(where, [...(documents.get(where) ?? []), control]);
+  }
+  const answers = new Map<PageCandidate, boolean | string>();
+  await Promise.all(
+    [...documents].map(async ([where, group]) => {
+      const handles = await elements.of(group);
+      const focused = await answered(
+        'the page, asked which excluded control has focus,',
+        where.evaluate((found) => found.map((element) => (element ? (element as Element).contains(document.activeElement) : null)), handles),
+        timeoutMs
+      )
+        // **Fails closed.** A focus that could not be read might be on an
         // excluded control, and reading "not focused" would leave Enter in the
         // draw on a focused outbound link: the way past the rail this closes.
-        .catch((error: unknown) => `unknown (${error instanceof Error ? error.message.split('\n')[0] : String(error)})`)
-    )
+        .catch((error: unknown) => `unknown (${error instanceof Error ? error.message.split('\n')[0] : String(error)})`);
+      for (const [index, control] of group.entries()) {
+        const answer = typeof focused === 'string' ? focused : focused[index];
+        answers.set(control, answer === null || answer === undefined ? 'unknown (its element could not be found)' : answer);
+      }
+    })
   );
-  for (const [index, focused] of answers.entries()) {
-    const control = controls[index];
-    if (!control) continue;
+  for (const control of controls) {
+    const focused = answers.get(control);
     if (typeof focused === 'string') return `${control.name}, ${focused}`;
     if (focused) return control.name;
   }
@@ -1406,7 +1523,8 @@ export interface Box {
  */
 async function surveyPage(
   page: Page,
-  timeoutMs: number | undefined
+  timeoutMs: number | undefined,
+  elements: Elements
 ): Promise<{
   candidates: PageCandidate[];
   unnamed: UnnamedElement[];
@@ -1477,7 +1595,10 @@ async function surveyPage(
     // apart by their position in document order, within their own document.
     // Counted from 1, as a person counts them; getByRole().nth() counts from
     // 0, and the conversion happens here and nowhere else.
-    seen: Map<string, number>
+    seen: Map<string, number>,
+    // Every element of each role, named or not, in document order, which is
+    // how `Elements` pairs a control with its element.
+    roles: Map<string, number>
   ): void => {
     if (typeof node === 'string') return;
 
@@ -1486,12 +1607,15 @@ async function surveyPage(
     const inner = node.frame ? documents.get(JSON.stringify([...doc.path, node.frame])) : undefined;
     if (inner) {
       const innerSeen = new Map<string, number>();
-      for (const child of node.children ?? []) walk(child, undefined, inner, innerSeen);
+      const innerRoles = new Map<string, number>();
+      for (const child of node.children ?? []) walk(child, undefined, inner, innerSeen, innerRoles);
       return;
     }
 
     let self: PageCandidate | undefined;
     if (node.role && hoppable.has(node.role)) {
+      const roleIndex = roles.get(node.role) ?? 0;
+      roles.set(node.role, roleIndex + 1);
       if (node.name) {
         const key = `${node.role}\u0000${node.name}`;
         const nth = (seen.get(key) ?? 0) + 1;
@@ -1509,6 +1633,7 @@ async function surveyPage(
             exact: true,
           }).nth(nth - 1),
           ...(doc.path.length ? { frame: doc.path, document: doc.frame } : {}),
+          found: { root: doc.root, roleIndex, roleTotals: roles },
         };
         candidates.push(self);
       } else {
@@ -1516,14 +1641,15 @@ async function surveyPage(
       }
     }
 
-    for (const child of node.children ?? []) walk(child, self ?? within, doc, seen);
+    for (const child of node.children ?? []) walk(child, self ?? within, doc, seen, roles);
   };
 
   const main = documents.get('[]');
   if (main) {
     const seen = new Map<string, number>();
+    const roles = new Map<string, number>();
     for (const node of (Array.isArray(read.snapshot) ? read.snapshot : [read.snapshot]) as (AriaNode | string)[]) {
-      walk(node, undefined, main, seen);
+      walk(node, undefined, main, seen, roles);
     }
   }
 
@@ -1532,7 +1658,7 @@ async function surveyPage(
   // reports them yet.
   const enabled = candidates.filter((candidate) => !candidate.disabled);
   return {
-    candidates: await withAddresses(page, enabled, timeoutMs),
+    candidates: await withAddresses(page, enabled, timeoutMs, elements),
     unnamed,
     tree,
     frames: read.frames,
@@ -1551,35 +1677,52 @@ async function surveyPage(
 async function withAddresses(
   page: Page,
   candidates: readonly PageCandidate[],
-  timeoutMs: number | undefined
+  timeoutMs: number | undefined,
+  elements: Elements
 ): Promise<PageCandidate[]> {
   const pageOrigin = originKey(page.mainFrame().url());
-  return Promise.all(
-    candidates.map(async (candidate) => {
-      if (!candidate.document || candidate.role !== 'link') return candidate;
-      const address = await candidate.locator
-        .evaluate(
-          (element) => {
-            const anchor = element.closest('a[href], area[href]') ?? element;
-            const written = anchor.getAttribute('href');
-            if (!written) return '';
-            try {
-              return new URL(written, document.baseURI).href;
-            } catch {
-              return written;
-            }
-          },
-          undefined,
-          timeoutMs === undefined ? {} : { timeout: timeoutMs }
-        )
-        .catch(() => undefined);
-      if (address === undefined) return { ...candidate, offApplication: 'an address that could not be read' };
-      if (address === '' || /^javascript:/i.test(address)) return candidate;
-      const goes = originKey(address);
-      if (goes === pageOrigin || goes === originKey(candidate.document.url())) return candidate;
-      return { ...candidate, offApplication: goes };
+  // One call per frame's document, each link's element found once per role,
+  // for the reason `Elements` gives.
+  const documents = new Map<Frame, PageCandidate[]>();
+  for (const candidate of candidates) {
+    if (!candidate.document || candidate.role !== 'link') continue;
+    documents.set(candidate.document, [...(documents.get(candidate.document) ?? []), candidate]);
+  }
+  const addresses = new Map<PageCandidate, string | undefined>();
+  await Promise.all(
+    [...documents].map(async ([where, links]) => {
+      const handles = await elements.of(links);
+      const read = await answered(
+        "a frame, asked for its links' addresses,",
+        where.evaluate(
+          (found) =>
+            found.map((element) => {
+              if (!element) return null;
+              const anchor = (element as Element).closest('a[href], area[href]') ?? (element as Element);
+              const written = anchor.getAttribute('href');
+              if (!written) return '';
+              try {
+                return new URL(written, document.baseURI).href;
+              } catch {
+                return written;
+              }
+            }),
+          handles
+        ),
+        timeoutMs
+      ).catch(() => links.map(() => null));
+      for (const [index, link] of links.entries()) addresses.set(link, read[index] ?? undefined);
     })
   );
+  return candidates.map((candidate) => {
+    if (!candidate.document || candidate.role !== 'link') return candidate;
+    const address = addresses.get(candidate);
+    if (address === undefined) return { ...candidate, offApplication: 'an address that could not be read' };
+    if (address === '' || /^javascript:/i.test(address)) return candidate;
+    const goes = originKey(address);
+    if (goes === pageOrigin || goes === originKey(candidate.document.url())) return candidate;
+    return { ...candidate, offApplication: goes };
+  });
 }
 
 /** Candidates from the native menu, or the reason there are none. */

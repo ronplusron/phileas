@@ -333,3 +333,28 @@ test('two frames drawn at one box are paired with their nodes in document order'
   expect(tree.indexOf('Under tag')).toBeGreaterThan(-1);
   expect(tree.indexOf('Under tag')).toBeLessThan(tree.indexOf('Over tag'));
 });
+
+test('a frame of thousands of links is surveyed in seconds, each link still judged', async ({ page, app }) => {
+  // Measured on RStudio on 2026-10-12: Help showing "Writing R Extensions"
+  // holds 7,581 links in a frame, and a survey that found each control's
+  // element again, one control at a time, took about 45 minutes there.
+  await page.evaluate(() => {
+    const frame = document.createElement('iframe');
+    frame.title = 'Manual';
+    frame.style.cssText = 'width: 400px; height: 200px;';
+    frame.srcdoc = Array.from({ length: 3000 }, (_unused, index) =>
+      index % 10 === 0 ? `<a href="https://example.com/${index}">Away ${index}</a><br>` : `<a href="#s${index}">Section ${index}</a><br>`
+    ).join('');
+    document.body.append(frame);
+  });
+  await page.locator('iframe[title="Manual"]').contentFrame().getByRole('link', { name: 'Section 2999' }).waitFor({ state: 'attached', timeout: 10_000 });
+  const started = Date.now();
+  const found = await survey({ page, app, exclusions: {}, hopIndex: 0, tally: createExclusionTally({}), timeoutMs: 3_000 });
+  expect(Date.now() - started).toBeLessThan(30_000);
+  // Every link that leaves is excluded, and only those, so no address read
+  // was given up on and read as leaving.
+  const away = found.excluded.filter((entry) => entry.rule.startsWith('link off the application'));
+  expect(away).toHaveLength(300);
+  expect(away.every((entry) => entry.candidate.name.startsWith('Away '))).toBe(true);
+  expect(found.candidates.filter((candidate) => candidate.name.startsWith('Section '))).toHaveLength(2700);
+});

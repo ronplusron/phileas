@@ -1176,6 +1176,12 @@ since every read inside it is refused and logged as a console error, and an
 id made fresh each launch is written `<id>` in a frame's label, measured on
 Positron's webviews.
 
+**Offering only what shows, placed on 2026-10-12,** before stage 5, on a
+branch of its own once the repair of the slow survey merges. R32 was
+corrected that day to its own words, and the engine still offers a control
+scrolled out of sight, which `DEFECTS.md` carries. Proposed with the
+correction and taken with "YES".
+
 ### After the trial: weighting the draw toward new targets
 
 **Placed 2026-09-27,** asked for in the words "Let's do it sooner", and
