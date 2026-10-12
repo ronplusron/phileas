@@ -1231,7 +1231,8 @@ question. Four pieces, in the order they depend on each other:
    run and writes a report and a draft per finding beside the journals,
    asking it for those as structured output so the command, not the model,
    writes the files. It sends the run's journals to the model's provider,
-   so it refuses without `--send` and says what it would send (C3).
+   so it refuses without `--send` and says what it would send (C3). It
+   may spend up to $5, unless `--budget` names another figure.
    Filing reads a consumer's `phileas/filing.json`: which repository, what a
    title starts with, and any rules of that tracker.
 4. **The page.** `phileas view` serves it on `127.0.0.1` only, with a token

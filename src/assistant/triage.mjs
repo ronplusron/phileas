@@ -36,6 +36,14 @@ import { draftProblems, prefixed, readFiling } from './filing.mjs';
 /** The engine's Claude Code plugin, shipped in the package beside `src/`. */
 export const PLUGIN_DIR = fileURLToPath(new URL('../../claude', import.meta.url));
 
+/**
+ * The most one triage may spend, in US dollars, unless a person gives
+ * another: Claude Code's `--max-budget-usd`. Set on 2026-10-12, when every
+ * triage was found to run with no cap, the page's included; the triages of
+ * that day cost from $0.61 to $2.06.
+ */
+export const DEFAULT_BUDGET_USD = '5';
+
 /** The folder in a run where a triage is prepared and written. */
 export const TRIAGE_FOLDER = 'triage';
 
@@ -128,16 +136,19 @@ export function prepareTriage(given, configFolder) {
 }
 
 /**
- * What a triage sends, and to whom, said before it is sent (C3).
+ * What a triage sends, and to whom, and the most it may spend, said before it
+ * is sent (C3).
  * @param {PreparedTriage} prepared
+ * @param {string} [budget] in US dollars
  * @returns {string}
  */
-export function sendNotice(prepared) {
+export function sendNotice(prepared, budget = DEFAULT_BUDGET_USD) {
   const { summary, files, bytes, filing, configFolder } = prepared;
   const rendered = files.filter((file) => file.endsWith('.txt')).length;
   return [
     `Triage sends what Claude Code reads of ${prepared.folder} to Anthropic: its summary, ` +
       `${summary.routes.length} journal(s) and ${rendered} rendered Route(s), ${Math.ceil(bytes / 1024)} KB in all.`,
+    `It may spend up to $${budget}.`,
     filing
       ? `Drafts are written for ${filing.repository}, by ${path.join(configFolder, 'filing.json')}. Nothing is filed.`
       : `There is no ${path.join(configFolder, 'filing.json')}, so drafts name no repository. Nothing is filed.`,
@@ -202,7 +213,9 @@ export function triageArgs(prepared, { model, budget } = {}) {
     '--strict-mcp-config',
     '--no-session-persistence',
     ...(model ? ['--model', model] : []),
-    ...(budget ? ['--max-budget-usd', budget] : []),
+    // Always capped: a person's own figure, or the default.
+    '--max-budget-usd',
+    budget ?? DEFAULT_BUDGET_USD,
   ];
 }
 

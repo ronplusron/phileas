@@ -8,7 +8,9 @@
 
     __REPOSITORY__  the consuming repository's folder, holding phileas/
     __CONFIG__      the Journey's folder, phileas/ by default
-    __BUDGET__      the most one night's triage may spend, in US dollars
+
+  Each night's triage may spend up to $5, the default; add a budget flag to
+  the command to change it.
 
   It runs as you, in your login session, so `claude` uses your own sign-in.
   The send flag in the command sends each run's journals to Anthropic for the
@@ -24,7 +26,7 @@
   <array>
     <string>/bin/zsh</string>
     <string>-lc</string>
-    <string>cd "__REPOSITORY__" &amp;&amp; npx phileas unattended "__CONFIG__" --send --budget __BUDGET__</string>
+    <string>cd "__REPOSITORY__" &amp;&amp; npx phileas unattended "__CONFIG__" --send</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>

@@ -145,6 +145,11 @@ Code refuses to file a draft holding anything outside ASCII. The reshaped
 draft for `buggy`'s planted defect had two steps, open Buggy and click Strap
 the trunk, and said they had not been run alone.
 
+**Every triage is capped at $5 by default,** set the same day, in the words
+"Set the default to $5", once it was found that a triage ran with no cap
+unless `--budget` was given, and the page's button had no way to give one.
+The notice before sending now says the cap.
+
 **Not run: the GitHub Actions workflow,** which needs this branch merged,
 and an `ANTHROPIC_API_KEY` secret for its triage. It is recorded as open.
 

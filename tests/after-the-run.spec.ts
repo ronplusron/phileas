@@ -258,6 +258,10 @@ test('a triage prepares what it sends, says so, and gives the assistant nothing 
   expect(after('--setting-sources')).toBe('user');
   expect(after('--plugin-dir')).toBe(PLUGIN_DIR);
   expect(after('--max-budget-usd')).toBe('2');
+  // Capped whether or not a budget is given.
+  expect(triageArgs(prepared)[triageArgs(prepared).indexOf('--max-budget-usd') + 1]).toBe('5');
+  expect(sendNotice(prepared)).toContain('It may spend up to $5.');
+  expect(sendNotice(prepared, '2')).toContain('It may spend up to $2.');
   expect(args).toContain('--strict-mcp-config');
   // The flags, not the prompt, which may say what not to do.
   expect(args.filter((_, i) => i !== 1).join(' ')).not.toMatch(/dangerously|bypassPermissions|Bash|Write|Edit/);

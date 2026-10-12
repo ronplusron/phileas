@@ -533,7 +533,8 @@ is inside the engine; `docs/PLAN.md` has them under "After the run".
 it, with any replays of its Routes found beside it. `phileas reproduce`
 replays one Route for each new finding not yet replayed.
 `phileas triage --send` hands a run to Claude Code, with only reading tools,
-and writes a report and a draft per finding into the run's `triage/` folder;
+and writes a report and a draft per finding into the run's `triage/` folder,
+spending up to $5 unless `--budget` says otherwise;
 without `--send` it says what it would send to Anthropic and stops.
 `phileas unattended` is a Journey, then `reproduce`, then `triage`, for a
 schedule; `schedule/` holds a launchd template and a GitHub Actions one, and

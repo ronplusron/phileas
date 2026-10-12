@@ -67,7 +67,7 @@ import { renderJournal } from '../src/report/render.mjs';
 import { DEFAULT_KNOWN_FINDINGS, dismissFinding, journalsBeside, listKnownFindings, markFiled, removeFinding } from '../src/known.mjs';
 import { REPORTER_VARIABLE } from '../src/report/render.mjs';
 import { journalsInFolder, listRuns, summarizeRoute, summarizeRun } from '../src/report/summary.mjs';
-import { PLUGIN_DIR, prepareTriage, runTriage, sendNotice, writeTriage } from '../src/assistant/triage.mjs';
+import { DEFAULT_BUDGET_USD, PLUGIN_DIR, prepareTriage, runTriage, sendNotice, writeTriage } from '../src/assistant/triage.mjs';
 import { serve } from '../src/view/server.mjs';
 
 /** Flags that take a value, and the variable each travels in. */
@@ -194,6 +194,7 @@ triage: hand a run to Claude Code, which writes a report of it and a draft
   --send    Send them.
   --model   The model Claude Code uses, as its --model takes it.
   --budget  The most to spend, in US dollars, as its --max-budget-usd.
+            Defaults to ${DEFAULT_BUDGET_USD}.
 
 unattended: run a Journey, reproduce what it found, then triage it, for a
   schedule. Without --send it stops before the triage and says so.
@@ -878,7 +879,7 @@ async function triageRun(folder, config, { send, model, budget }) {
     return true;
   }
   const prepared = prepareTriage(folder, folderOf(config));
-  console.log(sendNotice(prepared));
+  console.log(sendNotice(prepared, budget));
   if (!send) {
     console.log('Nothing was sent. Give --send to send them.');
     return false;
