@@ -79,6 +79,36 @@ function aRun() {
   return { journals, run, replayRun, second };
 }
 
+test('a run as data names the build each Route ran against and what the application ran with', () => {
+  const run = path.join(scratch('phileas-after-build-'), '.phileas-journals', 'seed1', '2026-10-12T10-00-00-000Z');
+  const build = {
+    name: 'Positron',
+    version: '1.130.0',
+    release: '2026.09.1+2',
+    runsWith: { 'R (PATH)': '4.6.0' },
+    sources: { notCompared: 'no-sources' },
+  };
+  const ended = (extra: Record<string, unknown>) => ({ kind: 'outcome', outcome: 'passed', hops: 1, endedAt: 'x', ...extra });
+  write(run, 'route-001-r1.jsonl', [opening(1, { build }), hop(1), ended({ ranWith: { R: ['4.6.0'] } })]);
+  write(run, 'route-002-r2.jsonl', [opening(2, { build }), hop(1), ended({ ranWith: 'none' })]);
+  // From before builds were recorded, and one that never finished.
+  write(run, 'route-003-r3.jsonl', [opening(3), hop(1), ended({})]);
+  write(run, 'route-004-r4.jsonl', [opening(4, { build }), hop(1)]);
+
+  const summary = summarizeRun(run);
+  const [first, second, third, fourth] = summary.routes;
+  const named = 'Positron 2026.09.1+2 (bundle 1.130.0); with R (PATH) 4.6.0; no sources to check it against';
+  expect(first).toMatchObject({ build, buildText: named, ranWith: { R: ['4.6.0'] }, ranWithText: 'ran with R 4.6.0' });
+  expect(second).toMatchObject({ ranWith: 'none', ranWithText: 'ran with nothing started' });
+  expect(third).toMatchObject({ buildText: 'build not recorded', ranWithText: 'what it ran with not recorded' });
+  expect(third?.build).toBeUndefined();
+  expect(fourth).toMatchObject({ buildText: named, ranWithText: 'what it ran with not recorded: the Route did not finish' });
+  expect(summary.builds).toEqual([
+    { text: named, routes: [1, 2, 4] },
+    { text: 'build not recorded', routes: [3] },
+  ]);
+});
+
 test('a run as data says what the reporter says of each Route, and finds the replays beside it', () => {
   const { run, replayRun, second } = aRun();
   const summary = summarizeRun(run);

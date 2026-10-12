@@ -39,10 +39,44 @@ export function rscript(raw: string | undefined = process.env[WHICH_R_VARIABLE])
  * not what RStudio started: `AppUnderTest.runsWith` says why.
  */
 export function rRunsWith(env: Readonly<Record<string, string>>): Record<string, string> {
+  // Written against macOS, where RStudio takes the PATH's R when the variable
+  // is unset. On Windows it can be told another R in its own settings, so the
+  // PATH's would be a wrong value, which is worse than none.
+  if (process.platform !== 'darwin') {
+    throw new Error(`the R RStudio is set up with is read on macOS only, not on ${process.platform}`);
+  }
   const named = (env[WHICH_R_VARIABLE] ?? '').trim();
   const version = execFileSync(rscript(named), ['--vanilla', '-e', 'cat(format(getRversion()))'], {
     encoding: 'utf8',
     timeout: 10_000,
   }).trim();
   return { [named ? `R (${WHICH_R_VARIABLE})` : 'R (PATH)']: version };
+}
+
+/**
+ * RStudio's first call to its R session, which answers with the R it
+ * started: `r_versions_info.r_version` in `SessionClientInit.cpp`, sent on
+ * every platform before anything is drawn. The engine keeps its responses
+ * from launch (`captureResponses`).
+ */
+export const CLIENT_INIT = /\/rpc\/client_init(?:[?#]|$)/;
+
+/**
+ * The R RStudio started, from the latest `client_init` answer. A throw, which
+ * the engine records as unread, where none was caught or one came without
+ * the version, rather than nothing: RStudio is not ready until its session
+ * has answered `client_init`, and the engine first asks once it is ready, so
+ * no answer means it was missed, never that no R started.
+ */
+export function rRanWith(bodies: readonly string[]): Record<string, string> {
+  const body = bodies.at(-1);
+  if (body === undefined) throw new Error('no client_init answer was caught, though RStudio answers one before it is ready');
+  let version: unknown;
+  try {
+    version = (JSON.parse(body) as { result?: { r_versions_info?: { r_version?: unknown } } }).result?.r_versions_info?.r_version;
+  } catch {
+    throw new Error('client_init answered with something that is not JSON');
+  }
+  if (typeof version !== 'string' || version === '') throw new Error('client_init answered without result.r_versions_info.r_version');
+  return { R: version };
 }

@@ -25,12 +25,16 @@ argument, and re-deriving them would cost it again.
 
 ---
 
-## 2026-10-12: the journal names the build a Route ran against
+## 2026-10-12: the journal names the build a Route ran against, and what it ran with
 
 **Why.** C1 asks a finding to say which build was tested, and the opening
 line said nothing about the application. That day an automated triage of
 an RStudio run, with nothing recorded, wrote that RStudio was built from a
-source checkout, when the trial runs a copy of the installed release.
+source checkout, when the trial runs a copy of the installed release. The
+language each one ran followed, in the words "RStudio needs the R version,
+Positron is R or Python, whichever is relevant," on macOS, Windows and
+Linux. `PLAN.md` has the design, under "Which build a Route ran, and what
+it ran with", from a research pass over both applications' sources.
 
 **Measured first.** RStudio 2026.10.0's `Info.plist` gives
 `2026.10.0+232` for both its short version and its build. Positron
@@ -39,29 +43,51 @@ source checkout, when the trial runs a copy of the installed release.
 release. So the bundle alone would have named the wrong Positron in every
 report.
 
-**What landed.** `launchApp` reads the bundle's `Info.plist` (`src/build.ts`)
-and records the name, version, build where it differs, and identifier, with
-the staleness guard's verdict: files compared, no sources, or skipped by
-`PHILEAS_ALLOW_STALE`. Two optional adapter fields add what the bundle
-cannot say. `release` is the adapter's name for the release, and Positron's
-reads it from `product.json`. `runsWith` returns short named values, each
-named by where it came from: RStudio's is the R that `RSTUDIO_WHICH_R`
-names, else the PATH's, and Positron's is the PATH's R and `python3`, plus
-the R handed to the early releases. It does not run macOS's
-`/usr/bin/python3` where the Command Line Tools are missing, since that
-stub opens a dialog offering to install them; untested on this machine,
-which has them. Asked in the words "Can we hav
-adapter-level items?", with R in RStudio and R and Python in Positron as
-the cases. A Route finds the build from the `app` it is handed, so no
-consumer's spec had to change. Anything that could not be read says why,
-and the renderer prints it all on the opening line. An older journal reads
-as before and prints "build not recorded".
+**What landed.**
+- **The build, on the opening line.** `launchApp` reads the bundle's
+  `Info.plist` on macOS, and the packaged `package.json` elsewhere
+  (`src/build.ts`), with the staleness guard's verdict: files compared, no
+  sources, or skipped by `PHILEAS_ALLOW_STALE`. An adapter's `release`
+  names its own release; Positron's is `2026.09.1+2` from `product.json`.
+  A Route finds the build from the `app` it is handed, so no consumer's
+  spec had to change. An older journal prints "build not recorded".
+- **The setup, on the opening line.** An adapter's `runsWith`, asked in the
+  words "Can we hav adapter-level items?", is its account before launch,
+  each value named by where it came from: RStudio's R from
+  `RSTUDIO_WHICH_R` or the PATH, Positron's PATH R and `python3` and the R
+  handed to its early releases. Off macOS both trial adapters record it as
+  unread rather than guess: RStudio on Windows can be told another R in its
+  own settings, which made the PATH's R a wrong value there, and a wrong
+  value is worse than none. Positron's does not run macOS's
+  `/usr/bin/python3` where the Command Line Tools are missing, since that
+  stub opens a dialog; untested here, where they are installed.
+- **What ran, from the running application.** An adapter's `ranWith` is
+  asked after launch, after the Fix and after every Hop. Each new value
+  goes on a `note` line where it was first seen, and the `outcome` line
+  rolls them up, as `none` where nothing started and every read answered.
+  The engine keeps responses whose address an adapter's
+  `captureResponses` names. RStudio's R comes from its own `client_init`
+  answer; Positron's R or Python from the Route's `renderer.log`.
+- **After the run.** `phileas show --json` gives each Route's `build` and
+  `ranWith`, each also as text, and a run's `builds`; the triage skill
+  states the environment from them, and calls what is not recorded "not
+  recorded".
 
-**What it is not.** `runsWith` is the adapter's account at launch, not
-what the application used. RStudio uses `RSTUDIO_WHICH_R` where it is set,
-and on Windows can be told another R in its own settings. Positron
-discovers interpreters itself. `OUTSTANDING.md` has reading what actually
-started.
+**Measured on both applications** by each trial's `probes/ran-with.spec.ts`:
+RStudio named R 4.6.0 from the PATH and R 4.4.3 when `RSTUDIO_WHICH_R`
+named it, which only its own answer could tell apart; Positron named
+`none` with no Fix, R 4.6.0 with the `session` Fix, and Python 3.9.6 for a
+Python session. Capturing a response starts when the launch returns, which
+missed `buggy`'s own first page but caught `client_init` on every launch,
+since RStudio answers it seconds later. So each adapter records as unread,
+never as `none`, what would otherwise be a wrong `none`: RStudio's a
+missing `client_init` answer, and Positron's a missing renderer log or a
+session start whose line gives no version. Windows and Linux are read in
+source only; `OUTSTANDING.md` has what is unverified there.
+
+**Decided against: a check that setup and run agree.** It would end every
+Route at its first Hop where RStudio on Windows was told another R in its
+settings, which is not a defect. Both stay on the record.
 
 ## 2026-10-12: the work after a run, given commands, a page, a schedule and an assistant
 

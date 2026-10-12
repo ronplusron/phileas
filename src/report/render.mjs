@@ -319,6 +319,22 @@ export function buildText(build) {
 }
 
 /**
+ * What a Route's application was seen to run with, from its outcome line:
+ * each name with every value it took, `nothing started` where the adapter
+ * reads it and saw nothing, and why a read failed. Empty where the adapter
+ * does not read it, or the journal is from before 2026-10-12.
+ * @param {Extract<JournalEntry, { kind: 'outcome' }>} outcome
+ * @returns {string}
+ */
+export function ranWithText(outcome) {
+  const parts = [];
+  if (outcome.ranWith === 'none') parts.push('nothing started');
+  else if (outcome.ranWith) parts.push(Object.entries(outcome.ranWith).map(([name, values]) => `${name} ${values.join(' then ')}`).join(', '));
+  if (outcome.ranWithUnread) parts.push(`not all read: ${outcome.ranWithUnread}`);
+  return parts.length ? `ran with ${parts.join('; ')}` : '';
+}
+
+/**
  * The first sentence of a reason, without a colon it ends on: "3 checks failed
  * after hop 56, which is when the checks read it." from the whole failure.
  * @param {string} text
@@ -393,7 +409,8 @@ export function renderEntry(entry, routeNumber, { brief = false } = {}) {
       return `${route}  note before hop ${entry.hop}: ${entry.note}`;
     case 'outcome': {
       const reason = entry.reason && brief && entry.outcome === 'failed' ? firstSentence(entry.reason) : entry.reason;
-      return `${route}  ${entry.outcome} after ${entry.hops} hops${reason ? `: ${reason}` : ''}`;
+      const ran = ranWithText(entry);
+      return `${route}  ${entry.outcome} after ${entry.hops} hops${ran ? ` (${ran})` : ''}${reason ? `: ${reason}` : ''}`;
     }
     default:
       return undefined;

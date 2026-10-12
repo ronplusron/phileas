@@ -17,9 +17,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { currentSignature, findingId, readKnownFindings } from '../known.mjs';
 import { readEnding, replayVerdict } from './reporter.mjs';
-import { targetText } from './render.mjs';
+import { buildText, ranWithText, targetText } from './render.mjs';
 
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
+/** @typedef {import('../build').JournaledBuild} JournaledBuild */
 
 /** A Route's journal, as `journalPath` names it in journal.ts. */
 const JOURNAL_NAME = /^route-\d+-.*\.jsonl$/;
@@ -52,6 +53,11 @@ const JOURNAL_NAME = /^route-\d+-.*\.jsonl$/;
  *   newFindings: string[],
  *   replays?: { journal: string, verdict: string },
  *   replayedBy: { journal: string, verdict: string }[],
+ *   build?: JournaledBuild,
+ *   buildText: string,
+ *   ranWith?: Readonly<Record<string, readonly string[]>> | 'none',
+ *   ranWithUnread?: string,
+ *   ranWithText: string,
  * }} SummaryRoute
  */
 
@@ -65,6 +71,7 @@ const JOURNAL_NAME = /^route-\d+-.*\.jsonl$/;
  *   counts: { passed: number, failed: number, stranded: number, unfinished: number },
  *   knownFindings: string | null,
  *   newFindings: { id: string, signature: string, check: string, routes: number[], now: StandingNow }[],
+ *   builds: { text: string, routes: number[] }[],
  * }} RunSummary
  */
 
@@ -166,6 +173,18 @@ export function summarizeRoute(journal, standing = standingFrom(knownFileFor(pat
     newFindings,
     ...(verdict && ending.opening?.replays ? { replays: { journal: ending.opening.replays.journal, verdict } } : {}),
     replayedBy: [],
+    // Which build the Route ran against, from its opening line, and what the
+    // application was seen to run with, from its outcome line, each also as
+    // the renderer prints it. A journal from before either was recorded says
+    // so in the text, and a Route that did not finish has no outcome to say
+    // what ran.
+    ...(ending.opening?.build ? { build: ending.opening.build } : {}),
+    buildText: buildText(ending.opening?.build),
+    ...(ending.outcome?.ranWith ? { ranWith: ending.outcome.ranWith } : {}),
+    ...(ending.outcome?.ranWithUnread ? { ranWithUnread: ending.outcome.ranWithUnread } : {}),
+    ranWithText: ending.outcome
+      ? ranWithText(ending.outcome) || 'what it ran with not recorded'
+      : 'what it ran with not recorded: the Route did not finish',
   };
 }
 
@@ -215,6 +234,12 @@ export function summarizeRun(folder, { knownFile = knownFileFor(folder) } = {}) 
     }
   }
 
+  // Each build the run's Routes ran against, with which Routes: one where the
+  // run was steady, more where the application changed under it.
+  /** @type {Map<string, number[]>} */
+  const builds = new Map();
+  for (const route of routes) builds.set(route.buildText, [...(builds.get(route.buildText) ?? []), route.routeNumber]);
+
   const count = (/** @type {SummaryRoute['outcome']} */ kind) => routes.filter((route) => route.outcome === kind).length;
   return {
     folder,
@@ -224,6 +249,7 @@ export function summarizeRun(folder, { knownFile = knownFileFor(folder) } = {}) 
     counts: { passed: count('passed'), failed: count('failed'), stranded: count('stranded'), unfinished: count('unfinished') },
     knownFindings: knownFile ?? null,
     newFindings: [...found.values()],
+    builds: [...builds].map(([text, numbers]) => ({ text, routes: numbers })),
   };
 }
 

@@ -416,13 +416,6 @@ a refactor or a feature rather than a fault. The faults it deferred are in
   optional, so a menu target without a path or a stranded outcome without a
   reason typechecks. Strict unions for writing and a tolerant type for reading
   old journals.
-- **What the application was seen to run with.** The opening line's
-  `runsWith` is the adapter's account at launch, before anything starts:
-  RStudio on Windows can be told another R in its own settings, and
-  Positron discovers interpreters itself, may start none in a Route, and
-  lets a Route choose among them. Reading the interpreter a Route actually
-  started, from the running application, would need a later journal line
-  and a way for an adapter to ask; neither exists.
 - **Toolchain versions on the opening line.** A journal records no engine,
   Playwright or Electron version, so a seed that stops reproducing cannot be
   told apart from a toolchain change (R13, R14).
@@ -430,7 +423,12 @@ a refactor or a feature rather than a fault. The faults it deferred are in
   field is used, and `settleQuietMs` and `profileWatchMs` not at all. A
   `defineAdapter()` beside `defineJourney()` would check it once.
 - **Say where the engine runs.** macOS on arm64 only, which neither
-  `package.json` nor the README says. Also, `@types/node` is a major ahead of
+  `package.json` nor the README says. What a journal records of the build
+  and of what ran is written for Windows and Linux from the applications'
+  sources and unmeasured there: Positron's install layout on both, where
+  Linux packages install RStudio, and whether `client_init` and
+  `renderer.log` read the same. The trial adapters record their setup
+  (`runsWith`) as unread off macOS until someone measures it. Also, `@types/node` is a major ahead of
   `engines.node`. What the engine asks of a consumer's Electron and
   Playwright is 1.16.
 - **Tests still missing** after the review's own were added: the renderer's

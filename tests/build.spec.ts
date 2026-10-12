@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
+import { createPackage } from '@electron/asar';
 import { readBuild, readRunsWith, sourcesOf, topLevelStrings, type JournaledBuild } from '../src/build';
 import { readJournal } from '../src/journal';
 import { buildText, renderJournal } from '../src/report/render.mjs';
@@ -168,4 +169,27 @@ test('a journal from before builds were recorded still reads, and says so', () =
   expect(renderJournal(fs.readFileSync(file, 'utf8'))[0]).toBe(
     'route 1  seed r, from Journey seed j, Trip of 1 hops, build not recorded'
   );
+});
+
+test('off macOS the packaged package.json is read, from the archive where there is one, and what is missing is said', async () => {
+  const install = scratch('build-other-');
+  const app = path.join(install, 'resources', 'app');
+  fs.mkdirSync(app, { recursive: true });
+  fs.writeFileSync(path.join(app, 'package.json'), JSON.stringify({ name: 'rstudio', productName: 'RStudio', version: '2026.10.0+232' }));
+  for (const platform of ['linux', 'win32'] as const) {
+    expect(readBuild(install, platform)).toEqual({ name: 'RStudio', version: '2026.10.0+232' });
+  }
+
+  // An archive wins over a folder beside it, since it is what Electron loads.
+  const packed = scratch('build-asar-src-');
+  fs.writeFileSync(path.join(packed, 'package.json'), JSON.stringify({ name: 'buggy', version: '0.0.0' }));
+  await createPackage(packed, path.join(install, 'resources', 'app.asar'));
+  expect(readBuild(install, 'linux')).toEqual({ name: 'buggy', version: '0.0.0' });
+
+  fs.rmSync(path.join(install, 'resources', 'app.asar'));
+  fs.writeFileSync(path.join(app, 'package.json'), JSON.stringify({ name: 'nameless-version' }));
+  expect(readBuild(install, 'linux')).toEqual({ name: 'nameless-version', unread: 'resources/app/package.json names no version' });
+  fs.writeFileSync(path.join(app, 'package.json'), 'not json');
+  expect(readBuild(install, 'linux').unread).toMatch(/^resources\/app\/package\.json is not JSON: /);
+  expect(readBuild(scratch('build-empty-'), 'win32').unread).toMatch(/^resources\/app\/package\.json could not be read: ENOENT/);
 });

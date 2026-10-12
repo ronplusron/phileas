@@ -29,6 +29,7 @@ export { readBuild, type JournaledBuild } from './build.js';
 export {
   launchApp,
   buildOf,
+  responsesOf,
   closeApp,
   reloadRenderer,
   makeUserDataDir,
@@ -243,3 +244,4 @@ export {
   type Recorded,
   type ReplayPlan,
 } from './replay.js';
+export { trackRanWith, RAN_WITH_TIMEOUT_MS, type RanWithTracker } from './ran-with.js';

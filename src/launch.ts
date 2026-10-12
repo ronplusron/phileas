@@ -723,6 +723,11 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
       throw notInstalled ? new Error(`The launch failed, and so did the first-line install.`, { cause: notInstalled }) : error;
     });
 
+  // Before anything else, so a response the application gives once as it
+  // starts, before its first window is found, is still caught. Not one from
+  // before the launch returned: `AppUnderTest.captureResponses` says so.
+  captureResponses(app, cfg.captureResponses);
+
   // Everything after the launch is inside this, so a step that throws closes
   // the application rather than leaking it: the fixture never receives a
   // launch that did not return, so nothing else would.
@@ -795,6 +800,49 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
     }
     throw error;
   }
+}
+
+/** How many responses are kept for each pattern: the latest. */
+const RESPONSES_KEPT = 10;
+
+/** The responses kept for each application, by pattern, for `responsesOf`. */
+const responses = new WeakMap<ElectronApplication, Map<string, string[]>>();
+
+/**
+ * Keep the bodies of responses whose address matches one of the patterns,
+ * on the application's whole browser context, so every window's are seen. A
+ * body that cannot be read, such as a redirect's, is not kept.
+ */
+function captureResponses(app: ElectronApplication, patterns: readonly RegExp[] | undefined): void {
+  if (!patterns?.length) return;
+  // By the pattern's text, so an equal pattern written again finds the same.
+  const kept = new Map(patterns.map((pattern) => [String(pattern), [] as string[]]));
+  responses.set(app, kept);
+  app.context().on('response', (response) => {
+    const url = response.url();
+    // `search`, not `test`, which a pattern with the global flag would make stateful.
+    const matching = patterns.filter((pattern) => url.search(pattern) !== -1);
+    if (!matching.length) return;
+    response.text().then(
+      (body) => {
+        for (const pattern of matching) {
+          const bodies = kept.get(String(pattern))!;
+          bodies.push(body);
+          if (bodies.length > RESPONSES_KEPT) bodies.shift();
+        }
+      },
+      () => undefined
+    );
+  });
+}
+
+/**
+ * The bodies kept for one of the adapter's `captureResponses` patterns,
+ * oldest first. Empty for a pattern the adapter did not declare, or an
+ * application the engine did not launch.
+ */
+export function responsesOf(app: ElectronApplication, pattern: RegExp): readonly string[] {
+  return [...(responses.get(app)?.get(String(pattern)) ?? [])];
 }
 
 /** The build each application launched by `launchApp` is, for `buildOf`. */

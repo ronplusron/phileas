@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { extractFile } from '@electron/asar';
 import type { AppUnderTest } from './app-under-test.js';
 import type { GuardVerdict } from './bundle.js';
 
@@ -76,7 +77,7 @@ export async function readRunsWith(
     if (notText.length) return { runsWithUnread: `the adapter's runsWith gave values that are not text for ${notText.join(', ')}` };
     return { runsWith: { ...values } };
   } catch (error) {
-    return { runsWithUnread: `the adapter's runsWith failed: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}` };
+    return { runsWithUnread: `the adapter's runsWith failed: ${firstLine(error)}` };
   }
 }
 
@@ -121,14 +122,28 @@ export function topLevelStrings(xml: string): Map<string, string> {
 }
 
 /**
- * Read which build a bundle is, from its `Contents/Info.plist`.
+ * Read which build an installed application is.
+ *
+ * On macOS from the bundle's `Contents/Info.plist`. Elsewhere from the
+ * `package.json` the application was packaged with, in `resources/app.asar`
+ * or `resources/app`, which is where any Electron application keeps its own:
+ * its `productName`, else its `name`, and its `version`. Measured on macOS,
+ * RStudio's `package.json` version is its `Info.plist` version.
  *
  * Never throws: a build that cannot be read is recorded as unread, with why,
  * and the Route goes on, since which build ran is a fact about the run and
- * not a precondition for it. A binary property list is converted with
- * `plutil`, which is on every Mac; the applications measured so far ship XML.
+ * not a precondition for it.
  */
-export function readBuild(bundleDir: string): JournaledBuild {
+export function readBuild(installDir: string, platform: NodeJS.Platform = process.platform): JournaledBuild {
+  return platform === 'darwin' ? readInfoPlist(installDir) : readPackageJson(installDir);
+}
+
+/**
+ * The bundle's `Contents/Info.plist`. A binary property list is converted
+ * with `plutil`, which is on every Mac; the applications measured so far ship
+ * XML.
+ */
+function readInfoPlist(bundleDir: string): JournaledBuild {
   const plist = path.join(bundleDir, 'Contents', 'Info.plist');
   let xml: string;
   try {
@@ -137,7 +152,7 @@ export function readBuild(bundleDir: string): JournaledBuild {
       ? execFileSync('plutil', ['-convert', 'xml1', '-o', '-', plist], { encoding: 'utf8', timeout: 5_000 })
       : raw.toString('utf8');
   } catch (error) {
-    return { unread: `Contents/Info.plist could not be read: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}` };
+    return { unread: `Contents/Info.plist could not be read: ${firstLine(error)}` };
   }
 
   const strings = topLevelStrings(xml);
@@ -156,4 +171,37 @@ export function readBuild(bundleDir: string): JournaledBuild {
     ...(identifier ? { identifier } : {}),
     ...(missing.length ? { unread: `Contents/Info.plist names no ${missing.join(' and no ')}` } : {}),
   };
+}
+
+/** The packaged `package.json`, from the archive where there is one, else the folder. */
+function readPackageJson(installDir: string): JournaledBuild {
+  const archive = path.join(installDir, 'resources', 'app.asar');
+  const folder = path.join(installDir, 'resources', 'app', 'package.json');
+  const where = fs.existsSync(archive) ? 'resources/app.asar package.json' : 'resources/app/package.json';
+  let text: string;
+  try {
+    text = fs.existsSync(archive) ? extractFile(archive, 'package.json').toString('utf8') : fs.readFileSync(folder, 'utf8');
+  } catch (error) {
+    return { unread: `${where} could not be read: ${firstLine(error)}` };
+  }
+  let parsed: { productName?: unknown; name?: unknown; version?: unknown };
+  try {
+    parsed = JSON.parse(text) as typeof parsed;
+  } catch (error) {
+    return { unread: `${where} is not JSON: ${firstLine(error)}` };
+  }
+  const nonEmpty = (value: unknown) => (typeof value === 'string' && value !== '' ? value : undefined);
+  const name = nonEmpty(parsed.productName) ?? nonEmpty(parsed.name);
+  const version = nonEmpty(parsed.version);
+  const missing = [...(name ? [] : ['productName or name']), ...(version ? [] : ['version'])];
+  return {
+    ...(name ? { name } : {}),
+    ...(version ? { version } : {}),
+    ...(missing.length ? { unread: `${where} names no ${missing.join(' and no ')}` } : {}),
+  };
+}
+
+/** The first line of an error's message, which is the part that says what went wrong. */
+function firstLine(error: unknown): string {
+  return error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error);
 }

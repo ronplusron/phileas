@@ -95,7 +95,9 @@ context a developer needs first, if any.>
 
 ### Environment
 
-- <application and version, OS and architecture>
+- <application and version, from the Route's build>
+- <the R or Python it ran with, where the finding involves one>
+- <OS and architecture, "not recorded" unless the filing settings say>
 - <how it was launched: fresh profile, flags, settings that differ>
 
 ### Steps to reproduce
@@ -160,13 +162,30 @@ The `reproduce` skill is what confirms them.
   "100% reproducible". Name what was actually run and how many times: "each
   time" after one run, or "reproduced by hand" for a replay, have both been
   written before.
-- **No guessed environment.** A run does not record what was launched, so
-  the Environment section says only what the filing settings' `environment`
-  lines say, and what the journal itself records, such as a setting the Fix
-  changed. Anything else, a version, how the application was built, the OS,
-  is "not recorded", never inferred from a path or a name: a triage once
-  wrote that RStudio was built from source, when the trial runs a copy of
-  the installed release.
+- **No guessed environment.** The Environment section states only what
+  is recorded, each fact from where it is recorded:
+  - **The application and its version** from the Route's `buildText` in
+    the summary (its `build`, from the journal's opening line). Where the
+    adapter gives a `release`, that is the version to state; the bundle's
+    own version follows it in brackets because the two can differ, as
+    Positron's 2026.09.1 is 1.130.0 in its bundle.
+  - **The R or Python it ran with** from the Route's `ranWithText` (its
+    `ranWith`, from the outcome line): what the running application was
+    seen to start. "Nothing started" is a fact worth stating where the
+    finding is about a session.
+  - **Never state `runsWith` as what ran.** It is the adapter's account of
+    the setup before launch; if it is used at all, say "set up with".
+  - **"No sources to check it against"** means the staleness guard had no
+    sources, which is the shape of an installed release. It never means
+    built from source, and nothing else in a run does either.
+  - **How it was launched** from the filing settings' `environment` lines,
+    and what the journal itself records, such as a setting the Fix changed.
+  - Anything else, the OS and architecture among them, is "not recorded",
+    never inferred from a path or a name. Where a Route's `buildText` says
+    "build not recorded", the journal is from before builds were, and the
+    version is "not recorded" too. A triage once wrote that RStudio was
+    built from source, when the trial runs a copy of the installed release,
+    which is why every fact here names its source.
 - **No guessed causes.** Report what was seen. The application's source,
   where it was read, is the developer's to explain, not the draft's.
 - **ASCII only,** since an issue is a git artifact: `--` closed up for a

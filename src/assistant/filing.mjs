@@ -12,10 +12,12 @@
 //     "environment": ["what is launched, and how, as a draft states it"]
 //   }
 //
-// `environment` is there because a run does not record what was launched: a
-// triage of RStudio's run of 2026-09-29, with nothing else to go on, wrote
-// that RStudio was built from source, when the trial runs a copy of the
-// installed release.
+// `environment` says how the application was launched, which a run does not
+// record: a triage of RStudio's run of 2026-09-29, with nothing else to go
+// on, wrote that RStudio was built from source, when the trial runs a copy of
+// the installed release. Since 2026-10-12 each journal records which build
+// it ran against and what the application ran with, and the triage skill
+// states those from the journal.
 //
 // Only `repository` is required. The rules are read by the assistant when it
 // drafts; the rest are also enforced here, by code, on every draft, since a

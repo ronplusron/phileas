@@ -10,6 +10,7 @@ import {
   fixFingerprint,
   journalFolder,
   sourceHash,
+  type ClosingEntry,
   type FixStepEntry,
   type HopAction,
   type JournaledCandidate,
@@ -18,6 +19,7 @@ import {
 } from './journal.js';
 import { requireRun } from './journey.js';
 import { buildOf } from './launch.js';
+import { trackRanWith } from './ran-with.js';
 import { clickMenuItem } from './menu.js';
 import { frameText, renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
@@ -881,6 +883,14 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   let hops = 0;
   let menuVerdictNoted = false;
 
+  // What the application was seen to run with, asked at each step and rolled
+  // up on the outcome, which every ending below closes with.
+  const ranWith = trackRanWith(cfg, { app, page, userDataDir }, journal);
+  const close = async (closing: Omit<ClosingEntry, 'kind' | 'endedAt' | 'ranWith' | 'ranWithUnread'>) => {
+    await ranWith.read(hops + 1);
+    journal.close({ ...closing, ...ranWith.closing() });
+  };
+
   try {
     // Started before the Fix, since the checks run after Fix steps too, and
     // inside the try, so a Route whose watching cannot start still closes its
@@ -899,6 +909,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         at: new Date().toISOString(),
       });
     }
+
+    await ranWith.read(1);
 
     // Every step so far, Fix and Trip, with when each ran, so a failure can
     // say which step was running when what it found arrived.
@@ -920,6 +932,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         hopTimeoutMs,
         hopDelayMs,
       });
+      await ranWith.read(1);
     }
 
     let lastTarget: string | undefined;
@@ -967,7 +980,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         // application has a dead end at hop 3" from "this Route found nothing
         // to do", which are different findings about different things.
         const reason = strandedReason(found);
-        journal.close({
+        await close({
           outcome: 'stranded',
           hops,
           reason,
@@ -1088,6 +1101,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       });
 
       hops += 1;
+      await ranWith.read(hops + 1);
 
       // The first violation ends the Route (R16). Hops after it would only
       // record what a known-broken state does next, and bury the Hop that
@@ -1112,10 +1126,10 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       const reason =
         `Every one of the ${hops} Hops was abandoned: each action timed out or met nothing, ` +
         `so the Route moved nowhere. The journal has what each one met.`;
-      journal.close({ outcome: 'stranded', hops, reason, exclusionsNeverMatched: neverMatched(tally) });
+      await close({ outcome: 'stranded', hops, reason, exclusionsNeverMatched: neverMatched(tally) });
       return { kind: 'stranded', hops, reason };
     }
-    journal.close({ outcome: 'passed', hops, exclusionsNeverMatched: neverMatched(tally) });
+    await close({ outcome: 'passed', hops, exclusionsNeverMatched: neverMatched(tally) });
     return { kind: 'passed', hops };
   } catch (error) {
     // Closed with an outcome rather than abandoned, because this ending was
@@ -1126,7 +1140,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     // Guarded: a journal that cannot be written, a full disk say, must not
     // replace the error that ended the Route with its own.
     try {
-      journal.close({
+      await close({
         outcome: 'failed',
         hops,
         reason: error instanceof Error ? error.message : String(error),

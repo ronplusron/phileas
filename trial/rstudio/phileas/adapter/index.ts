@@ -4,7 +4,7 @@ import path from 'node:path';
 import { requireAppDir, type AppUnderTest } from '@drugstoresushi/phileas';
 import type { ElectronApplication, Page } from '@playwright/test';
 import { libraryList, personalLibrary } from '../personal-library';
-import { rRunsWith } from '../which-r';
+import { CLIENT_INIT, rRanWith, rRunsWith } from '../which-r';
 
 /**
  * The adapter for RStudio Desktop, pointed at a copy of the installed release
@@ -85,6 +85,10 @@ export const rstudio: AppUnderTest = {
 
   // Which R the Route's RStudio is set up to start, asked of that R.
   runsWith: ({ env }) => rRunsWith(env),
+
+  // Which R it started, from its own first answer. `which-r.ts` has both.
+  captureResponses: [CLIENT_INIT],
+  ranWith: ({ responses }) => rRanWith(responses(CLIENT_INIT)),
 
   env: (userDataDir) => ({
     // A home folder of the Route's own. RStudio's configuration and R's follow

@@ -2343,3 +2343,20 @@ test('the opening line names the build the launch read, and one the engine did n
     unread: 'The application was not launched by the engine, so which build it is was not read.',
   });
 });
+
+test("what the adapter says the application ran with is noted where first seen and rolled up on the outcome", async ({ page, app }) => {
+  const dir = scratch();
+  const seed = 'ran-with';
+  let reads = 0;
+  // Nothing at launch, then an R from the first Hop on, as a session started by a Hop would be.
+  const cfg: AppUnderTest = { ...buggy, ranWith: (): Record<string, string> => (++reads > 1 ? { R: '4.6.0' } : {}) };
+  await runRoute({ page, app, cfg, streams: deriveRouteStreams(seed, 1), journeySeed: seed, routeNumber: 1, tripLength: 2, journalsRoot: dir });
+  const entries = readJournal(path.join(inRun(dir), `route-001-${deriveRouteStreams(seed, 1).routeSeed}.jsonl`));
+  const notes = entries.filter((entry) => entry.kind === 'note' && entry.ranWith);
+  expect(notes.map((entry) => entry.kind === 'note' && [entry.hop, entry.ranWith])).toEqual([[2, { R: '4.6.0' }]]);
+  // The note sits after the first Hop's line, where it was learned.
+  expect(entries.findIndex((entry) => entry === notes[0])).toBeGreaterThan(entries.findIndex((entry) => entry.kind === 'trip-hop'));
+  expect(entries.at(-1)).toMatchObject({ kind: 'outcome', ranWith: { R: ['4.6.0'] } });
+  // Asked at launch, after each of the two Hops, and once more at the end.
+  expect(reads).toBe(4);
+});

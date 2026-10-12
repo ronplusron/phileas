@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { requireAppDir, type AppUnderTest } from '@drugstoresushi/phileas';
 import type { Page } from '@playwright/test';
-import { positronRunsWith } from '../runs-with';
+import { positronRanWith, positronRunsWith } from '../runs-with';
 
 /**
  * The adapter for Positron, pointed at an installed release.
@@ -39,15 +39,35 @@ const CANCELED_FOR_MUTATION = /Request [\w$/]+ \(\d+\) is canceled due to subseq
 const bundleDir = requireAppDir();
 
 /**
- * The release being run, from the installed application's own product.json,
- * read once and before anything launches.
+ * The installed application's own product.json, read once and before
+ * anything launches: under the bundle's Contents/Resources on macOS, and
+ * under resources/ elsewhere, as for any Code OSS build (unmeasured off
+ * macOS).
  */
+const product = (() => {
+  const file =
+    process.platform === 'darwin'
+      ? path.join(bundleDir, 'Contents', 'Resources', 'app', 'product.json')
+      : path.join(bundleDir, 'resources', 'app', 'product.json');
+  return { file, json: JSON.parse(fs.readFileSync(file, 'utf8')) as { positronVersion?: unknown; positronBuildNumber?: unknown } };
+})();
+
+/** The release being run, from product.json. */
 export const positronVersion: string = (() => {
-  const product = path.join(bundleDir, 'Contents', 'Resources', 'app', 'product.json');
-  const version = (JSON.parse(fs.readFileSync(product, 'utf8')) as { positronVersion?: unknown }).positronVersion;
-  if (typeof version !== 'string') throw new Error(`${product} names no positronVersion.`);
+  const version = product.json.positronVersion;
+  if (typeof version !== 'string') throw new Error(`${product.file} names no positronVersion.`);
   return version;
 })();
+
+/**
+ * The release with its build number, as Positron's About names it,
+ * `2026.09.1+2`, for the journal's opening line. The version alone where
+ * product.json names no build.
+ */
+const positronRelease =
+  typeof product.json.positronBuildNumber === 'number' || typeof product.json.positronBuildNumber === 'string'
+    ? `${positronVersion}+${product.json.positronBuildNumber}`
+    : positronVersion;
 
 /**
  * Which releases draw their sessions the same way, by release measured.
@@ -133,11 +153,15 @@ export const positron: AppUnderTest = {
 
   // The release by the name Positron gives it, since the bundle calls it by
   // the version of the editor it is built on: 1.130.0 for 2026.09.1.
-  release: positronVersion,
+  release: positronRelease,
 
   // The R and Python a Route is offered. `runs-with.ts` says why that is not
   // the same as what a Route ran.
   runsWith: ({ env }) => positronRunsWith(env, positronFamily === 'early' ? EARLY_R_BINARY : undefined),
+
+  // The R or Python a Route actually started, from the Route's own renderer
+  // log, once a session starts, if one does.
+  ranWith: ({ userDataDir }) => positronRanWith(userDataDir),
 
   async beforeLaunch(userDataDir: string): Promise<void> {
     await fs.promises.mkdir(homeIn(userDataDir), { recursive: true });

@@ -1258,6 +1258,73 @@ be built in one.
 Boundary: bookkeeping. It changes how a person works with what the engine
 found, and nothing about what it finds.
 
+### Which build a Route ran, and what it ran with
+
+**Asked for on 2026-10-12,** after an automated triage wrote that RStudio was
+built from a source checkout when the trial runs the installed release. C1
+asks a finding to say which build was tested. Then, for the language each
+application runs: "RStudio needs the R version, Positron is R or Python,
+whichever is relevant," on macOS, Windows and Linux, at whichever level
+works best. The design below came from a research pass that read both
+applications' sources and measured what it could on macOS without launching
+either. `HISTORY.md` has what landed.
+
+**Split by what the fact is about, not by application.** Three facts, each
+recorded where it becomes true:
+
+1. **What was launched.** The engine, on the opening line, as `build`:
+   the name and version the installed application gives about itself. On
+   macOS that is the bundle's `Info.plist`. On Windows and Linux it is the
+   `package.json` inside `resources/app.asar` or `resources/app`, which is
+   any Electron application's own. An adapter may add `release`, its
+   application's own name for the release, where that differs:
+   Positron's bundle says 1.130.0, the editor it is built on, and only its
+   `product.json` says 2026.09.1, with build 2. `app.getVersion()` is not
+   used, since it returns the 1.130.0.
+2. **What it was set up with.** The adapter, on the opening line, as
+   `runsWith`: its account, before launch, of what the application will be
+   offered, each value named by where it came from. It is the setup, not
+   what ran: RStudio on Windows can be told another R in its own settings,
+   and Positron discovers interpreters and lets a Route choose. The trial
+   adapters were written against macOS, so off it they record their values
+   as unread rather than guess.
+3. **What it ran with.** The adapter, read from the running application,
+   as `ranWith`. The engine asks the adapter after launch, after the Fix,
+   and after every Hop, and journals each new value on a `note` line at
+   that point, so a reader sees where it was learned. The `outcome` line
+   rolls them up, and says `none` where the adapter reads them and nothing
+   started, never leaving it out. A read that fails says why, as
+   `ranWithUnread`.
+
+**Where each application says what it ran with,** read in each one's source:
+
+- **RStudio:** its first call to its R session, `/rpc/client_init`, answers
+  with `r_versions_info.r_version` and the R home on every platform, before
+  the first Hop. The engine captures responses whose address matches a
+  pattern the adapter declares, from launch, and hands them to the
+  adapter's `ranWith`.
+- **Positron:** only once a session starts, which a Route may never do. The
+  Route's own `renderer.log` gets a `Starting session for language runtime`
+  line naming the language and its version. The adapter reads that file;
+  a line without a version is not counted.
+
+**Engine or adapter.** The engine gives the means: reading the installed
+application, capturing a response by address, calling the hook at each
+step, and journaling. The adapter knows which address, which log line and
+which field, since that is knowledge of one application, and the engine
+reads no source and depends on no bridge. A third means the research
+proposed, reading a running process's environment and the libraries it
+loaded, is not built: neither application here needs it.
+
+**Decided against: a check that setup and run agree.** Proposed, and not
+taken, since a check ends the Route, and a Windows R chosen in RStudio's
+settings would end every Route at its first Hop for a fact that is not a
+defect. Both values stay on the record, each named for what it is.
+
+**Unverified, since only macOS is here:** Windows' and Linux's install
+layouts for Positron, and where Linux packages install RStudio.
+`OUTSTANDING.md` has them.
+
 ### Phase 5: the universal tier, and the Route as a test
 
 The journal already exists from phase 4; this phase fills in its check-results

@@ -58,6 +58,11 @@ function versionOf(program: string, args: readonly string[], env: Readonly<Recor
  * at all.
  */
 export function positronRunsWith(env: Readonly<Record<string, string>>, customR: string | undefined): Record<string, string> {
+  // Written against macOS: elsewhere the programs are named otherwise, as
+  // `python` or `py` on Windows, and a miss would read as no Python at all.
+  if (process.platform !== 'darwin') {
+    throw new Error(`the R and Python Positron is offered are read on macOS only, not on ${process.platform}`);
+  }
   const rVersion = ['--vanilla', '-e', 'cat(format(getRversion()))'];
   return {
     'R (PATH)': versionOf('Rscript', rVersion, env),
@@ -68,4 +73,40 @@ export function positronRunsWith(env: Readonly<Record<string, string>>, customR:
       return stubWithoutTools(python) ?? versionOf(python, ['--version'], env);
     })(),
   };
+}
+
+/**
+ * What Positron writes to the window's renderer log as it starts a session:
+ * the runtime's language and that language's version, from
+ * `languageRuntimeService.ts` in Positron's source. A line whose version is
+ * not a version, as `undefined` was on a 2024.11 log, does not count.
+ */
+const SESSION_STARTED = /Starting session for language runtime .*?\(language: (\w+) name: .*? version: (\d[^\s)]*)\)/g;
+
+/**
+ * The R and Python a Route's Positron started, from the Route's own
+ * `logs/window1/renderer.log`, by language: nothing until a session starts,
+ * which a Route may never do. Each language's latest version, since the
+ * engine keeps every value seen.
+ *
+ * Throws, which the engine records as unread, rather than answer nothing
+ * where nothing would be a wrong `none`: where the log is missing, since
+ * Positron writes it as its window opens, measured on 2026-10-12, and where
+ * a session started whose line gives no version, as on a 2024.11 log.
+ */
+export function positronRanWith(userDataDir: string | undefined): Record<string, string> {
+  if (userDataDir === undefined) throw new Error("the Route's profile folder was not given, so its logs cannot be found");
+  const log = path.join(userDataDir, 'logs', 'window1', 'renderer.log');
+  if (!fs.existsSync(log)) throw new Error(`Positron's renderer log is not at ${path.relative(userDataDir, log)}`);
+  const text = fs.readFileSync(log, 'utf8');
+  const started: Record<string, string> = {};
+  for (const [, language, version] of text.matchAll(SESSION_STARTED)) {
+    if (language && version) started[language] = version;
+  }
+  const announced = text.split('\n').filter((line) => line.includes('Starting session for language runtime')).length;
+  const read = [...text.matchAll(SESSION_STARTED)].length;
+  if (announced > read) {
+    throw new Error(`${announced - read} session start(s) in the renderer log gave no version that could be read`);
+  }
+  return started;
 }

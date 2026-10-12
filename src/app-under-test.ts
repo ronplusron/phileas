@@ -413,6 +413,44 @@ export interface AppUnderTest {
   }): Readonly<Record<string, string>> | Promise<Readonly<Record<string, string>>>;
 
   /**
+   * Addresses whose responses the engine keeps, for `ranWith` to read, on the
+   * application's whole browser context from the moment the launch returns,
+   * since what an application says about itself at start, as RStudio's
+   * `/rpc/client_init` does, is said once. Only the latest few for each
+   * pattern are kept.
+   *
+   * **Not from before the first window loads,** which nothing in Playwright
+   * reaches: measured on 2026-10-12, `buggy`'s own page had loaded by then
+   * and was not caught, while RStudio's `client_init`, which comes seconds
+   * later, was caught on every launch. So a `ranWith` reading a response its
+   * application must have sent should say it is missing, never read its
+   * absence as nothing having started.
+   */
+  captureResponses?: readonly RegExp[];
+
+  /**
+   * What the running application was seen to run with, as short named
+   * values, such as `{ R: '4.6.0' }`: read from the application itself, not
+   * from its setup, which is `runsWith`'s.
+   *
+   * Asked after launch, after the Fix and after every Hop, so return
+   * everything seen so far each time; the engine journals each new value on
+   * a note line where it was first seen, and rolls them up on the Route's
+   * outcome, as `none` where nothing was ever seen. Read the responses
+   * `captureResponses` kept through `responses`, or the Route's own logs.
+   * A value not yet known is left out, never guessed.
+   *
+   * Should not throw, and is not trusted not to: a throw is recorded as
+   * `ranWithUnread` and the Route goes on. Given five seconds.
+   */
+  ranWith?(context: {
+    readonly app: ElectronApplication;
+    readonly page: Page;
+    readonly userDataDir: string | undefined;
+    readonly responses: (pattern: RegExp) => readonly string[];
+  }): Readonly<Record<string, string>> | Promise<Readonly<Record<string, string>>>;
+
+  /**
    * The sources the bundle was built from, for the staleness guard (R23).
    *
    * Absent where there are none, which is the shape where the engine is

@@ -514,6 +514,12 @@ export interface NoteEntry {
   /** The Trip hop about to be taken when this was noted, counting from 1. */
   readonly hop: number;
   readonly note: string;
+  /**
+   * What the running application was newly seen to run with, where that is
+   * what this note says, by the adapter's `ranWith`: only the values not
+   * seen before in this Route. Since 2026-10-12.
+   */
+  readonly ranWith?: Readonly<Record<string, string>>;
   readonly at: string;
 }
 
@@ -535,6 +541,15 @@ export interface ClosingEntry {
    * report's job in phase 7.
    */
   readonly exclusionsNeverMatched?: readonly string[];
+  /**
+   * Every value the adapter's `ranWith` saw during the Route, each name with
+   * the values it took in the order first seen, or `none` where the adapter
+   * reads what the application runs with and nothing was seen. Absent where
+   * the adapter has no `ranWith`, and before 2026-10-12.
+   */
+  readonly ranWith?: Readonly<Record<string, readonly string[]>> | 'none';
+  /** Why the adapter's `ranWith` could not be read, the last time it could not. */
+  readonly ranWithUnread?: string;
   readonly endedAt: string;
 }
 
