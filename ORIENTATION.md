@@ -527,6 +527,24 @@ Following, a failed Hop's line names each check and finding without what it
 saw, since the ending says it. A `--reporter` given after `--` replaces it, and
 the run then prints as it did before.
 
+**The work after a run has commands of its own,** since 2026-10-12, and none
+is inside the engine; `docs/PLAN.md` has them under "After the run".
+`phileas show --json` prints a run as one object, read as the reporter reads
+it, with any replays of its Routes found beside it. `phileas reproduce`
+replays one Route for each new finding not yet replayed.
+`phileas triage --send` hands a run to Claude Code, with only reading tools,
+and writes a report and a draft per finding into the run's `triage/` folder;
+without `--send` it says what it would send to Anthropic and stops.
+`phileas unattended` is a Journey, then `reproduce`, then `triage`, for a
+schedule; `schedule/` holds a launchd template and a GitHub Actions one, and
+`.github/workflows/phileas-unattended.yml` runs `buggy` nightly. `phileas
+view` serves a page on `127.0.0.1` with a token in its address, for all of
+it and for filing a draft through `gh`. `phileas claude` starts Claude Code
+with the plugin in `claude/` loaded: skills to run a Journey, triage,
+reproduce and file. Filing reads `filing.json` beside the config, and every
+draft is checked by code against it before anything is filed. The nightly
+workflow has not run yet; `docs/OUTSTANDING.md` 1.25.
+
 **Writing a Fix starts from `phileas survey`,** which launches the application
 and prints what the engine sees at the start, one control per line in the
 engine's own form: `button "Open Alps by rail"`, `menu View > Show Timetable`.

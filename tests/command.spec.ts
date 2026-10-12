@@ -97,7 +97,7 @@ test('the command refuses what it cannot read, by name', () => {
   expect(() => parse(['travel'])).toThrow(/unknown command travel/);
   expect(() => parse(['run', '--follow=yes'])).toThrow(/--follow takes no value/);
   expect(() => parse(['show', 'a', 'b'])).toThrow(/one thing to show/);
-  expect(() => parse(['show', '--routes'])).toThrow(/show takes no flags/);
+  expect(() => parse(['show', '--routes'])).toThrow(/show takes --json, and was given --routes/);
   expect(parse(['survey'])).toEqual({ command: 'survey', config: 'phileas' });
   expect(parse(['survey', 'proving-ground/buggy/phileas'])).toEqual({ command: 'survey', config: 'proving-ground/buggy/phileas' });
   expect(() => parse(['survey', '--routes', '3'])).toThrow(/survey takes one config|survey takes no flags/);
@@ -297,5 +297,7 @@ test("the command says the engine's version, and an unknown command is told ever
   expect(said.stdout.trim()).toBe(`phileas ${version}`);
   expect(() => parse(['--version', 'extra'])).toThrow(/--version takes nothing/);
   // Every command the command has, replay included, which this line once left out.
-  expect(() => parse(['nope'])).toThrow(/the commands are run, show, survey, known and replay/);
+  expect(() => parse(['nope'])).toThrow(
+    /the commands are run, show, survey, known, replay, reproduce, triage, unattended, view and claude/
+  );
 });

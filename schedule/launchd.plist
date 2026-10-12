@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A Journey every night on this Mac, then a replay of each new finding, then a
+  triage, by `phileas unattended`. A template: copy it to
+  ~/Library/LaunchAgents/com.drugstoresushi.phileas.unattended.plist, replace
+  each __PLACEHOLDER__, and load it with
+  `launchctl bootstrap gui/$(id -u) <that file>`.
+
+    __REPOSITORY__  the consuming repository's folder, holding phileas/
+    __CONFIG__      the Journey's folder, phileas/ by default
+    __BUDGET__      the most one night's triage may spend, in US dollars
+
+  It runs as you, in your login session, so `claude` uses your own sign-in.
+  The send flag in the command sends each run's journals to Anthropic for the
+  triage (C3); take it out to stop at the replays. Nothing is ever filed:
+  drafts wait in each run's triage/ folder.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.drugstoresushi.phileas.unattended</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd "__REPOSITORY__" &amp;&amp; npx phileas unattended "__CONFIG__" --send --budget __BUDGET__</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>2</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>__REPOSITORY__/__CONFIG__/.phileas-journals/unattended.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPOSITORY__/__CONFIG__/.phileas-journals/unattended.log</string>
+</dict>
+</plist>

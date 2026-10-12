@@ -86,9 +86,14 @@ jobs, which may be the same person on different days.
 - **Testing native desktop or mobile applications.** Applications built with
   platform-native interface toolkits cannot be traveled through by this engine
   at all, and no adapter will change that.
-- **Using a language model for anything, in this version.** Every move is
+- **Using a language model inside the engine, in this version.** Every move is
   chosen by a seeded draw over what the application is offering, and every
-  judgment is a check somebody wrote. This is a decision about this version
+  judgment is a check somebody wrote. **Work done after a run is outside
+  this:** reading its journals, replaying a finding, sorting what was found
+  and drafting a report of it may use one (R34), since none of that changes
+  where a route goes or what ends it. Narrowed to that on 2026-10-12, from
+  "for anything"; whether a model may later choose moves or judge checks is
+  still open, and `OUTSTANDING.md` 2.1 holds it. This is a decision about this version
   rather than a permanent one, and it is deliberately reversible: what would
   otherwise make it expensive to reverse is R7 and R8, since a model choosing
   moves cannot replay from a seed. The journal already names what
@@ -397,6 +402,21 @@ and the runner runs all of them after every hop.
   is the failure this prevents. A setting makes any such degradation a
   failure, for runs where the absence of findings is meant to mean something.
 - **R28 (Should)** A journey can be started on demand or on a schedule.
+- **R34 (Should)** What a person does with a journey's results can be handed
+  to an assistant: running a journey, reading what it found, replaying each
+  new finding, and drafting a report of it. The assistant says what it
+  actually ran and how many times, since a draft saying a failure happened
+  "each time" after one run has been written before. It never files a
+  report, marks a finding a false alarm, or changes the known findings
+  without a person saying yes to that one change. A scheduled run can do the
+  same unattended, and leaves its drafts for a person to read rather than
+  filing them. Asked for on 2026-10-12, after weeks of doing all of it by
+  hand in conversation with one.
+- **R35 (Should)** A person can do what R34 hands to an assistant from a
+  page in a browser, without a terminal: see every journey kept, read any
+  route, start a journey or a replay and watch it run, and ask for a
+  finding to be sorted, replayed or drafted. The page is served on the same
+  machine and answers nobody else.
 
 ## 8. Constraints
 
@@ -420,8 +440,13 @@ Stated as what must be true for someone using it.
   since anyone building the application decides it for themselves.
 - **C2** Slots into a team's existing browser-automation test run. A team not
   already running one has to adopt it first, which is a real cost of entry.
-- **C3** Everything produced by a run -- results, journals -- stays
-  on the machine that ran it. Nothing is sent anywhere.
+- **C3** The engine sends nothing a run produces anywhere: results and
+  journals stay on the machine that ran it. A tool somebody chooses to run
+  afterwards may send them on, such as an assistant reading journals (R34)
+  or a scheduled run in a hosted build service keeping them there, and each
+  says what it sends and where before it does. Narrowed on 2026-10-12 from
+  "Nothing is sent anywhere," which assistants reading journals by hand had
+  already stopped being true of.
 - **C4** Private for now. No public release is promised, and nothing about it
   is stable for outside consumers yet. [inferred: publishing is an eventual
   goal, so this constraint has an expiry]

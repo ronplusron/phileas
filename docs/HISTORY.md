@@ -25,6 +25,129 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-12: the work after a run, given commands, a page, a schedule and an assistant
+
+**Why.** Running Journeys, reading their results, replaying findings and
+filing them had been done for weeks by hand, in conversation with Claude.
+Asked whether any of it could be integrated, from a page and on a schedule,
+the answer was yes, and the request was "Let's add all of this, 1) the UI,
+2) the Claude skills, and 3) the LLM integration to our project." Building
+it was asked for separately, as "go ahead and build it", once it was
+settled that it replaces nothing that runs now.
+
+**Two requirements changed first, since both forbade it.** The non-goal "Using
+a language model for anything" now covers the engine only, and C3 now lets a
+tool run after the engine send journals, once it has said what and where.
+Whether a model may later choose moves or judge checks was weighed and left
+open; `OUTSTANDING.md` 2.1 has the weighing, including that R12 narrows the
+difference to the checks. R34 and R35 are new. Three choices were answered:
+the skills ship with the package, the page is served by `phileas view`, and
+scheduled runs happen both on this machine and in GitHub Actions.
+
+**What landed,** all outside the engine:
+
+- `phileas show --json`, a run as one object, through the reporter's own
+  `readEnding` and `replayVerdict`, in `src/report/summary.mjs`. A replay
+  lands in the recorded seed's folder, so a run finds its replays beside it,
+  matched by journal file name.
+- `phileas reproduce`: one replay per new finding not yet replayed. It first
+  replayed every Route that met one; after a run where two Routes met the
+  same planted defect, it was changed, since a batch of hundreds often meets
+  one finding on dozens of Routes.
+- `phileas triage --send`, in `src/assistant/triage.mjs`: Claude Code with
+  `--tools Read,Grep,Glob`, `dontAsk`, `--strict-mcp-config` and the plugin,
+  answering with structured output that the command writes into the run's
+  `triage/` folder. Without `--send` it says what it would send and stops; a
+  run where every Route passed sends nothing.
+- `filing.json`, read by `src/assistant/filing.mjs`, with every draft checked
+  by code before `gh` starts: no bare `#N`, and with `noOtherRepositoryLinks`
+  no other repository's issue or pull request. The trials each have one,
+  holding the title prefix and the rule against linking upstream that were
+  both stated for this tracker in September.
+- `phileas unattended`, `phileas view`, `phileas claude`, the plugin in
+  `claude/` with four skills, `schedule/` with a launchd and a GitHub Actions
+  template, and `.github/workflows/phileas-unattended.yml` running `buggy`
+  nightly.
+
+**Measured on `buggy`, in this worktree.** `phileas unattended
+proving-ground/buggy/phileas --routes 3 --trip-length 15` passed all three
+Routes and stopped before the triage. With `BUGGY_PLANT=main-throw` and four
+Routes, Routes 2 and 3 failed on finding `4797b382`, both replays
+reproduced it, and it stopped before the triage, saying it would send 4
+journals and 4 rendered Routes, 78 KB. Through `phileas view`, a one-Route
+Journey was started from the form and its output streamed to the end; the
+first attempt was refused by the fresh-build guard, correctly, since the
+engine had not been rebuilt after the change.
+
+**The triage, measured once signed in.** `phileas triage` on that run, with
+`--budget 2`, wrote a report and one draft. The report sorted Routes 2 and 3
+as one new finding, quoted each replay's verdict, and judged it a real
+uncaught exception that is also a planted one, so it advised marking it
+known rather than filing it, and left that for a yes. So `/phileas:triage`
+in a `-p` prompt runs the skill, and the answer arrives as structured output.
+
+**It also read what it should not have.** The report cited
+`proving-ground/buggy/main.cjs` and the repository's `package.json`, both
+outside the two folders the triage is meant to read. The cause was
+`--allowedTools Read,Grep,Glob`, which allows reading any path. A probe with
+it removed, in `dontAsk` mode, was refused `main.cjs` and allowed a journal
+in the run folder, at a cost of $0.35, so the flag was removed, and the
+command now prints each refused read and the triage's cost.
+
+**Then it was refused the run's own journals.** Run again, it listed reads of
+the run folder as refused: the folder had been handed to Claude Code as a
+path relative to where `phileas` ran, while Claude Code runs in the triage
+folder, where that path names nothing. The probe had used absolute paths,
+which is why it passed. The folder is now made absolute first; the next
+triage was refused only `buggy`'s `package.json` and a search of the
+repository, both outside the run. The three triages cost $0.61 and $1.22
+where printed; the first did not yet print its cost.
+
+**Then on the trials' own runs, which turned up a second leak.** Asked for
+in the words "Now let's try on with RStudio and Positron", each was triaged
+from a run kept in the main checkout, with `$5` as the budget. First the
+summary was given each finding's standing now, from the known findings
+file, since a run read later holds findings filed or dismissed since:
+Positron's `4a630dab6903` of 2026-10-07 had 16 findings new when it ran, of
+which 6 were filed since, 2 dismissed and 8 never decided. Its triage, $2.06,
+wrote no draft: the 8 were one pyrefly hover message counted 8 times,
+already judged ordinary under another finding, and it said so. RStudio's
+`92237931ed96` of 2026-09-29, $1.84, held two still-responding findings it
+judged likelier a condition of the run than a defect, and left open with a
+replay as the next step, and one session-log error it drafted, saying it
+was seen once and never replayed. **Both read files outside the run:**
+`adapter/index.ts`, `docs/HISTORY.md` and others. Run inside the main
+checkout, Claude Code took the repository's `settings.local.json`, which
+allows reading its whole folder tree. A probe with `--setting-sources user`
+was refused the adapter and read a journal, $0.34, and the triage now runs
+with only the person's own settings. Neither had `filing.json`, which is new
+on this branch and so not in the main checkout they were run against.
+**And the RStudio draft said RStudio was "built from a source checkout",**
+pointed out the same day as not true: the trial runs a copy of the installed
+release, its fuses switched on by `prepare-app.mjs`. A run records nothing
+about what was launched, so the triage guessed. `filing.json` now takes
+`environment` lines, the trials' say what each launches, the triage skill
+says anything else about the environment is "not recorded", and the draft
+was corrected by hand.
+
+**Drafts were reshaped the same day,** asked for in the words "Use
+/bug-report as a model for how the bug report should be structured. It
+doesn't have to be followed precisely," and for steps as "an interpretation
+that's human-readable, as we've been doing". The first draft had copied all
+13 Hops of a Route as its steps. A draft now follows issue 88 as filed: where
+it was found, Environment, the few steps that matter in a person's words with
+what happened as bullets under them, What happened, What I expected, the
+Route as recorded in a collapsed section, and the finding's id and seed in a
+closing comment. Steps cut down from a Route say they are a reading of it
+until run alone, and the `reproduce` skill now says how that has been done by
+hand: a probe from a fresh launch, beside a control, counted as "N of M".
+Code refuses to file a draft holding anything outside ASCII. The reshaped
+draft for `buggy`'s planted defect had two steps, open Buggy and click Strap
+the trunk, and said they had not been run alone.
+
+**Not run: the GitHub Actions workflow,** which needs this branch merged,
+and an `ANTHROPIC_API_KEY` secret for its triage. It is recorded as open.
+
 ## 2026-10-09: the survey reads inside frames
 
 **Why.** RStudio's data viewer, Help and Viewer are each a frame, and

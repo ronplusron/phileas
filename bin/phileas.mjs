@@ -9,6 +9,11 @@
 //   phileas known remove <id> [file]
 //   phileas known list [file]
 //   phileas replay <journal> [config] [--whole] [--with-current-fix] [--follow]
+//   phileas reproduce [what] [--config <config>] [--with-current-fix]
+//   phileas triage [what] [--config <config>] [--send] [--model <model>] [--budget <usd>]
+//   phileas unattended [config] [run flags] [--send] [--model <model>] [--budget <usd>]
+//   phileas view [config] [--port <port>]
+//   phileas claude [-- arguments for claude]
 //   phileas --version
 //
 // `run` runs a Journey with its settings changed for one run. Real flags need
@@ -38,6 +43,12 @@
 // checks saw, and a summary last, rather than Playwright's report of a
 // thrown error and its attachments.
 //
+// `reproduce`, `triage`, `unattended`, `view` and `claude` are the work done
+// after a run, asked for on 2026-10-12: replaying each new finding, handing a
+// run to an assistant, all of that unattended, a page to do it from, and a
+// session with the assistant's skills loaded. None of them is inside the
+// engine; docs/PLAN.md has them under "After the run".
+//
 // docs/HISTORY.md has the reasoning for each.
 //
 // Plain JavaScript on purpose, with its types in comments that the compiler
@@ -55,6 +66,9 @@ import { fileURLToPath } from 'node:url';
 import { renderJournal } from '../src/report/render.mjs';
 import { DEFAULT_KNOWN_FINDINGS, dismissFinding, journalsBeside, listKnownFindings, markFiled, removeFinding } from '../src/known.mjs';
 import { REPORTER_VARIABLE } from '../src/report/render.mjs';
+import { journalsInFolder, listRuns, summarizeRoute, summarizeRun } from '../src/report/summary.mjs';
+import { PLUGIN_DIR, prepareTriage, runTriage, sendNotice, writeTriage } from '../src/assistant/triage.mjs';
+import { serve } from '../src/view/server.mjs';
 
 /** Flags that take a value, and the variable each travels in. */
 const FLAGS = /** @type {Record<string, string>} */ ({
@@ -92,6 +106,11 @@ const USAGE = `Usage:
   phileas known remove <id> [file]
   phileas known list [file]
   phileas replay <journal> [config] [--whole] [--with-current-fix] [--follow]
+  phileas reproduce [what] [--config <config>] [--with-current-fix]
+  phileas triage [what] [--config <config>] [--send] [--model <model>] [--budget <usd>]
+  phileas unattended [config] [run flags] [--send] [--model <model>] [--budget <usd>]
+  phileas view [config] [--port <port>]
+  phileas claude [-- arguments for claude]
   phileas --version
 
 run: run a Journey, with its settings changed for this run only.
@@ -113,6 +132,8 @@ show: print a finished run, one line per Hop.
   what      A run folder, a seed's folder or a journals folder (its latest run),
             one journal file, or a seed's name under ${DEFAULT_JOURNALS}/.
             Defaults to the latest run under ${DEFAULT_JOURNALS}/.
+  --json    Print the run as one object instead: each Route's outcome, failed
+            checks, findings and replays, read as the reporter reads them.
 
 survey: print what the engine sees when the application starts, one line per
   candidate, each in the form a Fix's act step takes. Then, if there is a Fix, run
@@ -154,7 +175,38 @@ replay: replay one Route from its journal, acting on each recorded target by
 
 known list: print every known finding: unfiled, filed and false alarms, each
   with when it was last met in the journals kept beside the file.
-  file      As for add.`;
+  file      As for add.
+
+reproduce: replay, one at a time, one Route for each finding of a run not yet
+  known and not yet replayed, then say what each replay showed.
+  what      As for show.
+  --config  As for run. Defaults to ${DEFAULT_CONFIG}/.
+  --with-current-fix
+            As for replay.
+
+triage: hand a run to Claude Code, which writes a report of it and a draft
+  issue for each new finding into the run's triage/ folder. Nothing is filed.
+  It sends the run's summary and journals to Anthropic, so it says what it
+  would send and stops unless --send is given.
+  what      As for show.
+  --config  The Journey's folder, where filing.json says where findings are
+            filed. Defaults to ${DEFAULT_CONFIG}/.
+  --send    Send them.
+  --model   The model Claude Code uses, as its --model takes it.
+  --budget  The most to spend, in US dollars, as its --max-budget-usd.
+
+unattended: run a Journey, reproduce what it found, then triage it, for a
+  schedule. Without --send it stops before the triage and says so.
+  config, run flags   As for run.
+  --send, --model, --budget   As for triage.
+
+view: serve a page for working with Journeys on this machine, at an address
+  holding a token that every request must carry.
+  config    As for run. Defaults to ${DEFAULT_CONFIG}/.
+  --port    The port, 0 for any free one. Defaults to 0.
+
+claude: start Claude Code with the engine's skills loaded: booking and running
+  a Journey, triaging a run, reproducing a finding and filing one.`;
 
 /**
  * @param {string} message
@@ -198,7 +250,12 @@ export function knownFileIn(file, dir = process.cwd()) {
  * @typedef {{ command: 'help' }
  *   | { command: 'version' }
  *   | { command: 'run', config: string, settings: Record<string, string>, passThrough: string[] }
- *   | { command: 'show', what: string | undefined }
+ *   | { command: 'show', what: string | undefined, json: boolean }
+ *   | { command: 'reproduce', what: string | undefined, config: string, withCurrentFix: boolean }
+ *   | { command: 'triage', what: string | undefined, config: string, send: boolean, model?: string, budget?: string }
+ *   | { command: 'unattended', config: string, settings: Record<string, string>, passThrough: string[], send: boolean, model?: string, budget?: string }
+ *   | { command: 'view', config: string, port: number }
+ *   | { command: 'claude', passThrough: string[] }
  *   | { command: 'survey', config: string }
  *   | { command: 'known-add', id: string, issue: string, file: string }
  *   | { command: 'known-dismiss', id: string, reason: string, file: string }
@@ -206,6 +263,70 @@ export function knownFileIn(file, dir = process.cwd()) {
  *   | { command: 'known-list', file: string }
  *   | { command: 'replay', journal: string, config: string, whole: boolean, withCurrentFix: boolean, follow: boolean }} Parsed
  */
+
+/**
+ * A command's own arguments, read against the flags it takes: those taking a
+ * value, as `--name value` or `--name=value`, and those taking none. Anything
+ * else starting with - is refused, and the rest are positional, in order.
+ * @param {string} command
+ * @param {string[]} args
+ * @param {{ values?: string[], switches?: string[] }} takes
+ * @returns {{ positional: string[], values: Record<string, string>, switches: Set<string> }}
+ */
+function readFlags(command, args, { values = [], switches = [] }) {
+  /** @type {string[]} */
+  const positional = [];
+  /** @type {Record<string, string>} */
+  const found = {};
+  /** @type {Set<string>} */
+  const on = new Set();
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = /** @type {string} */ (args[i]);
+    if (!arg.startsWith('-')) {
+      positional.push(arg);
+      continue;
+    }
+    const [flag = '', inline] = arg.split(/=(.*)/s);
+    if (switches.includes(flag)) {
+      if (inline !== undefined) throw new Error(`${flag} takes no value`);
+      if (on.has(flag)) throw new Error(`${flag} was given twice`);
+      on.add(flag);
+    } else if (values.includes(flag)) {
+      if (flag in found) throw new Error(`${flag} was given twice`);
+      const value = inline ?? args[(i += 1)];
+      if (value === undefined || value === '' || value.startsWith('--')) throw new Error(`${flag} needs a value`);
+      found[flag] = value;
+    } else {
+      const takes = [...values, ...switches];
+      throw new Error(`${command} takes ${takes.length ? takes.join(', ') : 'no flags'}, and was given ${flag}`);
+    }
+  }
+  return { positional, values: found, switches: on };
+}
+
+/**
+ * A port as the page takes it: a whole number from 0, which means any free
+ * one, to 65535.
+ * @param {string | undefined} text
+ * @returns {number}
+ */
+function portOf(text) {
+  if (text === undefined) return 0;
+  const port = Number(text);
+  if (!/^\d+$/.test(text) || port > 65535) throw new Error(`--port takes a port from 0 to 65535, and was given ${text}`);
+  return port;
+}
+
+/**
+ * A spending limit as Claude Code takes it: a positive number of dollars.
+ * @param {string | undefined} text
+ * @returns {string | undefined}
+ */
+function budgetOf(text) {
+  if (text === undefined) return undefined;
+  if (!/^\d+(\.\d+)?$/.test(text) || Number(text) <= 0) throw new Error(`--budget takes a number of US dollars, and was given ${text}`);
+  return text;
+}
 
 /**
  * The command line, read into what to do.
@@ -223,11 +344,80 @@ export function parse(args) {
     if (rest.length) throw new Error(`--version takes nothing, and was given ${rest.join(' ')}`);
     return { command: 'version' };
   }
+  if (command === 'claude') {
+    // Everything for claude comes after --, so a flag of its own is never
+    // read as one of this command's.
+    const separator = rest.indexOf('--');
+    const own = separator === -1 ? rest : rest.slice(0, separator);
+    if (own.length) throw new Error(`claude takes its own arguments after --, and was given ${own.join(' ')}`);
+    return { command: 'claude', passThrough: separator === -1 ? [] : rest.slice(separator + 1) };
+  }
   if (command === 'show') {
-    if (rest.length > 1) throw new Error(`show takes one thing to show, and was given ${rest.length}`);
-    const [what] = rest;
-    if (what?.startsWith('-')) throw new Error(`show takes no flags, and was given ${what}`);
-    return { command: 'show', what };
+    const { positional, switches } = readFlags('show', rest, { switches: ['--json'] });
+    if (positional.length > 1) throw new Error(`show takes one thing to show, and was given ${positional.length}`);
+    return { command: 'show', what: positional[0], json: switches.has('--json') };
+  }
+  if (command === 'reproduce') {
+    const { positional, values, switches } = readFlags('reproduce', rest, { values: ['--config'], switches: ['--with-current-fix'] });
+    if (positional.length > 1) throw new Error(`reproduce takes one run, and was given ${positional.length}`);
+    return {
+      command: 'reproduce',
+      what: positional[0],
+      config: values['--config'] ?? DEFAULT_CONFIG,
+      withCurrentFix: switches.has('--with-current-fix'),
+    };
+  }
+  if (command === 'triage') {
+    const { positional, values, switches } = readFlags('triage', rest, { values: ['--config', '--model', '--budget'], switches: ['--send'] });
+    if (positional.length > 1) throw new Error(`triage takes one run, and was given ${positional.length}`);
+    const budget = budgetOf(values['--budget']);
+    return {
+      command: 'triage',
+      what: positional[0],
+      config: values['--config'] ?? DEFAULT_CONFIG,
+      send: switches.has('--send'),
+      ...(values['--model'] ? { model: values['--model'] } : {}),
+      ...(budget ? { budget } : {}),
+    };
+  }
+  if (command === 'view') {
+    const { positional, values } = readFlags('view', rest, { values: ['--port'] });
+    if (positional.length > 1) throw new Error(`view takes one config, and was given ${positional.length}`);
+    return { command: 'view', config: positional[0] ?? DEFAULT_CONFIG, port: portOf(values['--port']) };
+  }
+  if (command === 'unattended') {
+    // A Journey's flags as run reads them, with triage's taken out first.
+    const separator = rest.indexOf('--');
+    const own = separator === -1 ? rest : rest.slice(0, separator);
+    /** @type {string[]} */
+    const forRun = [];
+    /** @type {Record<string, string>} */
+    const triage = {};
+    let send = false;
+    for (let i = 0; i < own.length; i += 1) {
+      const arg = /** @type {string} */ (own[i]);
+      const [flag = '', inline] = arg.split(/=(.*)/s);
+      if (flag === '--send') {
+        if (inline !== undefined) throw new Error('--send takes no value');
+        send = true;
+      } else if (flag === '--model' || flag === '--budget') {
+        const value = inline ?? own[(i += 1)];
+        if (value === undefined || value === '' || value.startsWith('--')) throw new Error(`${flag} needs a value`);
+        triage[flag] = value;
+      } else forRun.push(arg);
+    }
+    const run = parse(['run', ...forRun, ...(separator === -1 ? [] : rest.slice(separator))]);
+    if (run.command !== 'run') throw new Error('unattended could not read its Journey flags');
+    const budget = budgetOf(triage['--budget']);
+    return {
+      command: 'unattended',
+      config: run.config,
+      settings: run.settings,
+      passThrough: run.passThrough,
+      send,
+      ...(triage['--model'] ? { model: triage['--model'] } : {}),
+      ...(budget ? { budget } : {}),
+    };
   }
   if (command === 'survey') {
     if (rest.length > 1) throw new Error(`survey takes one config, and was given ${rest.length}`);
@@ -292,7 +482,9 @@ export function parse(args) {
   }
   if (command !== 'run') {
     throw new Error(
-      command ? `unknown command ${command}; the commands are run, show, survey, known and replay` : 'no command given'
+      command
+        ? `unknown command ${command}; the commands are run, show, survey, known, replay, reproduce, triage, unattended, view and claude`
+        : 'no command given'
     );
   }
 
@@ -365,15 +557,18 @@ export function runReporter(passThrough) {
 }
 
 /**
+ * Start Playwright on a config, and settle with how it ended. Refuses, by
+ * throwing, a config that is not there or that cannot reach Playwright.
  * @param {string} config
  * @param {Record<string, string>} settings
  * @param {string[]} passThrough
  * @param {{ reporter?: boolean }} [options] false for a survey, which judges
  *   nothing and keeps the config's own reporter
+ * @returns {Promise<{ code: number | null, signal: NodeJS.Signals | null }>}
  */
-function run(config, settings, passThrough, { reporter = true } = {}) {
+export function startPlaywright(config, settings, passThrough, { reporter = true } = {}) {
   if (!fs.existsSync(config)) {
-    fail(
+    throw new Error(
       config === DEFAULT_CONFIG
         ? `there is no ${DEFAULT_CONFIG}/ folder here; give the Playwright config to run`
         : `${config} does not exist`
@@ -385,7 +580,7 @@ function run(config, settings, passThrough, { reporter = true } = {}) {
   try {
     cli = playwrightCli(config);
   } catch {
-    refuse(`@playwright/test is not installed where ${config} can reach it`);
+    throw new Error(`@playwright/test is not installed where ${config} can reach it`);
   }
 
   const engineReports = reporter && !ownReporter(passThrough);
@@ -399,11 +594,50 @@ function run(config, settings, passThrough, { reporter = true } = {}) {
   // this only has to report how it ended.
   const waitForPlaywright = () => {};
   process.on('SIGINT', waitForPlaywright);
-  child.on('close', (code, signal) => {
-    process.off('SIGINT', waitForPlaywright);
-    if (signal) process.kill(process.pid, signal);
-    else process.exit(code ?? 1);
+  return new Promise((resolve) => {
+    child.on('close', (code, signal) => {
+      process.off('SIGINT', waitForPlaywright);
+      resolve({ code, signal });
+    });
   });
+}
+
+/**
+ * Run Playwright and leave as it left.
+ * @param {string} config
+ * @param {Record<string, string>} settings
+ * @param {string[]} passThrough
+ * @param {{ reporter?: boolean }} [options]
+ */
+async function run(config, settings, passThrough, options) {
+  /** @type {{ code: number | null, signal: NodeJS.Signals | null }} */
+  let ended;
+  try {
+    ended = await startPlaywright(config, settings, passThrough, options);
+  } catch (error) {
+    fail(/** @type {Error} */ (error).message);
+  }
+  if (ended.signal) process.kill(process.pid, ended.signal);
+  else process.exit(ended.code ?? 1);
+}
+
+/**
+ * The folder a config's journals are kept in: `.phileas-journals` beside its
+ * Playwright config, which is where every consumer here writes them.
+ * @param {string} config
+ * @returns {string}
+ */
+export function journalsOf(config) {
+  return path.join(folderOf(config), '.phileas-journals');
+}
+
+/**
+ * The folder a config lives in, which holds its known findings and filing.json.
+ * @param {string} config
+ * @returns {string}
+ */
+function folderOf(config) {
+  return fs.existsSync(config) && fs.statSync(config).isFile() ? path.dirname(config) : config;
 }
 
 /**
@@ -417,17 +651,8 @@ function subfolders(folder) {
     .map((entry) => path.join(folder, entry.name));
 }
 
-/**
- * @param {string} folder
- * @returns {string[]}
- */
-function journalsIn(folder) {
-  return fs
-    .readdirSync(folder)
-    .filter((name) => /^route-\d+-.*\.jsonl$/.test(name))
-    .sort()
-    .map((name) => path.join(folder, name));
-}
+/** The Route journals in a folder, in Route order. */
+const journalsIn = journalsInFolder;
 
 /**
  * The latest run among run folders. A run is named for when it started, in UTC,
@@ -445,18 +670,20 @@ function latest(runs) {
  * A journals folder holds seed folders, which hold run folders, which hold one
  * journal per Route, so a folder is recognized by what is inside it.
  * @param {string | undefined} what
+ * @param {string} [root] where a seed's name is looked for, and what is shown
+ *   when nothing is named
  * @returns {{ from: string, files: string[] }}
  */
-export function journalsFor(what) {
-  const target = what ?? DEFAULT_JOURNALS;
+export function journalsFor(what, root = DEFAULT_JOURNALS) {
+  const target = what ?? root;
   if (!fs.existsSync(target)) {
-    if (what !== undefined && !what.includes(path.sep) && fs.existsSync(path.join(DEFAULT_JOURNALS, what))) {
-      return journalsFor(path.join(DEFAULT_JOURNALS, what));
+    if (what !== undefined && !what.includes(path.sep) && fs.existsSync(path.join(root, what))) {
+      return journalsFor(path.join(root, what), root);
     }
     throw new Error(
       what === undefined
-        ? `there is no ${DEFAULT_JOURNALS}/ folder here; name a run folder, or a seed's folder`
-        : `${what} is neither a folder nor a seed under ${DEFAULT_JOURNALS}/`
+        ? `there is no ${root}/ folder here; name a run folder, or a seed's folder`
+        : `${what} is neither a folder nor a seed under ${root}/`
     );
   }
   if (fs.statSync(target).isFile()) return { from: target, files: [target] };
@@ -474,13 +701,15 @@ export function journalsFor(what) {
 }
 
 /**
- * Replay one Route from its journal: run its Journey with the journal's seed
- * and Route, and the variables a Route reads its replay from. Whether each
- * Fix step can be replayed is checked by the engine before anything launches.
- * @param {{ journal: string, config: string, whole: boolean, withCurrentFix: boolean, follow: boolean }} asked
+ * What replaying one Route from its journal runs: its Journey with the
+ * journal's seed and Route, and the variables a Route reads its replay from.
+ * Whether each Fix step can be replayed is checked by the engine before
+ * anything launches. Refuses, by throwing, a file that names no Route.
+ * @param {{ journal: string, whole: boolean, withCurrentFix: boolean, follow: boolean }} asked
+ * @returns {{ settings: Record<string, string>, passThrough: string[] }}
  */
-function replay({ journal, config, whole, withCurrentFix, follow }) {
-  if (!fs.existsSync(journal) || !fs.statSync(journal).isFile()) fail(`${journal} is not a journal file`);
+export function replayRun({ journal, whole, withCurrentFix, follow }) {
+  if (!fs.existsSync(journal) || !fs.statSync(journal).isFile()) throw new Error(`${journal} is not a journal file`);
   /** @type {{ journeySeed?: string, routeNumber?: number, tripLength?: number, fix?: { name?: string } } | undefined} */
   let opening;
   for (const line of fs.readFileSync(journal, 'utf8').split('\n')) {
@@ -494,14 +723,13 @@ function replay({ journal, config, whole, withCurrentFix, follow }) {
       continue;
     }
   }
-  if (!opening?.journeySeed || !opening.routeNumber) fail(`${journal} has no opening line, so it names no Route to replay`);
+  if (!opening?.journeySeed || !opening.routeNumber) throw new Error(`${journal} has no opening line, so it names no Route to replay`);
   if (withCurrentFix && opening.fix && !opening.fix.name) {
-    fail(`${journal} recorded a Fix with no name, so there is no current Fix to run in its place`);
+    throw new Error(`${journal} recorded a Fix with no name, so there is no current Fix to run in its place`);
   }
   const route = opening.routeNumber;
-  run(
-    config,
-    {
+  return {
+    settings: {
       PHILEAS_SEED: opening.journeySeed,
       PHILEAS_ROUTES: String(route),
       PHILEAS_TRIP_LENGTH: String(opening.tripLength ?? 1),
@@ -511,12 +739,30 @@ function replay({ journal, config, whole, withCurrentFix, follow }) {
       ...(withCurrentFix ? { PHILEAS_REPLAY_CURRENT_FIX: '1' } : {}),
       ...(follow ? { PHILEAS_FOLLOW: '1' } : {}),
     },
-    route > 1 ? ['--grep', `route ${route}$`] : []
-  );
+    passThrough: route > 1 ? ['--grep', `route ${route}$`] : [],
+  };
 }
 
-/** @param {string | undefined} what */
-function show(what) {
+/**
+ * Replay one Route from its journal.
+ * @param {{ journal: string, config: string, whole: boolean, withCurrentFix: boolean, follow: boolean }} asked
+ */
+function replay(asked) {
+  /** @type {ReturnType<typeof replayRun>} */
+  let replaying;
+  try {
+    replaying = replayRun(asked);
+  } catch (error) {
+    fail(/** @type {Error} */ (error).message);
+  }
+  run(asked.config, replaying.settings, replaying.passThrough);
+}
+
+/**
+ * @param {string | undefined} what
+ * @param {boolean} [json] the run as one object rather than one line per Hop
+ */
+function show(what, json = false) {
   /** @type {{ from: string, files: string[] }} */
   let found;
   try {
@@ -525,11 +771,180 @@ function show(what) {
     // Every way this fails names what is not there, so the reason stands alone.
     fail(/** @type {Error} */ (error).message);
   }
+  if (json) {
+    const isFile = fs.statSync(found.from).isFile();
+    console.log(JSON.stringify(isFile ? summarizeRoute(found.from) : summarizeRun(found.from), null, 2));
+    return;
+  }
   console.log(`Journals in ${found.from}\n`);
   for (const file of found.files) {
     for (const line of renderJournal(fs.readFileSync(file, 'utf8'))) console.log(line);
     console.log('');
   }
+}
+
+/**
+ * The run folder a command after the run works on: the one named, or the
+ * latest under the config's journals. A single journal is refused, since
+ * these work on a whole run.
+ * @param {string | undefined} what
+ * @param {string} config
+ * @returns {string}
+ */
+function runFolderFor(what, config) {
+  /** @type {{ from: string, files: string[] }} */
+  let found;
+  try {
+    found = journalsFor(what, journalsOf(config));
+  } catch (error) {
+    fail(/** @type {Error} */ (error).message);
+  }
+  if (fs.statSync(found.from).isFile()) fail(`${found.from} is one journal; name the run folder it is in`);
+  return found.from;
+}
+
+/**
+ * The Routes of a run to replay: for each finding not known when the run was
+ * made, and neither filed nor dismissed since, the first Route that ended on
+ * it, unless a Route that ended on it has been replayed already. One per finding, since a batch of hundreds often meets one finding
+ * on dozens of Routes, and each replay launches the application.
+ * @param {import('../src/report/summary.mjs').RunSummary} summary
+ */
+export function toReproduce(summary) {
+  // A finding filed or dismissed since the run needs no replay to decide it.
+  const settled = new Set(
+    summary.newFindings.filter((finding) => finding.now.standing === 'filed' || finding.now.standing === 'false alarm').map((finding) => finding.id)
+  );
+  const ended = summary.routes
+    .map((route) => ({ ...route, newFindings: route.newFindings.filter((id) => !settled.has(id)) }))
+    .filter((route) => route.outcome !== 'passed' && route.newFindings.length);
+  const covered = new Set(ended.filter((route) => route.replayedBy.length).flatMap((route) => route.newFindings));
+  /** @type {typeof ended} */
+  const chosen = [];
+  for (const route of ended) {
+    if (route.newFindings.every((id) => covered.has(id))) continue;
+    chosen.push(route);
+    for (const id of route.newFindings) covered.add(id);
+  }
+  return chosen;
+}
+
+/**
+ * Replay, one at a time, every Route of a run that failed on a new finding,
+ * then say what each replay showed. Replaying is code, not the assistant, so
+ * the verdict stays the engine's.
+ * @param {string} folder
+ * @param {string} config
+ * @param {boolean} withCurrentFix
+ */
+async function reproduceRun(folder, config, withCurrentFix) {
+  const pending = toReproduce(summarizeRun(folder));
+  if (!pending.length) {
+    console.log(`Nothing to reproduce in ${folder}: no Route ended on a new finding that has not been replayed.`);
+    return;
+  }
+  console.log(`Replaying ${pending.length} Route(s) of ${folder}, one at a time.`);
+  for (const route of pending) {
+    console.log(`\nReplaying route ${route.routeNumber}, for finding ${route.newFindings.join(', ')}`);
+    try {
+      const { settings, passThrough } = replayRun({ journal: route.journal, whole: false, withCurrentFix, follow: false });
+      await startPlaywright(config, settings, passThrough);
+    } catch (error) {
+      console.log(`route ${route.routeNumber} could not be replayed: ${/** @type {Error} */ (error).message}`);
+    }
+  }
+  const after = summarizeRun(folder);
+  console.log(`\nWhat each replay showed, in ${folder}:`);
+  for (const route of pending) {
+    const now = after.routes.find((each) => each.journal === route.journal);
+    const verdict = now?.replayedBy.at(-1)?.verdict ?? 'no replay was recorded';
+    console.log(`  route ${route.routeNumber}  ${route.newFindings.join(', ')}  ${verdict}`);
+  }
+}
+
+/**
+ * Hand a run to the assistant, once the person or the schedule has said to
+ * send it. Without that, says what would be sent and stops.
+ * @param {string} folder
+ * @param {string} config
+ * @param {{ send: boolean, model?: string, budget?: string }} options
+ * @returns {Promise<boolean>} whether it ended as asked: a triage written, or
+ *   none needed
+ */
+async function triageRun(folder, config, { send, model, budget }) {
+  // Nothing to sort when everything passed, so nothing is sent to sort it.
+  if (summarizeRun(folder).routes.every((route) => route.outcome === 'passed')) {
+    console.log(`Every Route in ${folder} passed, so there is nothing to triage, and nothing was sent.`);
+    return true;
+  }
+  const prepared = prepareTriage(folder, folderOf(config));
+  console.log(sendNotice(prepared));
+  if (!send) {
+    console.log('Nothing was sent. Give --send to send them.');
+    return false;
+  }
+  try {
+    const result = await runTriage(prepared, { model, budget });
+    const written = writeTriage(prepared, result);
+    console.log(`Triage written: ${written.report}`);
+    if (result.costUsd !== undefined) console.log(`  cost   $${result.costUsd.toFixed(2)}`);
+    for (const refused of result.refused) console.log(`  refused, outside the run: ${refused}`);
+    for (const draft of written.drafts) console.log(`  draft  ${draft}`);
+    if (!written.drafts.length) console.log('  no drafts: nothing in this run was judged worth filing');
+    return true;
+  } catch (error) {
+    console.error(`phileas: the triage did not finish: ${/** @type {Error} */ (error).message}`);
+    return false;
+  }
+}
+
+/**
+ * A Journey, then a replay of each new finding, then a triage, for a schedule.
+ * Leaves as the Journey left, so a schedule sees what the run found, and never
+ * as a triage left, which says nothing about the application.
+ * @param {Extract<Parsed, { command: 'unattended' }>} asked
+ */
+async function unattended(asked) {
+  const root = journalsOf(asked.config);
+  const before = new Set(listRuns(root).map((each) => each.folder));
+  /** @type {{ code: number | null, signal: NodeJS.Signals | null }} */
+  let ended;
+  try {
+    ended = await startPlaywright(asked.config, asked.settings, asked.passThrough);
+  } catch (error) {
+    fail(/** @type {Error} */ (error).message);
+  }
+  if (ended.signal) process.kill(process.pid, ended.signal);
+  const runs = listRuns(root).filter((each) => !before.has(each.folder));
+  if (!runs.length) {
+    console.error(`phileas: the Journey wrote no journals under ${root}, so there is nothing to reproduce or triage.`);
+    process.exit(ended.code || 1);
+  }
+  for (const each of runs) {
+    await reproduceRun(each.folder, asked.config, false);
+    console.log('');
+    await triageRun(each.folder, asked.config, asked);
+  }
+  process.exit(ended.code ?? 1);
+}
+
+/**
+ * Claude Code, with the engine's plugin loaded for this session only.
+ * @param {string[]} passThrough
+ */
+function claude(passThrough) {
+  const child = spawn('claude', ['--plugin-dir', PLUGIN_DIR, ...passThrough], { stdio: 'inherit' });
+  child.on('error', (error) => {
+    fail(
+      /** @type {NodeJS.ErrnoException} */ (error).code === 'ENOENT'
+        ? 'Claude Code is not installed: there is no claude command to start'
+        : error.message
+    );
+  });
+  child.on('close', (code, signal) => {
+    if (signal) process.kill(process.pid, signal);
+    else process.exit(code ?? 1);
+  });
 }
 
 /**
@@ -607,7 +1022,7 @@ function main() {
   }
   if (parsed.command === 'help') console.log(USAGE);
   else if (parsed.command === 'version') console.log(`phileas ${version()}`);
-  else if (parsed.command === 'show') show(parsed.what);
+  else if (parsed.command === 'show') show(parsed.what, parsed.json);
   // One Route is enough to see the start, since every Route starts the same way.
   else if (parsed.command === 'survey') run(parsed.config, { PHILEAS_SURVEY: '1', PHILEAS_ROUTES: '1' }, [], { reporter: false });
   else if (parsed.command === 'known-add') knownAdd(parsed.id, parsed.issue, knownFileIn(parsed.file));
@@ -615,6 +1030,12 @@ function main() {
   else if (parsed.command === 'known-remove') knownChange('remove', parsed.id, knownFileIn(parsed.file));
   else if (parsed.command === 'known-list') knownList(knownFileIn(parsed.file));
   else if (parsed.command === 'replay') replay(parsed);
+  else if (parsed.command === 'reproduce') reproduceRun(runFolderFor(parsed.what, parsed.config), parsed.config, parsed.withCurrentFix);
+  else if (parsed.command === 'triage') {
+    triageRun(runFolderFor(parsed.what, parsed.config), parsed.config, parsed).then((written) => process.exit(written ? 0 : 2));
+  } else if (parsed.command === 'unattended') unattended(parsed);
+  else if (parsed.command === 'view') serve({ config: parsed.config, port: parsed.port, journals: journalsOf(parsed.config), phileas: fileURLToPath(import.meta.url) });
+  else if (parsed.command === 'claude') claude(parsed.passThrough);
   else run(parsed.config, parsed.settings, parsed.passThrough);
 }
 

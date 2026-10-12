@@ -1,0 +1,53 @@
+# The engine's own unattended Journey: `buggy`, the proving ground, every
+# night, then a replay of each new finding, then a triage when the repository
+# has an ANTHROPIC_API_KEY secret. Built from schedule/github-actions.yml,
+# which says what this costs. `buggy` is the only application here that can be
+# built on a runner; RStudio and Positron are built on this machine.
+#
+# Never a required check, since exploratory runs never gate a push, and it
+# files nothing: buggy has no filing.json, and its findings are planted.
+
+name: Phileas, unattended
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  buggy:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Installing builds the engine into dist/, which buggy's adapter imports.
+      - run: npm ci
+
+      - name: Build buggy
+        working-directory: proving-ground/buggy
+        run: npm ci && npm run package
+
+      - run: npm install --global @anthropic-ai/claude-code
+
+      # Without the secret, it stops at the replays, and says so.
+      - name: Journey, reproduce, triage
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then send=--send; else send=; fi
+          node bin/phileas.mjs unattended proving-ground/buggy/phileas $send --budget 3
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: phileas-journals
+          path: proving-ground/buggy/phileas/.phileas-journals
+          retention-days: 14

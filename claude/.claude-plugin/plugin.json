@@ -1,0 +1,8 @@
+{
+  "name": "phileas",
+  "version": "0.7.0",
+  "description": "Work with the Phileas exploratory testing engine after a run: book and run a Journey, triage what it found, reproduce a finding, and draft or file an issue for it.",
+  "author": {
+    "name": "Drugstore Sushi"
+  }
+}

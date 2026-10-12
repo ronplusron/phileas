@@ -105,6 +105,9 @@ Journey is shown finding each one.
 | `docs/research/` | Studies of whether the engine suits a particular application, measured against that application's real bugs. |
 | `src/` | The engine. Its planned file layout is in `docs/PLAN.md`. |
 | `src/oracles/` | The check runner and the implicit tier. |
+| `src/report/`, `src/assistant/`, `src/view/` | Work after a run, outside the engine: reading a run, the assistant's triage and filing, and the page `phileas view` serves. |
+| `claude/` | A Claude Code plugin shipped with the package: skills to run a Journey, triage a run, reproduce a finding and file one. `phileas claude` starts a session with it loaded. |
+| `schedule/` | Templates for running `phileas unattended` nightly, under launchd or in GitHub Actions. |
 | `tests/` | This engine's own tests. |
 | `proving-ground/` | Applications built to be tested, each broken in one chosen way, with the adapter each needs. |
 | `trial/` | The adapter and Journeys for a measured trial against a real application, Positron first. `docs/PLAN.md` has the trial. |
