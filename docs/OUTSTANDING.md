@@ -435,7 +435,10 @@ a refactor or a feature rather than a fault. The faults it deferred are in
   sources and unmeasured there: Positron's install layout on both, where
   Linux packages install RStudio, and whether `client_init` and
   `renderer.log` read the same. The trial adapters record their setup
-  (`runsWith`) as unread off macOS until someone measures it. Also, `@types/node` is a major ahead of
+  (`runsWith`) as unread off macOS until someone measures it. The
+  platform reads the system's own version only on macOS, and records the
+  kernel's release elsewhere, since how Windows and Linux say theirs was
+  not measured. Also, `@types/node` is a major ahead of
   `engines.node`. What the engine asks of a consumer's Electron and
   Playwright is 1.16.
 - **Tests still missing** after the review's own were added: the renderer's

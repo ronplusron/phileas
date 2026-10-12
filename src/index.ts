@@ -26,9 +26,11 @@ export {
   type GuardVerdict,
 } from './bundle.js';
 export { readBuild, type JournaledBuild } from './build.js';
+export { readMachine, type JournaledPlatform } from './platform.js';
 export {
   launchApp,
   buildOf,
+  platformOf,
   responsesOf,
   closeApp,
   reloadRenderer,

@@ -18,7 +18,7 @@ import {
   type TripHopEntry,
 } from './journal.js';
 import { requireRun } from './journey.js';
-import { buildOf } from './launch.js';
+import { buildOf, platformOf } from './launch.js';
 import { trackRanWith } from './ran-with.js';
 import { clickMenuItem } from './menu.js';
 import { frameText, renderEntry, targetText } from './report/render.mjs';
@@ -855,6 +855,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     tripLength: tripLength,
     settleQuietMs,
     build: buildOf(app),
+    platform: platformOf(app),
     responsiveTimeoutMs: responsiveMs,
     ...shares,
     allowStandardMenuRoles: (cfg.exclusions.allowStandardMenuRoles ?? []).map((role) => role.toLowerCase()),

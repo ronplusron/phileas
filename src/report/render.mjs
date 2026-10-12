@@ -21,6 +21,7 @@ import { currentEntry } from '../legacy.mjs';
 /** @typedef {import('../effect').HopEffect} HopEffect */
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
 /** @typedef {import('../build').JournaledBuild} JournaledBuild */
+/** @typedef {import('../platform').JournaledPlatform} JournaledPlatform */
 /** @typedef {import('../journal').JournaledCandidate} JournaledCandidate */
 
 /**
@@ -319,6 +320,34 @@ export function buildText(build) {
 }
 
 /**
+ * Which operating system and architecture a Route ran on, as its opening line
+ * says them: the system and its version and build, the machine's
+ * architecture, and the application's own where it ran as another. The
+ * kernel is named only where the system's own version was not read, since it
+ * is then the only version there is. Whatever could not be read says so, and
+ * a journal from before 2026-10-12 says the platform was not recorded.
+ * @param {JournaledPlatform | undefined} platform
+ * @returns {string}
+ */
+export function platformText(platform) {
+  if (!platform) return 'platform not recorded';
+  const parts = [
+    [
+      platform.os,
+      platform.version,
+      platform.osBuild ? `(${platform.osBuild})` : '',
+      !platform.version && platform.kernel ? `kernel ${platform.kernel}` : '',
+    ]
+      .filter(Boolean)
+      .join(' '),
+  ];
+  if (platform.arch) parts.push(platform.arch);
+  if (platform.appArch && platform.appArch !== platform.arch) parts.push(`the application ran as ${platform.appArch}`);
+  if (platform.unread) parts.push(`not all read: ${platform.unread}`);
+  return parts.join(', ');
+}
+
+/**
  * What a Route's application was seen to run with, from its outcome line:
  * each name with every value it took, `nothing started` where the adapter
  * reads it and saw nothing, and why a read failed. Empty where the adapter
@@ -370,7 +399,10 @@ export function renderEntry(entry, routeNumber, { brief = false } = {}) {
     case 'route':
       return (
         `${route}  seed ${entry.routeSeed}, from Journey seed ${entry.journeySeed}, ` +
-        `Trip of ${entry.tripLength} hops, ${entry.build ? `on ${buildText(entry.build)}` : buildText(undefined)}`
+        `Trip of ${entry.tripLength} hops, ${entry.build ? `on ${buildText(entry.build)}` : buildText(undefined)}` +
+        // Left off a journal from before platforms were recorded, rather than
+        // adding to every line of one a fact the build already says is missing.
+        (entry.platform ? `; under ${platformText(entry.platform)}` : '')
       );
     case 'pool':
       return undefined;

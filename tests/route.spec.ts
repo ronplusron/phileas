@@ -5,6 +5,7 @@ import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   allowedGroupsFromEnvironment,
   buildOf,
+  platformOf,
   createExclusionTally,
   createTest,
   ALLOW_EXCLUDED_VARIABLE,
@@ -2342,6 +2343,21 @@ test('the opening line names the build the launch read, and one the engine did n
   expect(buildOf({} as ElectronApplication)).toEqual({
     unread: 'The application was not launched by the engine, so which build it is was not read.',
   });
+});
+
+test('the opening line names the platform, with the architecture the application itself ran as', async ({ page, app, launched }) => {
+  const dir = scratch();
+  const seed = 'which-platform';
+  await runRoute({ page, app, cfg: buggy, streams: deriveRouteStreams(seed, 1), journeySeed: seed, routeNumber: 1, tripLength: 1, journalsRoot: dir });
+  const [first] = readJournal(path.join(inRun(dir), `route-001-${deriveRouteStreams(seed, 1).routeSeed}.jsonl`));
+  expect(first?.kind === 'route' && first.platform).toEqual(launched.platform);
+  // Asked of Buggy's main process, which runs as the engine does: Buggy is
+  // packaged for the one architecture the engine is run on.
+  expect(launched.platform.appArch).toBe(process.arch);
+  expect(launched.platform.arch).toBeTruthy();
+  const elsewhere = platformOf({} as ElectronApplication);
+  expect(elsewhere.appArch).toBeUndefined();
+  expect(elsewhere.unread).toMatch(/not launched by the engine, so its own architecture was not read\.$/);
 });
 
 test("what the adapter says the application ran with is noted where first seen and rolled up on the outcome", async ({ page, app }) => {

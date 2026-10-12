@@ -6,6 +6,7 @@ import { _electron as electron, type ElectronApplication, type Page } from '@pla
 import type { AppUnderTest, UniversalCheck } from './app-under-test.js';
 import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle.js';
 import { readBuild, readRunsWith, sourcesOf, type JournaledBuild } from './build.js';
+import { machineOnce, withAppArch, type JournaledPlatform } from './platform.js';
 import { stubOpenExternal, stubOpenPaths, stubSelfLaunch, clearOpenExternal } from './external.js';
 import { stubNativeDialogs } from './dialogs.js';
 import { prepareFirstLine } from './first-line.js';
@@ -72,6 +73,8 @@ export type LaunchedApp = {
   guard: GuardVerdict;
   /** Which build was launched, for the journal's opening line (C1). See `buildOf`. */
   build: JournaledBuild;
+  /** Which operating system and architecture it ran on, beside the build. See `platformOf`. */
+  platform: JournaledPlatform;
   pageErrors: Error[];
   consoleErrors: string[];
 } & (
@@ -739,6 +742,10 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
     // answer to the first call made.
     await reachMainProcess(app);
 
+    // Asked of the application rather than assumed from the engine, since the
+    // two can run as different architectures on the same machine.
+    const platform = await withAppArch(machineOnce(), () => retryDropped(() => app.evaluate(() => process.arch)));
+
     // Before firstWindow(), which is the earliest the main process can be reached
     // and, for an app that defers display, before anything has been drawn.
     await retryDropped(() => prepareWindows(app, mode));
@@ -758,12 +765,14 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
       path: 'electron',
       guard,
       build,
+      platform,
       stderr: [],
       pageErrors: [],
       consoleErrors: [],
     };
 
     builds.set(app, build);
+    platforms.set(app, platform);
 
     app.process().stderr?.on('data', (chunk) => launched.stderr.push(String(chunk)));
 
@@ -859,6 +868,21 @@ const builds = new WeakMap<ElectronApplication, JournaledBuild>();
  */
 export function buildOf(app: ElectronApplication): JournaledBuild {
   return builds.get(app) ?? { unread: 'The application was not launched by the engine, so which build it is was not read.' };
+}
+
+/** The platform each application launched by `launchApp` ran on, for `platformOf`. */
+const platforms = new WeakMap<ElectronApplication, JournaledPlatform>();
+
+/**
+ * Which operating system and architecture an application ran on, as
+ * `launchApp` read them. Found from the application for the reason `buildOf`
+ * is. One launched some other way still gets the machine's, which does not
+ * depend on how it was launched, and says its own architecture was not read.
+ */
+export function platformOf(app: ElectronApplication): JournaledPlatform {
+  const machine = machineOnce();
+  const why = 'The application was not launched by the engine, so its own architecture was not read.';
+  return platforms.get(app) ?? { ...machine, unread: [machine.unread, why].filter(Boolean).join('; ') };
 }
 
 /**

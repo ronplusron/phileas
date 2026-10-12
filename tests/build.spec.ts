@@ -5,7 +5,8 @@ import { test, expect } from '@playwright/test';
 import { createPackage } from '@electron/asar';
 import { readBuild, readRunsWith, sourcesOf, topLevelStrings, type JournaledBuild } from '../src/build';
 import { readJournal } from '../src/journal';
-import { buildText, renderJournal } from '../src/report/render.mjs';
+import { readMachine, withAppArch, type Exec, type JournaledPlatform } from '../src/platform';
+import { buildText, platformText, renderJournal } from '../src/report/render.mjs';
 import { scratch, removeScratch } from './scratch';
 
 /**
@@ -192,4 +193,82 @@ test('off macOS the packaged package.json is read, from the archive where there 
   fs.writeFileSync(path.join(app, 'package.json'), 'not json');
   expect(readBuild(install, 'linux').unread).toMatch(/^resources\/app\/package\.json is not JSON: /);
   expect(readBuild(scratch('build-empty-'), 'win32').unread).toMatch(/^resources\/app\/package\.json could not be read: ENOENT/);
+});
+
+/**
+ * Which operating system and architecture a Route ran on, beside the build on
+ * the opening line, so a triage can state them instead of "not recorded".
+ */
+
+/** Answers each command from a table, as a Mac would, and fails any other. */
+function macWith(answers: Record<string, ReturnType<Exec>>): Exec {
+  return (command, args) => answers[[command, ...args].join(' ')] ?? { error: `${command} was not expected` };
+}
+
+const appleSilicon = {
+  'sw_vers -productVersion': { value: '26.6.2' },
+  'sw_vers -buildVersion': { value: '25G83' },
+  'sysctl -n hw.optional.arm64': { value: '1' },
+};
+
+test("macOS is named by its own version, and the machine's architecture is sysctl's, not uname's", () => {
+  const read = readMachine('darwin', macWith(appleSilicon));
+  expect(read).toMatchObject({ os: 'macOS', version: '26.6.2', osBuild: '25G83', arch: 'arm64' });
+  expect(read.unread).toBeUndefined();
+});
+
+test('an Intel Mac, where sysctl has no arm64 key, keeps the machine name, and any other sysctl failure says so', () => {
+  const intel = readMachine('darwin', macWith({
+    ...appleSilicon,
+    'sysctl -n hw.optional.arm64': { error: 'sysctl failed', stderr: "sysctl: unknown oid 'hw.optional.arm64'" },
+  }));
+  expect(intel.unread).toBeUndefined();
+  const broken = readMachine('darwin', macWith({ ...appleSilicon, 'sysctl -n hw.optional.arm64': { error: 'sysctl failed: ETIMEDOUT' } }));
+  expect(broken.unread).toMatch(/^sysctl failed: ETIMEDOUT, so the architecture is os\.machine\(\)'s/);
+});
+
+test('a version that cannot be read is named, and off macOS the kernel stands in for it', () => {
+  const unread = readMachine('darwin', macWith({ ...appleSilicon, 'sw_vers -productVersion': { error: 'sw_vers failed: ENOENT' } }));
+  expect(unread.version).toBeUndefined();
+  expect(unread.unread).toBe('sw_vers failed: ENOENT');
+  const linux = readMachine('linux', () => {
+    throw new Error('no command is run off macOS');
+  });
+  expect(linux.os).toBe('Linux');
+  expect(linux.version).toBeUndefined();
+  expect(linux.kernel).toBeTruthy();
+  expect(linux.unread).toMatch(/read only on macOS/);
+});
+
+test("the machine reads on the machine running the tests, which is the positive control for the table above", () => {
+  const read = readMachine();
+  expect(read.os).toBeTruthy();
+  expect(read.arch).toMatch(/^(arm64|x64)$/);
+  if (process.platform === 'darwin') expect(read.version).toMatch(/^\d+\.\d+/);
+});
+
+test("the application's architecture is added where it is read, and why where it is not", async () => {
+  const base: JournaledPlatform = { os: 'macOS', version: '26.6.2', arch: 'arm64' };
+  expect(await withAppArch(base, async () => 'x64')).toEqual({ ...base, appArch: 'x64' });
+  expect((await withAppArch(base, async () => { throw new Error('closed\nmore'); })).unread).toBe(
+    "the application's process.arch could not be read: closed"
+  );
+  expect((await withAppArch({ ...base, unread: 'first' }, async () => 7)).unread).toBe("first; the application's process.arch was not text: 7");
+});
+
+test('the opening line names the platform, the application\'s architecture where it differs, and what was not read', () => {
+  const mac: JournaledPlatform = { os: 'macOS', version: '26.6.2', osBuild: '25G83', kernel: '25.6.0', arch: 'arm64', appArch: 'arm64' };
+  expect(platformText(mac)).toBe('macOS 26.6.2 (25G83), arm64');
+  expect(platformText({ ...mac, appArch: 'x64' })).toBe('macOS 26.6.2 (25G83), arm64, the application ran as x64');
+  expect(platformText({ os: 'Linux', kernel: '6.8.0', arch: 'x64', unread: 'not on macOS' })).toBe(
+    'Linux kernel 6.8.0, x64, not all read: not on macOS'
+  );
+  expect(platformText(undefined)).toBe('platform not recorded');
+
+  const file = path.join(scratch('platform-journal-'), 'route-001-r.jsonl');
+  const opening = { kind: 'route', journeySeed: 'j', routeSeed: 'r', routeNumber: 1, tripLength: 1, settleQuietMs: 400, startedAt: '' };
+  fs.writeFileSync(file, `${JSON.stringify({ ...opening, build: { name: 'Buggy', version: '0.0.0' }, platform: mac })}\n`);
+  expect(renderJournal(fs.readFileSync(file, 'utf8'))[0]).toBe(
+    'route 1  seed r, from Journey seed j, Trip of 1 hops, on Buggy 0.0.0; under macOS 26.6.2 (25G83), arm64'
+  );
 });

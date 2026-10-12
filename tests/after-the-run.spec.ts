@@ -89,7 +89,8 @@ test('a run as data names the build each Route ran against and what the applicat
     sources: { notCompared: 'no-sources' },
   };
   const ended = (extra: Record<string, unknown>) => ({ kind: 'outcome', outcome: 'passed', hops: 1, endedAt: 'x', ...extra });
-  write(run, 'route-001-r1.jsonl', [opening(1, { build }), hop(1), ended({ ranWith: { R: ['4.6.0'] } })]);
+  const platform = { os: 'macOS', version: '26.6.2', osBuild: '25G83', kernel: '25.6.0', arch: 'arm64', appArch: 'arm64' };
+  write(run, 'route-001-r1.jsonl', [opening(1, { build, platform }), hop(1), ended({ ranWith: { R: ['4.6.0'] } })]);
   write(run, 'route-002-r2.jsonl', [opening(2, { build }), hop(1), ended({ ranWith: 'none' })]);
   // From before builds were recorded, and one that never finished.
   write(run, 'route-003-r3.jsonl', [opening(3), hop(1), ended({})]);
@@ -99,6 +100,10 @@ test('a run as data names the build each Route ran against and what the applicat
   const [first, second, third, fourth] = summary.routes;
   const named = 'Positron 2026.09.1+2 (bundle 1.130.0); with R (PATH) 4.6.0; no sources to check it against';
   expect(first).toMatchObject({ build, buildText: named, ranWith: { R: ['4.6.0'] }, ranWithText: 'ran with R 4.6.0' });
+  expect(first).toMatchObject({ platform, platformText: 'macOS 26.6.2 (25G83), arm64' });
+  // From before platforms were recorded: the build the same day, the platform not.
+  expect(second).toMatchObject({ platformText: 'platform not recorded' });
+  expect(second?.platform).toBeUndefined();
   expect(second).toMatchObject({ ranWith: 'none', ranWithText: 'ran with nothing started' });
   expect(third).toMatchObject({ buildText: 'build not recorded', ranWithText: 'what it ran with not recorded' });
   expect(third?.build).toBeUndefined();

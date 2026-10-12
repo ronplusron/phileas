@@ -17,10 +17,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { currentSignature, findingId, readKnownFindings } from '../known.mjs';
 import { readEnding, replayVerdict } from './reporter.mjs';
-import { buildText, ranWithText, targetText } from './render.mjs';
+import { buildText, platformText, ranWithText, targetText } from './render.mjs';
 
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
 /** @typedef {import('../build').JournaledBuild} JournaledBuild */
+/** @typedef {import('../platform').JournaledPlatform} JournaledPlatform */
 
 /** A Route's journal, as `journalPath` names it in journal.ts. */
 const JOURNAL_NAME = /^route-\d+-.*\.jsonl$/;
@@ -55,6 +56,8 @@ const JOURNAL_NAME = /^route-\d+-.*\.jsonl$/;
  *   replayedBy: { journal: string, verdict: string }[],
  *   build?: JournaledBuild,
  *   buildText: string,
+ *   platform?: JournaledPlatform,
+ *   platformText: string,
  *   ranWith?: Readonly<Record<string, readonly string[]>> | 'none',
  *   ranWithUnread?: string,
  *   ranWithText: string,
@@ -180,6 +183,9 @@ export function summarizeRoute(journal, standing = standingFrom(knownFileFor(pat
     // what ran.
     ...(ending.opening?.build ? { build: ending.opening.build } : {}),
     buildText: buildText(ending.opening?.build),
+    // Which operating system and architecture, from the same line.
+    ...(ending.opening?.platform ? { platform: ending.opening.platform } : {}),
+    platformText: platformText(ending.opening?.platform),
     ...(ending.outcome?.ranWith ? { ranWith: ending.outcome.ranWith } : {}),
     ...(ending.outcome?.ranWithUnread ? { ranWithUnread: ending.outcome.ranWithUnread } : {}),
     ranWithText: ending.outcome

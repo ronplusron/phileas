@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { FrameName } from './app-under-test.js';
 import type { JournaledBuild } from './build.js';
+import type { JournaledPlatform } from './platform.js';
 import type { CaughtByStubs } from './caught.js';
 import type { UnreadFrame } from './frames.js';
 import type { HopEffect } from './effect.js';
@@ -421,6 +422,13 @@ export interface OpeningEntry {
    * recorded nothing about the application. See `JournaledBuild`.
    */
   readonly build?: JournaledBuild;
+  /**
+   * Which operating system and architecture the Route ran on, the
+   * machine's and the application's own. Beside `build` rather than in it,
+   * since the build names the application and this names the machine. Absent
+   * in journals written before 2026-10-12. See `JournaledPlatform`.
+   */
+  readonly platform?: JournaledPlatform;
   /**
    * How long each process had to answer before it counted as not answering.
    * See `AppUnderTest.responsiveTimeoutMs`. Absent in journals written before

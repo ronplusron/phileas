@@ -97,7 +97,7 @@ context a developer needs first, if any.>
 
 - <application and version, from the Route's build>
 - <the R or Python it ran with, where the finding involves one>
-- <OS and architecture, "not recorded" unless the filing settings say>
+- <OS and architecture, from the Route's platform>
 - <how it was launched: fresh profile, flags, settings that differ>
 
 ### Steps to reproduce
@@ -178,12 +178,17 @@ The `reproduce` skill is what confirms them.
   - **"No sources to check it against"** means the staleness guard had no
     sources, which is the shape of an installed release. It never means
     built from source, and nothing else in a run does either.
+  - **The OS and architecture** from the Route's `platformText` in the
+    summary (its `platform`, from the journal's opening line): the system,
+    its version and build, and the machine's architecture. Where it adds
+    "the application ran as" another architecture, state that too, since
+    the application ran translated. Where it says "platform not recorded",
+    the journal is from before platforms were, and both are "not recorded".
   - **How it was launched** from the filing settings' `environment` lines,
     and what the journal itself records, such as a setting the Fix changed.
-  - Anything else, the OS and architecture among them, is "not recorded",
-    never inferred from a path or a name. Where a Route's `buildText` says
-    "build not recorded", the journal is from before builds were, and the
-    version is "not recorded" too. A triage once wrote that RStudio was
+  - Anything else is "not recorded", never inferred from a path or a name.
+    Where a Route's `buildText` says "build not recorded", the journal is
+    from before builds were, and the version is "not recorded" too. A triage once wrote that RStudio was
     built from source, when the trial runs a copy of the installed release,
     which is why every fact here names its source.
 - **No guessed causes.** Report what was seen. The application's source,

@@ -25,6 +25,39 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-12: the journal names the operating system and architecture a Route ran on
+
+**Why.** With the build and what it ran with recorded the same day, the OS
+and architecture were the one part of a bug draft's Environment section the
+triage skill still had to call "not recorded".
+
+**Measured first, on this Mac.** `os.release()` gives `25.6.0`, the Darwin
+kernel's, where `sw_vers -productVersion` gives `26.6.2`, and the two do not
+map past the major version, so macOS's own version comes from `sw_vers`.
+Under Rosetta, `uname -m`, which `os.machine()` asks, says `x86_64` on an
+arm64 machine, while `sysctl hw.optional.arm64` still says `1`, so the
+machine's architecture comes from `sysctl`. On a key that does not exist,
+`sysctl` fails with "unknown oid", which is what an Intel Mac gives for that
+one; any other failure is recorded as unread rather than passing for a read.
+
+**What landed.**
+- **A `platform`, beside `build` on the opening line** (`src/platform.ts`):
+  the system, its version and build, the kernel's release, the machine's
+  architecture, and the architecture the application's main process ran as,
+  asked of it at launch. Beside the build rather than in it, because the
+  build names the application and this names the machine, and a run's
+  `builds` should not split by where it ran. The machine's part is read once
+  per engine process. An application the engine did not launch still gets
+  the machine's part, and says its own architecture was not read.
+- **Off macOS** the system's own version is not read, and says so; the
+  kernel's release stands in. How Windows and Linux name theirs was not
+  measured, and `OUTSTANDING.md` carries it.
+- **After the run.** The renderer prints it after the build, `phileas show
+  --json` gives each Route's `platform` and `platformText`, and the triage
+  skill states the OS and architecture from them. An older journal prints
+  nothing for it on the opening line, and "platform not recorded" in the
+  summary.
+
 ## 2026-10-12: the journal names the build a Route ran against, and what it ran with
 
 **Why.** C1 asks a finding to say which build was tested, and the opening
