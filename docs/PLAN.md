@@ -1195,6 +1195,69 @@ draw as the default was not decided.
 Boundary: bookkeeping. It changes where Routes go, and says nothing new
 about what the engine finds until a measurement does.
 
+### After the run: an assistant, a page, and a schedule
+
+**Asked for on 2026-10-12,** in the words "Let's add all of this, 1) the UI,
+2) the Claude skills, and 3) the LLM integration to our project," after
+running Journeys, reading them, replaying findings and filing them had been
+done for weeks by hand in conversation with an assistant. It answers R34
+and R35, and R28's schedule. Three choices were put and answered the same
+day: the skills ship with the package rather than staying in this
+repository; the page is served by the `phileas` command on this machine
+rather than built as an application of its own; and scheduled runs happen
+both on this machine and in a hosted build service.
+
+**None of it is inside the engine.** It reads journals, runs `phileas`
+commands, and drafts text. A Route goes where it went and ends where it
+ended whether any of this exists, which is what let the non-goal be
+narrowed rather than dropped; `OUTSTANDING.md` 2.1 holds the rest of that
+question. Four pieces, in the order they depend on each other:
+
+1. **A run as data.** `phileas show --json` prints what the reporter prints
+   for a run, as one object: each Route's outcome, Hops, failed checks and
+   their findings, and any replay's verdict. Built on the reporter's own
+   reading of a journal, so the page, the skills and the assistant all read
+   a run the way the reporter does rather than parsing its printed lines.
+2. **Replaying each new finding, as code.** `phileas reproduce` replays, one at
+   a time, one Route for each finding of a run not yet known, and says what
+   each replay showed; a batch of hundreds often meets one finding on dozens
+   of Routes. No model is involved: replaying is
+   mechanical, and keeping it out of the assistant keeps the verdict the
+   engine's. The assistant reads the verdicts afterwards.
+3. **The assistant.** A Claude Code plugin shipped in the package, under
+   `claude/`, with a skill for each job: booking and running a Journey,
+   triaging a run, reproducing a finding, and filing one. `phileas claude`
+   opens a session with it loaded. `phileas triage` runs it unattended on one
+   run and writes a report and a draft per finding beside the journals,
+   asking it for those as structured output so the command, not the model,
+   writes the files. It sends the run's journals to the model's provider,
+   so it refuses without `--send` and says what it would send (C3). It
+   may spend up to $5, unless `--budget` names another figure.
+   Filing reads a consumer's `phileas/filing.json`: which repository, what a
+   title starts with, and any rules of that tracker.
+4. **The page.** `phileas view` serves it on `127.0.0.1` only, with a token
+   in its address that every request must carry, since it can start
+   processes. It lists every run kept, shows any Route through the
+   renderer, starts a Journey, a replay or a triage and streams its output,
+   and files a draft through `gh` when a person presses the button for that
+   one draft.
+
+**The schedule** is `phileas unattended`: a Journey, then `reproduce`, then
+`triage`, so one command is what runs at night on this machine and in a
+hosted build service alike. The package ships a launchd template and a
+GitHub Actions workflow to start from. A scheduled run never gates a push,
+and leaves drafts rather than filing anything (R34).
+
+**What the hosted service costs, said when it was chosen:** a macOS runner,
+since the proving ground is packaged for macOS only; the application built
+there first; a key for the model kept as a secret; and journals kept by
+that service, which C3 now permits because the workflow says so. This
+repository's own workflow runs `buggy`, the only application here that can
+be built in one.
+
+Boundary: bookkeeping. It changes how a person works with what the engine
+found, and nothing about what it finds.
+
 ### Phase 5: the universal tier, and the Route as a test
 
 The journal already exists from phase 4; this phase fills in its check-results

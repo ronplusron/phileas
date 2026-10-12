@@ -1,0 +1,57 @@
+# A Journey every night in GitHub Actions, then a replay of each new finding,
+# then a triage, by `phileas unattended`. A template: copy it to
+# .github/workflows/phileas-unattended.yml in the consuming repository and
+# fill in the step that builds the application.
+#
+# What it costs, before turning it on:
+#   - A macOS runner, billed at several times a Linux one's minutes on a
+#     private repository. An application packaged for Linux could run on
+#     ubuntu-latest under a virtual display instead.
+#   - A secret, ANTHROPIC_API_KEY, which the triage spends from. --budget caps
+#     one run. Without the secret, remove --send and it stops at the replays.
+#   - The journals leave the machine twice: to Anthropic for the triage, and
+#     to GitHub, kept as an artifact for the days set below (C3).
+#
+# It runs on a schedule and by hand only. Exploratory runs never gate a push,
+# so it is never a required check, and it files nothing: the drafts are in
+# the artifact, under each run's triage/ folder.
+
+name: Phileas, unattended
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  journey:
+    runs-on: macos-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: npm ci
+
+      # Build the application the Journey launches, as the adapter expects to
+      # find it.
+      - run: echo "Replace this step with the application's build" && exit 1
+
+      - run: npm install --global @anthropic-ai/claude-code
+
+      - run: npx phileas unattended phileas --send --budget 5
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: phileas-journals
+          path: phileas/.phileas-journals
+          retention-days: 14

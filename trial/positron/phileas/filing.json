@@ -1,0 +1,9 @@
+{
+  "repository": "ronplusron/phileas",
+  "titlePrefix": "Positron: ",
+  "noOtherRepositoryLinks": true,
+  "environment": [
+    "Positron, an installed release, named by PHILEAS_APP_DIR. Not a build from source.",
+    "Launched by Phileas with a fresh home folder and profile of its own."
+  ]
+}

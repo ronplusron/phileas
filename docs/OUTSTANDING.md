@@ -843,6 +843,16 @@ and whether it is a bug or the noise of a session ending. A Route cannot
 type `q()`, so a Journey has never met it; Restart R, which a Route can
 click, logged nothing in 3 runs.
 
+### 1.25 The nightly workflow, never yet run
+
+`.github/workflows/phileas-unattended.yml` runs `buggy` each night in GitHub
+Actions, and was written on 2026-10-12 without being run, since a scheduled
+workflow runs only from the default branch. Not yet known: whether `buggy`
+packages and launches on a `macos-latest` runner as it does here, and how
+long a night's run takes. Its triage needs an `ANTHROPIC_API_KEY` secret this
+repository does not have; without one it stops at the replays and says so.
+Running it once by hand, with `workflow_dispatch`, answers the first two.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -852,15 +862,29 @@ repeated here.
 
 ### 2.1 A language model, deferred rather than undecided
 
-Not in this version, and wanted eventually. `PRODUCT_REQUIREMENTS.md` states it
-as a non-goal of this version. This entry exists to keep the seams honest in
-the meantime, because the cost of adding one later is decided now, not then.
+Not inside the engine in this version, and wanted eventually.
+`PRODUCT_REQUIREMENTS.md` states it as a non-goal of this version. This entry
+exists to keep the seams honest in the meantime, because the cost of adding
+one later is decided now, not then.
+
+**Narrowed on 2026-10-12, and what is still open.** The non-goal said "for
+anything" until then. It now covers the engine only, so work done after a
+run may use a model (R34); `PLAN.md` has that under "After the run: an
+assistant, a page, and a schedule". Two answers were weighed for the rest
+and neither was chosen: keep the engine free of a model for good, or lift
+the non-goal entirely. Asked when it had to be decided, the answer given was
+that only the part after the run had to be settled now, and the rest can
+wait until somebody wants a model choosing moves or judging checks. Weighed
+against R12, the difference narrows to the checks: a finding is reproduced
+from its journal rather than its seed, so a model choosing moves costs R8
+and R13 but not R12, while a model judging a check could turn "not
+reproduced" on a fixed build into a verdict that flips with nothing changed.
 
 Four places it could go, and they are not equally risky:
 
 - **Summarizing a finding from a route's journal.** Runs after everything,
   reads the journal, changes nothing about detection. Addable at any point
-  without touching the engine.
+  without touching the engine. Being built since 2026-10-12, as R34.
 - **Helping write an application's own checks.** A tool for whoever wires the
   application up, not something present at run time.
 - **Generating input values.** The control being hopped to stays a seeded
@@ -895,9 +919,9 @@ places above. It could point a person at Hops that look wrong, as
 suggestions that never end a Route. Or it could read many journals for two
 places on screen stating the same fact, and propose structural checks for a
 person to accept, which is helping write an application's own checks. Either
-sends journals to the model, and C3 says nothing a run produces is sent
-anywhere, so a hosted model needs that constraint changed or a model run on
-the same machine.
+sends journals to the model. C3 was narrowed on 2026-10-12 so that a tool
+run after the engine may, saying so first, which answers the half of this
+that was a constraint; which of the two uses to build is still open.
 
 ### 2.2 Publishing, deferred with an expiry that nothing currently watches
 

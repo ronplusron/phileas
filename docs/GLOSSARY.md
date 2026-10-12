@@ -95,6 +95,22 @@ phases are marked by number.
 | Adapter | The application-specific code implementing `AppUnderTest`: how to launch, how to tell it's ready, what to exclude. It judges nothing itself. |
 | Staleness guard | Refuses to run when a file in the packaged build differs in content from the source it was built from, naming each file (R23). Without source it can't run at all, and the run says so. |
 
+## After the run
+
+Work done with a run's results, outside the engine (R34, R35), since
+2026-10-12.
+
+| Term | Meaning |
+|---|---|
+| Run summary | A run as one object, `phileas show --json`: each Route's outcome, failed checks, findings and any replays of it, read as the reporter reads them. What the page and the assistant read. |
+| Reproduce | Replaying, one at a time, one Route for each finding of a run not yet known and not yet replayed: `phileas reproduce`. Done by code, so the verdict is the engine's. |
+| Triage | A run handed to Claude Code with reading tools only, `phileas triage --send`, which answers with a report sorting every Route that did not pass and a draft per new finding worth filing. Written to the run's `triage/` folder. It sends the run to Anthropic, and says so first (C3), and may spend up to $5 unless `--budget` says otherwise. |
+| Draft | An issue a triage wrote for one finding and nobody has filed: `triage/drafts/<id>.md` to read and `<id>.json` to file from, with anything that would stop it being filed named in it. |
+| Filing settings | `filing.json` beside a Journey's config: the repository findings are filed in, a title prefix, labels, `noOtherRepositoryLinks`, and rules for the assistant. Code checks every draft against it before `gh` is started. |
+| Unattended run | A Journey, then reproduce, then triage, as one command for a schedule: `phileas unattended`. It never files anything. |
+| The page | What `phileas view` serves on `127.0.0.1`, at an address with a token every request must carry: runs, Routes, jobs, and a button to file one draft. |
+| The plugin | The Claude Code plugin in the package's `claude/` folder, with the skills `journey`, `triage`, `reproduce` and `file`, called as `/phileas:triage` and so on. `phileas claude` starts Claude Code with it loaded. |
+
 ## Settings
 
 | Term | Meaning |
