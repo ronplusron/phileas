@@ -89,6 +89,63 @@ source only; `OUTSTANDING.md` has what is unverified there.
 Route at its first Hop where RStudio on Windows was told another R in its
 settings, which is not a defect. Both stay on the record.
 
+## 2026-10-12: the data viewer's Routes with frames read, and a survey slow on thousands of links
+
+**The run.** RStudio 2026.10.0, the `data-viewer` Fix, 100 Routes of 20
+Hops, two at a time, seed `278f39f6a354`, asked for as "run the
+data-viewer Routes with frames read". 99 Routes finished: 98 passed and 1
+failed. The run was stopped by hand with Route 2 unfinished, for the defect
+below, and two Ctrl-Cs skipped the Journey's end, so its known findings
+were not written and Route 2's profile was left in the run's temp folder.
+
+**What frames changed.** On the 1,144 Trip Hops whose pool held the data
+viewer, 408, or 35.7%, went into its frame, against 36% worked out
+beforehand: almost all of them the six actions repeated for each column,
+`OUTSTANDING.md` 1.15. Nearly every one changed the screen. 49 of the 408,
+12.0%, were abandoned, against 21 of 1,017 Hops in RStudio's own page,
+2.1%, most under an empty `<div class="gwt-HTML">` the survey had not seen
+over the control; why is not known, `OUTSTANDING.md` 1.9 has it. A frame
+Hop's median was 713 ms against 618 ms for a page Hop.
+
+**What it found.** Route 90 failed on a console error, "WebSocket
+connection to 'ws://127.0.0.1:4045/terminal/<id>/' failed", 0.2 s into a
+click on "Terminal Close Terminal tab", finding `ae4035a0`. Most likely the
+filed terminal-close bug, RStudio's issue 18976, seen this time by the
+console check rather than the log check; not yet triaged, and not in
+`known-findings.json`, since the Journey's end did not run.
+
+**The defect.** Route 2 opened Help's "Writing R Extensions", and every
+survey after that took about 45 minutes. Measured with
+`trial/rstudio/probes/help-survey-time.spec.ts`: the page holds 7,581 links
+in its frame, the frame read took 1.2 s, and the survey was still going at
+3 minutes. Three of the survey's tests ran one call per control, each
+finding its element again by role and name across the whole page: reading
+a frame link's address, the second test of what covers a control, and
+which excluded control has focus, with the label test for controls with no
+area beside them. So the cost grew with the square of the controls.
+
+**The repair.** Each control's element is found once per role and document,
+by one call fetching every element of that role in document order, paired
+with the snapshot's own order, and each of those tests runs as one call
+over them all. A role whose count differs from the snapshot's falls back to
+each control's own locator rather than pairing wrongly. The same survey now
+takes about 6.4 s on that page, under the Hop's own 3 s bound, with the same
+counts at either bound. A test of 3,000 links in a frame takes 3.3 s; run
+against the survey before the repair, as its control, it took 156 s.
+
+**What it leaves.** That page offers 5,297 controls from its frame, so a
+Route there draws a Help link on nearly every page Hop. Asked to be dealt
+with soon; `OUTSTANDING.md` 1.15 has it.
+
+**R32 corrected.** Nearly all of those links are scrolled out of sight,
+offered because the survey has counted a control scrolled out of sight as
+reachable since 2026-09-30, and R32 said so from 2026-10-01 in a clause,
+"or bring into view by scrolling", that the words it was raised in do not
+contain. Asked when that was said, and called a terrible idea, R32 was
+corrected to offer only what shows, taken with "YES". The engine does not
+meet it yet: `DEFECTS.md` has the defect and `PLAN.md` places the work,
+before stage 5 on a branch of its own.
+
 ## 2026-10-12: the work after a run, given commands, a page, a schedule and an assistant
 
 **Why.** Running Journeys, reading their results, replaying findings and

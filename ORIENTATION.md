@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs four hundred and seventeen tests, after a
+through, and `npm test` runs four hundred and thirty-one tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -190,15 +190,23 @@ to come back, against `buggy`'s lasting blank still failing, and the
 summary counting brief blanks by Route. One more holds a source file's
 line out of a signature, so a release that moves code keeps its findings.
 One more holds anything naming Posit Assistant out of RStudio's Routes.
-Eleven came with reading inside frames: a frame's controls offered at its
+Twelve came with reading inside frames: a frame's controls offered at its
 place and named after it, a nested frame by both, two frames sharing a
 title told apart and printed apart, two frames at one box paired in
 document order, a label keeping no fresh id, a link leaving the
 application excluded, a frame covered in the page and one hidden there, a
 control covered inside its frame, a frame with no area adding nothing, a
 frame sandboxed without scripts recorded as unread, a Fix step and a Trip
-hop acting inside frames with their effects, and a replay matching a
-frame's target only with its frame.
+hop acting inside frames with their effects, a replay matching a
+frame's target only with its frame, and a frame of 3,000 links surveyed in
+seconds. Thirteen came with the work after a run: a run read as data with
+its replays, a replay for each new finding and none for one replayed
+already or filed since, runs listed newest first, the commands' flags,
+filing settings refused by name, a draft checked by code, what a triage
+sends and the reading it allows, the assistant's answer read only from its
+structured output, a triage written beside the run, the page's jobs built
+from checked fields and answering only with its token at its own address,
+and the plugin shipped at the package's version.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -350,7 +358,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Nineteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Twenty defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
@@ -360,7 +368,8 @@ itself forward partway through a Route, one a Positron Route saving
 outside its home folder, one a known finding with nothing particular
 in it matching every finding of its check, and one the log check keeping
 only the lines of an error that look like errors, and one the home folder
-guard blaming a Journey for a copy of the application it did not see. That file holds what is wrong, confirmed by reading the
+guard blaming a Journey for a copy of the application it did not see,
+and one a control scrolled out of sight offered against R32. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
@@ -460,7 +469,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own four hundred and seventeen tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own four hundred and thirty-one tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

@@ -310,7 +310,14 @@ repeating it.
   whether a webview's frame keeps a label from one launch to the next, is
   unmeasured; decided on 2026-10-09 to measure it once frames were read.
   And **a `<webview>` element**, a separate page rather than a frame, is not
-  read; no application in use is known to have one.
+  read; no application in use is known to have one. **A third, measured on
+  2026-10-12:** in RStudio's data-viewer run, 49 of 408 Hops inside the
+  viewer's frame were abandoned, 12.0%, against 2.1% in RStudio's own page,
+  most of them under an empty `<div class="gwt-HTML">` the survey had not
+  seen over the control. Whether it arrives after the survey, as a popup
+  opened late would, or the click scrolls a control that was out of the
+  frame's view in under one, is not known; the journal records no boxes,
+  so a probe is what would tell.
 - **The debugging-port launch** that a hardened release needs is named in the
   engine's types and has never been built. RStudio no longer needs it: since
   2026-09-28 a copy of its release with two fuses switched back on launches
@@ -569,6 +576,19 @@ a name identical but for one word catches this case and could merge
 controls that only look alike, so it is to be measured against the pools
 kept, RStudio's and Positron's, before anything is chosen. It belongs with
 weighting the draw, stage 5.
+
+**A document of thousands of links, measured on RStudio on 2026-10-12.**
+Help showing the manual "Writing R Extensions" holds 7,581 links in its
+frame, a snapshot of 2.9 MB, and every one is offered, since a control
+scrolled out of sight counts as reachable. A Route there draws a Help link
+on nearly every page Hop, the data viewer's crowding many times over, and
+each pool written to the journal carries every link. Asked to be dealt with
+soon, in the words "Make a note that we need to deal with the large number
+of links soon." Most of them are scrolled out of sight, and R32 was
+corrected the same day to offer only what shows, which `DEFECTS.md`
+carries until it is built. Whether what remains in view still crowds a
+Route is to be measured then. The survey taking 45 minutes on that page
+was a separate defect, repaired the same day; `HISTORY.md` has it.
 
 ### 1.16 What the engine asks of a consumer's Playwright
 
