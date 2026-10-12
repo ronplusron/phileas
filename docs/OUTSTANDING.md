@@ -279,12 +279,9 @@ by approving a proposal made at the end of the session that recorded them:
   Measured 2026-09-24, on Positron as well; `HISTORY.md` has the results.
 - **Designed before phase 9:** other windows, now 1.21, and more kinds of
   action.
-- **At the IDEs' turn, after phase 9 and before the engine meets either:**
-  reading inside frames and webviews, decided 2026-09-24 once the probes
-  showed the need. Nothing earlier is known to need it, though whether the
-  proving ground's siblings or the two first consumers use frames is unmeasured.
-  **Moved forward on 2026-10-08,** frames at least: right after the RStudio
-  batch of that day, before weighting the draw. `PLAN.md` has it.
+- **Reading inside frames** was built on 2026-10-09, moved forward from the
+  IDEs' turn; `HISTORY.md` has it. What is left of it is below, under
+  frames and webviews.
 - **At the IDEs' turn, asked for 2026-09-24:** revisit the draw shares for
   the keys and the menu, 1.11, once a Journey has run against either IDE.
 - **In phase 5, where `PLAN.md` already has them:** native dialogs, and bugs
@@ -306,15 +303,14 @@ repeating it.
   Virtualized lists and long panes need scrolling before their contents exist
   to be found. How much either IDE puts in context menus is unmeasured.
 - **Other windows.** Now a requirement, R33, and an item of its own, 1.21.
-- **Frames and webviews.** The survey does not read inside a frame, measured
-  on both IDEs. RStudio's Help, Viewer and data viewer are each an iframe, and
-  none of their controls reach the survey, 57 of them in the data viewer
-  alone, which is where one of RStudio's recorded bugs sits. Positron's Help
-  and Viewer are webviews and equally out of reach; its data explorer is drawn
-  in the page and is reachable. Scheduled above, now right after the
-  RStudio batch of 2026-10-08. On RStudio 2026.10.0 the data viewer's own
-  toolbar, seven controls, is drawn outside its frame and is reached; the
-  grid inside it is not.
+- **Frames and webviews.** The survey reads inside every frame since
+  2026-10-09, so RStudio's Help and data viewer are reached, both measured;
+  its Viewer, a frame too, is read and unmeasured. Two things are left. **Positron's Help and Viewer are webviews,** most likely
+  frames inside frames, and so read too, but what reading them offers, and
+  whether a webview's frame keeps a label from one launch to the next, is
+  unmeasured; decided on 2026-10-09 to measure it once frames were read.
+  And **a `<webview>` element**, a separate page rather than a frame, is not
+  read; no application in use is known to have one.
 - **The debugging-port launch** that a hardened release needs is named in the
   engine's types and has never been built. RStudio no longer needs it: since
   2026-09-28 a copy of its release with two fuses switched back on launches
@@ -543,6 +539,31 @@ nothing else is decided.
   1.6's caution. The journals already record every pool and each target's
   role, so the Positron runs can say, before any number is picked, which
   roles changed the screen when drawn and how often each crowded a pool.
+
+**Repeated controls, measured on RStudio on 2026-10-09** once frames were
+read. Its data viewer's frame offers 69 buttons: three for the summary
+panel, then the same six for each of `mtcars`'s eleven columns, "Scroll to
+column mpg", "Toggle summary for column mpg", "Pin column mpg", "Hide
+column mpg", "Filter column mpg" and "Sort column mpg ascending", and so on
+for each. They are 69 of about 143 page candidates while the viewer is open,
+so a uniform draw sends about 36% of all Hops to them. Each does something,
+so this is crowding rather than dead clicks. Raised in the words "Phileas
+will be spending a lot of time sorting and filtering data viewer columns",
+and, against a share of the draw for frames, which was laid out, "with
+help, these are different controls, while with the data viewer, it's the
+same controls repeating." Asked to be recorded the same day; nothing is
+decided.
+
+**A reading, not a decision:** draw a repeated control as one candidate,
+then which instance, as the menu bar is drawn a level at a time. The
+viewer would offer 9 where it offers 69, and Help's eight different links
+would stay eight. It needs no frame and no knowledge of the application,
+replays, since it depends only on the pool, and moves seeds only on
+screens with such a group. Open: how a group is recognized. Same role and
+a name identical but for one word catches this case and could merge
+controls that only look alike, so it is to be measured against the pools
+kept, RStudio's and Positron's, before anything is chosen. It belongs with
+weighting the draw, stage 5.
 
 ### 1.16 What the engine asks of a consumer's Playwright
 
@@ -954,7 +975,9 @@ second.
 
 A replay is unaffected, since survey order is the same each time. What is at
 risk is the Fix doing something other than what its author meant, silently,
-which is a latent hazard rather than a cosmetic one. Open: whether a step
+which is a latent hazard rather than a cosmetic one. Frames, read since
+2026-10-09, do not meet it: the second of two frames sharing a title prints
+its position, `frame "Luggage tags" #2 >`. Open: whether a step
 naming more than one control should be refused, like one naming none, or
 whether the line should be able to say which.
 

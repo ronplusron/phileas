@@ -5,6 +5,7 @@ import './fresh-build.js';
 export type {
   AppUnderTest,
   Candidate,
+  FrameName,
   Exclusions,
   ExclusionGroup,
   StalenessGuard,

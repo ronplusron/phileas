@@ -93,14 +93,30 @@ export function effectText(effect) {
 }
 
 /**
- * What a Hop acted on, as a person reads it.
+ * What a Hop acted on, as a person reads it. A control drawn in a frame is
+ * named after each frame it sits inside, outermost first, as `frameText`
+ * names one: `frame "Data Browser" > button "Pin column mpg"`, which is also
+ * what a Fix's `act` step takes.
  * @param {JournaledCandidate} target
  * @returns {string}
  */
 export function targetText(target) {
   if (target.source === 'key') return target.role === 'shortcut' ? `shortcut ${target.name}` : `key ${target.name}`;
   if (target.source === 'menu') return `menu ${(target.menuPath ?? [target.name]).join(' > ')}`;
-  return `${target.role} "${target.name}"`;
+  const frames = (target.frame ?? []).map((frame) => `${frameText(frame)} > `).join('');
+  return `${frames}${target.role} "${target.name}"`;
+}
+
+/**
+ * How a frame is named in a target: `frame "Luggage tags"`, and the second
+ * of two sharing that label `frame "Luggage tags" #2`, so a Fix step can name
+ * either. The first prints no position, so every line printed before
+ * positions were prints as it did.
+ * @param {{ label: string, nth: number }} frame
+ * @returns {string}
+ */
+export function frameText(frame) {
+  return frame.nth > 1 ? `frame "${frame.label}" #${frame.nth}` : `frame "${frame.label}"`;
 }
 
 /**

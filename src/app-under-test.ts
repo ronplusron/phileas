@@ -14,6 +14,23 @@ import type { ElectronApplication, Page } from '@playwright/test';
  */
 
 /**
+ * How a target names a frame it sits inside: the label of the frame's
+ * element, its `title`, else its `name`, else its `id`, else empty, and which
+ * of the frames in the same document sharing that label it is, in document
+ * order, counting from 1.
+ *
+ * The accessibility snapshot names no frame, whatever its title, so the
+ * element's own attributes are what is left. Measured on RStudio on
+ * 2026-10-09: its data viewer's frame is titled "Data Browser" and Help's
+ * "Help Pane", and a position alone would shift as one opens before the
+ * other in the page.
+ */
+export interface FrameName {
+  readonly label: string;
+  readonly nth: number;
+}
+
+/**
  * One thing a Route could act on next.
  *
  * Minimal on purpose. survey() is what produces these, and it may add to this
@@ -31,7 +48,14 @@ export type Candidate = {
    */
   readonly name: string;
 } & (
-  | { readonly source: 'page' }
+  | {
+      readonly source: 'page';
+      /**
+       * The frames it sits inside, outermost first, for a control drawn in a
+       * frame; absent for one in the window's own page. See `FrameName`.
+       */
+      readonly frame?: readonly FrameName[];
+    }
   | {
       readonly source: 'menu';
       /**

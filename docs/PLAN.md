@@ -990,7 +990,7 @@ still-responding, so that one would fail loudly rather than go unseen.
 ### Next: Fix steps recorded, the menu bar, and replay from the journal
 
 **Ordered on 2026-10-03,** one open question at a time, each answered from
-options offered, and built on one branch with a commit or more per step, in
+options offered, and built on one branch with a commit or more per stage, in
 the words "One branch, multiple commits."
 
 1. **Each Fix step's content recorded in the journal,** the part of replay
@@ -1016,7 +1016,7 @@ the words "One branch, multiple commits."
    landed on 2026-10-04. **Split on 2026-10-05:** the proof comes early in
    the order below, and the rest of replay after weighting the draw.
 
-The answer put step 4 before A. Placing it before C as well is a reading,
+The answer put stage 4 before A. Placing it before C as well is a reading,
 not part of the answer: it keeps the two reviews of exclusions together.
 
 **Throughout,** the listener leak warning `65d8aff3`, known and unfiled, is
@@ -1031,7 +1031,8 @@ only by someone reading the summary.
 together and taken in the words "Let's do all of these." What they share:
 the order kept adding to the engine ahead of the one question still open,
 whether it finds bugs on its own, which `PRODUCT_REQUIREMENTS.md` section 11
-asks. `HISTORY.md` has each change and why.
+asks. `HISTORY.md` has each change and why. Each numbered item is a
+stage, and `GLOSSARY.md` has how a stage differs from a phase.
 
 1. **The log check reading a logged error's stack as part of it.** It made
    false findings, so it is fixed before anything below is measured. Landed
@@ -1048,7 +1049,7 @@ asks. `HISTORY.md` has each change and why.
    planted defect whose check exists switched on, finding them by traveling
    rather than by being steered, under the uniform draw. Done on 2026-10-06,
    and `HISTORY.md` has it: every plant was found, once two hang plants were
-   made long enough to find. **It is a coverage check, not step 5's
+   made long enough to find. **It is a coverage check, not stage 5's
    baseline,** agreed the same day: every plant sits on `buggy`'s opening
    screen, so Routes ended within a few Hops and it measured how often a draw
    lands on a plant, not how well a Route explores. Moving plants deeper is
@@ -1064,7 +1065,7 @@ asks. `HISTORY.md` has each change and why.
    shortened by a probe, none followed by hand, and triage taking hours
    rather than minutes. `HISTORY.md` has the runs, the triage and the
    reading against the bar. The trial is finished. An RStudio batch comes
-   next, placed on 2026-10-08 and described below the list, and then step
+   next, placed on 2026-10-08 and described below the list, and then stage
    5.
 5. **Weighting the draw toward new targets,** below, measured on Eighty
    Days' `screens` layout.
@@ -1075,17 +1076,17 @@ asks. `HISTORY.md` has each change and why.
    in phase 5's own order.
 8. **Recording a Fix, then phases 6, 7, 8 in full, 9 and 10,** as below.
 
-**Steps 1 and 2 swapped the same day,** proposed when asked whether the proof
+**Stages 1 and 2 swapped the same day,** proposed when asked whether the proof
 would take the wider log rule into account, and taken with "y": every RStudio
 journal predated that rule, so the proof would have been its first RStudio
 run.
 
-Steps 3 and 5 were proposed in both orders around the rest of replay, and
+Stages 3 and 5 were proposed in both orders around the rest of replay, and
 the one above was taken with "OK let's do this." after a recommendation.
-Placing step 4 after step 3 rather than before it is a reading, not part of
+Placing stage 4 after stage 3 rather than before it is a reading, not part of
 the answer, which said only before weighting.
 
-**An RStudio batch before step 5, placed on 2026-10-08.** Raised in the
+**An RStudio batch before stage 5, placed on 2026-10-08.** Raised in the
 words "We did a ton of extensive testing with Positron. It feels like we
 didn't do nearly as much with RStudio", and asked for with "Let's take care
 of that". Counted the same day from the Route journals kept: 828 for
@@ -1111,7 +1112,7 @@ taken from options offered:
 
 **Done on 2026-10-08:** 594 of 600 passed, one RStudio bug filed, and four
 engine repairs or defects found along the way; `HISTORY.md` has the runs
-and the triage. Reading inside frames is next, then step 5.
+and the triage. Reading inside frames is next, then stage 5.
 - **A Trip of 20 Hops,** asked for as "Whatever we did for Positron",
   which was 20 in step 6.
 - **No bar set in advance.**
@@ -1119,7 +1120,7 @@ and the triage. Reading inside frames is next, then step 5.
   goes before weighting, as the Positron trial did, so the two compare.
 
 **Reading inside frames, placed after the RStudio batch on 2026-10-08,**
-also before step 5. Asked for in the words "Let's move reading inside frames
+also before stage 5. Asked for in the words "Let's move reading inside frames
 forward", once the batch's data viewer Fix showed RStudio's grid drawn in a
 frame the survey does not read, and placed from three offered, right after
 the batch, over after weighting the draw and after the rest of replay. It
@@ -1128,6 +1129,52 @@ has what was measured. The reason given with the proposal, not with the
 answer: the data viewer's 100 Routes can be run again with frames read, as
 a direct measure, and weighting is measured on Eighty Days, which has no
 frames, so neither waits on the other.
+
+**Measured on 2026-10-09, before designing it,** by
+`trial/rstudio/probes/frames.spec.ts` on RStudio 2026.10.0. The data viewer
+is a same-origin frame whose element is titled "Data Browser", holding 69
+named buttons, each column's pin, hide, filter and summary among them; its
+cells carry no role a Hop acts on. Help is a same-origin frame titled "Help
+Pane", 8 links on `?mean`. Two empty frames are always there, one 0 by 0
+off the screen and one with no box. A box read inside a frame is the
+frame's own, offset by where the frame sits, and at a control's point the
+main page has the iframe itself on top. Playwright's snapshot shows an
+iframe as a node with no name, whatever its title, and its `ai` mode reads
+inside frames but adds references and changes what it returns, so it is
+not the way in. `buggy` and both demos have no iframes, so their pools and
+pinned seeds do not move.
+
+**Decided on 2026-10-09, before building it.** Four were proposed together
+and not questioned:
+- **A frame's controls join the pool at the iframe's place** in document
+  order, `nth` counted within the frame. A frame hidden or with no area
+  adds nothing.
+- **A target names its frame,** by its element's title, else its name, else
+  its id, with a position among frames sharing that label, and a nested
+  frame as a path. The survey prints `frame "Data Browser" > button "Pin
+  column mpg"`, a Fix's `act` step takes it, and a replay matches it
+  exactly.
+- **The covered, hidden and labeled tests run in the frame's own
+  document,** and the frame itself must be on top in its parent at the
+  control's point.
+- **The settle wait, each Hop's effect and the checks read each frame's
+  tree in its place,** or a click inside one would be journaled as changing
+  nothing (R31).
+
+Two were asked, each answered with the option recommended:
+- **Every frame is read,** over only same-origin frames for now, so
+  Positron's webviews, most likely nested frames, come in too and are
+  measured once this lands.
+- **The engine leaves out a link in a frame whose address is on another
+  origin than the application,** recorded as excluded with that reason,
+  over leaving it to each adapter or measuring first. Such a link navigates
+  the frame itself, which the outbound-link stub never sees.
+
+**Built on 2026-10-09;** `HISTORY.md` has it, with two things the building
+found: a frame sandboxed without `allow-scripts` is recorded as unread,
+since every read inside it is refused and logged as a console error, and an
+id made fresh each launch is written `<id>` in a frame's label, measured on
+Positron's webviews.
 
 ### After the trial: weighting the draw toward new targets
 
@@ -1138,7 +1185,7 @@ and over placing it beside recording a Fix. The reason given with the
 proposal, not with the answer: before the trial ends, the trial would be
 measuring a chooser its bar was not set against. `OUTSTANDING.md` has the
 idea and what needs deciding before it is built. **Placed again on
-2026-10-05,** once the trial had stopped with no word on resuming: step 5
+2026-10-05,** once the trial had stopped with no word on resuming: stage 5
 of "The order from 2026-10-05", after the trial's remaining steps.
 
 It is a second chooser behind the choosing seam, so the hop loop does not
@@ -1411,7 +1458,7 @@ from `PRODUCT_REQUIREMENTS.md`, done cold: a second session reproduces a
 finding from the report alone.
 
 **Part of it comes first, since 2026-10-05:** one Journey finding the
-defects already planted, under the uniform draw, as step 3 of "The order
+defects already planted, under the uniform draw, as stage 3 of "The order
 from 2026-10-05". This phase still asserts every defect planted by then.
 
 Boundary: **real, and the only one that shows the engine does its job.** The

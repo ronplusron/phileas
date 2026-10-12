@@ -29,15 +29,15 @@ function busyPage(): Page {
     await new Promise((resolve) => setTimeout(resolve, READ_MS));
     return tree;
   };
-  return {
-    locator: () => ({ ariaSnapshotJSON: read }),
-    evaluate: async () => undefined,
-  } as unknown as Page;
+  // The page as its own main frame, with no frames inside it, which is all
+  // the frame reader asks of it (src/frames.ts).
+  const frame = { locator: () => ({ ariaSnapshotJSON: read }), evaluate: async () => undefined, childFrames: () => [] };
+  return { ...frame, mainFrame: () => frame } as unknown as Page;
 }
 
 /** A page that never answers a read at all. */
 function silentPage(): Page {
-  return {
+  const frame = {
     locator: () => ({
       ariaSnapshotJSON: async ({ timeout }: { timeout: number }) => {
         await new Promise((resolve) => setTimeout(resolve, timeout));
@@ -45,7 +45,9 @@ function silentPage(): Page {
       },
     }),
     evaluate: async () => undefined,
-  } as unknown as Page;
+    childFrames: () => [],
+  };
+  return { ...frame, mainFrame: () => frame } as unknown as Page;
 }
 
 test('a page still changing when the budget runs out is unsettled, with its last reading', async () => {

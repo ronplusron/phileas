@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { FrameName } from './app-under-test.js';
 import type { CaughtByStubs } from './caught.js';
+import type { UnreadFrame } from './frames.js';
 import type { HopEffect } from './effect.js';
 import { currentEntry } from './legacy.mjs';
 import { renderEntry, reporterInUse } from './report/render.mjs';
@@ -44,6 +46,12 @@ export interface JournaledCandidate {
   readonly key?: string;
   /** For a shortcut, the names of the controls that print it. */
   readonly controls?: readonly string[];
+  /**
+   * For a page control drawn in a frame, the frames it sits inside, outermost
+   * first. Absent for one in the window's own page, and in every journal
+   * written before 2026-10-09, when frames were first read.
+   */
+  readonly frame?: readonly FrameName[];
 }
 
 /**
@@ -179,6 +187,13 @@ export interface PoolEntry {
    * where present, as layered text boxes are.
    */
   readonly labeled?: readonly JournaledLabeled[];
+  /**
+   * Frames drawn with area whose documents could not be read, each with why,
+   * so a frame whose controls never reached the pool says so. Absent where
+   * none were, and before 2026-10-09. On the pool and part of its id where
+   * present, as covered controls are.
+   */
+  readonly unreadFrames?: readonly UnreadFrame[];
 }
 
 /** A control reached through its label, as the journal records it. */
@@ -651,7 +666,8 @@ export class Journal {
     covered: readonly JournaledCovered[] = [],
     hidden: readonly JournaledHidden[] = [],
     layered: readonly JournaledLayered[] = [],
-    labeled: readonly JournaledLabeled[] = []
+    labeled: readonly JournaledLabeled[] = [],
+    unreadFrames: readonly UnreadFrame[] = []
   ): string {
     // A screen with none of these hashes as it did before any was recorded,
     // and one with only the older kinds as it did before the newer ones
@@ -661,6 +677,7 @@ export class Journal {
       ...(hidden.length ? { hidden } : {}),
       ...(layered.length ? { layered } : {}),
       ...(labeled.length ? { labeled } : {}),
+      ...(unreadFrames.length ? { unreadFrames } : {}),
     };
     const hashed = Object.keys(outOfReach).length ? { candidates, ...outOfReach } : candidates;
     const id = createHash('sha256').update(JSON.stringify(hashed)).digest('hex').slice(0, 12);

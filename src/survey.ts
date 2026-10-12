@@ -1,5 +1,6 @@
-import type { ElectronApplication, Locator, Page } from '@playwright/test';
-import type { Candidate, Exclusions } from './app-under-test.js';
+import type { ElectronApplication, Frame, Locator, Page } from '@playwright/test';
+import type { Candidate, Exclusions, FrameName } from './app-under-test.js';
+import { originKey, readFramed, readTree, withoutBoxes, type AriaNode, type ReadFrame, type UnreadFrame } from './frames.js';
 import { menuEntries } from './menu.js';
 
 /**
@@ -105,6 +106,19 @@ export interface PageCandidate {
    * a Fix name; only the click goes here.
    */
   readonly via?: Locator;
+  /**
+   * The frames it sits inside, outermost first, for a control drawn in a
+   * frame; absent for one in the window's own page. Journaled, and printed
+   * as `frame "Data Browser" > button "Pin column mpg"`. See `FrameName`.
+   */
+  readonly frame?: readonly FrameName[];
+  /** The frame's document it lives in, for the tests run inside it; absent for the window's own page. */
+  readonly document?: Frame;
+  /**
+   * For a link in a frame whose address leaves the application, the scheme
+   * and host it goes to, which keeps it out of the draw; see `survey`.
+   */
+  readonly offApplication?: string;
 }
 
 /** A menu entry, reached by walking the menu by label. */
@@ -156,7 +170,12 @@ export function toCandidate(candidate: SurveyedCandidate): Candidate {
   if (candidate.source === 'key') {
     return { source: 'key', role: candidate.role, name: candidate.name, key: candidate.key };
   }
-  return { source: 'page', role: candidate.role, name: candidate.name };
+  return {
+    source: 'page',
+    role: candidate.role,
+    name: candidate.name,
+    ...(candidate.frame ? { frame: candidate.frame } : {}),
+  };
 }
 
 /** The common keys, offered on every Hop, one candidate each, in this order. */
@@ -366,6 +385,12 @@ export interface SurveyResult {
   readonly labeled: readonly LabeledCandidate[];
   readonly unnamed: readonly UnnamedElement[];
   readonly menuSource: MenuSourceVerdict;
+  /**
+   * Frames drawn with area whose documents could not be read, each with why:
+   * whatever they hold was not offered, and this says so rather than leaving
+   * a frame's controls missing in silence.
+   */
+  readonly unreadFrames: readonly UnreadFrame[];
   /**
    * The accessibility tree this survey read, which is the "before" half of the
    * Hop's effect (R31). Handed back rather than read again, so the effect costs
@@ -589,7 +614,7 @@ export async function answered<T>(what: string, call: Promise<T>, timeoutMs: num
 export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   const { page, app, exclusions, hopIndex, tally, timeoutMs } = options;
 
-  const { candidates: pageCandidates, unnamed, tree } = await surveyPage(page, timeoutMs);
+  const { candidates: pageCandidates, unnamed, tree, frames, unread } = await surveyPage(page, timeoutMs);
   const { menuCandidates, menuSource } = await surveyMenu(app, timeoutMs);
 
   const found: SurveyedCandidate[] = [
@@ -632,12 +657,20 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
       // window mode: measured on macOS on 2026-09-28, where they opened it and
       // never changed the choice. The dropdown stays reachable by `select`.
       if (!rule && candidate.role === 'key' && OPEN_A_DROPDOWN.has(candidate.key)) {
-        focusOnDropdown ??= await focusedDropdown(page, timeoutMs);
+        focusOnDropdown ??= await focusedDropdown(frames, timeoutMs);
         if (focusOnDropdown) rule = `focus: native dropdown ${focusOnDropdown}`;
       }
     }
 
     rule ??= await excludedBy(candidate, { exclusions, page, tally, control });
+    // A link in a frame that leaves the application navigates the frame
+    // itself, which the outbound-link stub never sees, so an outside site
+    // would load inside the application. Left out by the engine for every
+    // adapter, decided on 2026-10-09. After the adapter's own rules, so a
+    // link it names is counted against the rule that names it.
+    if (!rule && candidate.source === 'page' && candidate.offApplication !== undefined) {
+      rule = `link off the application: ${candidate.offApplication}`;
+    }
     if (rule) {
       excluded.push({ candidate: toCandidate(candidate), rule });
       if (candidate.source === 'page') excludedControls.set(candidate, rule);
@@ -649,7 +682,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
   // tested. Before the draw, for the reason this function's comment gives.
   // Shortcuts were built from every control, covered or not: a key press
   // needs no clear spot to land on, except under a dialog, below.
-  const { covered, hidden, layered, labeled: reached } = await outOfReachAmong(
+  const { covered, hidden, layered, labeled: reached } = await outOfReachInEachDocument(
     page,
     candidates.filter((c): c is PageCandidate => c.source === 'page'),
     timeoutMs
@@ -694,8 +727,167 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
     menuSource: menuSource.offered
       ? { offered: true, count: candidates.filter((c) => c.source === 'menu').length }
       : menuSource,
+    unreadFrames: unread,
     tree,
   };
+}
+
+/**
+ * The covered, hidden, layered and labeled controls, each frame's tested in
+ * its own document, and a frame's then tested again in each document it sits
+ * inside: the frame itself must be on top there, at the control's point.
+ * Decided on 2026-10-09. A page with no frames is tested as it always was,
+ * in one group.
+ */
+async function outOfReachInEachDocument(
+  page: Page,
+  controls: readonly PageCandidate[],
+  timeoutMs: number | undefined
+): Promise<Awaited<ReturnType<typeof outOfReachAmong>>> {
+  const main = page.mainFrame();
+  const groups = new Map<Frame, PageCandidate[]>();
+  for (const control of controls) {
+    const where = control.document ?? main;
+    const group = groups.get(where);
+    if (group) group.push(control);
+    else groups.set(where, [control]);
+  }
+  const results = await Promise.all(
+    [...groups].map(async ([where, group]) => {
+      const inside = await outOfReachAmong(where, group, timeoutMs);
+      if (where === main) return inside;
+      const out = new Set<PageCandidate | KeyCandidate>([...inside.covered, ...inside.hidden].map((entry) => entry.candidate));
+      const outside = await throughFrames(
+        where,
+        group.filter((control) => !out.has(control)),
+        timeoutMs
+      );
+      return { ...inside, covered: [...inside.covered, ...outside.covered], hidden: [...inside.hidden, ...outside.hidden] };
+    })
+  );
+  return {
+    covered: results.flatMap((result) => result.covered),
+    hidden: results.flatMap((result) => result.hidden),
+    layered: results.flatMap((result) => result.layered),
+    labeled: results.flatMap((result) => result.labeled),
+  };
+}
+
+/**
+ * The controls in a frame's document that the frame itself does not show:
+ * covered, where something in a document it sits inside is drawn over the
+ * frame at the control's point, or hidden, where the frame is inside a
+ * container there that clips what it holds and has no area. Tested from the
+ * frame's own document outward, one call per document, with the part of each
+ * control that shows carried out through each frame. A control scrolled out
+ * of a frame's view, or a frame scrolled out of sight, is kept, since the
+ * click scrolls it into view, and so is one this cannot answer for, as in
+ * `outOfReachAmong`.
+ */
+async function throughFrames(
+  where: Frame,
+  controls: readonly PageCandidate[],
+  timeoutMs: number | undefined
+): Promise<{ covered: CoveredCandidate[]; hidden: HiddenCandidate[] }> {
+  const covered: CoveredCandidate[] = [];
+  const hidden: HiddenCandidate[] = [];
+  let rects: (Box | null)[] = controls.map((control) => (control.box && hasArea(control.box) ? control.box : null));
+  for (let child = where, parent = where.parentFrame(); parent; child = parent, parent = parent.parentFrame()) {
+    if (!rects.some(Boolean)) break;
+    const frameChild = child;
+    const verdicts = await answered(
+      'a frame, asked what is drawn over it,',
+      (async () => {
+        const element = await frameChild.frameElement();
+        try {
+          return await element.evaluate((handle, inside) => {
+            const frame = handle as HTMLElement;
+            const up = (node: Element): Element | null => {
+              const root = node.getRootNode();
+              return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+            };
+            const describe = (node: Element): string => {
+              const attributes = ['role', 'aria-label', 'id', 'class', 'title']
+                .map((name) => [name, node.getAttribute(name)] as const)
+                .filter(([, value]) => value)
+                .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
+                .join('');
+              const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
+              return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
+            };
+            // Where the frame's own document is drawn: inside its border and padding.
+            const style = getComputedStyle(frame);
+            const own = frame.getBoundingClientRect();
+            const [padLeft, padTop, padRight, padBottom] = [style.paddingLeft, style.paddingTop, style.paddingRight, style.paddingBottom].map(
+              (value) => parseFloat(value) || 0
+            ) as [number, number, number, number];
+            const left = own.left + frame.clientLeft + padLeft;
+            const top = own.top + frame.clientTop + padTop;
+            const width = frame.clientWidth - padLeft - padRight;
+            const height = frame.clientHeight - padTop - padBottom;
+            // What of this document shows the frame: the window and every
+            // container that clips it, read as `outOfReachAmong` reads them.
+            let [x0, y0, x1, y1] = [0, 0, window.innerWidth, window.innerHeight];
+            const rootStyle = getComputedStyle(document.documentElement);
+            const bodyPassesUp = rootStyle.overflowX === 'visible' && rootStyle.overflowY === 'visible';
+            for (let node = up(frame); node; node = up(node)) {
+              if (node === document.documentElement || (node === document.body && bodyPassesUp)) continue;
+              const clip = getComputedStyle(node);
+              if (clip.overflowX === 'visible' && clip.overflowY === 'visible') continue;
+              const area = node.getBoundingClientRect();
+              if (area.width < 1 || area.height < 1) return inside.map(() => ({ hidden: describe(node) }));
+              [x0, y0, x1, y1] = [Math.max(x0, area.left), Math.max(y0, area.top), Math.min(x1, area.right), Math.min(y1, area.bottom)];
+            }
+            return inside.map((rect): { hidden: string } | { covered: string; dialog: boolean } | { rect: { x: number; y: number; width: number; height: number } } | null => {
+              if (!rect) return null;
+              // Out of the frame's view: scrolled inside it, so the click scrolls it in.
+              const cx0 = Math.max(0, rect.x);
+              const cy0 = Math.max(0, rect.y);
+              const cx1 = Math.min(width, rect.x + rect.width);
+              const cy1 = Math.min(height, rect.y + rect.height);
+              if (cx1 - cx0 < 1 || cy1 - cy0 < 1) return null;
+              const px0 = Math.max(x0, left + cx0);
+              const py0 = Math.max(y0, top + cy0);
+              const px1 = Math.min(x1, left + cx1);
+              const py1 = Math.min(y1, top + cy1);
+              // The frame scrolled out of sight here, which the click scrolls in too.
+              if (px1 - px0 < 1 || py1 - py0 < 1) return null;
+              const [x, y] = [(px0 + px1) / 2, (py0 + py1) / 2];
+              let onTop = document.elementFromPoint(x, y);
+              while (onTop?.shadowRoot) {
+                const inner = onTop.shadowRoot.elementFromPoint(x, y);
+                if (!inner || inner === onTop) break;
+                onTop = inner;
+              }
+              if (!onTop) return null;
+              for (let node: Element | null = onTop; node; node = up(node)) {
+                if (node === frame) return { rect: { x: px0, y: py0, width: px1 - px0, height: py1 - py0 } };
+              }
+              return {
+                covered: describe(onTop),
+                dialog: onTop.closest('[role="dialog"], [role="alertdialog"], dialog') !== null,
+              };
+            });
+          }, rects);
+        } finally {
+          await element.dispose().catch(() => undefined);
+        }
+      })(),
+      timeoutMs
+    ).catch(() => undefined);
+    // A document that does not answer leaves the rest kept, as a control the
+    // test cannot answer for is.
+    if (!verdicts) break;
+    rects = verdicts.map((verdict, index) => {
+      const control = controls[index];
+      if (!verdict || !control) return null;
+      if ('hidden' in verdict) hidden.push({ candidate: control, by: verdict.hidden });
+      else if ('covered' in verdict) covered.push({ candidate: control, by: verdict.covered, ...(verdict.dialog ? { underDialog: true } : {}) });
+      else return verdict.rect;
+      return null;
+    });
+  }
+  return { covered, hidden };
 }
 
 /**
@@ -758,7 +950,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
  * nothing covered, costs one call per survey.
  */
 async function outOfReachAmong(
-  page: Page,
+  doc: Frame,
   controls: readonly PageCandidate[],
   timeoutMs: number | undefined
 ): Promise<{
@@ -767,13 +959,13 @@ async function outOfReachAmong(
   layered: LayeredCandidate[];
   labeled: (LabeledCandidate & { via: Locator })[];
 }> {
-  const labeled = await throughLabels(page, controls, timeoutMs);
+  const labeled = await throughLabels(doc, controls, timeoutMs);
   const tested = controls.filter((control) => control.box !== undefined && !labeled.decided.has(control));
   if (!tested.length && !labeled.decided.size) return { covered: [], hidden: [], layered: [], labeled: [] };
 
   const suspects = await answered(
     'the page, asked what is on top of each control,',
-    page.evaluate((boxes) => {
+    doc.evaluate((boxes) => {
       const describe = (element: Element): string => {
         const attributes = ['role', 'aria-label', 'id', 'class']
           .map((name) => [name, element.getAttribute(name)] as const)
@@ -960,7 +1152,7 @@ const CLICKED_ROLES = new Set(['button', 'checkbox', 'link', 'menuitem', 'menuit
  * One call per such control; a page with none costs nothing.
  */
 async function throughLabels(
-  page: Page,
+  doc: Frame,
   controls: readonly PageCandidate[],
   timeoutMs: number | undefined
 ): Promise<{
@@ -1038,7 +1230,7 @@ async function throughLabels(
       // The label around it, or the one naming it by id.
       const via = verdict.inside
         ? control.locator.locator('xpath=ancestor::label[1]')
-        : page.locator(`label[for="${verdict.id.replace(/["\\]/g, '\\$&')}"]`).first();
+        : doc.locator(`label[for="${verdict.id.replace(/["\\]/g, '\\$&')}"]`).first();
       reached.push({ candidate: control, by: verdict.labeled, via });
     } else if ('covered' in verdict) {
       covered.push({ candidate: control, by: verdict.covered, ...(verdict.dialog ? { underDialog: true } : {}) });
@@ -1101,24 +1293,31 @@ const OPEN_A_DROPDOWN: ReadonlySet<string> = new Set(['Enter', 'ArrowUp', 'Arrow
  * An empty string when none does, so a survey asks the page once however many
  * keys it reaches.
  */
-async function focusedDropdown(page: Page, timeoutMs: number | undefined): Promise<string> {
-  return (
-    page
-      .locator('body')
-      .evaluate(
-        () => {
-          const element = document.activeElement;
-          if (!(element instanceof HTMLSelectElement) || element.multiple || element.size > 1) return '';
-          const label = element.labels?.[0]?.textContent?.trim() || element.getAttribute('aria-label') || element.id;
-          return label ? `"${label}"` : 'with no label';
-        },
-        undefined,
-        timeoutMs === undefined ? {} : { timeout: timeoutMs }
-      )
-      // **Fails closed,** as for an excluded control: a focus that could not be
-      // read might be on a dropdown, and the list would then open on the screen.
-      .catch((error: unknown) => `unknown (${error instanceof Error ? error.message.split('\n')[0] : String(error)})`)
+async function focusedDropdown(frames: readonly ReadFrame[], timeoutMs: number | undefined): Promise<string> {
+  // Asked of every document read, the window's page first, since focus
+  // inside a frame shows in the page only as the frame itself. All at once,
+  // for the reason the covered test in `outOfReachAmong` gives, and read back
+  // in order.
+  const answers = await Promise.all(
+    frames.map((read) =>
+      read.frame
+        .locator('body')
+        .evaluate(
+          () => {
+            const element = document.activeElement;
+            if (!(element instanceof HTMLSelectElement) || element.multiple || element.size > 1) return '';
+            const label = element.labels?.[0]?.textContent?.trim() || element.getAttribute('aria-label') || element.id;
+            return label ? `"${label}"` : 'with no label';
+          },
+          undefined,
+          timeoutMs === undefined ? {} : { timeout: timeoutMs }
+        )
+        // **Fails closed,** as for an excluded control: a focus that could not be
+        // read might be on a dropdown, and the list would then open on the screen.
+        .catch((error: unknown) => `unknown (${error instanceof Error ? error.message.split('\n')[0] : String(error)})`)
+    )
   );
+  return answers.find((answer) => answer !== '') ?? '';
 }
 
 /** Which exclusion rule keeps this candidate out of the draw, if any. */
@@ -1176,24 +1375,7 @@ async function excludedBy(
   return 'exclude()';
 }
 
-/**
- * A node in Playwright's accessibility snapshot.
- *
- * Declared here rather than imported: ariaSnapshotJSON is typed as a free-form
- * object, so this states what is actually read out of it. Every field is
- * optional because a node carrying none of them is a plain text fragment.
- */
-interface AriaNode {
-  role?: string;
-  name?: string;
-  text?: string;
-  disabled?: boolean;
-  /** Where the element is drawn, asked for with `boxes`. */
-  box?: Box;
-  children?: (AriaNode | string)[];
-}
-
-/** An element's bounding box, in the page's own pixels. */
+/** An element's bounding box, in its own document's viewport, in CSS pixels. */
 export interface Box {
   readonly x: number;
   readonly y: number;
@@ -1202,22 +1384,9 @@ export interface Box {
 }
 
 /**
- * The tree without the boxes, for the Hop's effect and an adapter's checks.
- *
- * A Hop's effect compares two trees as text (src/effect.ts), and a box moves
- * whenever anything scrolls or resizes, so leaving them in would report every
- * Hop as a change. The checks were handed a tree without them before boxes
- * were read, and still are.
- */
-function withoutBoxes(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(withoutBoxes);
-  if (node === null || typeof node !== 'object') return node;
-  const { box: _box, children, ...rest } = node as AriaNode;
-  return children === undefined ? rest : { ...rest, children: children.map(withoutBoxes) };
-}
-
-/**
- * Candidates from the page, in document order.
+ * Candidates from the page, in document order, a frame's at the frame's
+ * place, each counted within its own document. src/frames.ts has why frames
+ * are read and how.
  *
  * The snapshot is Playwright's own accessibility tree: it computes the role and
  * the accessible name the way a screen reader would, and it leaves out anything
@@ -1238,9 +1407,13 @@ function withoutBoxes(node: unknown): unknown {
 async function surveyPage(
   page: Page,
   timeoutMs: number | undefined
-): Promise<{ candidates: PageCandidate[]; unnamed: UnnamedElement[]; tree: unknown }> {
-  const bounded = timeoutMs === undefined ? {} : { timeout: timeoutMs };
-
+): Promise<{
+  candidates: PageCandidate[];
+  unnamed: UnnamedElement[];
+  tree: unknown;
+  frames: readonly ReadFrame[];
+  unread: readonly UnreadFrame[];
+}> {
   // **While a modal dialog is open, only the dialog is surveyed.** Measured on
   // 2026-09-24 with the demo's ticket dialog, opened with showModal(): the
   // browser reported it modal, and the accessibility snapshot of the body still
@@ -1263,40 +1436,59 @@ async function surveyPage(
   // modal and leaves the page behind it reachable has a bug a Route will now
   // never walk into. A dialog blocked only by an overlay, with no aria-modal,
   // is still surveyed with the whole page; docs/OUTSTANDING.md has both.
-  const native = page.locator('dialog:modal');
-  const marked = page
-    .locator(':is([role="dialog"], [role="alertdialog"], dialog)[aria-modal="true"]')
-    .filter({ visible: true });
-  // Bounded by hand: a count takes no timeout of its own.
-  const [nativeOpen, markedOpen] = await answered(
-    'the page, asked for an open dialog,',
-    Promise.all([native.count(), marked.count()]),
-    timeoutMs
-  );
-  const modalOpen = nativeOpen > 0 || markedOpen > 0;
-  const root = nativeOpen > 0 ? native.last() : markedOpen > 0 ? marked.last() : page.locator('body');
+  //
+  // Asked of each frame's document as of the page's, so a frame whose own
+  // dialog is open offers only that dialog; frames outside a dialog open in
+  // the page are outside its snapshot and never read.
+  let modalOpen = false;
+  const rootOf = async (frame: Frame): Promise<Locator> => {
+    const native = frame.locator('dialog:modal');
+    const marked = frame
+      .locator(':is([role="dialog"], [role="alertdialog"], dialog)[aria-modal="true"]')
+      .filter({ visible: true });
+    // Bounded by hand: a count takes no timeout of its own.
+    const [nativeOpen, markedOpen] = await answered(
+      'the page, asked for an open dialog,',
+      Promise.all([native.count(), marked.count()]),
+      timeoutMs
+    );
+    if (nativeOpen > 0 || markedOpen > 0) modalOpen = true;
+    return nativeOpen > 0 ? native.last() : markedOpen > 0 ? marked.last() : frame.locator('body');
+  };
   // With each element's box, which is where the test for a covered control
   // looks; see `outOfReachAmong`. Read in the same call, so it costs nothing extra.
-  const snapshot = (await root.ariaSnapshotJSON({ ...bounded, boxes: true })) as AriaNode | AriaNode[];
+  const read = await readFramed(page, { ...(timeoutMs === undefined ? {} : { timeoutMs }), rootOf });
 
   // The whole page is still what a Hop's effect is read from (R31), since the
   // settle wait that reads "after" reads the whole page too. So with a modal
   // open, the page is read once more.
-  const tree =
-    modalOpen ? await page.locator('body').ariaSnapshotJSON(bounded) : withoutBoxes(snapshot);
+  const tree = modalOpen ? (await readTree(page, timeoutMs)).tree : withoutBoxes(read.snapshot);
 
   const candidates: PageCandidate[] = [];
   const unnamed: UnnamedElement[] = [];
   const hoppable = new Set<string>(HOPPABLE_ROLES);
+  const documents = new Map(read.frames.map((frame) => [JSON.stringify(frame.path), frame]));
 
-  // Counted per role and name, so that two controls sharing both are told apart
-  // by their position in document order. Counted from 1, as a person counts
-  // them; getByRole().nth() counts from 0, and the conversion happens there
-  // and nowhere else.
-  const seen = new Map<string, number>();
-
-  const walk = (node: AriaNode | string, within: PageCandidate | undefined): void => {
+  const walk = (
+    node: AriaNode | string,
+    within: PageCandidate | undefined,
+    doc: ReadFrame,
+    // Counted per role and name, so that two controls sharing both are told
+    // apart by their position in document order, within their own document.
+    // Counted from 1, as a person counts them; getByRole().nth() counts from
+    // 0, and the conversion happens here and nowhere else.
+    seen: Map<string, number>
+  ): void => {
     if (typeof node === 'string') return;
+
+    // A frame's node with its document read in: what it holds is counted
+    // and reached within that document.
+    const inner = node.frame ? documents.get(JSON.stringify([...doc.path, node.frame])) : undefined;
+    if (inner) {
+      const innerSeen = new Map<string, number>();
+      for (const child of node.children ?? []) walk(child, undefined, inner, innerSeen);
+      return;
+    }
 
     let self: PageCandidate | undefined;
     if (node.role && hoppable.has(node.role)) {
@@ -1312,10 +1504,11 @@ async function surveyPage(
           disabled: node.disabled === true,
           ...(node.box ? { box: node.box } : {}),
           ...(within ? { within } : {}),
-          locator: root.getByRole(node.role as Parameters<Page['getByRole']>[0], {
+          locator: doc.root.getByRole(node.role as Parameters<Page['getByRole']>[0], {
             name: node.name,
             exact: true,
           }).nth(nth - 1),
+          ...(doc.path.length ? { frame: doc.path, document: doc.frame } : {}),
         };
         candidates.push(self);
       } else {
@@ -1323,19 +1516,70 @@ async function surveyPage(
       }
     }
 
-    for (const child of node.children ?? []) walk(child, self ?? within);
+    for (const child of node.children ?? []) walk(child, self ?? within, doc, seen);
   };
 
-  for (const node of Array.isArray(snapshot) ? snapshot : [snapshot]) walk(node, undefined);
+  const main = documents.get('[]');
+  if (main) {
+    const seen = new Map<string, number>();
+    for (const node of (Array.isArray(read.snapshot) ? read.snapshot : [read.snapshot]) as (AriaNode | string)[]) {
+      walk(node, undefined, main, seen);
+    }
+  }
 
   // Disabled controls are found and then dropped from the draw. Hopping to one
   // does nothing, which would be journaled as a Hop that happened. Nothing
   // reports them yet.
+  const enabled = candidates.filter((candidate) => !candidate.disabled);
   return {
-    candidates: candidates.filter((candidate) => !candidate.disabled),
+    candidates: await withAddresses(page, enabled, timeoutMs),
     unnamed,
     tree,
+    frames: read.frames,
+    unread: read.unread,
   };
+}
+
+/**
+ * The candidates, each link in a frame marked with where it goes when that
+ * leaves the application: a scheme and host that is neither the window's
+ * page's nor its own frame's. A `javascript:` link stays, since it runs in
+ * the frame. One whose address cannot be read is marked too, since it might
+ * leave: this fails closed, as the focus checks do. One call per such link,
+ * all at once; a page with no frames costs nothing.
+ */
+async function withAddresses(
+  page: Page,
+  candidates: readonly PageCandidate[],
+  timeoutMs: number | undefined
+): Promise<PageCandidate[]> {
+  const pageOrigin = originKey(page.mainFrame().url());
+  return Promise.all(
+    candidates.map(async (candidate) => {
+      if (!candidate.document || candidate.role !== 'link') return candidate;
+      const address = await candidate.locator
+        .evaluate(
+          (element) => {
+            const anchor = element.closest('a[href], area[href]') ?? element;
+            const written = anchor.getAttribute('href');
+            if (!written) return '';
+            try {
+              return new URL(written, document.baseURI).href;
+            } catch {
+              return written;
+            }
+          },
+          undefined,
+          timeoutMs === undefined ? {} : { timeout: timeoutMs }
+        )
+        .catch(() => undefined);
+      if (address === undefined) return { ...candidate, offApplication: 'an address that could not be read' };
+      if (address === '' || /^javascript:/i.test(address)) return candidate;
+      const goes = originKey(address);
+      if (goes === pageOrigin || goes === originKey(candidate.document.url())) return candidate;
+      return { ...candidate, offApplication: goes };
+    })
+  );
 }
 
 /** Candidates from the native menu, or the reason there are none. */

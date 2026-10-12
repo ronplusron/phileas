@@ -9,6 +9,7 @@ import {
   type Narrowing,
   type UniversalCheck,
 } from '../app-under-test.js';
+import { readTree } from '../frames.js';
 import type { JournaledCheck } from '../journal.js';
 import { currentSignature, findingId, refuseUnfitVarying, signatureOf, type KnownFindings } from '../known.mjs';
 import {
@@ -765,9 +766,8 @@ async function shownAgainWithin(page: Page, waitMs: number): Promise<number | un
     await new Promise((resolve) => setTimeout(resolve, Math.min(BLANK_REREAD_MS, left)));
     const remaining = waitMs - (Date.now() - started);
     if (remaining <= 0) return undefined;
-    const tree = await page
-      .locator('body')
-      .ariaSnapshotJSON({ timeout: remaining })
+    const tree = await readTree(page, remaining)
+      .then((read) => read.tree)
       .catch(() => undefined);
     if (tree !== undefined && !showsNothing(tree)) return Date.now() - started;
   }

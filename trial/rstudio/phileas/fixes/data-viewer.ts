@@ -6,9 +6,10 @@ import type { Fix } from '@drugstoresushi/phileas';
  * the console. The counterpart of Positron's `data-explorer` Fix, asked for
  * on 2026-10-08.
  *
- * The viewer's grid is drawn in a frame, and the survey does not read inside
- * frames (docs/OUTSTANDING.md 1.9), so a Trip reaches only what RStudio draws
- * around the grid. The focus is moved by RStudio's own menu entry and the
+ * The viewer's grid is drawn in a frame, titled "Data Browser", which the
+ * survey has read since 2026-10-09: a Trip reaches each column's pin, hide and
+ * filter controls there as well as what RStudio draws around the
+ * grid. The focus is moved by RStudio's own menu entry and the
  * line typed by Playwright, as in `session-data`, since the console and an
  * open editor are two text boxes with one name. The last step waits for the
  * viewer's tab, which also shows that the line ran.

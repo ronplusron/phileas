@@ -4,6 +4,7 @@ import type { Rng, RouteStreams } from './random.js';
 import { caughtSince, type CaughtByStubs } from './caught.js';
 import { effectOf, type HopEffect } from './effect.js';
 import { fixName } from './fixes.js';
+import { readTree } from './frames.js';
 import {
   Journal,
   fixFingerprint,
@@ -17,7 +18,7 @@ import {
 } from './journal.js';
 import { requireRun } from './journey.js';
 import { clickMenuItem } from './menu.js';
-import { renderEntry, targetText } from './report/render.mjs';
+import { frameText, renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
 import { replayFix, replayFromEnvironment, replayOf, type ReplayPlan } from './replay.js';
 import { CheckFailure, DEFAULT_RESPONSIVE_TIMEOUT_MS, failedChecks, startWatching, STALLED, type Watch } from './oracles/index.js';
@@ -665,6 +666,9 @@ export function surveyLines(found: SurveyResult): string[] {
     ...found.excluded.map((entry) => `${targetText(entry.candidate)}   (excluded: ${entry.rule})`),
     ...found.covered.map((entry) => `${targetText(journaled(entry.candidate))}   (covered by ${entry.by})`),
     ...found.hidden.map((entry) => `${targetText(journaled(entry.candidate))}   (hidden: ${entry.by} has no area)`),
+    ...found.unreadFrames.map(
+      (entry) => `${entry.path.map(frameText).join(' > ')}   (not read: ${entry.reason})`
+    ),
     ...(keys.length ? [`and the common keys: ${keys.join(', ')}`] : []),
   ];
 }
@@ -1050,7 +1054,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         found.covered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
         found.hidden.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
         found.layered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
-        found.labeled.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by }))
+        found.labeled.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
+        found.unreadFrames
       );
 
       span.endedAt = Date.now();
@@ -1257,9 +1262,8 @@ async function runFix(
 
   // The "before" of the first step. Every later step's "before" is the reading
   // the previous step's settle wait ended on, so this is the only extra read.
-  let before: unknown = await page
-    .locator('body')
-    .ariaSnapshotJSON({ timeout: settleTimeoutMs })
+  let before: unknown = await readTree(page, settleTimeoutMs)
+    .then((read) => read.tree)
     .catch(() => undefined);
 
   // A full settle wait after each step, as after a Trip hop, rather than one
@@ -1462,7 +1466,13 @@ export function journaled(candidate: SurveyedCandidate): JournaledCandidate {
         name: candidate.name,
         menuPath: candidate.menuPath,
       }
-    : { source: 'page', role: candidate.role, name: candidate.name, nth: candidate.nth };
+    : {
+        source: 'page',
+        role: candidate.role,
+        name: candidate.name,
+        nth: candidate.nth,
+        ...(candidate.frame ? { frame: candidate.frame } : {}),
+      };
 }
 
 /**
@@ -1660,7 +1670,10 @@ export async function settle(
       // throughout. So the wait can run past its budget by up to the floor,
       // and a read that times out means the page gave no answer for that long.
       const remaining = Math.max(MIN_SETTLE_READ_MS, timeoutMs - (Date.now() - startedAt));
-      tree = await page.locator('body').ariaSnapshotJSON({ timeout: remaining });
+      // Every frame's tree read into its place, so a change inside a frame
+      // keeps the window open as one in the page does (src/frames.ts).
+      const read = await readTree(page, remaining);
+      tree = read.tree;
       const current = JSON.stringify(tree);
       // A page that says it is still filling something in is not settled,
       // however still it looks. `aria-busy` is the standard way to say so,
@@ -1668,13 +1681,20 @@ export async function settle(
       // Bobolink Editor on 2026-10-01, its font list arrives after a pause in
       // which nothing on the page changes, and 3 of 25 replays of one seed
       // surveyed before it, drew from a shorter list, and chose another font.
-      const busy = await page
-        .evaluate(() =>
-          [...document.querySelectorAll('[aria-busy="true"]')].some((element) =>
-            (element as HTMLElement).checkVisibility()
+      // Asked of every document read, a frame's as the page's.
+      const busy = (
+        await Promise.all(
+          read.frames.map((doc) =>
+            doc.frame
+              .evaluate(() =>
+                [...document.querySelectorAll('[aria-busy="true"]')].some((element) =>
+                  (element as HTMLElement).checkVisibility()
+                )
+              )
+              .catch(() => false)
           )
         )
-        .catch(() => false);
+      ).some((answer) => answer === true);
       const readAt = Date.now();
       if (current !== previous || busy === true) unchangedSince = readAt;
       else if (readAt - unchangedSince >= quietMs) {

@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs four hundred and six tests, after a
+through, and `npm test` runs four hundred and seventeen tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -190,6 +190,15 @@ to come back, against `buggy`'s lasting blank still failing, and the
 summary counting brief blanks by Route. One more holds a source file's
 line out of a signature, so a release that moves code keeps its findings.
 One more holds anything naming Posit Assistant out of RStudio's Routes.
+Eleven came with reading inside frames: a frame's controls offered at its
+place and named after it, a nested frame by both, two frames sharing a
+title told apart and printed apart, two frames at one box paired in
+document order, a label keeping no fresh id, a link leaving the
+application excluded, a frame covered in the page and one hidden there, a
+control covered inside its frame, a frame with no area adding nothing, a
+frame sandboxed without scripts recorded as unread, a Fix step and a Trip
+hop acting inside frames with their effects, and a replay matching a
+frame's target only with its frame.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -217,11 +226,15 @@ planted defects unsteered, as a baseline; the Positron trial resumed;
 weighting the draw; the rest of replay; then the rest of phase 5, with the
 stranded encoding first. `docs/PLAN.md` has the order under "The order from
 2026-10-05", and `docs/HISTORY.md` has why. The order before it, from
-2026-10-03, landed all but the rest of replay. Its first four steps are
+2026-10-03, landed all but the rest of replay. Its first four stages are
 done, the Positron trial last, on 2026-10-07. An RStudio batch of 600
 Routes on its current release was placed before weighting the draw on
 2026-10-08, and reading inside frames after the batch, also before
-weighting; `docs/PLAN.md` has both under that order.
+weighting; `docs/PLAN.md` has both under that order. **Frames are read
+since 2026-10-09:** every frame drawn with area, each frame's controls at
+its place, named as `frame "Data Browser" > button "Pin column mpg"`, and
+a link in a frame that leaves the application excluded by the engine.
+`docs/HISTORY.md` has it. Weighting the draw, stage 5, is next.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stopped where it stood
@@ -260,7 +273,8 @@ R script with code in it; `session-data`, code run in the console;
 `r-markdown-further`, that document created, with text and an R chunk
 added at its end; `zoomed-plots`, the Plots pane zoomed so the other
 panes are hidden; or `data-viewer`, `mtcars` shown in the data viewer,
-whose grid a Trip cannot reach until frames are read. Its Journey fails the run when the machine's R libraries
+whose frame offers 69 controls since frames are read, the same six for
+each column, which `docs/OUTSTANDING.md` 1.15 records as crowding. Its Journey fails the run when the machine's R libraries
 changed. Its Routes see the person's own R library after their own, so an
 install still lands in the Route's; `PHILEAS_R_PERSONAL_LIBRARY=0` leaves
 it out, a folder's path names another, and the Journey's start says which.
@@ -446,7 +460,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own four hundred and six tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own four hundred and seventeen tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

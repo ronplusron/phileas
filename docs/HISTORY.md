@@ -25,6 +25,96 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-09: the survey reads inside frames
+
+**Why.** RStudio's data viewer, Help and Viewer are each a frame, and
+Playwright's accessibility snapshot stops at one, showing it as a node with
+no name and nothing inside. So a Route that opened the data viewer never
+acted inside it, and a click inside a frame would have been journaled as
+changing nothing (R31). Moved forward on 2026-10-08, in the words "Let's
+move reading inside frames forward", to right after the RStudio batch.
+
+**Measured first,** by `trial/rstudio/probes/frames.spec.ts` on RStudio
+2026.10.0: the data viewer's frame, titled "Data Browser", holds 69 named
+buttons and Help's, titled "Help Pane", 8 links on `?mean`; two empty frames
+are always there; a box read inside a frame is the frame's own; and
+`buggy` and both demos have no frames, so their pools and pinned seeds do
+not move. `PLAN.md` has the measurement and the six decisions taken from
+it, four proposed and not questioned and two asked.
+
+**What landed.** `src/frames.ts` reads each document on its own and gives
+every frame's node in the snapshot the document of the frame whose element
+has its box. The survey offers a frame's controls at the frame's place,
+counted within the frame, and names each after its frames, outermost
+first, as `frame "Data Browser" > button "Pin column mpg"`: by the
+element's title, else its name, else its id, with a position among frames
+sharing that label. The journal records it as `frame` on the target, a
+Fix's `act` step takes the printed form, and a replay matches it exactly;
+journals before this have no `frame` and match only controls in the page.
+The covered, hidden and labeled tests run in a frame's own document, and
+the frame itself must be on top at the control's point in each document it
+sits inside. The settle wait, each Hop's effect and the checks read every
+frame's tree in its place, and the busy and focused-dropdown reads ask each
+frame. A link in a frame whose address is on a scheme and host that is
+neither the page's nor its frame's is excluded as `link off the
+application`, and one whose address cannot be read is excluded too.
+
+**Found while building it:**
+- **A frame sandboxed without `allow-scripts` is not read,** and is
+  recorded on the pool as unread with that reason. The engine's reads
+  inside a frame run script, Chromium refuses each one there and logs it
+  as a console error, and `checks.spec.ts`'s frame after Bobolink Inbox's
+  message reader failed the console check on the engine's own reads.
+- **An id made fresh each launch is written `<id>` in a frame's label,** by
+  the two id shapes a signature takes out. Measured on Positron
+  2026.09.1 the same day, with `trial/positron/probes/frames.spec.ts` run
+  twice: a webview's outer frame has no title and a name that is a new UUID
+  each launch, so its targets would never have replayed. Its Help start
+  page's 8 links, inside the webview's inner frame "Positron Help", were all
+  excluded as leaving the application, `command:` among them. Help on
+  `mean` opened in a second webview, which the snapshot left out, so what a
+  Help page itself offers on Positron is unmeasured.
+- **Two frames drawn at one box are paired with their nodes in document
+  order.** The snapshot tells a frame's node by its box alone, and
+  Playwright lists frames in the order they were made, measured on
+  2026-10-12, so a frame made later and placed earlier took the other's
+  place in the pool's order. A frame's label and controls always came from
+  the same frame, so nothing was misnamed.
+- **The second of two frames sharing a label prints its position,** `frame
+  "Luggage tags" #2 >`, so a Fix step can name a control in it; the first
+  prints as before.
+- **The settle test's stand-in pages had no `mainFrame()`.** The one that
+  never answers had been passing because the missing method threw, not
+  because of the timeout it tests; both now model the page as its own main
+  frame.
+
+**What it showed at once.** `phileas survey` after RStudio's `data-viewer`
+Fix prints 69 lines inside "Data Browser": three for the summary panel and
+the same six for each of `mtcars`'s eleven columns, about 36% of all Hops
+under the uniform draw. Each does something, so it is crowding, recorded in
+`OUTSTANDING.md` 1.15 with what was said about it.
+
+**Tests:** eleven in `tests/frames.spec.ts`, against frames laid into
+`buggy`'s page by each test, and four hundred and seventeen in all.
+
+## 2026-10-09: a stage of the build order, apart from a phase
+
+**Why.** Asked which were the remaining phases, stages and steps, the answer
+showed the two kinds of number tangled: phases are the sections of the
+build plan, 0 to 10, and the numbered items of the order the work is done
+in were called steps, while a Fix has steps and the Positron trial had its
+own steps 1 to 6. Settled in the words "Phases are sections of the plan,
+Steps are the order we're doing things in", then asked as "Can we use
+"stage" instead of "step"?" and taken with "y".
+
+**What changed.** The numbered items of both build orders in `PLAN.md`,
+2026-10-03's and 2026-10-05's, are stages, and `ORIENTATION.md` with them.
+`GLOSSARY.md` defines phase and stage among its design terms. The Positron
+trial's steps, Fix steps and the demo plans' stage one and stage two keep
+their names; earlier entries here keep "step" where they wrote it. Asked
+not to have a branch of its own, it rode on the branch that reads inside
+frames.
+
 ## 2026-10-09: Positron's unfiled known findings triaged, and its extensions held to the release's
 
 **Why.** Positron's `known-findings.json` held 29 unfiled entries, more than
