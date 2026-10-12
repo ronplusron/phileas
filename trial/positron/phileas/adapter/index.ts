@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { requireAppDir, type AppUnderTest } from '@drugstoresushi/phileas';
 import type { Page } from '@playwright/test';
+import { positronRunsWith } from '../runs-with';
 
 /**
  * The adapter for Positron, pointed at an installed release.
@@ -129,6 +130,14 @@ export const positron: AppUnderTest = {
   // A home folder of the Route's own. The in-page file dialogs set below start
   // in the home folder, and a Route must not read or write the real one.
   env: (userDataDir) => ({ HOME: homeIn(userDataDir) }),
+
+  // The release by the name Positron gives it, since the bundle calls it by
+  // the version of the editor it is built on: 1.130.0 for 2026.09.1.
+  release: positronVersion,
+
+  // The R and Python a Route is offered. `runs-with.ts` says why that is not
+  // the same as what a Route ran.
+  runsWith: ({ env }) => positronRunsWith(env, positronFamily === 'early' ? EARLY_R_BINARY : undefined),
 
   async beforeLaunch(userDataDir: string): Promise<void> {
     await fs.promises.mkdir(homeIn(userDataDir), { recursive: true });

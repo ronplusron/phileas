@@ -379,6 +379,40 @@ export interface AppUnderTest {
   bundleDir: string;
 
   /**
+   * The application's own name for the release being run, where the bundle's
+   * version is not it, for the journal's opening line beside the version the
+   * bundle gives (C1).
+   *
+   * Optional, since the bundle's own version is usually right. Positron's is
+   * not: its bundle calls 2026.09.1 by the version of the editor it is built
+   * on, 1.130.0, measured 2026-10-12, and only its `product.json` names the
+   * release. Read it from the bundle in the adapter rather than writing it
+   * down, or it goes stale on the next install.
+   */
+  release?: string;
+
+  /**
+   * What the application runs with that its bundle cannot say, as short named
+   * values, for the journal's opening line beside the build (C1): which R
+   * RStudio starts, say, or which R and Python Positron is offered. Each name
+   * should say where its value came from, as `R (RSTUDIO_WHICH_R)`, since the
+   * same fact can come from more than one place.
+   *
+   * Called at every launch, before the application starts, with the
+   * environment it is about to be given. So it is the adapter's account of
+   * the setup, not anything the engine saw the application use: RStudio on
+   * Windows, for one, can be told another R in its own settings. A value read
+   * from the running application belongs on a later line.
+   *
+   * Should not throw, and is not trusted not to: a throw is recorded as
+   * `runsWithUnread`, with its message, and the launch goes on.
+   */
+  runsWith?(launch: {
+    readonly userDataDir: string;
+    readonly env: Readonly<Record<string, string>>;
+  }): Readonly<Record<string, string>> | Promise<Readonly<Record<string, string>>>;
+
+  /**
    * The sources the bundle was built from, for the staleness guard (R23).
    *
    * Absent where there are none, which is the shape where the engine is

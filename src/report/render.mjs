@@ -20,6 +20,7 @@ import { currentEntry } from '../legacy.mjs';
 
 /** @typedef {import('../effect').HopEffect} HopEffect */
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
+/** @typedef {import('../build').JournaledBuild} JournaledBuild */
 /** @typedef {import('../journal').JournaledCandidate} JournaledCandidate */
 
 /**
@@ -284,6 +285,40 @@ export function caughtText(caught, step) {
 }
 
 /**
+ * Which build a Route ran against, as its opening line says it: the name and
+ * version, the adapter's name for the release beside the bundle's version
+ * where the two differ, what the adapter says it runs with, and whether the
+ * staleness guard compared it with its sources. Whatever could not be read
+ * says so, and a journal from before builds were recorded says that (C1).
+ * @param {JournaledBuild | undefined} build
+ * @returns {string}
+ */
+export function buildText(build) {
+  if (!build) return 'build not recorded';
+  const version = build.release ?? build.version;
+  // A name or version left out here is named in `unread`, which follows.
+  const parts = [
+    [
+      build.name,
+      version,
+      build.release && build.version && build.release !== build.version ? `(bundle ${build.version})` : '',
+      build.build ? `build ${build.build}` : '',
+    ]
+      .filter(Boolean)
+      .join(' ') || 'a build whose name and version were not read',
+  ];
+  if (build.unread) parts.push(`not all read: ${build.unread}`);
+  const runsWith = Object.entries(build.runsWith ?? {});
+  if (runsWith.length) parts.push(`with ${runsWith.map(([name, value]) => `${name} ${value}`).join(', ')}`);
+  if (build.runsWithUnread) parts.push(`what it runs with unread: ${build.runsWithUnread}`);
+  const sources = build.sources;
+  if (sources && 'compared' in sources) parts.push(`checked against its sources, ${sources.compared} files`);
+  else if (sources?.notCompared === 'no-sources') parts.push('no sources to check it against');
+  else if (sources?.notCompared === 'skipped-by-switch') parts.push('not checked against its sources, by PHILEAS_ALLOW_STALE');
+  return parts.join('; ');
+}
+
+/**
  * The first sentence of a reason, without a colon it ends on: "3 checks failed
  * after hop 56, which is when the checks read it." from the whole failure.
  * @param {string} text
@@ -319,7 +354,7 @@ export function renderEntry(entry, routeNumber, { brief = false } = {}) {
     case 'route':
       return (
         `${route}  seed ${entry.routeSeed}, from Journey seed ${entry.journeySeed}, ` +
-        `Trip of ${entry.tripLength} hops`
+        `Trip of ${entry.tripLength} hops, ${entry.build ? `on ${buildText(entry.build)}` : buildText(undefined)}`
       );
     case 'pool':
       return undefined;

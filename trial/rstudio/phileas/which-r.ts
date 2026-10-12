@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -29,4 +30,19 @@ export function rscript(raw: string | undefined = process.env[WHICH_R_VARIABLE])
   const beside = path.join(path.dirname(named), 'Rscript');
   if (!fs.existsSync(beside)) throw refuse('has no Rscript beside it');
   return beside;
+}
+
+/**
+ * The R RStudio is set up to start, for the journal's opening line, named by
+ * where the choice came from: RSTUDIO_WHICH_R where it is set, else the
+ * PATH's, which is what the R library guard asks too. The adapter's account,
+ * not what RStudio started: `AppUnderTest.runsWith` says why.
+ */
+export function rRunsWith(env: Readonly<Record<string, string>>): Record<string, string> {
+  const named = (env[WHICH_R_VARIABLE] ?? '').trim();
+  const version = execFileSync(rscript(named), ['--vanilla', '-e', 'cat(format(getRversion()))'], {
+    encoding: 'utf8',
+    timeout: 10_000,
+  }).trim();
+  return { [named ? `R (${WHICH_R_VARIABLE})` : 'R (PATH)']: version };
 }

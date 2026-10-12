@@ -25,6 +25,44 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-12: the journal names the build a Route ran against
+
+**Why.** C1 asks a finding to say which build was tested, and the opening
+line said nothing about the application. That day an automated triage of
+an RStudio run, with nothing recorded, wrote that RStudio was built from a
+source checkout, when the trial runs a copy of the installed release.
+
+**Measured first.** RStudio 2026.10.0's `Info.plist` gives
+`2026.10.0+232` for both its short version and its build. Positron
+2026.09.1's gives `1.130.0`, the version of the editor it is built on, in
+`Info.plist` and `package.json` alike, and only its `product.json` names the
+release. So the bundle alone would have named the wrong Positron in every
+report.
+
+**What landed.** `launchApp` reads the bundle's `Info.plist` (`src/build.ts`)
+and records the name, version, build where it differs, and identifier, with
+the staleness guard's verdict: files compared, no sources, or skipped by
+`PHILEAS_ALLOW_STALE`. Two optional adapter fields add what the bundle
+cannot say. `release` is the adapter's name for the release, and Positron's
+reads it from `product.json`. `runsWith` returns short named values, each
+named by where it came from: RStudio's is the R that `RSTUDIO_WHICH_R`
+names, else the PATH's, and Positron's is the PATH's R and `python3`, plus
+the R handed to the early releases. It does not run macOS's
+`/usr/bin/python3` where the Command Line Tools are missing, since that
+stub opens a dialog offering to install them; untested on this machine,
+which has them. Asked in the words "Can we hav
+adapter-level items?", with R in RStudio and R and Python in Positron as
+the cases. A Route finds the build from the `app` it is handed, so no
+consumer's spec had to change. Anything that could not be read says why,
+and the renderer prints it all on the opening line. An older journal reads
+as before and prints "build not recorded".
+
+**What it is not.** `runsWith` is the adapter's account at launch, not
+what the application used. RStudio uses `RSTUDIO_WHICH_R` where it is set,
+and on Windows can be told another R in its own settings. Positron
+discovers interpreters itself. `OUTSTANDING.md` has reading what actually
+started.
+
 ## 2026-10-09: the survey reads inside frames
 
 **Why.** RStudio's data viewer, Help and Viewer are each a frame, and

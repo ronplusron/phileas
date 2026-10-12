@@ -416,6 +416,13 @@ a refactor or a feature rather than a fault. The faults it deferred are in
   optional, so a menu target without a path or a stranded outcome without a
   reason typechecks. Strict unions for writing and a tolerant type for reading
   old journals.
+- **What the application was seen to run with.** The opening line's
+  `runsWith` is the adapter's account at launch, before anything starts:
+  RStudio on Windows can be told another R in its own settings, and
+  Positron discovers interpreters itself, may start none in a Route, and
+  lets a Route choose among them. Reading the interpreter a Route actually
+  started, from the running application, would need a later journal line
+  and a way for an adapter to ask; neither exists.
 - **Toolchain versions on the opening line.** A journal records no engine,
   Playwright or Electron version, so a seed that stops reproducing cannot be
   told apart from a toolchain change (R13, R14).
@@ -654,8 +661,9 @@ same Hop. Across two machines it has never been measured.
   shortening has to cover.
 - **The seed can still be made to travel further,** separately: giving each
   Route an R library of fixed contents in place of the machine's, and
-  recording R's and the packages' versions on the opening line, would make
-  more of a seed's pools match. Whether RStudio can be pointed at such a
+  recording the packages' versions on the opening line, as the RStudio
+  trial has recorded R's since 2026-10-12, would make more of a seed's
+  pools match. Whether RStudio can be pointed at such a
   library is unmeasured.
 
 **Decided on 2026-10-02: replay from the journal,** built as `phileas replay

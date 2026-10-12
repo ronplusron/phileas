@@ -4,6 +4,7 @@ import { expect, type ElectronApplication, type Page } from '@playwright/test';
 import { buggy } from '../proving-ground/buggy/phileas/adapter/index';
 import {
   allowedGroupsFromEnvironment,
+  buildOf,
   createExclusionTally,
   createTest,
   ALLOW_EXCLUDED_VARIABLE,
@@ -2326,4 +2327,19 @@ test('the keys that open a focused native dropdown are withheld, and the rest ar
   );
   // Still reachable by choosing an option, which never opens the list.
   expect(found.candidates.some((candidate) => candidate.name === 'Category')).toBe(true);
+});
+
+test('the opening line names the build the launch read, and one the engine did not launch says so', async ({ page, app, launched }) => {
+  const dir = scratch();
+  const seed = 'which-build';
+  await runRoute({ page, app, cfg: buggy, streams: deriveRouteStreams(seed, 1), journeySeed: seed, routeNumber: 1, tripLength: 1, journalsRoot: dir });
+  const [first] = readJournal(path.join(inRun(dir), `route-001-${deriveRouteStreams(seed, 1).routeSeed}.jsonl`));
+  expect(first?.kind === 'route' && first.build).toEqual(launched.build);
+  // Read from Buggy's own bundle, which its package script names, and
+  // compared with its sources, since the proving ground has them.
+  expect(launched.build).toMatchObject({ name: 'Buggy', version: '0.0.0', identifier: 'com.drugstoresushi.buggy' });
+  expect(launched.build.sources).toEqual({ compared: expect.any(Number) });
+  expect(buildOf({} as ElectronApplication)).toEqual({
+    unread: 'The application was not launched by the engine, so which build it is was not read.',
+  });
 });

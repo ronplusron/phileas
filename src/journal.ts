@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { FrameName } from './app-under-test.js';
+import type { JournaledBuild } from './build.js';
 import type { CaughtByStubs } from './caught.js';
 import type { UnreadFrame } from './frames.js';
 import type { HopEffect } from './effect.js';
@@ -411,6 +412,15 @@ export interface OpeningEntry {
   readonly tripLength: number;
   /** The quiet window the settle wait used for this Route. See `settle`. */
   readonly settleQuietMs: number;
+  /**
+   * Which build of the application the Route ran against: its name and
+   * version as the bundle gives them, the adapter's name for the release
+   * where it gives one, and whether the staleness guard compared it with its
+   * sources (C1). Says why where any of that could not be read, rather than
+   * leaving it out. Absent in journals written before 2026-10-12, which
+   * recorded nothing about the application. See `JournaledBuild`.
+   */
+  readonly build?: JournaledBuild;
   /**
    * How long each process had to answer before it counted as not answering.
    * See `AppUnderTest.responsiveTimeoutMs`. Absent in journals written before

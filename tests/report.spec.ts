@@ -96,7 +96,7 @@ const text = (entries: readonly JournalEntry[]) => entries.map((e) => JSON.strin
 
 test('a journal reads as one line per Hop, with what each did', () => {
   expect(renderJournal(text(ENTRIES))).toEqual([
-    'route 3  seed r0, from Journey seed j, Trip of 3 hops',
+    'route 3  seed r0, from Journey seed j, Trip of 3 hops, build not recorded',
     `${'route 3  hop 1'.padEnd(18)}${'click'.padEnd(11)}${'button "Summary"'.padEnd(44)}+ Total weight   - Inventory`,
     `${'route 3  hop 2'.padEnd(18)}${'type'.padEnd(11)}${'searchbox "Search items"'.padEnd(44)}"a value ..." (26 characters)   no change`,
     `${'route 3  hop 3'.padEnd(18)}${'menu-click'.padEnd(11)}${'menu View > Show Summary'.padEnd(44)}could not read the screen: the page stopped answering`,

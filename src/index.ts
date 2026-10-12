@@ -25,8 +25,10 @@ export {
   type ResolvedBundle,
   type GuardVerdict,
 } from './bundle.js';
+export { readBuild, type JournaledBuild } from './build.js';
 export {
   launchApp,
+  buildOf,
   closeApp,
   reloadRenderer,
   makeUserDataDir,

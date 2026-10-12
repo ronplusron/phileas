@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test';
 import type { AppUnderTest, UniversalCheck } from './app-under-test.js';
 import { resolveBundle, assertBundleFresh, type GuardVerdict } from './bundle.js';
+import { readBuild, readRunsWith, sourcesOf, type JournaledBuild } from './build.js';
 import { stubOpenExternal, stubOpenPaths, stubSelfLaunch, clearOpenExternal } from './external.js';
 import { stubNativeDialogs } from './dialogs.js';
 import { prepareFirstLine } from './first-line.js';
@@ -69,6 +70,8 @@ export type LaunchedApp = {
   app: ElectronApplication;
   /** What the staleness guard did, for the report (R23, C1a). */
   guard: GuardVerdict;
+  /** Which build was launched, for the journal's opening line (C1). See `buildOf`. */
+  build: JournaledBuild;
   pageErrors: Error[];
   consoleErrors: string[];
 } & (
@@ -658,6 +661,19 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
   // disk before the process starts, not after it.
   await cfg.beforeLaunch?.(userDataDir);
 
+  // Worked out once, so the adapter's account of what the application runs
+  // with is given the environment the application is actually given.
+  const env = {
+    ...process.env,
+    ...(typeof cfg.env === 'function' ? cfg.env(userDataDir) : (cfg.env ?? {})),
+  } as Record<string, string>;
+  const build: JournaledBuild = {
+    ...readBuild(bundle.appDir),
+    ...(cfg.release ? { release: cfg.release } : {}),
+    ...(await readRunsWith(cfg, { userDataDir, env })),
+    sources: sourcesOf(guard),
+  };
+
   // An adapter's own --user-data-dir would be appended after the engine's, and
   // which one Chromium honors is not something this should rest on. The
   // guarantee above is that a Journey never writes over the application's real
@@ -697,10 +713,7 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
       cwd: userDataDir,
       // The first-line pause last, so nothing an adapter passes shadows it.
       args: [`--user-data-dir=${userDataDir}`, ...launchArgs, ...(firstLine ? [firstLine.launchArg] : [])],
-      env: {
-        ...process.env,
-        ...(typeof cfg.env === 'function' ? cfg.env(userDataDir) : (cfg.env ?? {})),
-      } as Record<string, string>,
+      env,
       timeout: 20_000,
     })
     .catch(async (error: unknown) => {
@@ -739,10 +752,13 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
       app,
       path: 'electron',
       guard,
+      build,
       stderr: [],
       pageErrors: [],
       consoleErrors: [],
     };
+
+    builds.set(app, build);
 
     app.process().stderr?.on('data', (chunk) => launched.stderr.push(String(chunk)));
 
@@ -779,6 +795,22 @@ export async function launchApp(cfg: AppUnderTest, userDataDir: string): Promise
     }
     throw error;
   }
+}
+
+/** The build each application launched by `launchApp` is, for `buildOf`. */
+const builds = new WeakMap<ElectronApplication, JournaledBuild>();
+
+/**
+ * Which build an application is, as `launchApp` read it.
+ *
+ * Found from the application rather than passed to `runRoute`, since every
+ * consumer's spec hands a Route `app` and not `launched`: a new option would
+ * be left out by every spec not edited to pass it, and its journals would
+ * name no build. An application launched some other way says so rather than
+ * being given a build nobody read.
+ */
+export function buildOf(app: ElectronApplication): JournaledBuild {
+  return builds.get(app) ?? { unread: 'The application was not launched by the engine, so which build it is was not read.' };
 }
 
 /**
