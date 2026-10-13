@@ -21,6 +21,7 @@ import { requireRun } from './journey.js';
 import { buildOf, platformOf } from './launch.js';
 import { trackRanWith } from './ran-with.js';
 import { clickMenuItem } from './menu.js';
+import { routeOutputDir } from './output.js';
 import { frameText, renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
 import { replayFix, replayFromEnvironment, replayOf, type ReplayPlan } from './replay.js';
@@ -413,14 +414,62 @@ export class FixFailure extends Error {
     // one beside it. Anything reading a cause chain finds it where it expects.
     override readonly cause: unknown
   ) {
+    // A check failing after a step that ran is said as that, never as the
+    // step failing: on RStudio on 2026-10-13 an accessibility check found
+    // what was already on screen after the Fix's first step, and "The Fix
+    // failed at step" sent a reader looking at a step that had worked.
     super(
-      `The Fix failed at step "${step}", so this Route never started traveling. ` +
+      (cause instanceof CheckFailure
+        ? `A check failed after Fix step "${step}", which itself ran, so this Route never started traveling. `
+        : `The Fix failed at step "${step}", so this Route never started traveling. `) +
         `A Fix failure is a broken precondition, not a finding about the route ahead: ` +
         `expect every Route in this Journey to report the same thing.\n\n` +
         (cause instanceof Error ? (cause.stack ?? cause.message) : String(cause))
     );
     this.name = 'FixFailure';
   }
+}
+
+/**
+ * What ended the test this Route runs in while the Route was still going, or
+ * undefined while the test runs. A Route run outside a test is never ended
+ * around it.
+ *
+ * **Playwright does not stop a test's body when its deadline passes.** It
+ * marks the test timed out and closes the application through the fixtures'
+ * teardown, while the Route goes on. So the Route's next checks saw the
+ * window close and recorded it as the application's fault: on `buggy` on
+ * 2026-10-13, a 3-second Route deadline became a `still-responding`
+ * finding, which the Journey's end then filed among the known findings. The
+ * run being stopped by hand closes the application the same way.
+ */
+function endedAround(): string | undefined {
+  let status: string | undefined;
+  try {
+    status = test.info().status;
+  } catch {
+    return undefined;
+  }
+  if (status === 'timedOut') return 'its deadline';
+  if (status === 'interrupted') return 'the run being stopped';
+  return undefined;
+}
+
+/**
+ * Thrown where a Route finds its test already ended around it, before it
+ * records anything it saw after that. See `endedAround`.
+ */
+export class RouteCutOff extends Error {
+  constructor(readonly by: string) {
+    super(`The Route was cut off by ${by}, and stopped before recording what it saw after that.`);
+    this.name = 'RouteCutOff';
+  }
+}
+
+/** Throw RouteCutOff if the test has ended around this Route. */
+function stopIfEndedAround(): void {
+  const by = endedAround();
+  if (by !== undefined) throw new RouteCutOff(by);
 }
 
 /**
@@ -848,7 +897,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
   // Opened and flushed before the Route does anything, so that a Route which
   // dies inside its Fix still leaves a file naming the seed that produced it.
-  const journal = Journal.open(journalFolder(journalsRoot, journeySeed, requireRun()), {
+  const journalDirectory = journalFolder(journalsRoot, journeySeed, requireRun());
+  const outputDir = routeOutputDir(journalDirectory);
+  const journal = Journal.open(journalDirectory, {
     journeySeed,
     routeSeed: streams.routeSeed,
     routeNumber,
@@ -864,6 +915,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     ...(cfg.varyingInSignatures?.length
       ? { varyingInSignatures: cfg.varyingInSignatures.map(([pattern, replacement]) => [String(pattern), replacement] as const) }
       : {}),
+    ...(outputDir !== undefined ? { outputDir } : {}),
     ...(replay
       ? {
           ...(replay.recorded.opening.fix ? { fix: replay.recorded.opening.fix } : {}),
@@ -888,6 +940,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   // up on the outcome, which every ending below closes with.
   const ranWith = trackRanWith(cfg, { app, page, userDataDir }, journal);
   const close = async (closing: Omit<ClosingEntry, 'kind' | 'endedAt' | 'ranWith' | 'ranWithUnread'>) => {
+    // A Route whose deadline passed during its last Hop has no outcome to
+    // claim, whatever it reached.
+    stopIfEndedAround();
     await ranWith.read(hops + 1);
     journal.close({ ...closing, ...ranWith.closing() });
   };
@@ -1062,6 +1117,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // line carries them (R10).
       const checks = await watch.check(settling.tree);
       const stopped = await caught();
+      // Before anything of this Hop is written: what it saw after its test
+      // ended was the application being closed. See endedAround.
+      stopIfEndedAround();
 
       // The pool is written first, if this file has not seen it, so the Hop
       // line below never names a pool that is not already on disk.
@@ -1133,6 +1191,25 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     await close({ outcome: 'passed', hops, exclusionsNeverMatched: neverMatched(tally) });
     return { kind: 'passed', hops };
   } catch (error) {
+    // Ended around the Route, by its deadline or by the run being stopped:
+    // whatever was thrown since is the application being closed under it,
+    // and is no finding. Said in a note and left without an outcome, which is
+    // how a journal says the Route did not finish, and the reporter reads the
+    // test's own status for which ending it was.
+    const by = error instanceof RouteCutOff ? error.by : endedAround();
+    if (by !== undefined) {
+      try {
+        journal.write({
+          kind: 'note',
+          hop: hops + 1,
+          note: `Cut off by ${by} after ${hops} Trip hop(s). Nothing seen after that is recorded, since it was the application being closed.`,
+          at: new Date().toISOString(),
+        });
+      } finally {
+        journal.abandon();
+      }
+      throw error;
+    }
     // Closed with an outcome rather than abandoned, because this ending was
     // caught and is therefore known. A journal with no outcome line means the
     // Route did not finish and nothing saw it stop, which is a different thing
@@ -1338,6 +1415,7 @@ async function runFix(
       // Guarded: a check that throws here must not take the step's own
       // error, and the line that names it, with it.
       const after = await effectAfter().catch(() => undefined);
+      stopIfEndedAround();
       const effect: HopEffect = after?.effect ?? {
         readable: false,
         reason: 'The checks after this step failed, so what it did could not be read.',
@@ -1362,6 +1440,7 @@ async function runFix(
     // Before the entry, as for a Trip hop, so that `durationMs` includes the
     // settle wait on both.
     const { effect, checks, stopped } = await effectAfter();
+    stopIfEndedAround();
     span.endedAt = Date.now();
     journal.write({
       kind: 'fix-step',

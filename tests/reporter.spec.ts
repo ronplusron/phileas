@@ -181,6 +181,19 @@ test('the summary counts the Routes by outcome and Hops, prints the known findin
   expect(lines.at(-1)).toMatch(/^Route 2 alone: /);
 });
 
+test('the command to run it again keeps the deadlines, which decide where a Route is cut off', () => {
+  const text = summaryLines({
+    routes: [{ outcome: 'unfinished', routeNumber: 1, hops: 5, tripLength: 15 }],
+    endErrors: [],
+    config: 'proving-ground/buggy/phileas',
+    env: { PHILEAS_SEED: '757debeb43c0', PHILEAS_RUN: 'r1', PHILEAS_ROUTES: '1', PHILEAS_ROUTE_DEADLINE_MS: '3000', PHILEAS_JOURNEY_DEADLINE_MS: '60000' },
+    cwd: '/',
+  }).join('\n');
+  expect(text).toContain(
+    'Run it again: phileas run proving-ground/buggy/phileas --seed 757debeb43c0 --routes 1 --route-deadline-ms 3000 --journey-deadline-ms 60000'
+  );
+});
+
 test('brief blank windows are counted in the summary, and a Journey with none says nothing of them', () => {
   const run = (routes: Parameters<typeof summaryLines>[0]['routes']) =>
     summaryLines({ routes, endErrors: [], config: 'phileas', env: { PHILEAS_SEED: 's' } }).join('\n');

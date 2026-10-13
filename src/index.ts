@@ -247,3 +247,4 @@ export {
   type ReplayPlan,
 } from './replay.js';
 export { trackRanWith, RAN_WITH_TIMEOUT_MS, type RanWithTracker } from './ran-with.js';
+export { keepRouteOutput, OUTPUT_FOLDER, type KeptOutput } from './output.js';

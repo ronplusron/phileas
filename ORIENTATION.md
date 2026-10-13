@@ -532,7 +532,10 @@ since 2026-10-02: each Route's ending, read from its journal, with what each
 failed check saw once and the trace by path; an error that is not a check's
 finding printed whole, stack and all; and a summary last, with the Routes by
 outcome, stranded apart, the known findings, and the command to run it again.
-Following, a failed Hop's line names each check and finding without what it
+The trace path it prints is in Playwright's `test-results/`, which the next
+run empties; since 2026-10-13 the Journey's end copies each Route's output,
+trace included, into the run's own folder, as `output/<journal name>/`, which
+nothing empties. Following, a failed Hop's line names each check and finding without what it
 saw, since the ending says it. A `--reporter` given after `--` replaces it, and
 the run then prints as it did before.
 

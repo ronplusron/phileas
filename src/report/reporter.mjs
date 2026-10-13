@@ -280,8 +280,11 @@ function attachmentLines(result, cwd) {
 }
 
 /**
- * The settings `phileas run` was given that change what a rerun travels, as
- * the flags that give them again.
+ * The settings `phileas run` was given that change what a rerun travels, or
+ * where it is cut off, as the flags that give them again.
+ *
+ * The deadlines since 2026-10-13: a Route cut off by a 3-second deadline
+ * printed a command without it, which ran the Route to the end instead.
  * @param {NodeJS.ProcessEnv} env
  * @returns {string[]}
  */
@@ -292,6 +295,8 @@ function rerunFlags(env) {
     ['PHILEAS_TRIP_LENGTH', '--trip-length'],
     ['PHILEAS_FIX', '--fix'],
     ['PHILEAS_ALLOW_EXCLUDED', '--allow'],
+    ['PHILEAS_ROUTE_DEADLINE_MS', '--route-deadline-ms'],
+    ['PHILEAS_JOURNEY_DEADLINE_MS', '--journey-deadline-ms'],
   ];
   return flags.flatMap(([variable, flag]) => (env[variable] ? [`${flag} ${quoted(env[variable] ?? '')}`] : []));
 }

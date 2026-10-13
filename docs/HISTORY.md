@@ -25,6 +25,69 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-13: each Route's Playwright output kept, and a deadline no longer a finding
+
+**Why.** Playwright empties its output folder at the start of every run,
+before global setup, and has no setting to stop it. Every run of a consumer
+shares that folder, so the next Journey, probe or replay deleted the last
+one's traces, screenshots and error context. It cost two investigations
+before anyone named it: Positron's `81072f59`, whose trace "was overwritten
+by later runs", and the first RStudio Journey with an accessibility check,
+whose three traces a probe run removed minutes after it ended, when the
+question was which attribute each of its five findings lacked. The journals
+survived both times, since each run writes to a folder of its own, but a
+journal records what a check saw, not the page it saw it on. Checking the
+repair turned up four more defects, each repaired here too.
+
+**What landed.**
+- **The opening line names the Route's output folder** (`outputDir`), as a
+  path from the journal's own folder, so a journal names no home folder.
+  Absent for a Route run outside a test.
+- **The Journey's end copies it** (`keepRouteOutput`, `src/output.ts`, run
+  by `finishJourney` between recording the known findings and the leftover
+  check, and run even when either fails): each Route's folder to
+  `output/<journal name>/` in the run folder, and one line saying how many
+  were kept. A folder that is missing or empty, which is what a passing
+  Route leaves, counts as none written and makes nothing. Copied rather than
+  moved, so the paths the reporter printed during the run still open until
+  the next run. A `finishJourney` given no `journalsRoot` says the output was
+  not kept; `buggy`'s global setup now gives one.
+- **What the fixtures attach is written to disk as well.** Playwright writes
+  an attachment given as a file and keeps one given as a body in memory, for
+  reporters only, so the screenshot, the page, main-process stderr and every
+  note the fixtures attach had never reached any folder. Each is now written
+  into the test's output folder beside being attached.
+- **The trace is kept once.** Attaching it by path copies it into
+  `attachments/`, and the file it was copied from stayed beside it, 241,633
+  bytes twice on `buggy`. The original is removed once attached.
+- **A Route deadline is no longer a finding about the application.**
+  Playwright does not stop a test's body when its deadline passes: it marks
+  the test timed out and closes the application through the fixtures, while
+  the Route goes on. On `buggy`, a 3-second deadline became `still-responding`,
+  "the window closed", which the Journey's end filed among the known
+  findings. A Route now asks whether its test has ended around it before it
+  records a Hop, a Fix step or an outcome, and if so notes that it was cut
+  off and closes its journal without an outcome, which the reporter already
+  prints as "cut off by its deadline". The run being stopped by hand is
+  treated the same. `tests/cut-off.spec.ts` checks it; with the question
+  switched off, it fails.
+- **"Run it again" repeats the deadlines.** It repeated only what changes
+  where a rerun travels, so the 3-second run printed a command that ran the
+  Route to its end.
+- **A check failing during the Fix is said as that.** R11 still counts it as
+  a Fix failure, so one broken precondition reads as one problem. But "The
+  Fix failed at step" sent a reader to RStudio's first Fix step, which had
+  worked, when an accessibility check had found what was already on screen.
+  Now it reads "A check failed after Fix step ..., which itself ran".
+
+**Measured on `buggy`.** A Route failed by a 3-second deadline left its
+trace and its error context in `output/`; a second run then emptied
+`test-results/` and the copy was still there. Three passing Routes kept
+nothing, and said so.
+
+**What it does not cover.** A run killed before its end copies nothing, the
+same limit the known findings have.
+
 ## 2026-10-12: the journal names the operating system and architecture a Route ran on
 
 **Why.** With the build and what it ran with recorded the same day, the OS

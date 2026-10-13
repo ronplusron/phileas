@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { test as base, expect, type ElectronApplication, type Page } from '@playwright/test';
+import { test as base, expect, type ElectronApplication, type Page, type TestInfo } from '@playwright/test';
 import type { AppUnderTest } from './app-under-test.js';
 import { launchApp, closeApp, makeUserDataDir, removeProfile, type LaunchedApp } from './launch.js';
 import { openedExternally } from './external.js';
@@ -69,7 +69,7 @@ export function createTest(cfg: AppUnderTest) {
       // spec using `launched` or `app` and never `page` produced no attachment
       // at all, and this engine's own suite is written exactly that way.
       if (!launched.guard.ran) {
-        await testInfo.attach('staleness-guard.txt', {
+        await attachSaved(testInfo, 'staleness-guard.txt', {
           body: launched.guard.detail,
           contentType: 'text/plain',
         });
@@ -87,13 +87,13 @@ export function createTest(cfg: AppUnderTest) {
         // an empty attachment there would say "the application printed nothing"
         // when the truth is that nobody could have seen it.
         if (launched.path === 'electron' && launched.stderr.length) {
-          await testInfo.attach('main-stderr.txt', {
+          await attachSaved(testInfo, 'main-stderr.txt', {
             body: launched.stderr.join(''),
             contentType: 'text/plain',
           });
         }
         if (launched.consoleErrors.length) {
-          await testInfo.attach('renderer-console-errors.txt', {
+          await attachSaved(testInfo, 'renderer-console-errors.txt', {
             body: launched.consoleErrors.join('\n'),
             contentType: 'text/plain',
           });
@@ -107,13 +107,13 @@ export function createTest(cfg: AppUnderTest) {
         try {
           const closed = await closeApp(cfg, launched);
           if (closed.forced) {
-            await testInfo.attach('teardown-forced-kill.txt', {
+            await attachSaved(testInfo, 'teardown-forced-kill.txt', {
               body: closed.detail,
               contentType: 'text/plain',
             });
           }
         } catch (error) {
-          await testInfo.attach('teardown-failure.txt', {
+          await attachSaved(testInfo, 'teardown-failure.txt', {
             body: error instanceof Error ? (error.stack ?? error.message) : String(error),
             contentType: 'text/plain',
           });
@@ -131,7 +131,7 @@ export function createTest(cfg: AppUnderTest) {
             : `The application left ${strays.ended.length} process(es) running after it closed, and each was ended:\n\n` +
               strays.ended.map((line) => `  ${line}`).join('\n');
           process.stderr.write(`${testInfo.title}: ${said}\n`);
-          await testInfo.attach(strays.couldNotLook ? 'stray-processes-unchecked.txt' : 'stray-processes-ended.txt', {
+          await attachSaved(testInfo, strays.couldNotLook ? 'stray-processes-unchecked.txt' : 'stray-processes-ended.txt', {
             body: said,
             contentType: 'text/plain',
           });
@@ -185,7 +185,7 @@ export function createTest(cfg: AppUnderTest) {
       // is the thing the contract was written to prevent.
       if (narrowed) {
         const suppressed = unjudged.filter((error) => !unacceptable.includes(error));
-        await testInfo.attach('narrowed-checks.txt', {
+        await attachSaved(testInfo, 'narrowed-checks.txt', {
           body:
             `uncaught-error was narrowed for this run.\n\nReason: ${narrowed.reason}\n\n` +
             (narrowed.kind === 'off' ? 'The check is off entirely for this run.\n\n' : '') +
@@ -214,9 +214,9 @@ export function createTest(cfg: AppUnderTest) {
         // one would otherwise hold the test's end for as long as it hangs.
         const shot = await screenshotWithin(page, DIAGNOSTIC_TIMEOUT_MS);
         if (Buffer.isBuffer(shot)) {
-          await testInfo.attach('window.png', { body: shot, contentType: 'image/png' });
+          await attachSaved(testInfo, 'window.png', { body: shot, contentType: 'image/png' });
         } else {
-          await testInfo.attach('window-png-failed.txt', {
+          await attachSaved(testInfo, 'window-png-failed.txt', {
             body: shot.stack ?? shot.message,
             contentType: 'text/plain',
           });
@@ -226,9 +226,9 @@ export function createTest(cfg: AppUnderTest) {
           (error: Error) => error
         );
         if (typeof html === 'string') {
-          await testInfo.attach('dom.html', { body: html, contentType: 'text/html' });
+          await attachSaved(testInfo, 'dom.html', { body: html, contentType: 'text/html' });
         } else {
-          await testInfo.attach('dom-html-failed.txt', {
+          await attachSaved(testInfo, 'dom-html-failed.txt', {
             body: html.stack ?? html.message,
             contentType: 'text/plain',
           });
@@ -248,9 +248,14 @@ export function createTest(cfg: AppUnderTest) {
           (error: Error) => error
         );
       if (traced) {
-        await testInfo.attach('trace-failed.txt', { body: traced.stack ?? traced.message, contentType: 'text/plain' });
+        await attachSaved(testInfo, 'trace-failed.txt', { body: traced.stack ?? traced.message, contentType: 'text/plain' });
       } else if (failed && fs.existsSync(tracePath)) {
         await testInfo.attach('trace', { path: tracePath, contentType: 'application/zip' });
+        // Playwright attaches a file by copying it into `attachments/`, so the
+        // one written here would be a second copy of the same trace, kept for
+        // the Journey's end to copy again. On `buggy` on 2026-10-13 each was
+        // 241,633 bytes.
+        fs.rmSync(tracePath, { force: true });
       }
 
       if (thrown !== undefined) throw thrown;
@@ -273,6 +278,27 @@ export function createTest(cfg: AppUnderTest) {
 }
 
 export { expect };
+
+/**
+ * Attach text or an image to the test, and write it into the test's output
+ * folder as well.
+ *
+ * Playwright keeps an attachment given as a body in memory, for reporters,
+ * and writes only one given as a file to disk. So the screenshot, the page,
+ * main-process stderr and every note here reached no folder, and the
+ * Journey's end, which copies each Route's output folder into its run folder
+ * (`keepRouteOutput`), had nothing of them to copy. Written beside the
+ * attachment rather than attached by path, which Playwright would copy
+ * into `attachments/` and so keep twice.
+ */
+async function attachSaved(
+  testInfo: TestInfo,
+  name: string,
+  { body, contentType }: { body: string | Buffer; contentType: string }
+): Promise<void> {
+  fs.writeFileSync(testInfo.outputPath(name), body);
+  await testInfo.attach(name, { body, contentType });
+}
 
 /**
  * The page fixture's own verdict on uncaught renderer errors: those no Route's

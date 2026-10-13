@@ -32,9 +32,10 @@ export default function globalSetup(config: FullConfig): () => void {
   // what lets a Route notice a seed that did not survive being handed to its worker.
   fs.writeFileSync(seedRecordPath(config.rootDir), seed, 'utf8');
 
-  // Run once every Route has ended: it fails the run on a profile folder the
-  // Journey left in the temp folder.
+  // Run once every Route has ended: it keeps each Route's Playwright output
+  // beside its journal, and fails the run on a profile folder the Journey
+  // left in the temp folder.
   return () => {
-    finishJourney();
+    finishJourney({ journalsRoot: path.join(config.rootDir, '.phileas-journals') });
   };
 }

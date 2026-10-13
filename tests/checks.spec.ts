@@ -527,6 +527,9 @@ fixTest('a check failing after a Fix step is a Fix failure, not a failed Route (
 
   expect(error).toBeInstanceOf(FixFailure);
   expect((error as FixFailure).cause).toBeInstanceOf(CheckFailure);
+  // Said as a check failing after a step that ran, never as the step failing.
+  expect((error as FixFailure).message).toMatch(/^A check failed after Fix step ".+", which itself ran,/);
+  expect((error as FixFailure).message).not.toMatch(/The Fix failed at step/);
 
   const entries = journalIn(root);
   const step = entries.find((entry): entry is FixStepEntry => entry.kind === 'fix-step');

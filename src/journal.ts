@@ -473,6 +473,13 @@ export interface OpeningEntry {
    */
   readonly varyingInSignatures?: readonly (readonly [string, string])[];
   /**
+   * Where Playwright writes this Route's output, from the journal's own
+   * folder, so the Journey's end can copy it into the run folder before a
+   * later run empties it. See `keepRouteOutput`. Absent for a Route run
+   * outside a test, and in journals written before 2026-10-13.
+   */
+  readonly outputDir?: string;
+  /**
    * Which Fix the Route opened with: its name in `fixes/index.ts`, or the
    * function's own name where it has one, and a fingerprint of its source. Written because a Fix is part of what a seed
    * reproduces, and a replay after the Fix was edited would otherwise look like

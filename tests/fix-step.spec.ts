@@ -90,6 +90,8 @@ test('a Fix step can type into a named field, and refuses to without a value', a
   const missing = await routeWithFix(page, app, ({ step }) => step({ kind: 'act', target: 'searchbox "Search items"' }));
   expect(missing.outcome).toBeInstanceOf(FixFailure);
   expect(String((missing.outcome as FixFailure).message)).toMatch(/give the value to type/);
+  // A step that itself failed is still said as the Fix failing at it.
+  expect(String((missing.outcome as FixFailure).message)).toMatch(/^The Fix failed at step "/);
 });
 
 test("each step's line records its kind, an act step's target as data and a code step's source", async ({

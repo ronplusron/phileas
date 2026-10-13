@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { journalFolder } from './journal.js';
+import { keepRouteOutput } from './output.js';
 import { recordJourneyFindings, renderJourneyFindings, type JourneyFindings } from './known.mjs';
 import { JOURNEY_END, reporterPresent } from './report/render.mjs';
 import { folderName, TEMP_FOLDER_VARIABLE, windowMode } from './launch.js';
@@ -242,10 +243,11 @@ let leftoverCheck: (() => void) | undefined;
 
 /**
  * End a Journey: add what it found to the known findings, say what was seen,
- * what is still unfiled and what was not seen, and fail the run if it left a
- * profile folder behind. For a consumer's global setup to return, so that
- * Playwright runs it once every Route has ended, whether they passed or not.
- * Both parts run even when the other fails.
+ * what is still unfiled and what was not seen, keep each Route's Playwright
+ * output in the run's folder, and fail the run if it left a profile folder
+ * behind. For a consumer's global setup to return, so that Playwright runs it
+ * once every Route has ended, whether they passed or not. Every part runs
+ * even when another fails.
  *
  * The known findings are written here and nowhere else, so that every Route
  * of a Journey read the same ones. A Route that carried on past a bug only
@@ -291,13 +293,30 @@ export function finishJourney(
     console.log('');
     for (const line of renderJourneyFindings(findings, shown)) console.log(line);
   };
+  const keepOutput = () => {
+    if (surveyFromEnvironment()) return;
+    // Said rather than skipped quietly: output not kept reads, afterwards,
+    // exactly like a Route that wrote none.
+    if (options.journalsRoot === undefined) {
+      console.log('Playwright output not kept: finishJourney was given no journalsRoot to find the run folder by.');
+      return;
+    }
+    const { folder, kept, empty } = keepRouteOutput(journalFolder(options.journalsRoot, requireSeed(), requireRun()));
+    if (kept === 0 && empty === 0) return;
+    const shown = path.relative(process.cwd(), folder) || folder;
+    console.log(
+      kept
+        ? `Playwright output kept for ${kept} Route(s) in ${shown}` + (empty ? `; ${empty} Route(s) wrote none` : '')
+        : `Playwright output: none of ${empty} Route(s) wrote any`
+    );
+  };
   const checkLeftovers = () => {
     if (leftoverCheck === undefined) {
       throw new Error('finishJourney was called without startJourney, so what the Journey left behind cannot be told.');
     }
     leftoverCheck();
   };
-  runEveryCheck([recordFindings, checkLeftovers]);
+  runEveryCheck([recordFindings, keepOutput, checkLeftovers]);
   return findings;
 }
 
