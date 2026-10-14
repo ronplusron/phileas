@@ -339,8 +339,11 @@ export const rstudio: AppUnderTest = {
     },
   },
 
-  // axe-core's WCAG 2 A and AA rules, the engine's optional `wcag-aa`.
-  optionalChecks: ['wcag-aa'],
+  // The engine's `wcag-aa`, axe-core's WCAG 2 A and AA rules, off unless a
+  // Journey or a run includes it, decided on 2026-10-14. What it needs here
+  // to work well is in varyingInSignatures above: the data viewer's rows,
+  // columns and headers, each one finding.
+  checksByDefault: { 'wcag-aa': 'off' },
   /**
    * The workbench window, never the splash. Without RS_NO_SPLASH, RStudio
    * opens a splash from a file in its bundle and the workbench beside it, and

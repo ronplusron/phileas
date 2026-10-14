@@ -237,8 +237,9 @@ export const UNIVERSAL_CHECKS = [
 export type UniversalCheck = (typeof UNIVERSAL_CHECKS)[number];
 
 /**
- * Checks that ship with the engine and are off for every application until
- * its adapter names them in `optionalChecks`. Each assumes nothing about the
+ * Checks that ship with the engine and are off for every application unless
+ * its adapter has them on by default (`checksByDefault`) or a Journey or a run
+ * includes them. Each assumes nothing about the
  * application, as the universal ones do, but costs enough, or finds enough
  * on its first run, that turning it on is the adapter's decision. Decided on
  * 2026-10-14: "Think of optional checks as an opt-in availability to
@@ -580,11 +581,19 @@ export interface AppUnderTest {
   narrowedChecks?: Partial<Record<UniversalCheck, Narrowing>>;
 
   /**
-   * The engine's optional checks this application turns on, run after the
-   * built-in ones on every Hop, in the engine's order. Each is off until it
-   * is named here. See `OPTIONAL_CHECKS`.
+   * Whether each check runs for this application when neither the Journey nor
+   * the run includes or excludes it, by name: any built-in check, any of the
+   * engine's optional ones, or this adapter's own. A check left out keeps the
+   * engine's default: on for a built-in check and the adapter's own, off for
+   * an optional one (`OPTIONAL_CHECKS`).
+   *
+   * Separate from what the adapter defines for a check to work well on its
+   * application, such as patterns in `varyingInSignatures`, which apply
+   * whether or not the check runs by default. A check this switches off is
+   * recorded on every Hop as off, and a Journey or a run can still include
+   * it; one that cannot run at all belongs in `narrowedChecks` instead.
    */
-  optionalChecks?: readonly OptionalCheck[];
+  checksByDefault?: Readonly<Record<string, 'on' | 'off'>>;
 
   /**
    * Checks of this application's own, run after the built-in ones on every

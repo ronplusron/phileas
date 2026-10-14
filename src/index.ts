@@ -20,6 +20,16 @@ export type {
 export { UNIVERSAL_CHECKS, OPTIONAL_CHECKS } from './app-under-test.js';
 export { wcagCheck, steadySelector } from './oracles/wcag.js';
 export {
+  CHECK_ON_VARIABLE,
+  CHECK_OFF_VARIABLE,
+  NO_CHECKS,
+  checkChoiceFromEnvironment,
+  checksOf,
+  defaultOf,
+  stateOf,
+  type CheckChoice,
+} from './check-choice.js';
+export {
   resolveBundle,
   assertBundleFresh,
   allowStaleFromEnvironment,
@@ -219,9 +229,6 @@ export {
   AdapterCheckError,
   PageConnectionLost,
   assertAppChecks,
-  checksOffFromEnvironment,
-  optionalChecksOf,
-  CHECK_OFF_VARIABLE,
   CHECK_ORDER,
   LOG_FAILURE,
   STACK_FRAME,

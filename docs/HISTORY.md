@@ -25,21 +25,39 @@ argument, and re-deriving them would cost it again.
 
 ---
 
-## 2026-10-14: optional checks, the first of them WCAG, and any check off for a run
+## 2026-10-14: optional checks, the first of them WCAG, and each check chosen by adapter, Journey or run
 
 **Why.** A WCAG accessibility check was built inside RStudio's adapter on
 2026-10-13 and run through five Journeys before anyone asked where it was
-defined. Nothing in it was RStudio's but its description and the patterns for
-the data viewer's rows and columns, so it moved into the engine. Decided on
-2026-10-14: optional checks are "an opt-in availability to adapters," off
-until an adapter names them; and "the adapter may inherit a check, but it
-should still be possible to turn checks off."
+defined. The check itself had nothing of RStudio's in it, so it moved into the
+engine. What RStudio's adapter defines for it stays there, and all of it is
+needed: the patterns that make the data viewer's repeated rows, columns and
+headers one finding each, which took its 69 known findings to 18.
+
+**The first design was replaced before it merged.** It had the adapter name
+the optional checks it turned on, which made knowing about a check and
+running it by default one setting, and gave a Journey no say. Settled
+instead, in the words used: "It should be possible to have a check on or off
+for an adapter by default, and also include or exclude a check at the
+Journey level," with optional checks "an opt-in availability to adapters,"
+and `wcag-aa` off by default for RStudio.
 
 **What landed.**
-- **`OPTIONAL_CHECKS`, and an adapter's `optionalChecks`** naming the ones it
-  turns on. They run after the built-in checks and before the adapter's own,
-  in the engine's order. A name the engine does not have is refused, and an
-  adapter's own check may not take one.
+- **`OPTIONAL_CHECKS`**, off unless chosen; `wcag-aa` is the first.
+- **An adapter's `checksByDefault`**: on or off for any check by name,
+  built-in, optional or its own. Left out, built-in checks and the adapter's
+  own are on and optional ones off. Separate from what the adapter defines for
+  a check, which applies either way. One switched off is recorded on every Hop
+  as "off by default for this application", and can still be included.
+- **A Journey's `includeChecks` and `excludeChecks`**, and **`phileas run
+  --check-on` and `--check-off`** replacing either for one run, as `allow` and
+  `--allow` work for exclusion groups. The order is run, Journey, adapter,
+  engine (`src/check-choice.ts`). An excluded check is recorded as "excluded
+  for this run"; an optional check that does not run is left off each Hop's
+  line. The run prints each choice and where it came from, each journal's
+  opening line records it, and "Run it again" repeats it. A name the
+  application cannot run, one named both ways, or one included that the
+  adapter has narrowed off as unable to run, is refused.
 - **`wcag-aa`** (`src/oracles/wcag.ts`): axe-core 4.13.0, now a dependency of
   the engine, put into every frame and run over WCAG 2 A and AA after every
   Fix step and Hop, one line per element axe faults. A frame axe cannot be put
@@ -50,14 +68,7 @@ should still be possible to turn checks off."
   What it asserts comes from a published standard, not from the application
   agreeing with itself as an adapter's own check is asked to; it shares that
   rule's point, since nothing in it comes from the application's code.
-- **`phileas run --check-off <names>`** (`PHILEAS_CHECK_OFF`): any check the
-  application runs, built-in, optional or its own, recorded on every Hop as
-  not run, "turned off for this run with --check-off". It is printed at the
-  run's start beside the optional checks turned on, written on each journal's
-  opening line, and repeated in "Run it again". A name the application does
-  not run is refused, listing what it does.
-- **RStudio's adapter** turns `wcag-aa` on and keeps only what is its own: the
-  patterns that merge the data viewer's rows, columns and headers.
+- **RStudio's adapter** has `wcag-aa` off by default and keeps its patterns.
 - **R36 and R37** in `PRODUCT_REQUIREMENTS.md` state both.
 - **The scan for control characters reads what git would keep.** It walked
   the folder, and once a failed Route's page was written to `test-results/`

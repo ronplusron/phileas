@@ -13,7 +13,7 @@ import { allowStaleFromEnvironment } from './bundle.js';
 import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route.js';
 import { ALLOW_EXCLUDED_VARIABLE } from './survey.js';
 import { replayFromEnvironment } from './replay.js';
-import { checksOffFromEnvironment, optionalChecksOf } from './oracles/index.js';
+import { CHECK_OFF_VARIABLE, CHECK_ON_VARIABLE, assertCheckChoice, assertCheckDefaults, checksOf, defaultOf } from './check-choice.js';
 
 /**
  * Settle the seed, name the run, check the run's settings and print them. The
@@ -78,10 +78,22 @@ export function startJourney(
   // Looked up here as well as by each Route, so a Fix name that is not one of
   // the consumer's is refused before anything launches, not once per Route.
   fixFor(journey, fixes);
-  // Checked here as well as by each Route, so a check this application does
-  // not run is refused before anything launches.
-  const optional = optionalChecksOf(application).map((check) => check.name);
-  const checksOff = checksOffFromEnvironment(application);
+  // Checked here as well as by each Route, so a check this application
+  // cannot run is refused before anything launches, naming where it came
+  // from. What the Journey file includes or excludes reaches each Route
+  // through the run's variables, written here as the groups above are, so
+  // the command to run it again repeats it.
+  assertCheckDefaults(application);
+  const choice = { included: journey.includeChecks ?? [], excluded: journey.excludeChecks ?? [] };
+  const overridden = overriddenInBooking(journey);
+  assertCheckChoice(application, choice, {
+    included: overridden.includes('includeChecks') ? CHECK_ON_VARIABLE : "the Journey's includeChecks",
+    excluded: overridden.includes('excludeChecks') ? CHECK_OFF_VARIABLE : "the Journey's excludeChecks",
+  });
+  if (choice.included.length && !overridden.includes('includeChecks')) process.env[CHECK_ON_VARIABLE] = choice.included.join(',');
+  if (choice.excluded.length && !overridden.includes('excludeChecks')) process.env[CHECK_OFF_VARIABLE] = choice.excluded.join(',');
+  // The application's own defaults, where they differ from the engine's.
+  const defaults = checksOf(application).filter((name) => application.checksByDefault?.[name] !== undefined);
 
   const forThisRun = new Set<string>(overriddenInBooking(journey));
   const mark = (term: string) => (forThisRun.has(term) ? 'set for this run' : '');
@@ -109,8 +121,21 @@ export function startJourney(
         : groups.map((group) => `${group} ${allowedGroups.includes(group) ? 'let in' : 'excluded'}`).join(', '),
       mark('allow') || (allowedGroups.length ? 'in the Journey file' : ''),
     ],
-    ['Optional checks', optional.length ? optional.join(', ') : 'none turned on', optional.length ? 'turned on by the adapter' : ''],
-    ['Checks off', checksOff.length ? checksOff.join(', ') : 'none', checksOff.length ? 'set for this run' : ''],
+    [
+      'Check defaults',
+      defaults.length ? defaults.map((name) => `${name} ${defaultOf(application, name)}`).join(', ') : "the engine's",
+      defaults.length ? 'in the adapter' : '',
+    ],
+    [
+      'Checks included',
+      choice.included.length ? choice.included.join(', ') : 'none',
+      mark('includeChecks') || (choice.included.length ? 'in the Journey file' : ''),
+    ],
+    [
+      'Checks excluded',
+      choice.excluded.length ? choice.excluded.join(', ') : 'none',
+      mark('excludeChecks') || (choice.excluded.length ? 'in the Journey file' : ''),
+    ],
     // Printed, so a PHILEAS_SURVEY left set in the shell is seen at the top of
     // a run that would otherwise travel nowhere.
     // Printed, so a run against a stale build says so where it is read, not

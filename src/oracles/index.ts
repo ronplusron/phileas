@@ -13,6 +13,7 @@ import {
 } from '../app-under-test.js';
 import { readTree } from '../frames.js';
 import { wcagCheck } from './wcag.js';
+import { assertCheckDefaults, stateOf, type CheckChoice } from '../check-choice.js';
 import type { JournaledCheck } from '../journal.js';
 import { currentSignature, findingId, refuseUnfitVarying, signatureOf, type KnownFindings } from '../known.mjs';
 import {
@@ -216,60 +217,16 @@ export interface WatchOptions {
    */
   readonly known?: KnownFindings;
   /**
-   * Checks turned off for this run, by name, which each Hop records as not
-   * run and says why. See `checksOffFromEnvironment`.
+   * What the Journey or the run includes and excludes. Left out, each check
+   * runs by its default for the application. See `check-choice.ts`.
    */
-  readonly checksOff?: readonly string[];
+  readonly choice?: CheckChoice;
 }
 
-/** Each optional check, by the name an adapter turns it on with. */
+/** Each optional check, by its name. */
 const OPTIONAL: Record<OptionalCheck, AppCheck> = {
   'wcag-aa': wcagCheck,
 };
-
-/** The optional checks an adapter turns on, in the engine's order, whatever order it names them in. */
-export function optionalChecksOf(cfg: AppUnderTest): AppCheck[] {
-  const named = new Set(cfg.optionalChecks ?? []);
-  for (const name of named) {
-    if (!(OPTIONAL_CHECKS as readonly string[]).includes(name)) {
-      throw new Error(
-        `The adapter turns on ${JSON.stringify(name)}, which is not one of the engine's optional checks: ${OPTIONAL_CHECKS.join(', ')}.`
-      );
-    }
-  }
-  return OPTIONAL_CHECKS.filter((name) => named.has(name)).map((name) => OPTIONAL[name]);
-}
-
-/** The variable `phileas run --check-off` sets: check names, joined by commas. */
-export const CHECK_OFF_VARIABLE = 'PHILEAS_CHECK_OFF';
-
-/** What a check turned off for the run records on every Hop. */
-const CHECK_OFF_OBSERVATION = 'turned off for this run with --check-off';
-
-/**
- * The checks this run turns off, sorted, each one this application runs.
- *
- * Any check can be turned off for one run: a built-in one, an optional one
- * the adapter turns on, or the adapter's own. A name this application does
- * not run is refused by name, listing what it does run, since a mistyped
- * name would otherwise turn nothing off and the run would read as though it
- * had. Asked for on 2026-10-14: "The adapter may inherit a check, but it
- * should still be possible to turn checks off."
- */
-export function checksOffFromEnvironment(cfg: AppUnderTest): string[] {
-  const raw = (process.env[CHECK_OFF_VARIABLE] ?? '').trim();
-  if (!raw) return [];
-  const runs = [...UNIVERSAL_CHECKS, ...optionalChecksOf(cfg).map((check) => check.name), ...(cfg.checks ?? []).map((check) => check.name)];
-  const asked = [...new Set(raw.split(',').map((name) => name.trim()).filter(Boolean))].sort();
-  const unknown = asked.filter((name) => !runs.includes(name));
-  if (unknown.length) {
-    throw new Error(
-      `${CHECK_OFF_VARIABLE}=${JSON.stringify(raw)} names ${unknown.map((name) => JSON.stringify(name)).join(', ')}, ` +
-        `which this application does not run. It runs: ${runs.join(', ')}.`
-    );
-  }
-  return asked;
-}
 
 /**
  * The one console error the engine makes itself, which the console check sets
@@ -381,8 +338,16 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   // Before anything is watched, so a mistake in the declaration stops the
   // Route at its start rather than on its first Hop.
   assertAppChecks(appChecks);
-  const optional = optionalChecksOf(cfg);
-  const off = new Set(options.checksOff ?? []);
+  assertCheckDefaults(cfg);
+  const choice: CheckChoice = options.choice ?? { included: [], excluded: [] };
+  // An optional check that does not run is left off each Hop's line, as one
+  // the engine might have and this application does not use; a built-in check
+  // or the adapter's own that does not run is recorded as off, with why.
+  const offWhy = (name: string) => {
+    const state = stateOf(cfg, choice, name);
+    return state.runs ? undefined : state.why;
+  };
+  const optional = OPTIONAL_CHECKS.filter((name) => offWhy(name) === undefined).map((name) => OPTIONAL[name]);
   const varying = cfg.varyingInSignatures ?? [];
   refuseUnfitVarying(varying);
   // Under the rules in force now, so an entry written before a rule changed
@@ -631,7 +596,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     bounded,
     async check(tree) {
       const judge = (check: UniversalCheck, run: () => Promise<Verdict> | Verdict) =>
-        judged(check, cfg.narrowedChecks?.[check], known, varying, run, off.has(check));
+        judged(check, cfg.narrowedChecks?.[check], known, varying, run, offWhy(check));
 
       const universal = await Promise.all(
         CHECK_ORDER.map((check) => {
@@ -686,10 +651,10 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
         })
       );
 
-      // The optional ones the adapter turns on, then the adapter's own, after
-      // the built-in ones and one at a time, so each Hop's line lists them in
-      // a fixed order. Neither is narrowed: one is turned on by the adapter,
-      // and the other the adapter wrote.
+      // The optional ones that run, then the adapter's own, after the
+      // built-in ones and one at a time, so each Hop's line lists them in a
+      // fixed order. Neither is narrowed: one is the engine's and chosen, and
+      // the other the adapter wrote.
       const own: JournaledCheck[] = [];
       for (const appCheck of [...optional, ...appChecks]) {
         own.push(
@@ -699,7 +664,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
             known,
             varying,
             () => runAppCheck(appCheck, { page, app, tree }, responsiveTimeoutMs),
-            off.has(appCheck.name)
+            offWhy(appCheck.name)
           )
         );
       }
@@ -850,9 +815,9 @@ async function judged(
   known: ReadonlyMap<string, { readonly issue?: string; readonly falseAlarm?: string }>,
   varying: readonly (readonly [RegExp, string])[],
   run: () => Promise<Verdict> | Verdict,
-  offForRun = false
+  off?: string
 ): Promise<JournaledCheck> {
-  if (offForRun) return { check, result: 'not-run', observation: CHECK_OFF_OBSERVATION };
+  if (off !== undefined) return { check, result: 'not-run', observation: off };
   if (narrowing?.kind === 'off') {
     return { check, result: 'not-run', observation: 'switched off by the adapter', narrowed: narrowing.reason };
   }

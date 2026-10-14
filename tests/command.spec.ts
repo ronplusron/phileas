@@ -11,6 +11,8 @@ import {
   startJourney,
   FIX_OVERRIDE_VARIABLE,
   ALLOW_EXCLUDED_VARIABLE,
+  CHECK_ON_VARIABLE,
+  CHECK_OFF_VARIABLE,
   OVERRIDE_VARIABLES,
   SEED_VARIABLE,
   RUN_VARIABLE,
@@ -36,6 +38,8 @@ const TOUCHED = [
   ...Object.values(OVERRIDE_VARIABLES),
   FIX_OVERRIDE_VARIABLE,
   ALLOW_EXCLUDED_VARIABLE,
+  CHECK_ON_VARIABLE,
+  CHECK_OFF_VARIABLE,
   SEED_VARIABLE,
   RUN_VARIABLE,
   WINDOW_MODE_VARIABLE,
@@ -209,6 +213,45 @@ test("startJourney refuses a group the adapter does not declare, naming where it
   expect(none).toBeUndefined();
 });
 
+test("a Journey's included and excluded checks reach every Route, and one it cannot run is refused before anything launches", () => {
+  // Refused, naming the Journey file as where it came from.
+  withEnvironment({ PHILEAS_SEED: 'given' }, () => {
+    const journey = defineJourney({ routes: 1, tripLength: 1, includeChecks: ['wcag-a'] });
+    expect(() => startJourney(journey, buggy)).toThrow(/the Journey's includeChecks names "wcag-a", which this application cannot run/);
+  });
+
+  // Taken from the file: the Routes read them from the environment, and the
+  // printout says where they came from.
+  const fromFile = withEnvironment({ PHILEAS_SEED: 'given' }, () => {
+    const journey = defineJourney({ routes: 1, tripLength: 1, includeChecks: ['wcag-aa'], excludeChecks: ['console-error'] });
+    const { settings } = startJourney(journey, buggy);
+    const handedOn = { on: process.env[CHECK_ON_VARIABLE], off: process.env[CHECK_OFF_VARIABLE] };
+    finishJourney();
+    return { settings, handedOn };
+  });
+  expect(fromFile.handedOn).toEqual({ on: 'wcag-aa', off: 'console-error' });
+  expect(fromFile.settings.find((l) => l.startsWith('Checks included:'))).toMatch(/wcag-aa\s+in the Journey file$/);
+  expect(fromFile.settings.find((l) => l.startsWith('Checks excluded:'))).toMatch(/console-error\s+in the Journey file$/);
+
+  // Replaced for one run, and marked so.
+  const forRun = withEnvironment({ PHILEAS_SEED: 'given', [CHECK_ON_VARIABLE]: 'none' }, () => {
+    const { settings } = startJourney(defineJourney({ routes: 1, tripLength: 1, includeChecks: ['wcag-aa'] }), buggy);
+    finishJourney();
+    return settings;
+  });
+  expect(forRun.find((l) => l.startsWith('Checks included:'))).toMatch(/^Checks included: none\s+set for this run$/);
+
+  // The control: none chosen writes nothing, so the command to run it again
+  // stays as short as the run was.
+  const none = withEnvironment({ PHILEAS_SEED: 'given' }, () => {
+    startJourney(defineJourney({ routes: 1, tripLength: 1 }), buggy);
+    const handedOn = [process.env[CHECK_ON_VARIABLE], process.env[CHECK_OFF_VARIABLE]];
+    finishJourney();
+    return handedOn;
+  });
+  expect(none).toEqual([undefined, undefined]);
+});
+
 test('startJourney prints every setting, and marks each one set for this run', () => {
   const settings = withEnvironment(
     { PHILEAS_ROUTES: '2', PHILEAS_SEED: 'given', PHILEAS_SHOW: 'back', PHILEAS_HOP_DELAY_MS: '300' },
@@ -223,8 +266,9 @@ test('startJourney prints every setting, and marks each one set for this run', (
 
   expect(line('Journey seed')).toMatch(/^Journey seed: given\s+set for this run$/);
   expect(line('Routes')).toMatch(/^Routes: 2\s+set for this run$/);
-  expect(line('Optional checks')).toMatch(/^Optional checks: none turned on\s*$/);
-  expect(line('Checks off')).toMatch(/^Checks off: none\s*$/);
+  expect(line('Check defaults')).toMatch(/^Check defaults: the engine's\s*$/);
+  expect(line('Checks included')).toMatch(/^Checks included: none\s*$/);
+  expect(line('Checks excluded')).toMatch(/^Checks excluded: none\s*$/);
   // Taken from the file, so not marked: the marks are only worth reading if
   // they are absent where nothing changed.
   expect(line('Trip length')).toBe('Trip length: 20');
@@ -243,8 +287,9 @@ test('startJourney prints every setting, and marks each one set for this run', (
     'Hop delay',
     'Follow',
     'Exclusion groups',
-    'Optional checks',
-    'Checks off',
+    'Check defaults',
+    'Checks included',
+    'Checks excluded',
     'Staleness guard',
     'Survey only',
     'Replay',

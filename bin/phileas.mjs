@@ -81,6 +81,7 @@ const FLAGS = /** @type {Record<string, string>} */ ({
   '--hop-delay-ms': 'PHILEAS_HOP_DELAY_MS',
   '--fix': 'PHILEAS_FIX',
   '--allow': 'PHILEAS_ALLOW_EXCLUDED',
+  '--check-on': 'PHILEAS_CHECK_ON',
   '--check-off': 'PHILEAS_CHECK_OFF',
 });
 

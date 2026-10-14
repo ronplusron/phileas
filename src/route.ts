@@ -22,12 +22,12 @@ import { buildOf, platformOf } from './launch.js';
 import { trackRanWith } from './ran-with.js';
 import { clickMenuItem } from './menu.js';
 import { routeOutputDir } from './output.js';
+import { checkChoiceFromEnvironment } from './check-choice.js';
 import { frameText, renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
 import { replayFix, replayFromEnvironment, replayOf, type ReplayPlan } from './replay.js';
 import {
   CheckFailure,
-  checksOffFromEnvironment,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,
   failedChecks,
   startWatching,
@@ -905,9 +905,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
   // Opened and flushed before the Route does anything, so that a Route which
   // dies inside its Fix still leaves a file naming the seed that produced it.
-  // Read before the journal opens, so a name this application does not run
+  // Read before the journal opens, so a name this application cannot run
   // stops the Route before it records anything.
-  const checksOff = checksOffFromEnvironment(cfg);
+  const choice = checkChoiceFromEnvironment(cfg);
   const journalDirectory = journalFolder(journalsRoot, journeySeed, requireRun());
   const outputDir = routeOutputDir(journalDirectory);
   const journal = Journal.open(journalDirectory, {
@@ -922,7 +922,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     ...shares,
     allowStandardMenuRoles: (cfg.exclusions.allowStandardMenuRoles ?? []).map((role) => role.toLowerCase()),
     ...(cfg.exclusions.groups ? { allowedExclusionGroups: allowedGroups } : {}),
-    ...(checksOff.length ? { checksOff } : {}),
+    ...(choice.included.length ? { checksIncluded: choice.included } : {}),
+    ...(choice.excluded.length ? { checksExcluded: choice.excluded } : {}),
     ...(known ? { knownFindings: { version: known.version, entries: known.entries.length } } : {}),
     ...(cfg.varyingInSignatures?.length
       ? { varyingInSignatures: cfg.varyingInSignatures.map(([pattern, replacement]) => [String(pattern), replacement] as const) }
@@ -963,7 +964,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     // Started before the Fix, since the checks run after Fix steps too, and
     // inside the try, so a Route whose watching cannot start still closes its
     // journal with the reason.
-    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs: responsiveMs, userDataDir, known, checksOff });
+    const watch = await startWatching({ page, app, cfg, responsiveTimeoutMs: responsiveMs, userDataDir, known, choice });
 
     // Asked once here, so anything the stubs caught while the application
     // started is not put down to the first Hop.

@@ -5,8 +5,9 @@ import type { AppCheck } from '../app-under-test.js';
 
 /**
  * The optional `wcag-aa` check: axe-core's WCAG 2 A and AA rules, over the
- * page and every frame in it, after every Fix step and Hop of an application
- * whose adapter turns it on (`optionalChecks`).
+ * page and every frame in it, after every Fix step and Hop of a Route that
+ * runs it: off unless the adapter has it on by default, or a Journey or a run
+ * includes it (`check-choice.ts`).
  *
  * Built first inside RStudio's adapter on 2026-10-13 and moved here on
  * 2026-10-14, since nothing in it was RStudio's. What it asserts comes from a

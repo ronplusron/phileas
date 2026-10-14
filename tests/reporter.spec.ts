@@ -181,7 +181,7 @@ test('the summary counts the Routes by outcome and Hops, prints the known findin
   expect(lines.at(-1)).toMatch(/^Route 2 alone: /);
 });
 
-test('the command to run it again keeps the deadlines and the checks turned off, which decide where a Route ends', () => {
+test('the command to run it again keeps the deadlines and the checks included and excluded, which decide where a Route ends', () => {
   const text = summaryLines({
     routes: [{ outcome: 'unfinished', routeNumber: 1, hops: 5, tripLength: 15 }],
     endErrors: [],
@@ -192,12 +192,13 @@ test('the command to run it again keeps the deadlines and the checks turned off,
       PHILEAS_ROUTES: '1',
       PHILEAS_ROUTE_DEADLINE_MS: '3000',
       PHILEAS_JOURNEY_DEADLINE_MS: '60000',
-      PHILEAS_CHECK_OFF: 'wcag-aa',
+      PHILEAS_CHECK_ON: 'wcag-aa',
+      PHILEAS_CHECK_OFF: 'console-error',
     },
     cwd: '/',
   }).join('\n');
   expect(text).toContain(
-    'Run it again: phileas run proving-ground/buggy/phileas --seed 757debeb43c0 --routes 1 --route-deadline-ms 3000 --journey-deadline-ms 60000 --check-off wcag-aa'
+    'Run it again: phileas run proving-ground/buggy/phileas --seed 757debeb43c0 --routes 1 --route-deadline-ms 3000 --journey-deadline-ms 60000 --check-on wcag-aa --check-off console-error'
   );
 });
 

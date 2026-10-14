@@ -379,14 +379,15 @@ and the runner runs all of them after every hop.
   what is displayed. Without this, a result that is consistently wrong is
   never caught.
 - **R36 (Should)** The engine offers checks that assume nothing about the
-  application but stay off until an application's setup turns them on, since
-  each costs time on every hop or finds enough on its first run that turning
-  it on is that application's decision. The first judges each screen against
-  WCAG 2 at levels A and AA.
-- **R37 (Should)** A person can turn any check off for one run: a built-in
-  one, an optional one, or the application's own. The run states which,
-  records it, and repeats it in the command to run it again, and a name the
-  application does not run is refused rather than ignored.
+  application but are off unless chosen, since each costs time on every hop
+  or finds enough on its first run that running it is a decision. The first
+  judges each screen against WCAG 2 at levels A and AA.
+- **R37 (Should)** An application's setup can define whatever a check needs
+  to work well on it, and separately has each check on or off by default. A
+  journey can include a check that is off by default or exclude one that is
+  on, and a person can do either for one run. Each choice is stated, recorded
+  and repeated in the command to run it again, and a check the application
+  cannot run is refused rather than ignored.
 
 ### Setting it up
 

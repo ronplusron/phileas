@@ -1,4 +1,5 @@
 import { ALLOW_EXCLUDED_VARIABLE, NO_GROUPS } from './survey.js';
+import { CHECK_OFF_VARIABLE, CHECK_ON_VARIABLE, NO_CHECKS, checkNames } from './check-choice.js';
 
 /**
  * A Journey's Booking, and where its seed comes from.
@@ -88,6 +89,24 @@ export interface Booking {
    * in by nobody and the run would read as having allowed it.
    */
   allow?: readonly string[];
+
+  /**
+   * Checks every Route runs although the application has them off by
+   * default, by name: an optional one, or a built-in or adapter's own one
+   * its adapter switches off by default. `phileas run --check-on <names>`
+   * includes another set for one run, replacing this one, and
+   * `--check-on none` none. `startJourney` refuses a name the application
+   * cannot run.
+   */
+  includeChecks?: readonly string[];
+
+  /**
+   * Checks no Route runs although the application has them on by default,
+   * by name, each recorded on every Hop as excluded. `phileas run
+   * --check-off <names>` excludes another set for one run, replacing this
+   * one, and `--check-off none` none.
+   */
+  excludeChecks?: readonly string[];
 }
 
 /**
@@ -149,7 +168,7 @@ function groupNames(names: readonly string[]): string[] {
 }
 
 /** What in a Booking a run can set: the counted ones, the Fix and the groups let in. */
-type OverriddenTerm = OverridableTerm | 'fix' | 'allow';
+type OverriddenTerm = OverridableTerm | 'fix' | 'allow' | 'includeChecks' | 'excludeChecks';
 
 /** What each Journey took from the environment, for startJourney to mark. */
 const overridden = new WeakMap<Journey, readonly OverriddenTerm[]>();
@@ -219,6 +238,28 @@ export function defineJourney(booking: Booking): Journey {
       throw new RangeError(`allow names "${NO_GROUPS}"; leave allow out, or empty, to let no group in`);
     }
     terms.allow = groupNames(terms.allow);
+  }
+
+  // Whether each name is a check the application can run is startJourney's
+  // to check, as for the groups above.
+  for (const [term, variable] of [
+    ['includeChecks', CHECK_ON_VARIABLE],
+    ['excludeChecks', CHECK_OFF_VARIABLE],
+  ] as const) {
+    const given = (process.env[variable] ?? '').trim();
+    if (given) {
+      terms[term] = given === NO_CHECKS ? [] : checkNames(given.split(','));
+      fromEnvironment.push(term);
+    } else if (terms[term] !== undefined) {
+      const names = terms[term];
+      if (!Array.isArray(names) || names.some((name) => typeof name !== 'string' || !name.trim())) {
+        throw new RangeError(`${term} names a check that is not a name; give each check by its name`);
+      }
+      if (names.some((name) => name.trim() === NO_CHECKS)) {
+        throw new RangeError(`${term} names "${NO_CHECKS}"; leave ${term} out, or empty, for none`);
+      }
+      terms[term] = checkNames(names);
+    }
   }
 
   const journey = Object.freeze(terms) as Journey;
