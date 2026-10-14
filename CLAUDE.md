@@ -297,6 +297,21 @@ The engine reads no source at run time, ever. Everything above that uses
 source happens beforehand, in the adapter or in a build step, and produces
 something the engine consumes without knowing where it came from.
 
+## What any application would need belongs in the engine
+
+When something built for one adapter would make sense for any application,
+propose putting it in the engine before building it, and say which part is
+general and which is that application's own. An adapter is for what only that
+application has: how it launches, its exclusions, its Fixes, what varies in its
+messages, and checks only it can make.
+
+The case that set this rule: a WCAG accessibility check, axe-core loaded into
+every frame, was built inside RStudio's adapter and run through five Journeys
+before anyone asked where it was defined. Only its description and the
+patterns for the data viewer's rows and columns were RStudio's.
+
+Proposing is the rule. Where the thing goes is still decided by asking.
+
 ## Exploratory runs never gate a push
 
 An unlucky seed would block unrelated work, and a gate that fires on unrelated
