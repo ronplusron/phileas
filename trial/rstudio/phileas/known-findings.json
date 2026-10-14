@@ -62,5 +62,488 @@
     "added": "2026-10-08",
     "source": "journey",
     "issue": "ronplusron/phileas#97"
+  },
+  {
+    "id": "76f680e5",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-prohibited-attr: label[for=\"fp_select_all\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "a657f0f8",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-attr: #rstudio_middle_column_splitter",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "93474b93",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-attr: div[aria-label=\"left splitter\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "9601d75b",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-attr: div[aria-label=\"right splitter\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "e30ecc1c",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinned_cols",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "59a03586",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"1\"][aria-rowindex=\"3\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "efff203e",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"11\"][aria-rowindex=\"13\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "1cffd907",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"13\"][aria-rowindex=\"15\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "bf39b0c0",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"15\"][aria-rowindex=\"17\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "f72a6834",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"17\"][aria-rowindex=\"19\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "116c05f9",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"19\"][aria-rowindex=\"21\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "0ea6c1c0",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"21\"][aria-rowindex=\"23\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "3871fc45",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"23\"][aria-rowindex=\"25\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "0e3ff089",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"25\"][aria-rowindex=\"27\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "a7a5ff02",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"27\"][aria-rowindex=\"29\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "ec3b9a36",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"29\"][aria-rowindex=\"31\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "42467d68",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"3\"][aria-rowindex=\"5\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "29980d44",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"31\"][aria-rowindex=\"33\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "a2f5303a",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"5\"][aria-rowindex=\"7\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "d6b5e8ad",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"7\"][aria-rowindex=\"9\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "cff7056d",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > .odd-row[data-row=\"9\"][aria-rowindex=\"11\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "2eeb3f4d",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"0\"][aria-rowindex=\"2\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "6a90011c",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"10\"][aria-rowindex=\"12\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "25a3114d",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"12\"][aria-rowindex=\"14\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "9999b3ea",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"14\"][aria-rowindex=\"16\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "ed2cec2b",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"16\"][aria-rowindex=\"18\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "fcea3427",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"18\"][aria-rowindex=\"20\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "832e1c3f",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"2\"][aria-rowindex=\"4\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "4fe63959",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"20\"][aria-rowindex=\"22\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "5519318a",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"22\"][aria-rowindex=\"24\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "08d458b9",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"24\"][aria-rowindex=\"26\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "9337dd94",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"26\"][aria-rowindex=\"28\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "5cf78c9a",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"28\"][aria-rowindex=\"30\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "fcddd8ad",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"30\"][aria-rowindex=\"32\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "960683e4",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"4\"][aria-rowindex=\"6\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "605ea9d6",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"6\"][aria-rowindex=\"8\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "f972a5e9",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-parent: #rstudio_data_viewer_frame >>> #pinnedBody > tr[data-row=\"8\"][aria-rowindex=\"10\"][role=\"row\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "e6af151c",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[aria-label=\"Show and scroll to column gear\"] > .sidebar-col-type",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "b5f2279a",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[aria-posinset=\"1\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "c9472ba2",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[aria-posinset=\"2\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "7b3fec26",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[aria-posinset=\"3\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "b79b3836",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[aria-posinset=\"4\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "0ce9a7b7",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[aria-posinset=\"5\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "32bc991f",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[aria-posinset=\"6\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "05caf7bb",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[aria-posinset=\"7\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "8f16ea24",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[data-col-idx=\"10\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "e3de21c5",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[data-col-idx=\"10\"] > .sidebar-col-footer > .sidebar-col-summary.range",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "d69fe9c2",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[data-col-idx=\"11\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "61124090",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[data-col-idx=\"8\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "9e5946e3",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> div[data-col-idx=\"9\"] > .sidebar-col-footer > .sidebar-col-na.zero[title=\"No missing values\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "e4364db9",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_data_viewer_frame >>> span[title=\"gear\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "05bbcdb2",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: image-alt: .gwt-Image.GCOP2I3BFX[width=\"2\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "25d41e4c",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: image-alt: td[width=\"\"][height=\"\"][colspan=\"1\"] > .GCOP2I3BFJ > div:nth-child(3) > .breadcrumb[aria-label=\"Selected path breadcrumb\"] > .GCOP2I3BOJ > .GCOP2I3BNJ[height=\"24\"][width=\"25\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "5aed385f",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_data_viewer_frame >>> .numValueBox",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "6edce58a",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: meta-viewport: meta[name=\"viewport\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "1bc73469",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> #sidebarToggle",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "9ef01f1c",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column am\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "8447f8cd",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column carb\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "a896c9cc",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column cyl\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "80010f11",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column disp\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "0dddec77",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column drat\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "2cb3bb8c",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column gear\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "adcfc294",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column hp\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "8b7e50e9",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column mpg\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "d512cba0",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column qsec\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "2d80624a",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column vs\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "aeb14737",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Scroll to column wt\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "97672f17",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: #rstudio_data_viewer_frame >>> div[aria-label=\"Show and scroll to column gear\"]",
+    "added": "2026-10-13",
+    "source": "journey"
+  },
+  {
+    "id": "7cafee02",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: scrollable-region-focusable: #rstudio_data_viewer_frame >>> #pinnedPane",
+    "added": "2026-10-13",
+    "source": "journey"
   }
 ]

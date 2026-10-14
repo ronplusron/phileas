@@ -5,6 +5,7 @@ import { requireAppDir, type AppUnderTest } from '@drugstoresushi/phileas';
 import type { ElectronApplication, Page } from '@playwright/test';
 import { libraryList, personalLibrary } from '../personal-library';
 import { CLIENT_INIT, rRanWith, rRunsWith } from '../which-r';
+import { wcag } from './wcag';
 
 /**
  * The adapter for RStudio Desktop, pointed at a copy of the installed release
@@ -326,6 +327,8 @@ export const rstudio: AppUnderTest = {
       accept: (message) => /^Failed to load resource: net::ERR_(EMPTY_RESPONSE|CONNECTION_REFUSED)$/.test(message),
     },
   },
+
+  checks: [wcag],
   /**
    * The workbench window, never the splash. Without RS_NO_SPLASH, RStudio
    * opens a splash from a file in its bundle and the workbench beside it, and
