@@ -13,6 +13,7 @@ import { allowStaleFromEnvironment } from './bundle.js';
 import { followFromEnvironment, hopDelayFromEnvironment, surveyFromEnvironment } from './route.js';
 import { ALLOW_EXCLUDED_VARIABLE } from './survey.js';
 import { replayFromEnvironment } from './replay.js';
+import { checksOffFromEnvironment, optionalChecksOf } from './oracles/index.js';
 
 /**
  * Settle the seed, name the run, check the run's settings and print them. The
@@ -77,6 +78,10 @@ export function startJourney(
   // Looked up here as well as by each Route, so a Fix name that is not one of
   // the consumer's is refused before anything launches, not once per Route.
   fixFor(journey, fixes);
+  // Checked here as well as by each Route, so a check this application does
+  // not run is refused before anything launches.
+  const optional = optionalChecksOf(application).map((check) => check.name);
+  const checksOff = checksOffFromEnvironment(application);
 
   const forThisRun = new Set<string>(overriddenInBooking(journey));
   const mark = (term: string) => (forThisRun.has(term) ? 'set for this run' : '');
@@ -104,6 +109,8 @@ export function startJourney(
         : groups.map((group) => `${group} ${allowedGroups.includes(group) ? 'let in' : 'excluded'}`).join(', '),
       mark('allow') || (allowedGroups.length ? 'in the Journey file' : ''),
     ],
+    ['Optional checks', optional.length ? optional.join(', ') : 'none turned on', optional.length ? 'turned on by the adapter' : ''],
+    ['Checks off', checksOff.length ? checksOff.join(', ') : 'none', checksOff.length ? 'set for this run' : ''],
     // Printed, so a PHILEAS_SURVEY left set in the shell is seen at the top of
     // a run that would otherwise travel nowhere.
     // Printed, so a run against a stale build says so where it is read, not

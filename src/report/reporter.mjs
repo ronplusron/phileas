@@ -297,6 +297,7 @@ function rerunFlags(env) {
     ['PHILEAS_ALLOW_EXCLUDED', '--allow'],
     ['PHILEAS_ROUTE_DEADLINE_MS', '--route-deadline-ms'],
     ['PHILEAS_JOURNEY_DEADLINE_MS', '--journey-deadline-ms'],
+    ['PHILEAS_CHECK_OFF', '--check-off'],
   ];
   return flags.flatMap(([variable, flag]) => (env[variable] ? [`${flag} ${quoted(env[variable] ?? '')}`] : []));
 }

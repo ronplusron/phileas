@@ -164,6 +164,31 @@ test("a client exception keeps its message and first frame, without the build's 
   expect(logged(541, '2026.12.0+50')).toBe(logged(537, '2026.09.1+183'));
 });
 
+test("the data viewer's rows and columns are one finding each, as axe-core names them", async () => {
+  const { signatureOf } = await import('../src/index');
+  const { steadySelector } = await import('../src/index');
+  const signed = (target: string) =>
+    signatureOf('wcag-aa', `x: #rstudio_data_viewer_frame >>> ${steadySelector(target)}`, 'ann', rstudio.varyingInSignatures);
+  // Selectors as recorded on 2026-10-13 and 2026-10-14.
+  expect(signed('#pinnedBody > .odd-row[data-row="11"][aria-rowindex="13"]')).toBe(
+    signed('#pinnedBody > tr[data-row="0"][aria-rowindex="2"][role="row"]')
+  );
+  expect(signed('div[aria-posinset="1"] > .sidebar-col-footer')).toBe(signed('div[data-col-idx="10"] > .sidebar-col-footer'));
+  expect(signed('div[aria-label="Scroll to column mpg"]')).toBe(signed('div[aria-label="Scroll to column carb"]'));
+  expect(signed('span[title="gear"]')).toBe(signed('span[title="drat"]'));
+  // The control: different things stay different.
+  expect(signed('div[aria-label="Scroll to column mpg"]')).not.toBe(signed('div[aria-label="Show and scroll to column mpg"]'));
+  expect(signed('#pinnedBody > tr[data-row="0"]')).not.toBe(signed('#pinned_cols'));
+});
+
+test("one element is one finding whatever order axe-core lists its attributes in", async () => {
+  const { steadySelector } = await import('../src/index');
+  expect(steadySelector('.GCOP2I3BNJ[width="25"][height="24"]')).toBe(steadySelector('.GCOP2I3BNJ[height="24"][width="25"]'));
+  expect(steadySelector('td[width=""][height=""][colspan="1"] > .a')).toBe('td[colspan="1"][height=""][width=""] > .a');
+  // Nothing outside a run of attributes moves.
+  expect(steadySelector('#pinned_cols > .b:nth-child(3)')).toBe('#pinned_cols > .b:nth-child(3)');
+});
+
 test("the session log's lines are read for their own time, in UTC only", () => {
   const logs = typeof rstudio.logPaths === 'function' ? rstudio.logPaths(profile) : [];
   const session = logs.find((log) => typeof log !== 'string' && log.path.includes('rsession-'));

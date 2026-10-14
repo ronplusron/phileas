@@ -1,6 +1,6 @@
 {
   "name": "@drugstoresushi/phileas",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "description": "An exploratory testing engine for Electron apps: unscripted travel with continuous invariant checking.",
   "type": "module",
@@ -37,7 +37,8 @@
     "node": ">=24"
   },
   "dependencies": {
-    "@electron/asar": "^4.3.0"
+    "@electron/asar": "^4.3.0",
+    "axe-core": "4.13.0"
   },
   "peerDependencies": {
     "@playwright/test": "~1.63.0"

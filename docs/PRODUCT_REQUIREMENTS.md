@@ -378,6 +378,15 @@ and the runner runs all of them after every hop.
   independently of the code being tested, and the engine compares them against
   what is displayed. Without this, a result that is consistently wrong is
   never caught.
+- **R36 (Should)** The engine offers checks that assume nothing about the
+  application but stay off until an application's setup turns them on, since
+  each costs time on every hop or finds enough on its first run that turning
+  it on is that application's decision. The first judges each screen against
+  WCAG 2 at levels A and AA.
+- **R37 (Should)** A person can turn any check off for one run: a built-in
+  one, an optional one, or the application's own. The run states which,
+  records it, and repeats it in the command to run it again, and a name the
+  application does not run is refused rather than ignored.
 
 ### Setting it up
 

@@ -25,6 +25,49 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-14: optional checks, the first of them WCAG, and any check off for a run
+
+**Why.** A WCAG accessibility check was built inside RStudio's adapter on
+2026-10-13 and run through five Journeys before anyone asked where it was
+defined. Nothing in it was RStudio's but its description and the patterns for
+the data viewer's rows and columns, so it moved into the engine. Decided on
+2026-10-14: optional checks are "an opt-in availability to adapters," off
+until an adapter names them; and "the adapter may inherit a check, but it
+should still be possible to turn checks off."
+
+**What landed.**
+- **`OPTIONAL_CHECKS`, and an adapter's `optionalChecks`** naming the ones it
+  turns on. They run after the built-in checks and before the adapter's own,
+  in the engine's order. A name the engine does not have is refused, and an
+  adapter's own check may not take one.
+- **`wcag-aa`** (`src/oracles/wcag.ts`): axe-core 4.13.0, now a dependency of
+  the engine, put into every frame and run over WCAG 2 A and AA after every
+  Fix step and Hop, one line per element axe faults. A frame axe cannot be put
+  into makes it say it did not run: loaded into the top document alone, it
+  passed RStudio's data viewer while missing 51 of 57 violations. Each run of
+  attribute tests in a selector is sorted, since axe listed one RStudio image
+  as `[height][width]` from one dialog and `[width][height]` from another.
+  What it asserts comes from a published standard, not from the application
+  agreeing with itself as an adapter's own check is asked to; it shares that
+  rule's point, since nothing in it comes from the application's code.
+- **`phileas run --check-off <names>`** (`PHILEAS_CHECK_OFF`): any check the
+  application runs, built-in, optional or its own, recorded on every Hop as
+  not run, "turned off for this run with --check-off". It is printed at the
+  run's start beside the optional checks turned on, written on each journal's
+  opening line, and repeated in "Run it again". A name the application does
+  not run is refused, listing what it does.
+- **RStudio's adapter** turns `wcag-aa` on and keeps only what is its own: the
+  patterns that merge the data viewer's rows, columns and headers.
+- **R36 and R37** in `PRODUCT_REQUIREMENTS.md` state both.
+- **The scan for control characters reads what git would keep.** It walked
+  the folder, and once a failed Route's page was written to `test-results/`
+  as `dom.html`, the day before, RStudio's pages failed it with a U+0002 in
+  output git ignores. It now lists files with `git ls-files`, and a second
+  test checks that list holds the source and nothing under `test-results/`.
+
+**Measured on `buggy`.** `wcag-aa` finds nothing on it as shipped, and finds
+an image with no alt text planted in a Fix step.
+
 ## 2026-10-13: each Route's Playwright output kept, and a deadline no longer a finding
 
 **Why.** Playwright empties its output folder at the start of every run,

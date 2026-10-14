@@ -11,12 +11,14 @@ export type {
   StalenessGuard,
   Narrowing,
   UniversalCheck,
+  OptionalCheck,
   AppCheck,
   AppCheckContext,
   AppCheckVerdict,
   LogPath,
 } from './app-under-test.js';
-export { UNIVERSAL_CHECKS } from './app-under-test.js';
+export { UNIVERSAL_CHECKS, OPTIONAL_CHECKS } from './app-under-test.js';
+export { wcagCheck, steadySelector } from './oracles/wcag.js';
 export {
   resolveBundle,
   assertBundleFresh,
@@ -217,6 +219,9 @@ export {
   AdapterCheckError,
   PageConnectionLost,
   assertAppChecks,
+  checksOffFromEnvironment,
+  optionalChecksOf,
+  CHECK_OFF_VARIABLE,
   CHECK_ORDER,
   LOG_FAILURE,
   STACK_FRAME,

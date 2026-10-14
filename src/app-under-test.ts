@@ -237,6 +237,24 @@ export const UNIVERSAL_CHECKS = [
 export type UniversalCheck = (typeof UNIVERSAL_CHECKS)[number];
 
 /**
+ * Checks that ship with the engine and are off for every application until
+ * its adapter names them in `optionalChecks`. Each assumes nothing about the
+ * application, as the universal ones do, but costs enough, or finds enough
+ * on its first run, that turning it on is the adapter's decision. Decided on
+ * 2026-10-14: "Think of optional checks as an opt-in availability to
+ * adapters."
+ *
+ * - `wcag-aa`: axe-core's WCAG 2 A and AA rules, over the page and every
+ *   frame in it. On RStudio its first Journey found five faults on the
+ *   opening screen, which ended every Route there until they were known,
+ *   and each scan took 0.1 to 0.6 s.
+ */
+export const OPTIONAL_CHECKS = ['wcag-aa'] as const;
+
+/** A check the engine offers and an adapter turns on; see `OPTIONAL_CHECKS`. */
+export type OptionalCheck = (typeof OPTIONAL_CHECKS)[number];
+
+/**
  * Switching off or narrowing a built-in check, with the reason recorded.
  *
  * R19 exists because an application that writes to the console in normal
@@ -560,6 +578,13 @@ export interface AppUnderTest {
    * indistinguishable from one that passed.
    */
   narrowedChecks?: Partial<Record<UniversalCheck, Narrowing>>;
+
+  /**
+   * The engine's optional checks this application turns on, run after the
+   * built-in ones on every Hop, in the engine's order. Each is off until it
+   * is named here. See `OPTIONAL_CHECKS`.
+   */
+  optionalChecks?: readonly OptionalCheck[];
 
   /**
    * Checks of this application's own, run after the built-in ones on every

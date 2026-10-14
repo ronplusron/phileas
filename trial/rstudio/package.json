@@ -6,7 +6,6 @@
   "type": "module",
   "author": "Drugstore Sushi",
   "devDependencies": {
-    "@drugstoresushi/phileas": "file:../..",
-    "axe-core": "4.13.0"
+    "@drugstoresushi/phileas": "file:../.."
   }
 }

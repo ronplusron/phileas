@@ -783,7 +783,7 @@ function ownCheck(name: string, run: AppCheck['run'], why = 'a stated reason'): 
 
 test('an adapter check named like a built-in, twice, without a reason or out of form is refused', () => {
   const quiet = () => [];
-  expect(() => assertAppChecks([ownCheck('console-error', quiet)])).toThrow(/name of a built-in check/);
+  expect(() => assertAppChecks([ownCheck('console-error', quiet)])).toThrow(/name of one of the engine's own checks/);
   expect(() => assertAppChecks([ownCheck('same', quiet), ownCheck('same', quiet)])).toThrow(/two checks named same/);
   expect(() => assertAppChecks([ownCheck('no-reason', quiet, '  ')])).toThrow(/gives no reason/);
   expect(() => assertAppChecks([ownCheck('Count Matches', quiet)])).toThrow(/lower-case words/);

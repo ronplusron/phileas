@@ -5,7 +5,6 @@ import { requireAppDir, type AppUnderTest } from '@drugstoresushi/phileas';
 import type { ElectronApplication, Page } from '@playwright/test';
 import { libraryList, personalLibrary } from '../personal-library';
 import { CLIENT_INIT, rRanWith, rRunsWith } from '../which-r';
-import { wcag } from './wcag';
 
 /**
  * The adapter for RStudio Desktop, pointed at a copy of the installed release
@@ -175,6 +174,18 @@ export const rstudio: AppUnderTest = {
     // RStudio, Chrome and Electron versions changed the signature with every
     // release. Asked for on 2026-09-29.
     [/\|\|\|([^|]*?)#-?\d+::([^|]*)(?:\|\|\|.*)?$/g, ' $1::$2'],
+    // The data viewer's rows and columns, as axe-core's selectors name them
+    // for the accessibility check: one fault in the viewer's row or column
+    // template is found once per row or column. Measured on `mtcars` on
+    // 2026-10-13: 32 rows each by number, an even row as `tr` and an odd one
+    // as `.odd-row`; 12 column footers by position, as `aria-posinset` or
+    // `data-col-idx`; 12 column buttons by the column's name. And on
+    // 2026-10-14, a column's header by its name, `gear` and then `drat`.
+    // The row's attributes in either order, since the check sorts them.
+    [/#pinnedBody > (?:tr|\.odd-row)(?:\[(?:data-row|aria-rowindex|role)="[^"]*"\])+/g, '#pinnedBody > <row>'],
+    [/div\[(?:aria-posinset|data-col-idx)="\d+"\]/g, 'div[<column>]'],
+    [/(aria-label="(?:Show and scroll|Scroll) to column )[^"]+"/g, '$1<name>"'],
+    [/(#rstudio_data_viewer_frame >>> span\[title=")[^"]+"\]/g, '$1<name>"]'],
   ],
 
   async beforeLaunch(userDataDir: string): Promise<void> {
@@ -328,7 +339,8 @@ export const rstudio: AppUnderTest = {
     },
   },
 
-  checks: [wcag],
+  // axe-core's WCAG 2 A and AA rules, the engine's optional `wcag-aa`.
+  optionalChecks: ['wcag-aa'],
   /**
    * The workbench window, never the splash. Without RS_NO_SPLASH, RStudio
    * opens a splash from a file in its bundle and the workbench beside it, and

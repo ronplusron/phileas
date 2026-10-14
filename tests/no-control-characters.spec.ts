@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,23 +29,27 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 /** Tab, newline and carriage return are ordinary text; nothing else is. */
 const FORBIDDEN = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
-function sourceFiles(dir: string): string[] {
-  const found: string[] = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name.startsWith('.')) {
-      continue;
-    }
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) found.push(...sourceFiles(full));
-    else if (/[.](ts|js|cjs|mjs|json|md|html|css)$/.test(entry.name)) found.push(full);
-  }
-  return found;
+/**
+ * Every file git would keep, tracked or not yet added, and nothing it ignores.
+ *
+ * It walked the folder until 2026-10-14, skipping only `node_modules`, `dist`
+ * and dot-folders. Then a failed Route began writing its page to
+ * `test-results/` as `dom.html`, and RStudio's pages hold a U+0002, so the
+ * suite failed on output Playwright makes and git ignores, which is no
+ * source file at all.
+ */
+function sourceFiles(): string[] {
+  return execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '-z'], { cwd: ROOT, encoding: 'utf8' })
+    .split('\0')
+    .filter((name) => /[.](ts|js|cjs|mjs|json|md|html|css)$/.test(name))
+    .map((name) => path.join(ROOT, name))
+    .filter((file) => fs.existsSync(file));
 }
 
 test('no source file hides itself from search with a control character', () => {
   const offenders: string[] = [];
 
-  for (const file of sourceFiles(ROOT)) {
+  for (const file of sourceFiles()) {
     const contents = fs.readFileSync(file, 'utf8');
     const match = FORBIDDEN.exec(contents);
     if (!match) continue;
@@ -60,6 +65,14 @@ test('no source file hides itself from search with a control character', () => {
       'grep treat the file as binary and skip it silently, so every search against it comes ' +
       'back clean whatever is in it.'
   ).toEqual([]);
+});
+
+test('the scan reads the source and not what git ignores', () => {
+  // The control for the list itself: a list that came back empty would pass
+  // the test above on every repository.
+  const files = sourceFiles().map((file) => path.relative(ROOT, file));
+  expect(files).toContain(path.join('src', 'random.ts'));
+  expect(files.some((file) => file.split(path.sep).includes('test-results'))).toBe(false);
 });
 
 test('the scan can actually find one', () => {

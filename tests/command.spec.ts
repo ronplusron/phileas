@@ -223,6 +223,8 @@ test('startJourney prints every setting, and marks each one set for this run', (
 
   expect(line('Journey seed')).toMatch(/^Journey seed: given\s+set for this run$/);
   expect(line('Routes')).toMatch(/^Routes: 2\s+set for this run$/);
+  expect(line('Optional checks')).toMatch(/^Optional checks: none turned on\s*$/);
+  expect(line('Checks off')).toMatch(/^Checks off: none\s*$/);
   // Taken from the file, so not marked: the marks are only worth reading if
   // they are absent where nothing changed.
   expect(line('Trip length')).toBe('Trip length: 20');
@@ -241,6 +243,8 @@ test('startJourney prints every setting, and marks each one set for this run', (
     'Hop delay',
     'Follow',
     'Exclusion groups',
+    'Optional checks',
+    'Checks off',
     'Staleness guard',
     'Survey only',
     'Replay',

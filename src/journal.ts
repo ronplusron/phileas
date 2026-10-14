@@ -457,6 +457,13 @@ export interface OpeningEntry {
    */
   readonly allowedExclusionGroups?: readonly string[];
   /**
+   * The checks this run turned off with `--check-off`, which every Hop
+   * records as not run. Written because a check turned off cannot end a
+   * Route, so a replay with it on could end somewhere else. Absent where
+   * none was, and in journals written before 2026-10-14.
+   */
+  readonly checksOff?: readonly string[];
+  /**
    * Which known findings the Route ran with: the file's version and how many
    * it held. Written because the file decides where a Route ends, though not
    * what it draws, and a replay under a newer file would otherwise look like a
