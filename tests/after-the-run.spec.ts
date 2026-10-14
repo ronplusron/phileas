@@ -8,6 +8,7 @@ import { findingId } from '../src/known.mjs';
 import { draftProblems, prefixed, readFiling } from '../src/assistant/filing.mjs';
 import { draftsIn, parseTriageOutput, prepareTriage, sendNotice, triageArgs, writeTriage, PLUGIN_DIR } from '../src/assistant/triage.mjs';
 import { isUnder, jobArgs, serve, tokenMatches, TOKEN_HEADER } from '../src/view/server.mjs';
+import { PAGE } from '../src/view/page.mjs';
 import { parse, toReproduce } from '../bin/phileas.mjs';
 import { removeScratch, scratch } from './scratch';
 
@@ -98,16 +99,18 @@ test('a run as data names the build each Route ran against and what the applicat
 
   const summary = summarizeRun(run);
   const [first, second, third, fourth] = summary.routes;
-  const named = 'Positron 2026.09.1+2 (bundle 1.130.0); with R (PATH) 4.6.0; no sources to check it against';
-  expect(first).toMatchObject({ build, buildText: named, ranWith: { R: ['4.6.0'] }, ranWithText: 'ran with R 4.6.0' });
+  // The build without the setup, which is said apart, only where what ran
+  // does not bear it out, so it is never read as what ran.
+  const named = 'Positron 2026.09.1+2 (bundle 1.130.0); no sources to check it against';
+  expect(first).toMatchObject({ build, buildText: named, ranWith: { R: ['4.6.0'] }, ranWithText: 'ran with R 4.6.0', setupText: '' });
   expect(first).toMatchObject({ platform, platformText: 'macOS 26.6.2 (25G83), arm64' });
   // From before platforms were recorded: the build the same day, the platform not.
   expect(second).toMatchObject({ platformText: 'platform not recorded' });
   expect(second?.platform).toBeUndefined();
-  expect(second).toMatchObject({ ranWith: 'none', ranWithText: 'ran with nothing started' });
-  expect(third).toMatchObject({ buildText: 'build not recorded', ranWithText: 'what it ran with not recorded' });
+  expect(second).toMatchObject({ ranWith: 'none', ranWithText: 'ran with nothing started', setupText: 'set up for R (PATH) 4.6.0' });
+  expect(third).toMatchObject({ buildText: 'build not recorded', ranWithText: 'what it ran with not recorded', setupText: '' });
   expect(third?.build).toBeUndefined();
-  expect(fourth).toMatchObject({ buildText: named, ranWithText: 'what it ran with not recorded: the Route did not finish' });
+  expect(fourth).toMatchObject({ buildText: named, ranWithText: 'what it ran with not recorded: the Route did not finish', setupText: 'set up for R (PATH) 4.6.0' });
   expect(summary.builds).toEqual([
     { text: named, routes: [1, 2, 4] },
     { text: 'build not recorded', routes: [3] },
@@ -425,4 +428,17 @@ test("the plugin ships with the package, at the package's version, and each skil
     expect(front, skill).toContain(`name: ${skill}\n`);
     expect(front, skill).toMatch(/\ndescription: \S/);
   }
+});
+
+test('the page asks its questions itself, never through a browser dialog', () => {
+  // A browser may answer confirm() itself without showing it: in the Claude
+  // app's browser pane it returned false in 1 ms, so Triage and File did
+  // nothing at all, with nothing on screen to say why.
+  const dialogs = /\b(?:window\.)?(?:confirm|alert|prompt)\s*\(/;
+  // The pattern finds a call, as its control, so a clean page means none.
+  expect(dialogs.test("if (confirm(notice + 'Send it?')) send();")).toBe(true);
+  expect(dialogs.test("window.alert('Filed');")).toBe(true);
+  expect(PAGE.match(dialogs)?.[0] ?? null).toBeNull();
+  // And the question it asks instead is there.
+  expect(PAGE).toContain("yes: 'Send to Anthropic'");
 });

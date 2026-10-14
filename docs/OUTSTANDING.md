@@ -874,6 +874,28 @@ long a night's run takes. Its triage needs an `ANTHROPIC_API_KEY` secret this
 repository does not have; without one it stops at the replays and says so.
 Running it once by hand, with `workflow_dispatch`, answers the first two.
 
+### 1.26 Saying which checks a Route ran, where a run is read
+
+Asked on 2026-10-14, while the page `phileas view` serves was being
+redrawn: "Will this include the list of included checks?" It does not, and
+neither does `phileas show`. Asked to be recorded "as an outstanding item,
+to be done soon."
+
+**What the journal already holds.** The opening line has `checksIncluded`
+and `checksExcluded` since 2026-10-14, which name only what the Journey or
+the run chose, never a check on or off by the adapter's or the engine's
+default. The whole account is on every step's line instead: each check as
+passed, failed, or not run with the reason, such as "excluded for this run"
+or a check not built yet. So nothing new needs recording.
+
+**What was proposed, not yet decided in detail:** an opened Route says which
+checks ran and which did not, each not-run one with its reason, read from
+its steps' lines, with those the run or the Journey chose marked as chosen;
+and a run's heading says the same only where its Routes differ. It belongs
+in the reading of a journal that the page and `phileas show` share,
+`journalSteps` and the renderer in `src/report/render.mjs`, so both say it
+alike, rather than in the page alone.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

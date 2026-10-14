@@ -174,7 +174,9 @@ The `reproduce` skill is what confirms them.
     seen to start. "Nothing started" is a fact worth stating where the
     finding is about a session.
   - **Never state `runsWith` as what ran.** It is the adapter's account of
-    the setup before launch; if it is used at all, say "set up with".
+    the setup before launch. The Route's `setupText` says it only where what
+    ran does not bear it out, as "set up for"; where it is empty, the setup
+    and what ran agree, and only what ran is stated.
   - **"No sources to check it against"** means the staleness guard had no
     sources, which is the shape of an installed release. It never means
     built from source, and nothing else in a run does either.

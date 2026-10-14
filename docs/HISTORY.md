@@ -141,6 +141,62 @@ nothing, and said so.
 
 **What it does not cover.** A run killed before its end copies nothing, the
 same limit the known findings have.
+## 2026-10-13: the page draws each Route as a line, and asks its questions itself
+
+**Why.** A design pass on the page `phileas view` serves was asked for, and
+its main job was taken to be reading one Route quickly enough to judge its
+finding. The page showed a run as a table and a Route as the renderer's
+printed lines in one block of text. Then, asked "Why doesn't the 'triage
+with Claude' button work", it was measured in the Claude app's browser pane:
+`confirm()` returned false in 1 ms without showing anything, so Triage and
+File had done nothing there, with nothing on screen to say why. The old page
+asked the same way.
+
+**What landed.**
+- **A run is a stack of lines, one per Route,** each as long as the Hops it
+  traveled out of its Trip, with its ending as a shape: a ring where it
+  passed, a filled square where it failed, an upright bar where it stranded,
+  a slash where it did not finish. A Route whose Fix broke before any check
+  ran reads "Fix failed", apart from a failed Route (R11). A failed row names
+  its new findings and counts the known ones met on the same Hop. A run with
+  passes can show only the Routes that did not pass.
+- **An opened Route runs down the page, one stop per step,** the Fix as a
+  double rail and the Trip as a single one, with each step's target, value,
+  effect, what the stubs caught, a known finding carried past, and a failed
+  check with its findings and when each arrived. The renderer's own lines
+  stay one click away. `journalSteps` in `src/report/render.mjs` reads a
+  journal into those parts with the renderer's own helpers, so the page and
+  `phileas show` say each thing in the same words, and `/api/route` returns
+  it beside the lines.
+- **The page asks in the page.** Triage shows the notice of what it sends,
+  with "Send to Anthropic" and "Cancel"; filing asks the same way and says
+  where it filed. A test fails if the page calls a browser dialog again.
+- **Which application a Journey from the page runs.** A job inherits
+  `PHILEAS_APP_DIR` from the server, and a server started without it started
+  Journeys that failed at once, met on RStudio the same day. `phileas view`
+  now prints which one is in force, or that none is set, and the page's
+  header says the same.
+- **The build and the platform under a run's heading,** and in an opened
+  Route, each said as not recorded where a journal predates it. Every one of
+  RStudio's 279 journals and Positron's 722 kept here predates both, counted
+  the same day.
+- **The setup said only where what ran does not bear it out.** The opening
+  line printed "with R (PATH) 4.6.0", the adapter's account before launch,
+  which read as what ran; asked "Does 'R (PATH) 4.6.0;' mean that this is
+  based on the location of R in the PATH, not necessarily what ran?", and
+  then why it should be logged at all. The journal keeps both, since the
+  setup is all there is for a Route that ends before the application
+  answers, or for a Positron Route that starts no session, and the two can
+  differ. What prints changed: the opening line, the run's build and the
+  page leave the setup out, and the outcome line, the summary's
+  `setupText` and an opened Route's terminus say "set up for" only where
+  what ran is missing or different. Chosen from four options, as "Only
+  when it differs".
+- **Smaller:** terminal color codes taken out of a reason, and type set in
+  macOS's own faces, since the page fetches nothing from anywhere else.
+
+**Checked on the journals kept** for RStudio and Positron, in the browser
+pane, light and dark, at desktop and phone widths.
 
 ## 2026-10-12: the journal names the operating system and architecture a Route ran on
 

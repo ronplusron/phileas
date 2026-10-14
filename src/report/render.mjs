@@ -189,23 +189,43 @@ function valueText(value) {
  * @returns {string}
  */
 function failedText(checks, step, brief = false) {
-  const failed = (checks ?? []).filter((check) => check.result === 'failed');
+  const failed = failedOf(checks, step);
   if (!failed.length) return '';
   return `   CHECK FAILED: ${failed
     .map((check) => {
-      const unknown = (check.findings ?? []).filter((finding) => !finding.known);
-      // One id per finding, however many times the Hop saw it, with when the
-      // first of them arrived. A journal from before 2026-09-30 has no times.
-      const ids = unknown
-        .filter((finding, index) => unknown.findIndex((other) => other.id === finding.id) === index)
-        .map((finding) => {
-          const arrived = arrivalAgainst(arrivalOf(finding), step.name, step.startedAt);
-          return arrived ? `finding ${finding.id}, arrived ${arrived}` : `finding ${finding.id}`;
-        });
+      const ids = check.findings.map((finding) =>
+        finding.arrived ? `finding ${finding.id}, arrived ${finding.arrived}` : `finding ${finding.id}`
+      );
       if (brief) return `${check.check}${ids.length ? ` (${ids.join('; ')})` : ''}`;
-      return `${check.check}: ${(check.observation ?? '').split('\n')[0]}${ids.length ? ` (${ids.join('; ')})` : ''}`;
+      return `${check.check}: ${check.observation}${ids.length ? ` (${ids.join('; ')})` : ''}`;
     })
     .join('; ')}`;
+}
+
+/**
+ * The checks that failed on a Hop, each with the first line of what it saw
+ * and the new findings it made, each once, with when the first of them
+ * arrived against this step. A journal from before 2026-09-30 has no times.
+ * @param {readonly { check: string, result?: string, observation?: string, findings?: readonly { id: string, known: boolean, seenAt?: string, seenAfter?: string, seenBefore?: string, loggedAt?: string }[] }[] | undefined} checks
+ * @param {Step} step
+ * @returns {{ check: string, observation: string, findings: { id: string, arrived?: string }[] }[]}
+ */
+function failedOf(checks, step) {
+  return (checks ?? [])
+    .filter((check) => check.result === 'failed')
+    .map((check) => {
+      const unknown = (check.findings ?? []).filter((finding) => !finding.known);
+      return {
+        check: check.check,
+        observation: (check.observation ?? '').split('\n')[0] ?? '',
+        findings: unknown
+          .filter((finding, index) => unknown.findIndex((other) => other.id === finding.id) === index)
+          .map((finding) => {
+            const arrived = arrivalAgainst(arrivalOf(finding), step.name, step.startedAt);
+            return arrived ? { id: finding.id, arrived } : { id: finding.id };
+          }),
+      };
+    });
 }
 
 /**
@@ -221,10 +241,25 @@ function failedText(checks, step, brief = false) {
  * @returns {string}
  */
 function knownText(checks) {
-  const every = (checks ?? []).flatMap((check) => (check.findings ?? []).filter((finding) => finding.known));
-  const known = every.filter((finding, index) => every.findIndex((other) => other.id === finding.id) === index);
+  const known = knownOf(checks);
   if (!known.length) return '';
-  return `   known: ${known.map((finding) => `${finding.id} (${finding.issue ? `issue ${finding.issue}` : finding.falseAlarm !== undefined ? 'false alarm' : 'unfiled'})`).join(', ')}`;
+  return `   known: ${known.map((finding) => `${finding.id} (${finding.standing})`).join(', ')}`;
+}
+
+/**
+ * The known findings a Hop carried on past, each once, with how it stood
+ * when the Route ran: `issue <n>`, `false alarm` or `unfiled`.
+ * @param {readonly { findings?: readonly { id: string, known: boolean, issue?: string, falseAlarm?: string }[] }[] | undefined} checks
+ * @returns {{ id: string, standing: string }[]}
+ */
+function knownOf(checks) {
+  const every = (checks ?? []).flatMap((check) => (check.findings ?? []).filter((finding) => finding.known));
+  return every
+    .filter((finding, index) => every.findIndex((other) => other.id === finding.id) === index)
+    .map((finding) => ({
+      id: finding.id,
+      standing: finding.issue ? `issue ${finding.issue}` : finding.falseAlarm !== undefined ? 'false alarm' : 'unfiled',
+    }));
 }
 
 /**
@@ -235,8 +270,19 @@ function knownText(checks) {
  * @returns {string}
  */
 export function recoveredText(checks) {
+  const { recovered } = recoveredOf(checks);
+  return recovered ? `   (${recovered})` : '';
+}
+
+/**
+ * A window found blank and then showing something again, as `{ recovered }`
+ * in words, or nothing.
+ * @param {readonly { recovered?: { afterMs: number } }[] | undefined} checks
+ * @returns {{ recovered?: string }}
+ */
+function recoveredOf(checks) {
   const recovered = (checks ?? []).find((check) => check.recovered)?.recovered;
-  return recovered ? `   (window blank, then showed something again ${recovered.afterMs} ms later)` : '';
+  return recovered ? { recovered: `window blank, then showed something again ${recovered.afterMs} ms later` } : {};
 }
 
 /**
@@ -262,7 +308,19 @@ export function underText(interceptedBy) {
  * @returns {string}
  */
 export function caughtText(caught, step) {
-  if (!caught) return '';
+  const parts = caughtParts(caught, step);
+  return parts.length ? `   (stubbed: ${parts.join('; ')})` : '';
+}
+
+/**
+ * What the engine's stubs caught on a Hop, one item each, as `caughtText`
+ * prints them.
+ * @param {import('../caught').CaughtByStubs | undefined} caught
+ * @param {Step} [step]
+ * @returns {string[]}
+ */
+function caughtParts(caught, step) {
+  if (!caught) return [];
   /**
    * @param {'selfLaunches' | 'outbound' | 'opened' | 'dialogs'} field
    * @param {number} index
@@ -272,7 +330,7 @@ export function caughtText(caught, step) {
     const arrived = at === undefined || !step ? undefined : arrivalAgainst(arrivalOf({ seenAt: at }), step.name, step.startedAt);
     return arrived ? ` (${arrived})` : '';
   };
-  const parts = [
+  return [
     ...(caught.selfLaunches ?? []).map((_, i) => `a second copy of the application${when('selfLaunches', i)}`),
     ...(caught.outbound ?? []).map((url, i) => `link ${url}${when('outbound', i)}`),
     ...(caught.opened ?? []).map((call, i) => `open ${call}${when('opened', i)}`),
@@ -282,7 +340,6 @@ export function caughtText(caught, step) {
     ...(caught.notInstalled ?? []).map((field) => `stub not installed: ${field}`),
     ...(caught.unreadable ? [`stubs unreadable: ${caught.unreadable}`] : []),
   ];
-  return parts.length ? `   (stubbed: ${parts.join('; ')})` : '';
 }
 
 /**
@@ -291,10 +348,13 @@ export function caughtText(caught, step) {
  * where the two differ, what the adapter says it runs with, and whether the
  * staleness guard compared it with its sources. Whatever could not be read
  * says so, and a journal from before builds were recorded says that (C1).
+ * Without `setup`, what the adapter said it set the application up with is
+ * left out, for a reader that says it beside what ran, by `setupText`.
  * @param {JournaledBuild | undefined} build
+ * @param {{ setup?: boolean }} [options]
  * @returns {string}
  */
-export function buildText(build) {
+export function buildText(build, { setup = true } = {}) {
   if (!build) return 'build not recorded';
   const version = build.release ?? build.version;
   // A name or version left out here is named in `unread`, which follows.
@@ -310,8 +370,8 @@ export function buildText(build) {
   ];
   if (build.unread) parts.push(`not all read: ${build.unread}`);
   const runsWith = Object.entries(build.runsWith ?? {});
-  if (runsWith.length) parts.push(`with ${runsWith.map(([name, value]) => `${name} ${value}`).join(', ')}`);
-  if (build.runsWithUnread) parts.push(`what it runs with unread: ${build.runsWithUnread}`);
+  if (setup && runsWith.length) parts.push(`with ${runsWith.map(([name, value]) => `${name} ${value}`).join(', ')}`);
+  if (setup && build.runsWithUnread) parts.push(`what it runs with unread: ${build.runsWithUnread}`);
   const sources = build.sources;
   if (sources && 'compared' in sources) parts.push(`checked against its sources, ${sources.compared} files`);
   else if (sources?.notCompared === 'no-sources') parts.push('no sources to check it against');
@@ -364,6 +424,40 @@ export function ranWithText(outcome) {
 }
 
 /**
+ * What the adapter set the application up with, from the opening line, said
+ * only where what ran does not bear it out: "set up for R (PATH) 4.6.0".
+ * Empty where every value of the setup was seen running, so a Route whose
+ * setup and run agree says only what it ran with.
+ *
+ * Asked for on 2026-10-14, after "with R (PATH) 4.6.0" on the opening line
+ * read as what ran: the setup is the adapter's account before launch, and
+ * the application may start something else. It is still worth saying where
+ * what ran is missing, as for a Route that ended before the application
+ * answered, or where it differs, as for an R named in RStudio's own settings.
+ *
+ * A setup's name is matched to what ran without the source it carries in
+ * brackets, `R (PATH)` to `R`, and its value must be among what that name
+ * took. A setup value nothing confirms is said, so an interpreter Positron
+ * offered and no session started is named.
+ * @param {JournaledBuild | undefined} build
+ * @param {Extract<JournalEntry, { kind: 'outcome' }> | undefined} outcome
+ * @returns {string}
+ */
+export function setupText(build, outcome) {
+  if (!build) return '';
+  /** @type {Readonly<Record<string, readonly string[]>>} */
+  const ran = outcome && outcome.ranWith && outcome.ranWith !== 'none' ? outcome.ranWith : {};
+  const unconfirmed = Object.entries(build.runsWith ?? {}).filter(([name, value]) => {
+    const values = ran[name.replace(/\s*\([^)]*\)$/, '')];
+    return !(values && values.includes(value));
+  });
+  const parts = [];
+  if (unconfirmed.length) parts.push(`set up for ${unconfirmed.map(([name, value]) => `${name} ${value}`).join(', ')}`);
+  if (build.runsWithUnread) parts.push(`setup not all read: ${build.runsWithUnread}`);
+  return parts.join('; ');
+}
+
+/**
  * The first sentence of a reason, without a colon it ends on: "3 checks failed
  * after hop 56, which is when the checks read it." from the whole failure.
  * @param {string} text
@@ -388,18 +482,21 @@ export function firstSentence(text) {
  * check and its finding without what it saw, and a failed Route's line keeps
  * the first sentence of its reason. `phileas show` is never brief, since a
  * journal read on its own has nothing printed under it.
+ * `opening` is the Route's opening line, which an outcome line needs to
+ * say the setup beside what ran, where the two do not agree.
  * @param {JournalEntry} entry
  * @param {number} routeNumber
- * @param {{ brief?: boolean }} [options]
+ * @param {{ brief?: boolean, opening?: Extract<JournalEntry, { kind: 'route' }> }} [options]
  * @returns {string | undefined}
  */
-export function renderEntry(entry, routeNumber, { brief = false } = {}) {
+export function renderEntry(entry, routeNumber, { brief = false, opening } = {}) {
   const route = routeLabel(routeNumber);
   switch (entry.kind) {
     case 'route':
       return (
         `${route}  seed ${entry.routeSeed}, from Journey seed ${entry.journeySeed}, ` +
-        `Trip of ${entry.tripLength} hops, ${entry.build ? `on ${buildText(entry.build)}` : buildText(undefined)}` +
+        // The setup is said on the outcome line instead, beside what ran.
+        `Trip of ${entry.tripLength} hops, ${entry.build ? `on ${buildText(entry.build, { setup: false })}` : buildText(undefined)}` +
         // Left off a journal from before platforms were recorded, rather than
         // adding to every line of one a fact the build already says is missing.
         (entry.platform ? `; under ${platformText(entry.platform)}` : '')
@@ -441,7 +538,7 @@ export function renderEntry(entry, routeNumber, { brief = false } = {}) {
       return `${route}  note before hop ${entry.hop}: ${entry.note}`;
     case 'outcome': {
       const reason = entry.reason && brief && entry.outcome === 'failed' ? firstSentence(entry.reason) : entry.reason;
-      const ran = ranWithText(entry);
+      const ran = [ranWithText(entry), setupText(opening?.build, entry)].filter(Boolean).join('; ');
       return `${route}  ${entry.outcome} after ${entry.hops} hops${ran ? ` (${ran})` : ''}${reason ? `: ${reason}` : ''}`;
     }
     default:
@@ -464,6 +561,8 @@ export function renderJournal(text) {
   /** @type {string[]} */
   const out = [];
   let routeNumber = 0; // unknown until the opening line is read
+  /** @type {Extract<JournalEntry, { kind: 'route' }> | undefined} */
+  let opening;
   let finished = false;
   for (const [index, raw] of lines.entries()) {
     if (raw.trim() === '') continue;
@@ -480,11 +579,130 @@ export function renderJournal(text) {
       );
       continue;
     }
-    if (entry.kind === 'route') routeNumber = entry.routeNumber;
+    if (entry.kind === 'route') {
+      routeNumber = entry.routeNumber;
+      opening = entry;
+    }
     if (entry.kind === 'outcome') finished = true;
-    const line = renderEntry(entry, routeNumber);
+    const line = renderEntry(entry, routeNumber, opening ? { opening } : {});
     if (line) out.push(line);
   }
-  if (!finished) out.push(`${routeLabel(routeNumber)}  no outcome recorded: the Route did not finish`);
+  if (!finished) {
+    // Nothing says what ran, so the setup is all there is.
+    const setup = setupText(opening?.build, undefined);
+    out.push(`${routeLabel(routeNumber)}  no outcome recorded: the Route did not finish${setup ? `; ${setup}` : ''}`);
+  }
+  return out;
+}
+
+/**
+ * One step of a Route as a page draws it: a Fix step or a Trip hop, with the
+ * same words its printed line uses, kept apart so each can be laid out.
+ * @typedef {{
+ *   kind: 'fix' | 'hop',
+ *   number: number,
+ *   action: string,
+ *   target: string,
+ *   value?: string,
+ *   effect: string,
+ *   error?: string,
+ *   abandoned?: string,
+ *   caught: string[],
+ *   recovered?: string,
+ *   failed: { check: string, observation: string, findings: { id: string, arrived?: string }[] }[],
+ *   known: { id: string, standing: string }[],
+ * }} RouteStep
+ */
+
+/**
+ * A whole journal file's text, as data for a page to lay out, from the
+ * journal alone: the same reading `renderJournal` prints, with each part of a
+ * line kept apart. A pool is left out, as it is from the printed lines. A
+ * line that cannot be read is named where it sits, and a journal with no
+ * outcome line is a Route that did not finish.
+ * @param {string} text
+ * @returns {{
+ *   opening: { routeNumber: number, routeSeed: string, journeySeed: string, tripLength: number, fix?: string, build: string, platform: string } | null,
+ *   steps: (RouteStep | { kind: 'note', before: number, text: string })[],
+ *   outcome: { outcome: string, hops: number, reason?: string, ranWith: string } | null,
+ *   setup: string,
+ *   unreadable: string[],
+ * }}
+ */
+export function journalSteps(text) {
+  const lines = text.split('\n');
+  /** @type {ReturnType<typeof journalSteps>} */
+  const out = { opening: null, steps: [], outcome: null, setup: '', unreadable: [] };
+  /** @type {JournaledBuild | undefined} */
+  let build;
+  /** @type {Extract<JournalEntry, { kind: 'outcome' }> | undefined} */
+  let ending;
+  for (const [index, raw] of lines.entries()) {
+    if (raw.trim() === '') continue;
+    /** @type {JournalEntry} */
+    let entry;
+    try {
+      entry = currentEntry(JSON.parse(raw));
+    } catch {
+      const last = lines.slice(index + 1).every((rest) => rest.trim() === '');
+      out.unreadable.push(last ? 'the journal ends partway through a line, where the Route stopped' : `line ${index + 1} of the journal cannot be read`);
+      continue;
+    }
+    if (entry.kind === 'route') {
+      build = entry.build;
+      out.opening = {
+        routeNumber: entry.routeNumber,
+        routeSeed: entry.routeSeed,
+        journeySeed: entry.journeySeed,
+        tripLength: entry.tripLength,
+        ...(entry.fix?.name ? { fix: entry.fix.name } : {}),
+        build: buildText(entry.build, { setup: false }),
+        // Said as missing in a journal from before it was recorded, as the
+        // build is, rather than left out.
+        platform: platformText(entry.platform),
+      };
+    } else if (entry.kind === 'fix-step') {
+      const step = { name: `Fix step ${entry.step}`, startedAt: Date.parse(entry.startedAt) };
+      out.steps.push({
+        kind: 'fix',
+        number: entry.step,
+        action: entry.stepKind ?? '',
+        target: entry.label,
+        effect: entry.error ? '' : effectText(entry.effect),
+        ...(entry.error ? { error: entry.error } : {}),
+        caught: caughtParts(entry.caught, step),
+        ...recoveredOf(entry.checks),
+        failed: failedOf(entry.checks, step),
+        known: knownOf(entry.checks),
+      });
+    } else if (entry.kind === 'trip-hop') {
+      const step = { name: `hop ${entry.hop}`, startedAt: Date.parse(entry.startedAt) };
+      out.steps.push({
+        kind: 'hop',
+        number: entry.hop,
+        action: entry.action,
+        target: targetText(entry.target),
+        ...(entry.action === 'type' || entry.action === 'fill' ? { value: valueText(entry.value) } : {}),
+        effect: effectText(entry.effect),
+        ...(entry.abandoned ? { abandoned: `${entry.abandoned}${underText(entry.interceptedBy)}` } : {}),
+        caught: caughtParts(entry.caught, step),
+        ...recoveredOf(entry.checks),
+        failed: failedOf(entry.checks, step),
+        known: knownOf(entry.checks),
+      });
+    } else if (entry.kind === 'note') {
+      out.steps.push({ kind: 'note', before: entry.hop, text: entry.note });
+    } else if (entry.kind === 'outcome') {
+      ending = entry;
+      out.outcome = {
+        outcome: entry.outcome,
+        hops: entry.hops,
+        ...(entry.reason ? { reason: entry.reason } : {}),
+        ranWith: ranWithText(entry),
+      };
+    }
+  }
+  // The setup, said only where what ran does not bear it out.
+  out.setup = setupText(build, ending);
   return out;
 }

@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { currentSignature, findingId, readKnownFindings } from '../known.mjs';
 import { readEnding, replayVerdict } from './reporter.mjs';
-import { buildText, platformText, ranWithText, targetText } from './render.mjs';
+import { buildText, platformText, ranWithText, setupText, targetText } from './render.mjs';
 
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
 /** @typedef {import('../build').JournaledBuild} JournaledBuild */
@@ -61,6 +61,7 @@ const JOURNAL_NAME = /^route-\d+-.*\.jsonl$/;
  *   ranWith?: Readonly<Record<string, readonly string[]>> | 'none',
  *   ranWithUnread?: string,
  *   ranWithText: string,
+ *   setupText: string,
  * }} SummaryRoute
  */
 
@@ -182,7 +183,9 @@ export function summarizeRoute(journal, standing = standingFrom(knownFileFor(pat
     // so in the text, and a Route that did not finish has no outcome to say
     // what ran.
     ...(ending.opening?.build ? { build: ending.opening.build } : {}),
-    buildText: buildText(ending.opening?.build),
+    // Without the setup, which `setupText` says only where what ran does
+    // not bear it out, so the setup is never read as what ran.
+    buildText: buildText(ending.opening?.build, { setup: false }),
     // Which operating system and architecture, from the same line.
     ...(ending.opening?.platform ? { platform: ending.opening.platform } : {}),
     platformText: platformText(ending.opening?.platform),
@@ -191,6 +194,7 @@ export function summarizeRoute(journal, standing = standingFrom(knownFileFor(pat
     ranWithText: ending.outcome
       ? ranWithText(ending.outcome) || 'what it ran with not recorded'
       : 'what it ran with not recorded: the Route did not finish',
+    setupText: setupText(ending.opening?.build, ending.outcome),
   };
 }
 

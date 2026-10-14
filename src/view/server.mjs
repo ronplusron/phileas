@@ -24,7 +24,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { readKnownFindings } from '../known.mjs';
-import { renderJournal } from '../report/render.mjs';
+import { journalSteps, renderJournal } from '../report/render.mjs';
 import { listRuns, summarizeRun } from '../report/summary.mjs';
 import { fileDraft, readFiling } from '../assistant/filing.mjs';
 import { draftsIn, prepareTriage, sendNotice, TRIAGE_FOLDER } from '../assistant/triage.mjs';
@@ -32,6 +32,14 @@ import { PAGE } from './page.mjs';
 
 /** The header every request to the API carries the token in. */
 export const TOKEN_HEADER = 'x-phileas-token';
+
+/**
+ * Where an adapter outside its application reads the application from:
+ * `APP_DIR_VARIABLE` in src/launch.ts, named again here since this file is
+ * plain JavaScript and cannot import that one. A job inherits it from this
+ * server, so a server started without it starts Journeys that fail at once.
+ */
+const APP_DIR_VARIABLE = 'PHILEAS_APP_DIR';
 
 /** A job's output is kept whole, up to this, so a page opened late sees it from the start. */
 const KEPT_OUTPUT = 4 * 1024 * 1024;
@@ -135,6 +143,7 @@ export function serve({ config, port, journals, phileas, quiet = false }) {
   const jobs = [];
   let nextId = 1;
   let boundPort = port;
+  const appDir = process.env[APP_DIR_VARIABLE] || null;
 
   /** @param {http.ServerResponse} res @param {number} status @param {unknown} body */
   const json = (res, status, body) => {
@@ -245,7 +254,7 @@ export function serve({ config, port, journals, phileas, quiet = false }) {
         } catch (error) {
           filingError = /** @type {Error} */ (error).message;
         }
-        json(res, 200, { config, journals, filing: filing ?? null, filingError, runs: listRuns(journals), jobs: jobs.map(jobView) });
+        json(res, 200, { config, journals, appDir, filing: filing ?? null, filingError, runs: listRuns(journals), jobs: jobs.map(jobView) });
       } else if (route === 'GET /api/run') {
         const folder = folderParam(url, 'folder');
         const report = path.join(folder, TRIAGE_FOLDER, 'report.md');
@@ -256,7 +265,8 @@ export function serve({ config, port, journals, phileas, quiet = false }) {
         });
       } else if (route === 'GET /api/route') {
         const journal = folderParam(url, 'journal');
-        json(res, 200, { lines: renderJournal(fs.readFileSync(journal, 'utf8')) });
+        const text = fs.readFileSync(journal, 'utf8');
+        json(res, 200, { lines: renderJournal(text), ...journalSteps(text) });
       } else if (route === 'GET /api/known') {
         json(res, 200, readKnownFindings(path.join(configFolder, 'known-findings.json')));
       } else if (route === 'GET /api/triage-notice') {
@@ -303,6 +313,11 @@ export function serve({ config, port, journals, phileas, quiet = false }) {
       const url = `http://127.0.0.1:${boundPort}/?token=${token}`;
       if (!quiet) {
         console.log(`Phileas, for ${config}, at:\n\n  ${url}\n`);
+        console.log(
+          appDir
+            ? `Journeys started from it run the application at ${appDir}, from ${APP_DIR_VARIABLE}.`
+            : `${APP_DIR_VARIABLE} is not set, so a Journey whose adapter reads it fails when started from here. Set it before phileas view to run one.`
+        );
         console.log('Only this machine can reach it, and only with the token above. Ctrl-C stops it, and any job it started.');
       }
       const stop = () => {

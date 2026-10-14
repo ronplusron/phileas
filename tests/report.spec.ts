@@ -15,6 +15,7 @@ import {
   type TripHopEntry,
 } from '../src/index';
 import { journalsFor } from '../bin/phileas.mjs';
+import { journalSteps } from '../src/report/render.mjs';
 
 /**
  * The journal read by a person (R30): the renderer, `phileas show`, and
@@ -328,4 +329,85 @@ test("what the stubs caught says when each came, against the line's own step", (
   );
   // Without times, as a journal from before 2026-09-30 has, nothing is added.
   expect(renderEntry(hop32([], { outbound: ['https://example.com/a'] }), 11)).toContain('(stubbed: link https://example.com/a)');
+});
+
+test('a journal as data keeps each part of a step apart, in the words the printed line uses', () => {
+  const failing: JournalEntry[] = [
+    { ...ENTRIES[0], fix: { name: 'open-summary', fingerprint: 'f' } } as JournalEntry,
+    {
+      kind: 'fix-step',
+      step: 1,
+      label: 'button "Summary"',
+      stepKind: 'act',
+      startedAt: '',
+      durationMs: 1,
+      effect: effect(['Total weight'], []),
+      checks: [],
+    },
+    { ...(ENTRIES[3] as TripHopEntry), abandoned: 'locator.click: Timeout 3000ms exceeded.', interceptedBy: '<div class="veil"></div> intercepts pointer events' },
+    { kind: 'note', hop: 3, note: 'the menu bar could not be read', at: '' },
+    {
+      ...(ENTRIES[4] as TripHopEntry),
+      checks: [
+        { check: 'uncaught-error', result: 'passed' },
+        {
+          check: 'console-error',
+          result: 'failed',
+          observation: 'console-error: Boom\nsecond line',
+          findings: [
+            { id: 'aaaa1111', signature: 's1', known: false },
+            { id: 'aaaa1111', signature: 's1', known: false },
+            { id: 'bbbb2222', signature: 's2', known: true, issue: '87' },
+          ],
+        },
+      ],
+    },
+    { kind: 'outcome', outcome: 'failed', hops: 3, reason: 'A check failed after hop 3.', endedAt: '' },
+  ];
+  const { opening, steps, outcome, unreadable } = journalSteps(text(failing));
+
+  expect(opening).toEqual({
+    routeNumber: 3,
+    routeSeed: 'r0',
+    journeySeed: 'j',
+    tripLength: 3,
+    fix: 'open-summary',
+    build: 'build not recorded',
+    platform: 'platform not recorded',
+  });
+  expect(steps.map((step) => step.kind)).toEqual(['fix', 'hop', 'note', 'hop']);
+  expect(steps[0]).toMatchObject({ kind: 'fix', number: 1, action: 'act', target: 'button "Summary"', effect: '+ Total weight', failed: [], known: [] });
+  // The value is shortened as the printed line shortens it, and what took an
+  // abandoned click is named with the pointer-events tail taken off.
+  expect(steps[1]).toMatchObject({
+    kind: 'hop',
+    number: 2,
+    action: 'type',
+    target: 'searchbox "Search items"',
+    value: '"a value ..." (26 characters)',
+    effect: 'no change',
+    abandoned: 'locator.click: Timeout 3000ms exceeded.; under <div class="veil"></div>',
+  });
+  expect(steps[2]).toEqual({ kind: 'note', before: 3, text: 'the menu bar could not be read' });
+  // A failed check keeps the first line of what it saw and each new finding
+  // once; the known one it carried past is apart, with how it stood.
+  expect(steps[3]).toMatchObject({
+    target: 'menu View > Show Summary',
+    failed: [{ check: 'console-error', observation: 'console-error: Boom', findings: [{ id: 'aaaa1111' }] }],
+    known: [{ id: 'bbbb2222', standing: 'issue 87' }],
+  });
+  expect(outcome).toEqual({ outcome: 'failed', hops: 3, reason: 'A check failed after hop 3.', ranWith: '' });
+  expect(unreadable).toEqual([]);
+});
+
+test('a journal as data cut off mid-write has no outcome, and says where it ended', () => {
+  const whole = text(ENTRIES.slice(0, 4));
+  const cut = journalSteps(whole + JSON.stringify(ENTRIES[4]).slice(0, 30));
+  expect(cut.steps.map((step) => step.kind === "note" ? null : step.number)).toEqual([1, 2]);
+  expect(cut.outcome).toBeNull();
+  expect(cut.unreadable).toEqual(['the journal ends partway through a line, where the Route stopped']);
+  // The same journal whole, as its control, has its outcome and nothing unreadable.
+  const finished = journalSteps(text(ENTRIES));
+  expect(finished.outcome).toMatchObject({ outcome: 'passed', hops: 3 });
+  expect(finished.unreadable).toEqual([]);
 });

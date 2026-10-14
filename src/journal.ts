@@ -624,6 +624,8 @@ export class Journal {
 
   /** The pools already in this file, so each is written exactly once. */
   private readonly pools = new Set<string>();
+  /** The opening line, which a printed outcome needs to say the setup beside what ran. */
+  private opening: Extract<JournalEntry, { kind: 'route' }> | undefined;
 
   private constructor(
     readonly file: string,
@@ -694,7 +696,8 @@ export class Journal {
     // Brief when the engine's reporter prints the run, which says once, under
     // the Route's ending, what each failed check saw.
     if (this.follow) {
-      const line = renderEntry(entry, this.routeNumber, { brief: reporterInUse() });
+      if (entry.kind === 'route') this.opening = entry;
+      const line = renderEntry(entry, this.routeNumber, { brief: reporterInUse(), ...(this.opening ? { opening: this.opening } : {}) });
       if (line) console.log(line);
     }
   }

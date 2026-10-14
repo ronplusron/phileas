@@ -6,7 +6,7 @@ import { createPackage } from '@electron/asar';
 import { readBuild, readRunsWith, sourcesOf, topLevelStrings, type JournaledBuild } from '../src/build';
 import { readJournal } from '../src/journal';
 import { readMachine, withAppArch, type Exec, type JournaledPlatform } from '../src/platform';
-import { buildText, platformText, renderJournal } from '../src/report/render.mjs';
+import { buildText, platformText, renderJournal, setupText } from '../src/report/render.mjs';
 import { scratch, removeScratch } from './scratch';
 
 /**
@@ -271,4 +271,28 @@ test('the opening line names the platform, the application\'s architecture where
   expect(renderJournal(fs.readFileSync(file, 'utf8'))[0]).toBe(
     'route 1  seed r, from Journey seed j, Trip of 1 hops, on Buggy 0.0.0; under macOS 26.6.2 (25G83), arm64'
   );
+});
+
+test('the setup is said only where what ran does not bear it out', () => {
+  const build = { name: 'RStudio', version: '2026.10.0+232', runsWith: { 'R (PATH)': '4.6.0' } };
+  const ended = (ranWith: unknown) => ({ kind: 'outcome' as const, outcome: 'passed' as const, hops: 5, endedAt: '', ranWith }) as never;
+  // Agreeing, nothing is said, matched without the source in brackets.
+  expect(setupText(build, ended({ R: ['4.6.0'] }))).toBe('');
+  // Differing, nothing started, or nothing recorded, the setup is said.
+  expect(setupText(build, ended({ R: ['4.4.3'] }))).toBe('set up for R (PATH) 4.6.0');
+  expect(setupText(build, ended('none'))).toBe('set up for R (PATH) 4.6.0');
+  expect(setupText(build, undefined)).toBe('set up for R (PATH) 4.6.0');
+  // An interpreter offered and never started is named, the started one not.
+  const positron = { ...build, runsWith: { 'R (PATH)': '4.6.0', 'Python (PATH python3)': '3.12.4' } };
+  expect(setupText(positron, ended({ R: ['4.6.0'] }))).toBe('set up for Python (PATH python3) 3.12.4');
+  expect(setupText({ ...build, runsWith: undefined, runsWithUnread: 'it threw' }, ended({ R: ['4.6.0'] }))).toBe('setup not all read: it threw');
+  // The printed journal: the opening line leaves it out, and the outcome
+  // line says it only where it differs.
+  const opening = { kind: 'route', journeySeed: 'j', routeSeed: 'r', routeNumber: 1, tripLength: 5, settleQuietMs: 400, startedAt: '', build };
+  const journal = (outcome: unknown) => [opening, outcome].filter(Boolean).map((e) => JSON.stringify(e)).join('\n') + '\n';
+  const agreeing = renderJournal(journal(ended({ R: ['4.6.0'] })));
+  expect(agreeing[0]).toBe('route 1  seed r, from Journey seed j, Trip of 5 hops, on RStudio 2026.10.0+232');
+  expect(agreeing.at(-1)).toBe('route 1  passed after 5 hops (ran with R 4.6.0)');
+  expect(renderJournal(journal(ended({ R: ['4.4.3'] }))).at(-1)).toBe('route 1  passed after 5 hops (ran with R 4.4.3; set up for R (PATH) 4.6.0)');
+  expect(renderJournal(journal(null)).at(-1)).toBe('route 1  no outcome recorded: the Route did not finish; set up for R (PATH) 4.6.0');
 });
