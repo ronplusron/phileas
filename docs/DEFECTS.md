@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Twenty defects are recorded.** The launch layer landed in phase 1, so this
+**Nineteen defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -491,28 +491,6 @@ for a leak in the adapter or the engine that is not there.
 the Journey rather than at its two ends; refusing to start, or warning, when
 one is already running; and saying beside each write whether an outside copy
 was seen near its time.
-
-## A control scrolled out of sight is offered, against R32
-
-**Filed 2026-10-12, confirmed by reading the code.** `outOfReachAmong` in
-`src/survey.ts` keeps a control that shows nowhere because it is scrolled
-out of sight, in the window, a pane or a frame, on the reading that the
-click scrolls it into view; `throughFrames` keeps one scrolled out of its
-frame's view the same way. R32, corrected the same day, offers only what
-shows. Measured on RStudio 2026.10.0: Help showing "Writing R Extensions"
-put 5,297 links from its frame in one pool, nearly all out of sight, so a
-Route there draws among them on nearly every page Hop.
-
-**Why it is a defect and not a limit.** A Hop drawn to a control no person
-could see acts where no person would, which is what R32 rules out, and one
-long page takes a Route over. The reading that a click scrolls a control
-into view is true of Playwright and not of a person, who sees nothing to
-click.
-
-**What closes it, decided the same day:** offer only a control at least
-partly inside the window, its pane and its frame's view, on a branch of its
-own; scrolling is then a move of its own, `OUTSTANDING.md` 1.9. Until that
-move exists, the part of a long list or dialog out of sight is unreachable.
 
 ## Two things that will look like candidates, and are not
 

@@ -6,6 +6,7 @@ import type { JournaledBuild } from './build.js';
 import type { JournaledPlatform } from './platform.js';
 import type { CaughtByStubs } from './caught.js';
 import type { UnreadFrame } from './frames.js';
+import type { OutOfSightCount } from './survey.js';
 import type { HopEffect } from './effect.js';
 import { currentEntry } from './legacy.mjs';
 import { renderEntry, reporterInUse } from './report/render.mjs';
@@ -175,6 +176,16 @@ export interface PoolEntry {
    * where present, for the reasons `covered` is.
    */
   readonly hidden?: readonly JournaledHidden[];
+  /**
+   * How many page controls the survey left out because no part of each
+   * shows (R32), for each frame and each thing keeping them out of sight:
+   * a view, or a container that clips them. Counted rather than listed,
+   * chosen on 2026-10-15, so a long page's thousands of unseen links are
+   * never recorded; see `OutOfSightCandidate` in `survey.ts`. Absent where
+   * none were, and before 2026-10-15, when such a control was in the pool
+   * itself. On the pool and part of its id where present, as `hidden` is.
+   */
+  readonly outOfSight?: readonly OutOfSightCount[];
   /**
    * Text boxes kept in the pool although something lies on top of each,
    * because it sits inside the text box's own parent, with what it is.
@@ -718,7 +729,8 @@ export class Journal {
     hidden: readonly JournaledHidden[] = [],
     layered: readonly JournaledLayered[] = [],
     labeled: readonly JournaledLabeled[] = [],
-    unreadFrames: readonly UnreadFrame[] = []
+    unreadFrames: readonly UnreadFrame[] = [],
+    outOfSight: readonly OutOfSightCount[] = []
   ): string {
     // A screen with none of these hashes as it did before any was recorded,
     // and one with only the older kinds as it did before the newer ones
@@ -729,6 +741,7 @@ export class Journal {
       ...(layered.length ? { layered } : {}),
       ...(labeled.length ? { labeled } : {}),
       ...(unreadFrames.length ? { unreadFrames } : {}),
+      ...(outOfSight.length ? { outOfSight } : {}),
     };
     const hashed = Object.keys(outOfReach).length ? { candidates, ...outOfReach } : candidates;
     const id = createHash('sha256').update(JSON.stringify(hashed)).digest('hex').slice(0, 12);

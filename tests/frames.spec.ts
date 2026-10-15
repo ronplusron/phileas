@@ -8,6 +8,7 @@ import {
   deriveRouteStreams,
   journaled,
   journalFolder,
+  outOfSightCounts,
   readJournal,
   runRoute,
   runTempFolder,
@@ -42,12 +43,17 @@ const surveyed = (page: Page, app: ElectronApplication) =>
  * A frame titled "Luggage tags" at the end of the page, holding a button that
  * adds a heading, a link inside the application, a link out of it, and a
  * frame of its own, "Tag preview", whose button adds a heading there.
+ *
+ * Placed in the window by default, each one below the last, since only what
+ * shows is offered (R32): at the end of `buggy`'s page, in a window 608
+ * pixels tall, it would fall mostly out of sight.
  */
-async function luggageTags(page: Page, style = 'width: 400px; height: 200px;'): Promise<void> {
+async function luggageTags(page: Page, style?: string): Promise<void> {
   await page.evaluate((frameStyle) => {
     const frame = document.createElement('iframe');
     frame.title = 'Luggage tags';
-    frame.style.cssText = frameStyle;
+    const before = document.querySelectorAll('iframe[title="Luggage tags"]').length;
+    frame.style.cssText = frameStyle ?? `position: absolute; left: 460px; top: ${180 + 215 * before}px; width: 400px; height: 200px;`;
     frame.srcdoc =
       '<h2>Tags</h2>' +
       `<button onclick="document.body.insertAdjacentHTML('beforeend', '<h2>Tag printed</h2>')">Print tag</button>` +
@@ -189,6 +195,43 @@ test('a frame covered in the page covers what it holds, and one inside a contain
   expect(hidden.candidates.some((candidate) => candidate.name === 'Print tag')).toBe(false);
   expect(hidden.hidden.map((entry) => entry.candidate.name)).toEqual(expect.arrayContaining(['Print tag', 'Tag help']));
   for (const entry of hidden.hidden) expect(entry.by).toMatch(/^<div id="probe-pane"/);
+});
+
+test('a frame out of sight keeps what it holds out of sight, by what keeps the frame there', async ({ page, app }) => {
+  // Far below the window.
+  await luggageTags(page, 'position: absolute; top: 5000px; left: 10px; width: 400px; height: 200px;');
+  const below = await surveyed(page, app);
+  expect(below.candidates.some((candidate) => candidate.name === 'Print tag')).toBe(false);
+  expect(below.covered.some((entry) => entry.candidate.name === 'Print tag')).toBe(false);
+  expect(outOfSightCounts(below.outOfSight)).toEqual(
+    expect.arrayContaining([
+      { frame: [{ label: 'Luggage tags', nth: 1 }], by: 'the window', count: 2 },
+      { frame: [{ label: 'Luggage tags', nth: 1 }, { label: 'Tag preview', nth: 1 }], by: 'the window', count: 1 },
+    ])
+  );
+
+  // Inside a pane scrolled away from it, though the pane itself shows.
+  await page.evaluate(() => {
+    const pane = document.createElement('div');
+    pane.id = 'probe-scroller';
+    pane.style.cssText = 'position: fixed; top: 300px; left: 10px; width: 420px; height: 40px; overflow: auto;';
+    const frame = document.querySelector('iframe[title="Luggage tags"]') as HTMLElement;
+    frame.style.cssText = 'display: block; margin-top: 80px; width: 400px; height: 200px;';
+    pane.append(frame);
+    document.body.append(pane);
+  });
+  // Moving a frame loads it again.
+  await page.locator('iframe[title="Luggage tags"]').contentFrame().getByRole('button', { name: 'Print tag' }).waitFor({ state: 'attached', timeout: 5_000 });
+  const scrolled = await surveyed(page, app);
+  expect(scrolled.candidates.some((candidate) => candidate.name === 'Print tag')).toBe(false);
+  expect(scrolled.outOfSight.find((entry) => entry.candidate.name === 'Print tag')?.by).toBe('<div id="probe-scroller">');
+
+  // The control: the pane tall enough to show the frame offers it again.
+  await page.evaluate(() => {
+    document.getElementById('probe-scroller')!.style.height = '300px';
+  });
+  const shown = await surveyed(page, app);
+  expect(shown.candidates.some((candidate) => candidate.name === 'Print tag')).toBe(true);
 });
 
 test('a control covered inside its frame is covered, by what is on top there', async ({ page, app }) => {
@@ -334,14 +377,15 @@ test('two frames drawn at one box are paired with their nodes in document order'
   expect(tree.indexOf('Under tag')).toBeLessThan(tree.indexOf('Over tag'));
 });
 
-test('a frame of thousands of links is surveyed in seconds, each link still judged', async ({ page, app }) => {
+test('a frame of thousands of links is surveyed in seconds, each link still judged, and only those in view offered', async ({ page, app }) => {
   // Measured on RStudio on 2026-10-12: Help showing "Writing R Extensions"
   // holds 7,581 links in a frame, and a survey that found each control's
   // element again, one control at a time, took about 45 minutes there.
   await page.evaluate(() => {
     const frame = document.createElement('iframe');
     frame.title = 'Manual';
-    frame.style.cssText = 'width: 400px; height: 200px;';
+    // In the window, so what it keeps out of sight is its own view's doing.
+    frame.style.cssText = 'position: absolute; left: 460px; top: 180px; width: 400px; height: 200px;';
     frame.srcdoc = Array.from({ length: 3000 }, (_unused, index) =>
       index % 10 === 0 ? `<a href="https://example.com/${index}">Away ${index}</a><br>` : `<a href="#s${index}">Section ${index}</a><br>`
     ).join('');
@@ -356,5 +400,14 @@ test('a frame of thousands of links is surveyed in seconds, each link still judg
   const away = found.excluded.filter((entry) => entry.rule.startsWith('link off the application'));
   expect(away).toHaveLength(300);
   expect(away.every((entry) => entry.candidate.name.startsWith('Away '))).toBe(true);
-  expect(found.candidates.filter((candidate) => candidate.name.startsWith('Section '))).toHaveLength(2700);
+  // R32: each link is offered or out of sight, and only those in the
+  // frame's view are offered, counted by that view and never named.
+  const offered = found.candidates.filter((candidate) => candidate.name.startsWith('Section '));
+  const unseen = found.outOfSight.filter((entry) => entry.candidate.name.startsWith('Section '));
+  expect(offered.length + unseen.length).toBe(2700);
+  expect(offered.length).toBeGreaterThan(0);
+  expect(offered.length).toBeLessThan(30);
+  expect(outOfSightCounts(found.outOfSight)).toContainEqual({ frame: [{ label: 'Manual', nth: 1 }], by: 'the view of frame "Manual"', count: unseen.length });
+  // Printed as they are offered, each by name, and the rest not at all.
+  expect(surveyLines(found).filter((line) => line.includes('"Section '))).toHaveLength(offered.length);
 });

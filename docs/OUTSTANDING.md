@@ -301,7 +301,12 @@ repeating it.
   hovering. A Hop today can click, type, press a key, select, focus and click a
   menu entry.
   Virtualized lists and long panes need scrolling before their contents exist
-  to be found. How much either IDE puts in context menus is unmeasured.
+  to be found. **Since 2026-10-15 scrolling matters more:** only what shows
+  is offered (R32), so the part of a long page, list or dialog out of sight
+  is unreachable until something brings it into view, which a Hop does
+  today, if at all, only as a side effect, such as Tab moving focus onto a
+  control out of sight; how often is unmeasured. How much either IDE puts
+  in context menus is unmeasured too.
 - **Other windows.** Now a requirement, R33, and an item of its own, 1.21.
 - **Frames and webviews.** The survey reads inside every frame since
   2026-10-09, so RStudio's Help and data viewer are reached, both measured;
@@ -317,7 +322,9 @@ repeating it.
   seen over the control. Whether it arrives after the survey, as a popup
   opened late would, or the click scrolls a control that was out of the
   frame's view in under one, is not known; the journal records no boxes,
-  so a probe is what would tell.
+  so a probe is what would tell. Since 2026-10-15 a control wholly out of
+  the frame's view is no longer offered (R32), so a run of the data viewer
+  now would show whether the second reading was the cause.
 - **The debugging-port launch** that a hardened release needs is named in the
   engine's types and has never been built. RStudio no longer needs it: since
   2026-09-28 a copy of its release with two fuses switched back on launches
@@ -562,7 +569,10 @@ column mpg", "Toggle summary for column mpg", "Pin column mpg", "Hide
 column mpg", "Filter column mpg" and "Sort column mpg ascending", and so on
 for each. They are 69 of about 143 page candidates while the viewer is open,
 so a uniform draw sends about 36% of all Hops to them. Each does something,
-so this is crowding rather than dead clicks. Raised in the words "Phileas
+so this is crowding rather than dead clicks. Since only what shows is
+offered, on 2026-10-15, 39 of the 69 show when the viewer opens, and the
+other 30 are out of sight in its column list, measured with `phileas
+survey` and the `data-viewer` Fix. Raised in the words "Phileas
 will be spending a lot of time sorting and filtering data viewer columns",
 and, against a share of the draw for frames, which was laid out, "with
 help, these are different controls, while with the data viewer, it's the
@@ -582,16 +592,16 @@ weighting the draw, stage 5.
 
 **A document of thousands of links, measured on RStudio on 2026-10-12.**
 Help showing the manual "Writing R Extensions" holds 7,581 links in its
-frame, a snapshot of 2.9 MB, and every one is offered, since a control
-scrolled out of sight counts as reachable. A Route there draws a Help link
-on nearly every page Hop, the data viewer's crowding many times over, and
-each pool written to the journal carries every link. Asked to be dealt with
+frame, a snapshot of 2.9 MB, and 5,297 of them were offered then, since a
+control scrolled out of sight counted as reachable. Asked to be dealt with
 soon, in the words "Make a note that we need to deal with the large number
-of links soon." Most of them are scrolled out of sight, and R32 was
-corrected the same day to offer only what shows, which `DEFECTS.md`
-carries until it is built. Whether what remains in view still crowds a
-Route is to be measured then. The survey taking 45 minutes on that page
-was a separate defect, repaired the same day; `HISTORY.md` has it.
+of links soon," which meant, said on 2026-10-15 close to how it was put,
+not seeing or recording thousands of links that are not seen. **Since
+2026-10-15 only what shows is offered (R32),** and the rest is counted on
+the pool, never named; `HISTORY.md` has it, with what that page offers
+now. Whether what remains in view still crowds a Route is still to be
+measured on a run. The survey taking 45 minutes on that page was a separate
+defect, repaired on 2026-10-12.
 
 ### 1.16 What the engine asks of a consumer's Playwright
 
@@ -895,6 +905,24 @@ and a run's heading says the same only where its Routes differ. It belongs
 in the reading of a journal that the page and `phileas show` share,
 `journalSteps` and the renderer in `src/report/render.mjs`, so both say it
 alike, rather than in the page alone.
+
+### 1.27 Eighty Days under its candidate floor, once only what shows is offered
+
+`DEMO_PLAN_EIGHTY_DAYS.md` sets a floor: every place offers at least a dozen
+page candidates across at least four roles, and no screen outside a dialog
+fewer than eight, and "a screen under the floor is widened rather than
+excused". Since 2026-10-15 only what shows is offered (R32), and part of
+some screens is below the game's window of 1280 by 800: at Fort Kearney, 9
+controls. The default Journey from Hong Kong then measured a median of 12
+page candidates a Hop under its seed `aouda`, and 9 under `carnatic`,
+against 13 on 2026-09-28; the least under `aouda` was 5, on a screen not
+yet identified.
+Asked to be recorded here on 2026-10-15. Not measured: the floor place by
+place, which `measure.mjs` does not yet print. Not decided: widening the
+screens that fall short, which changes the game's layout to suit what the
+engine cannot yet do and so meets the plan's rule against the demo
+flattering the engine, or waiting for scrolling as a move of its own
+(1.9), which would reach what is below the window as a person does.
 
 ## 2. Undecided
 

@@ -6,10 +6,12 @@
 // what a seed does, so a change of that kind means searching again.
 // Searched again on 2026-10-03, when the menu began to be drawn a level at a
 // time: passepartout then gave one win and two losses. carnatic was the
-// eighth seed tried, and the first since to show all three fates: Route 1
-// lost at Trip hop 100, Route 2 won at 126, and Route 3 was still going; Route
-// 1 alone retraced all 150 Hops.
-export const DEMO_SEED = 'carnatic';
+// eighth seed tried, and the first since to show all three fates. Searched
+// again on 2026-10-15, when only what shows began to be offered: carnatic
+// then gave one loss and two still going. aouda was the second seed tried:
+// Route 1 lost at Trip hop 131, Route 2 won at 123, and Route 3 was still
+// going; Route 1 alone retraced all 150 Hops.
+export const DEMO_SEED = 'aouda';
 export const TRIP_LENGTH = 150;
 export const REPLAY_ROUTE = 1;
 
@@ -20,18 +22,24 @@ export const REPLAY_ROUTE = 1;
 // time: five moved and still met their bug, at the Hops below, and
 // set-out-confirm's mudge no longer met it in 60 Hops, so stuart was searched
 // for, the sixth seed tried. The other three met theirs where they had.
+// Measured again on 2026-10-15, when only what shows began to be offered:
+// kiouni-throw's moved from hop 9 to 25 and still met its bug, and three met
+// theirs no longer, so each was searched for again, from the same list of
+// names: sail-console-error's mudge was the fourth tried, coal-hang's kiouni
+// the third, and carnatic-log-error's stuart the fifth. The other four met
+// theirs where they had.
 // A seed was searched for, never steered: the Route found the bug by its own
 // draws. bradshaw-trap strands rather than fails, so its hop is where the
 // Route ran out of moves. The same warning as above applies, and harder:
 // these seeds were not chosen to be robust, only to reach their bug once.
 export const PLANT_SEEDS = {
-  'kiouni-throw': { fix: 'kholby', seed: 'fogg', tripLength: 40, hop: 9 },
+  'kiouni-throw': { fix: 'kholby', seed: 'fogg', tripLength: 40, hop: 25 },
   'export-throw': { fix: 'hong-kong', seed: 'fogg', tripLength: 80, hop: 67 },
-  'sail-console-error': { fix: 'fort-kearney', seed: 'kiouni', tripLength: 40, hop: 1 },
-  'coal-hang': { fix: 'new-york', seed: 'aouda', tripLength: 40, hop: 5 },
+  'sail-console-error': { fix: 'fort-kearney', seed: 'mudge', tripLength: 40, hop: 14 },
+  'coal-hang': { fix: 'new-york', seed: 'kiouni', tripLength: 40, hop: 2 },
   'blank-club': { fix: 'london', seed: 'fogg', tripLength: 30, hop: 13 },
   'set-out-confirm': { fix: 'reform-club', seed: 'stuart', tripLength: 60, hop: 2 },
-  'carnatic-log-error': { fix: 'hong-kong', seed: 'aouda', tripLength: 60, hop: 5 },
+  'carnatic-log-error': { fix: 'hong-kong', seed: 'stuart', tripLength: 60, hop: 5 },
   'bradshaw-trap': { fix: 'hong-kong', seed: 'fogg', tripLength: 80, hop: 12 },
 };
 
@@ -42,10 +50,13 @@ export const PLANT_SEEDS = {
 // reached. Of five seeds tried, three gave two findings and two gave one, since
 // Export the ledger is on offer at every Hop and ends most Routes first.
 // Measured again on 2026-10-03, when the menu began to be drawn a level at a
-// time: the same, export-throw 4 times and carnatic-log-error once.
+// time: the same, export-throw 4 times and carnatic-log-error once. Searched
+// again on 2026-10-15, when only what shows began to be offered, since mudge
+// then met export-throw alone, on all five Routes: aouda, the second tried,
+// met export-throw on three Routes and carnatic-log-error on two.
 export const SEVERAL = {
   fix: 'hong-kong',
-  seed: 'mudge',
+  seed: 'aouda',
   routes: 5,
   tripLength: 150,
   plants: ['carnatic-log-error', 'export-throw', 'sail-console-error', 'coal-hang'],

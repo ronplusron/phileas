@@ -167,6 +167,9 @@ export {
   type UnnamedElement,
   type ExcludedCandidate,
   type ExclusionTally,
+  outOfSightCounts,
+  type OutOfSightCandidate,
+  type OutOfSightCount,
 } from './survey.js';
 export {
   Journal,

@@ -1,5 +1,5 @@
 import type { ElectronApplication, Page } from '@playwright/test';
-import { createExclusionTally, createTest, survey } from '@drugstoresushi/phileas';
+import { createExclusionTally, createTest, outOfSightCounts, survey } from '@drugstoresushi/phileas';
 import { readFramed } from '../../../dist/frames.js';
 import { rstudio } from '../phileas/adapter';
 
@@ -50,14 +50,26 @@ async function measure(page: Page, app: ElectronApplication, label: string): Pro
   }
   for (const frame of page.frames()) {
     const links = await frame.locator('a').count().catch(() => -1);
-    say(`  frame ${frame.url().slice(0, 80)}: ${links} <a> elements`);
+    // A count apart from the survey's own test (R32): links whose box meets
+    // the frame's view at all, by plain geometry.
+    const inView = await frame
+      .evaluate(() =>
+        [...document.querySelectorAll('a')].filter((link) => {
+          const box = link.getBoundingClientRect();
+          return box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 && box.top < window.innerHeight && box.left < window.innerWidth;
+        }).map((link) => `${link.getAttribute('href') ?? '(no href)'} "${(link.textContent ?? '').trim().slice(0, 30)}"`)
+      )
+      .catch(() => undefined);
+    const seen = Array.isArray(inView) ? inView : [];
+    say(`  frame ${frame.url().slice(0, 80)}: ${links} <a> elements, ${seen.length} meeting its view${seen.length && seen.length < 5 ? `: ${seen.join(', ')}` : ''}`);
   }
   const found = await capped('survey, timeout 3 s per read', () =>
     survey({ page, app, exclusions: rstudio.exclusions, hopIndex: 0, tally: createExclusionTally(rstudio.exclusions), timeoutMs: 3_000 })
   );
   if (found) {
     const framed = found.candidates.filter((candidate) => candidate.source === 'page' && candidate.frame).length;
-    say(`  survey: ${found.candidates.length} candidates, ${framed} in frames, ${found.excluded.length} excluded, ${found.covered.length} covered, ${found.hidden.length} hidden, unread ${JSON.stringify(found.unreadFrames)}`);
+    say(`  survey: ${found.candidates.length} candidates, ${framed} in frames, ${found.excluded.length} excluded, ${found.covered.length} covered, ${found.hidden.length} hidden, ${found.outOfSight.length} out of sight, unread ${JSON.stringify(found.unreadFrames)}`);
+    for (const entry of outOfSightCounts(found.outOfSight)) say(`  out of sight: ${JSON.stringify(entry)}`);
   }
 }
 

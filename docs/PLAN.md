@@ -1178,9 +1178,9 @@ Positron's webviews.
 
 **Offering only what shows, placed on 2026-10-12,** before stage 5, on a
 branch of its own once the repair of the slow survey merges. R32 was
-corrected that day to its own words, and the engine still offers a control
-scrolled out of sight, which `DEFECTS.md` carries. Proposed with the
-correction and taken with "YES".
+corrected that day to its own words, and the engine then still offered a
+control scrolled out of sight. Proposed with the correction and taken with
+"YES". **Built on 2026-10-15;** `HISTORY.md` has it. Stage 5 is next.
 
 ### After the trial: weighting the draw toward new targets
 

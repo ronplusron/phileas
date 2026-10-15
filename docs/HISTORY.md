@@ -25,6 +25,80 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-15: only what shows is offered
+
+**Why.** R32 was corrected on 2026-10-12 to offer only what a person could
+see, after Help showing "Writing R Extensions" put 5,297 links in one pool,
+nearly all scrolled out of sight. The survey had kept such a control since
+2026-09-30, on the reading that a click scrolls it into view, which is true
+of Playwright and not of a person. The note asking for "the large number of
+links" to be dealt with meant, said this day close to how it was put, not
+seeing or recording thousands of links that are not seen.
+
+**What landed.**
+- **A control no part of which shows is out of sight** (`src/survey.ts`):
+  wholly outside the window, outside a container around it that clips what
+  it holds, or outside a frame's view, or in a frame that is. It leaves the
+  pool, as a covered or hidden one does. A control partly in view stays. A
+  control with no box of its own goes with the one it sits inside, as it
+  already did for covered and hidden ones, and now does for what the
+  documents around a frame decide too, which it did not before. One with
+  no area reached through its label is out of sight when every label is.
+- **Counted, never named.** Chosen from three ways offered: a count for each
+  frame and each thing keeping controls out of sight, over every control by
+  name and over one count per screen. That thing is the innermost container
+  that leaves none of the control showing, else the window or the frame's
+  view, so a pane scrolled away from its contents is named even where they
+  run past the window too. A container is described by its tag and
+  attributes and not its text, found while testing it: a pane's text is
+  usually the names of the very controls it hides. The pool records the
+  counts as `outOfSight`, part of its id where present, so no earlier id
+  changes; `phileas survey` prints a line per count; a page with nothing
+  else strands, counting them; and a Fix step naming one fails, saying it
+  is out of sight and that a `code` step would have to bring it into view.
+- **Tests moved with it.** Three tests had held such controls in the draw
+  and now hold them out of sight. The frames tests placed their frames at
+  the end of `buggy`'s page, which in its window of 900 by 608 left all but
+  71 pixels of each below the window, so they now place them in it.
+  `buggy`'s own controls all show, so its pools and pinned seeds do not
+  move.
+- **The demos' seeds, run again.** Rail Itinerary's three plant seeds and
+  its several-at-once section met their bugs where they had. Of Eighty
+  Days' eight plant seeds, four met theirs where they had, `kiouni-throw`'s
+  moved from Trip hop 9 to 25, and three no longer met theirs within their
+  Trips; run on `main`, all four met theirs where recorded, so this change
+  moved them. Its default seed, `carnatic`, gave one loss and two still
+  going, and its several-at-once seed, `mudge`, met one bug on all five
+  Routes. Each was searched for again, and `demo/eighty-days/seeds.mjs`
+  has the new seeds and what each did; the default's Route 1 retraced all
+  150 Hops. At Fort Kearney, where `sail-console-error` starts, 9 of the
+  screen's controls were below the game's window, and they had been in the
+  draw. The default Journey's page candidates a Hop came to a median of 9
+  under `carnatic` and 12 under `aouda`, against 13 measured on 2026-09-28.
+
+**Measured on RStudio 2026.10.0,** with
+`trial/rstudio/probes/help-survey-time.spec.ts`, which now also counts the
+links meeting each frame's view by plain geometry, apart from the survey's
+own test. Help showing "Writing R Extensions": 7,581 links in its frame,
+246 excluded as leaving the application, and of the 5,297 offered on
+2026-10-12, none now, all counted out of sight by the frame's view. The
+plain count found one link meeting the view, the "¶" beside the heading,
+which the manual shows only under the pointer. The survey took 6.6 s, as
+it did after the repair of 2026-10-12. Help's home page, the control,
+offers 16 links from its frame, with 17 meeting its view. The data viewer,
+read with `phileas survey` and the `data-viewer` Fix: 39 of its frame's 69
+controls show when it opens, and 30 are out of sight in its column list.
+
+**Found on the way: an RStudio adapter repair.** The first run of the probe
+failed before the workbench on Update Available, RStudio 2026.10.0 build
+233 being out while the copy is build 232. The second got past launch and
+met the same dialog over Help: the survey read only the dialog, and the
+probe's own click failed under its backdrop. The third, with the check
+off, met it at neither point. So the update check runs in the background and can interrupt any
+Route, and the adapter now sets `check_for_updates` off before launch,
+the name taken from the release's own `user-prefs-schema.json`. Fixed on
+this branch rather than its own, since it stopped the measurement.
+
 ## 2026-10-14: optional checks, the first of them WCAG, and each check chosen by adapter, Journey or run
 
 **Why.** A WCAG accessibility check was built inside RStudio's adapter on

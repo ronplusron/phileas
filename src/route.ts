@@ -43,8 +43,10 @@ import {
   neverMatched,
   survey,
   NondeterministicExclusion,
+  outOfSightCounts,
   takesTypedValue,
   type MenuCandidate,
+  type OutOfSightCount,
   type SurveyedCandidate,
   type SurveyResult,
   type ExclusionTally,
@@ -726,11 +728,22 @@ export function surveyLines(found: SurveyResult): string[] {
     ...found.excluded.map((entry) => `${targetText(entry.candidate)}   (excluded: ${entry.rule})`),
     ...found.covered.map((entry) => `${targetText(journaled(entry.candidate))}   (covered by ${entry.by})`),
     ...found.hidden.map((entry) => `${targetText(journaled(entry.candidate))}   (hidden: ${entry.by} has no area)`),
+    ...outOfSightCounts(found.outOfSight).map(outOfSightText),
     ...found.unreadFrames.map(
       (entry) => `${entry.path.map(frameText).join(' > ')}   (not read: ${entry.reason})`
     ),
     ...(keys.length ? [`and the common keys: ${keys.join(', ')}`] : []),
   ];
+}
+
+/**
+ * How many controls one thing keeps out of sight, as a line: counted, never
+ * named, so a long page's unseen links stay unseen; see
+ * `OutOfSightCandidate`.
+ */
+function outOfSightText(entry: OutOfSightCount): string {
+  const where = entry.frame?.length ? `${entry.frame.map(frameText).join(' > ')} > ` : '';
+  return `${where}${entry.count} control(s)   (out of sight: scrolled out of ${entry.by})`;
 }
 
 /** Read whether to follow, refusing anything but on or off. */
@@ -1142,7 +1155,8 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         found.hidden.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
         found.layered.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
         found.labeled.map((entry) => ({ candidate: journaled(entry.candidate), by: entry.by })),
-        found.unreadFrames
+        found.unreadFrames,
+        outOfSightCounts(found.outOfSight)
       );
 
       span.endedAt = Date.now();
@@ -1277,6 +1291,18 @@ function strandedReason(found: SurveyResult): string {
       `No candidate was available on the page. ${found.hidden.length} control(s) were found hidden ` +
       `inside something with no area, so no person could see them: ` +
       `${found.hidden.map((entry) => `${targetText(journaled(entry.candidate))} inside ${entry.by}`).join('; ')}.`
+    );
+  }
+  // Everything left is scrolled out of sight, and reaching it takes a scroll,
+  // which is not a move yet (R32, docs/OUTSTANDING.md 1.9). Counted, never
+  // named, as everywhere else.
+  if (found.outOfSight.length) {
+    return (
+      `No candidate was available on the page. ${found.outOfSight.length} control(s) were scrolled ` +
+      `out of sight, and scrolling is not a move yet: ` +
+      `${outOfSightCounts(found.outOfSight)
+        .map((entry) => `${entry.count} out of ${entry.by}${entry.frame?.length ? ` in ${entry.frame.map(frameText).join(' > ')}` : ''}`)
+        .join('; ')}.`
     );
   }
   // Menu exclusions fire on every hop, so they say nothing about this page.
@@ -1498,10 +1524,11 @@ async function runFix(
     }
     if (!match) {
       const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
-      // Waited for like a target not yet drawn, since a cover can go away and
-      // a hidden pane can come back; named if neither did.
+      // Waited for like a target not yet drawn, since a cover can go away, a
+      // hidden pane can come back and a page can scroll; named if none did.
       const under = found.covered.find((entry) => targetText(journaled(entry.candidate)) === target);
       const inside = found.hidden.find((entry) => targetText(journaled(entry.candidate)) === target);
+      const away = found.outOfSight.find((entry) => targetText(journaled(entry.candidate)) === target);
       throw new Error(
         refused
           ? `${target} is on screen but excluded (${refused.rule}), so a Fix cannot act on it either.`
@@ -1509,6 +1536,9 @@ async function runFix(
           ? `${target} is on screen but covered by ${under.by} after ${hopTimeoutMs} ms, so a click cannot reach it.`
           : inside
           ? `${target} is in the page but hidden: ${inside.by} has no area, after ${hopTimeoutMs} ms, so no person could see it.`
+          : away
+          ? `${target} is in the page but scrolled out of ${away.by} after ${hopTimeoutMs} ms, so no person could see it. ` +
+            `Scrolling is not a move yet, so a \`code\` step before this one would have to bring it into view.`
           : `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${found.candidates
               .filter((candidate) => !isCommonKey(candidate))
               .map((candidate) => targetText(journaled(candidate)))

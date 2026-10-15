@@ -1710,7 +1710,7 @@ test('a survey with many covered controls whose own test never answers waits one
   expect(silent.ms).toBeLessThan(3 * timeoutMs);
 });
 
-test('a cover that lets clicks through, and a control out of view, are not covered', async ({ page, app }) => {
+test('a cover that lets clicks through covers nothing, and a control out of sight is out of sight, not covered', async ({ page, app }) => {
   await coverWith(page, '#view-summary', 'pointer-events: none;');
   await page.evaluate(() => {
     const far = document.createElement('button');
@@ -1718,19 +1718,71 @@ test('a cover that lets clicks through, and a control out of view, are not cover
     far.style.cssText = 'position: absolute; top: 5000px; left: 10px;';
     document.body.append(far);
     // Out of sight inside a pane that scrolls, while its box is in the
-    // window: the pane is on top at its center, and the click would scroll
-    // it into view. Measured on Bobolink Editor's preview pane.
+    // window: the pane is on top at its center, which once read as covered.
+    // Measured on Bobolink Editor's preview pane.
     const pane = document.createElement('div');
-    pane.style.cssText = 'position: fixed; bottom: 10px; left: 10px; width: 120px; height: 40px; overflow: auto;';
-    pane.innerHTML = '<div style="height: 60px"></div><button>Scrolled away</button>';
+    pane.id = 'probe-scroller';
+    pane.style.cssText = 'position: fixed; top: 300px; left: 10px; width: 120px; height: 40px; overflow: auto;';
+    pane.innerHTML =
+      '<button>Half in view</button><div style="height: 60px"></div><button>Scrolled away</button>';
     document.body.append(pane);
+    // The positive control: partly in the pane's view, so it shows.
+    const half = pane.querySelector('button') as HTMLElement;
+    half.style.cssText = 'position: relative; top: 30px;';
   });
   const found = await surveyed(page, app);
   const names = found.candidates.filter((c) => c.source === 'page').map((c) => c.name);
-  expect(names).toEqual(expect.arrayContaining(['Summary', 'Far below', 'Scrolled away']));
-  for (const name of ['Summary', 'Far below', 'Scrolled away']) {
+  expect(names).toEqual(expect.arrayContaining(['Summary', 'Half in view']));
+  // R32: no part of either shows, so neither is offered, and neither is covered.
+  expect(names).not.toContain('Far below');
+  expect(names).not.toContain('Scrolled away');
+  for (const name of ['Summary', 'Half in view', 'Far below', 'Scrolled away']) {
     expect(found.covered.some((entry) => entry.candidate.name === name), name).toBe(false);
   }
+  const away = new Map(found.outOfSight.map((entry) => [entry.candidate.name, entry.by]));
+  expect(away.get('Far below')).toBe('the window');
+  expect(away.get('Scrolled away')).toMatch(/^<div id="probe-scroller">/);
+  expect(away.has('Half in view')).toBe(false);
+});
+
+test('controls out of sight are counted, never named, where a survey is printed and journaled', async ({ page, app }) => {
+  // Chosen on 2026-10-15: a long page's unseen links are neither seen nor
+  // recorded, only counted by what keeps them out of sight. The pane is
+  // described without its text, which would name them.
+  await page.evaluate(() => {
+    const pane = document.createElement('div');
+    pane.id = 'probe-unseen';
+    pane.style.cssText = 'position: fixed; top: 300px; right: 10px; width: 160px; height: 40px; overflow: auto;';
+    pane.innerHTML =
+      '<button>Seen first</button><div style="height: 80px"></div>' +
+      Array.from({ length: 30 }, (_unused, index) => `<button>Unseen ${index + 1}</button><br>`).join('');
+    document.body.append(pane);
+  });
+  const found = await surveyed(page, app);
+  const lines = surveyLines(found);
+  expect(lines.some((line) => line.includes('Unseen'))).toBe(false);
+  expect(lines).toContain('30 control(s)   (out of sight: scrolled out of <div id="probe-unseen">)');
+  // The control: what shows is still printed by name.
+  expect(lines).toContain('button "Seen first"');
+
+  const dir = scratch();
+  const streams = deriveRouteStreams('out-of-sight-seed', 1);
+  await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams,
+    journeySeed: 'out-of-sight-seed',
+    routeNumber: 1,
+    tripLength: 1,
+    journalsRoot: dir,
+  });
+  const pools = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`)).filter(
+    (entry) => entry.kind === 'pool'
+  );
+  expect(pools.length).toBeGreaterThan(0);
+  expect(JSON.stringify(pools)).not.toContain('Unseen');
+  expect(pools[0]?.kind === 'pool' && pools[0].outOfSight).toContainEqual({ by: '<div id="probe-unseen">', count: 30 });
 });
 
 test('a covered text box leaves the draw, and a covered control\'s shortcut does not', async ({ page, app }) => {
@@ -1994,17 +2046,20 @@ test('a control hidden inside something with no area leaves the draw, and is rec
     found.candidates.filter((c) => c.source === 'page').map((c) => c.name);
 
   // The positive control: the same pane with room in it offers what shows,
-  // and keeps the one out of the window as scrolled away, hiding nothing.
+  // and finds the one out of the window out of sight, hiding nothing.
   await paneOf(page, 200);
   const open = await surveyed(page, app);
-  expect(names(open)).toEqual(expect.arrayContaining(['Zoomed away', 'Zoomed far']));
+  expect(names(open)).toContain('Zoomed away');
+  expect(open.outOfSight.map((entry) => entry.candidate.name)).toContain('Zoomed far');
   expect(open.hidden).toEqual([]);
 
   await paneOf(page, 0);
   const zoomed = await surveyed(page, app);
   expect(names(zoomed)).not.toContain('Zoomed away');
   expect(names(zoomed)).not.toContain('Zoomed far');
+  // Hidden whatever else keeps it out of sight, since no scroll could show it.
   expect(zoomed.hidden.map((entry) => entry.candidate.name).sort()).toEqual(['Zoomed away', 'Zoomed far']);
+  expect(zoomed.outOfSight.some((entry) => entry.candidate.name.startsWith('Zoomed'))).toBe(false);
   for (const entry of zoomed.hidden) expect(entry.by).toMatch(/^<div id="probe-pane">/);
   expect(zoomed.covered).toEqual([]);
   // The rest of the page is still offered.
@@ -2031,7 +2086,9 @@ test('a page whose html has no area and clips hides nothing', async ({ page, app
   const found = await surveyed(page, app);
   expect(found.hidden).toEqual([]);
   const names = found.candidates.filter((c) => c.source === 'page').map((c) => c.name);
-  expect(names).toEqual(expect.arrayContaining(['Summary', 'Far left']));
+  expect(names).toContain('Summary');
+  // Out of the window, so out of sight, and by the window rather than the html.
+  expect(found.outOfSight.find((entry) => entry.candidate.name === 'Far left')?.by).toBe('the window');
 });
 
 test('a covered control is found when the html has no area and clips', async ({ page, app }) => {
@@ -2204,6 +2261,67 @@ test('a control with no area is covered when its label is, and hidden when no la
   expect(surveyLines(bare).find((line) => line.startsWith('radio "R Project"'))).toMatch(/\(hidden: <input .* has no area\)/);
 });
 
+
+test('an option inside a dropdown out of sight, and a control whose label is out of sight, are out of sight', async ({ page, app }) => {
+  await page.evaluate(() => {
+    const pane = document.createElement('div');
+    pane.id = 'probe-scroller';
+    pane.style.cssText = 'position: fixed; top: 300px; left: 10px; width: 300px; height: 40px; overflow: auto;';
+    pane.innerHTML =
+      '<div style="height: 80px"></div>' +
+      '<select aria-label="Far dropdown"><option>Far option one</option><option>Far option two</option></select>' +
+      '<label style="display: block; width: 100px; height: 30px;">' +
+      '<input type="radio" aria-label="Far radio" style="appearance: none; display: block; width: 0; height: 0; margin: 0; padding: 0; border: 0;">' +
+      '<span>Far card</span></label>';
+    document.body.append(pane);
+  });
+  const found = await surveyed(page, app);
+  const away = new Map(found.outOfSight.map((entry) => [entry.candidate.name, entry.by]));
+  // An option has no box of its own, so it goes with its dropdown.
+  for (const name of ['Far dropdown', 'Far option one', 'Far option two', 'Far radio']) {
+    expect(away.get(name), name).toBe('<div id="probe-scroller">');
+    expect(found.candidates.some((c) => c.name === name), name).toBe(false);
+  }
+  expect(found.labeled).toEqual([]);
+  expect(found.covered.some((entry) => entry.candidate.name.startsWith('Far '))).toBe(false);
+
+  // The control: scrolled into the pane's view, each is offered again, the
+  // radio through its label.
+  await page.evaluate(() => {
+    document.getElementById('probe-scroller')!.style.height = '200px';
+  });
+  const shown = await surveyed(page, app);
+  for (const name of ['Far dropdown', 'Far option one', 'Far option two', 'Far radio']) {
+    expect(shown.candidates.some((c) => c.name === name), name).toBe(true);
+  }
+  expect(shown.outOfSight).toEqual([]);
+});
+
+test('a page with every control out of sight strands, counting them and naming none', async ({ page, app }) => {
+  await page.evaluate(() => {
+    const pane = document.createElement('div');
+    pane.id = 'probe-scroller';
+    pane.style.cssText = 'height: 100vh; overflow: auto;';
+    const spacer = document.createElement('div');
+    spacer.style.height = '200vh';
+    pane.append(spacer, ...Array.from(document.body.childNodes));
+    document.body.append(pane);
+  });
+  const outcome = await runRoute({
+    page,
+    app,
+    cfg: buggy,
+    streams: deriveRouteStreams('out-of-sight-seed', 1),
+    journeySeed: 'out-of-sight-seed',
+    routeNumber: 1,
+    tripLength: 3,
+    journalsRoot: scratch(),
+  });
+  expect(outcome).toMatchObject({ kind: 'stranded', hops: 0 });
+  const reason = outcome.kind === 'stranded' ? outcome.reason : '';
+  expect(reason).toMatch(/control\(s\) were scrolled out of sight, and scrolling is not a move yet: \d+ out of <div id="probe-scroller">\./);
+  expect(reason).not.toMatch(/Summary|Inventory/);
+});
 
 test('a page with every control hidden strands, naming what hides them', async ({ page, app }) => {
   await page.evaluate(() => {

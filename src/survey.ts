@@ -324,6 +324,65 @@ export interface HiddenCandidate {
 }
 
 /**
+ * A page control left out of the draw because no part of it shows: scrolled
+ * out of sight in the window, in a pane, or in a frame's view (R32), and what
+ * keeps it there.
+ *
+ * **Counted, never listed,** wherever a survey is written down or printed;
+ * see `outOfSightCounts`. Corrected on 2026-10-12, R32 offers only what a
+ * person could see, and reaching the rest takes a scroll, which is a move of
+ * its own (docs/OUTSTANDING.md 1.9). Measured on RStudio 2026.10.0: Help
+ * showing "Writing R Extensions" put 5,297 links from its frame in one pool,
+ * nearly all out of sight, and none of them is to be seen or recorded,
+ * asked for close to how it is put here: "I don't want to see and record
+ * thousands of links that aren't seen." Chosen on 2026-10-15 from three ways to record them:
+ * a count for each thing that keeps them out of sight, over each control by
+ * name and over one count for the whole screen.
+ */
+export interface OutOfSightCandidate {
+  readonly candidate: PageCandidate;
+  /**
+   * What keeps it out of sight: a view, as `viewOf` names one, or the
+   * container that clips it, described as a covering element is but without
+   * its text, which would name the very controls it keeps out of sight.
+   */
+  readonly by: string;
+}
+
+/** How many controls one thing keeps out of sight, as a pool records and a survey prints them. */
+export interface OutOfSightCount {
+  /** The frames they sit inside, outermost first; absent for the window's own page. */
+  readonly frame?: readonly FrameName[];
+  readonly by: string;
+  readonly count: number;
+}
+
+/**
+ * The controls a survey left out as out of sight, counted for each frame and
+ * each thing that keeps them there, in the order first met.
+ */
+export function outOfSightCounts(outOfSight: readonly OutOfSightCandidate[]): OutOfSightCount[] {
+  const counts = new Map<string, { frame?: readonly FrameName[]; by: string; count: number }>();
+  for (const { candidate, by } of outOfSight) {
+    const key = JSON.stringify([candidate.frame ?? [], by]);
+    const entry = counts.get(key);
+    if (entry) entry.count += 1;
+    else counts.set(key, { ...(candidate.frame?.length ? { frame: candidate.frame } : {}), by, count: 1 });
+  }
+  return [...counts.values()];
+}
+
+/**
+ * A document's view, as an out-of-sight control names what keeps it there:
+ * the window for the window's own page, and a frame's view for a frame's.
+ */
+function viewOf(path: readonly FrameName[]): string {
+  const last = path.at(-1);
+  if (!last) return 'the window';
+  return `the view of frame "${last.label}"${last.nth > 1 ? ` #${last.nth}` : ''}`;
+}
+
+/**
  * A text box kept in the draw although something lies on top of it, because
  * that something sits inside the text box's own parent, and what it is.
  *
@@ -381,6 +440,8 @@ export interface SurveyResult {
   readonly covered: readonly CoveredCandidate[];
   /** Page controls left out because the application has hidden them; see `outOfReachAmong`. */
   readonly hidden: readonly HiddenCandidate[];
+  /** Page controls left out because no part of them shows; see `OutOfSightCandidate`. Counted, never listed, where written down. */
+  readonly outOfSight: readonly OutOfSightCandidate[];
   /** Text boxes kept under a layer of their own widget; see `outOfReachAmong`. They are among `candidates`. */
   readonly layered: readonly LayeredCandidate[];
   /** Controls with no area reached through their label; see `outOfReachAmong`. They are among `candidates`, with `via` set. */
@@ -775,7 +836,7 @@ async function surveyWith(options: SurveyOptions, elements: Elements): Promise<S
   // tested. Before the draw, for the reason this function's comment gives.
   // Shortcuts were built from every control, covered or not: a key press
   // needs no clear spot to land on, except under a dialog, below.
-  const { covered, hidden, layered, labeled: reached } = await outOfReachInEachDocument(
+  const { covered, hidden, outOfSight, layered, labeled: reached } = await outOfReachInEachDocument(
     page,
     candidates.filter((c): c is PageCandidate => c.source === 'page'),
     timeoutMs,
@@ -793,8 +854,8 @@ async function surveyWith(options: SurveyOptions, elements: Elements): Promise<S
     const [first] = covers;
     if (first && covers.every(Boolean)) covered.push({ candidate, by: first.by, underDialog: true });
   }
-  if (covered.length || hidden.length) {
-    const out = new Set<SurveyedCandidate>([...covered, ...hidden].map((entry) => entry.candidate));
+  if (covered.length || hidden.length || outOfSight.length) {
+    const out = new Set<SurveyedCandidate>([...covered, ...hidden, ...outOfSight].map((entry) => entry.candidate));
     candidates.splice(0, candidates.length, ...candidates.filter((c) => !out.has(c)));
   }
   // A control reached through its label keeps its place in the draw, with
@@ -811,6 +872,7 @@ async function surveyWith(options: SurveyOptions, elements: Elements): Promise<S
     excluded,
     covered,
     hidden,
+    outOfSight,
     layered,
     labeled,
     unnamed,
@@ -827,7 +889,7 @@ async function surveyWith(options: SurveyOptions, elements: Elements): Promise<S
 }
 
 /**
- * The covered, hidden, layered and labeled controls, each frame's tested in
+ * The covered, hidden, out-of-sight, layered and labeled controls, each frame's tested in
  * its own document, and a frame's then tested again in each document it sits
  * inside: the frame itself must be on top there, at the control's point.
  * Decided on 2026-10-09. A page with no frames is tested as it always was,
@@ -851,18 +913,29 @@ async function outOfReachInEachDocument(
     [...groups].map(async ([where, group]) => {
       const inside = await outOfReachAmong(where, group, timeoutMs, elements);
       if (where === main) return inside;
-      const out = new Set<PageCandidate | KeyCandidate>([...inside.covered, ...inside.hidden].map((entry) => entry.candidate));
+      const out = new Set<PageCandidate | KeyCandidate>(
+        [...inside.covered, ...inside.hidden, ...inside.outOfSight].map((entry) => entry.candidate)
+      );
       const outside = await throughFrames(
         where,
         group.filter((control) => !out.has(control)),
         timeoutMs
       );
-      return { ...inside, covered: [...inside.covered, ...outside.covered], hidden: [...inside.hidden, ...outside.hidden] };
+      const found = {
+        covered: [...inside.covered, ...outside.covered],
+        hidden: [...inside.hidden, ...outside.hidden],
+        outOfSight: [...inside.outOfSight, ...outside.outOfSight],
+      };
+      // What the frame's own document decided is carried in already; this
+      // carries in what the documents around it decided too.
+      carryInward(group, new Set(inside.labeled.map((entry) => entry.candidate)), found);
+      return { ...inside, ...found };
     })
   );
   return {
     covered: results.flatMap((result) => result.covered),
     hidden: results.flatMap((result) => result.hidden),
+    outOfSight: results.flatMap((result) => result.outOfSight),
     layered: results.flatMap((result) => result.layered),
     labeled: results.flatMap((result) => result.labeled),
   };
@@ -875,40 +948,47 @@ async function outOfReachInEachDocument(
  * container there that clips what it holds and has no area. Tested from the
  * frame's own document outward, one call per document, with the part of each
  * control that shows carried out through each frame. A control scrolled out
- * of a frame's view, or a frame scrolled out of sight, is kept, since the
- * click scrolls it into view, and so is one this cannot answer for, as in
- * `outOfReachAmong`.
+ * of a frame's view, or in a frame scrolled out of sight, is out of sight
+ * (R32), as in `outOfReachAmong`; one this cannot answer for is kept.
  */
 async function throughFrames(
   where: Frame,
   controls: readonly PageCandidate[],
   timeoutMs: number | undefined
-): Promise<{ covered: CoveredCandidate[]; hidden: HiddenCandidate[] }> {
+): Promise<{ covered: CoveredCandidate[]; hidden: HiddenCandidate[]; outOfSight: OutOfSightCandidate[] }> {
   const covered: CoveredCandidate[] = [];
   const hidden: HiddenCandidate[] = [];
+  const outOfSight: OutOfSightCandidate[] = [];
+  // Every control here shares a document, so one path names its frames.
+  const path = controls[0]?.frame ?? [];
   let rects: (Box | null)[] = controls.map((control) => (control.box && hasArea(control.box) ? control.box : null));
-  for (let child = where, parent = where.parentFrame(); parent; child = parent, parent = parent.parentFrame()) {
+  for (
+    let child = where, parent = where.parentFrame(), depth = path.length;
+    parent;
+    child = parent, parent = parent.parentFrame(), depth -= 1
+  ) {
     if (!rects.some(Boolean)) break;
     const frameChild = child;
+    const views = { own: viewOf(path.slice(0, depth)), parent: viewOf(path.slice(0, depth - 1)) };
     const verdicts = await answered(
       'a frame, asked what is drawn over it,',
       (async () => {
         const element = await frameChild.frameElement();
         try {
-          return await element.evaluate((handle, inside) => {
+          return await element.evaluate((handle, { inside, views }) => {
             const frame = handle as HTMLElement;
             const up = (node: Element): Element | null => {
               const root = node.getRootNode();
               return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
             };
-            const describe = (node: Element): string => {
+            const describe = (node: Element, withText = true): string => {
               const attributes = ['role', 'aria-label', 'id', 'class', 'title']
                 .map((name) => [name, node.getAttribute(name)] as const)
                 .filter(([, value]) => value)
                 .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
                 .join('');
               const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
-              return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
+              return `<${node.tagName.toLowerCase()}${attributes}>${withText ? text : ''}`;
             };
             // Where the frame's own document is drawn: inside its border and padding.
             const style = getComputedStyle(frame);
@@ -920,9 +1000,11 @@ async function throughFrames(
             const top = own.top + frame.clientTop + padTop;
             const width = frame.clientWidth - padLeft - padRight;
             const height = frame.clientHeight - padTop - padBottom;
-            // What of this document shows the frame: the window and every
-            // container that clips it, read as `outOfReachAmong` reads them.
-            let [x0, y0, x1, y1] = [0, 0, window.innerWidth, window.innerHeight];
+            // What of this document shows the frame: every container that
+            // clips it, innermost first, and then the window, read as
+            // `outOfReachAmong` reads them, each kept with what it is, to
+            // name the one that hides a control.
+            const clips: { x0: number; y0: number; x1: number; y1: number; by: string }[] = [];
             const rootStyle = getComputedStyle(document.documentElement);
             const bodyPassesUp = rootStyle.overflowX === 'visible' && rootStyle.overflowY === 'visible';
             for (let node = up(frame); node; node = up(node)) {
@@ -931,22 +1013,30 @@ async function throughFrames(
               if (clip.overflowX === 'visible' && clip.overflowY === 'visible') continue;
               const area = node.getBoundingClientRect();
               if (area.width < 1 || area.height < 1) return inside.map(() => ({ hidden: describe(node) }));
-              [x0, y0, x1, y1] = [Math.max(x0, area.left), Math.max(y0, area.top), Math.min(x1, area.right), Math.min(y1, area.bottom)];
+              clips.push({ x0: area.left, y0: area.top, x1: area.right, y1: area.bottom, by: describe(node, false) });
             }
-            return inside.map((rect): { hidden: string } | { covered: string; dialog: boolean } | { rect: { x: number; y: number; width: number; height: number } } | null => {
+            clips.push({ x0: 0, y0: 0, x1: window.innerWidth, y1: window.innerHeight, by: views.parent });
+            type Verdict =
+              | { hidden: string }
+              | { outOfSight: string }
+              | { covered: string; dialog: boolean }
+              | { rect: { x: number; y: number; width: number; height: number } }
+              | null;
+            return inside.map((rect): Verdict => {
               if (!rect) return null;
-              // Out of the frame's view: scrolled inside it, so the click scrolls it in.
+              // Out of the frame's view: scrolled away inside it (R32).
               const cx0 = Math.max(0, rect.x);
               const cy0 = Math.max(0, rect.y);
               const cx1 = Math.min(width, rect.x + rect.width);
               const cy1 = Math.min(height, rect.y + rect.height);
-              if (cx1 - cx0 < 1 || cy1 - cy0 < 1) return null;
-              const px0 = Math.max(x0, left + cx0);
-              const py0 = Math.max(y0, top + cy0);
-              const px1 = Math.min(x1, left + cx1);
-              const py1 = Math.min(y1, top + cy1);
-              // The frame scrolled out of sight here, which the click scrolls in too.
-              if (px1 - px0 < 1 || py1 - py0 < 1) return null;
+              if (cx1 - cx0 < 1 || cy1 - cy0 < 1) return { outOfSight: views.own };
+              // The frame itself out of sight here, at this control: named by
+              // the first of the containers and the window that leaves none of it.
+              let [px0, py0, px1, py1] = [left + cx0, top + cy0, left + cx1, top + cy1];
+              for (const clip of clips) {
+                [px0, py0, px1, py1] = [Math.max(px0, clip.x0), Math.max(py0, clip.y0), Math.min(px1, clip.x1), Math.min(py1, clip.y1)];
+                if (px1 - px0 < 1 || py1 - py0 < 1) return { outOfSight: clip.by };
+              }
               const [x, y] = [(px0 + px1) / 2, (py0 + py1) / 2];
               let onTop = document.elementFromPoint(x, y);
               while (onTop?.shadowRoot) {
@@ -963,7 +1053,7 @@ async function throughFrames(
                 dialog: onTop.closest('[role="dialog"], [role="alertdialog"], dialog') !== null,
               };
             });
-          }, rects);
+          }, { inside: rects, views });
         } finally {
           await element.dispose().catch(() => undefined);
         }
@@ -977,17 +1067,19 @@ async function throughFrames(
       const control = controls[index];
       if (!verdict || !control) return null;
       if ('hidden' in verdict) hidden.push({ candidate: control, by: verdict.hidden });
+      else if ('outOfSight' in verdict) outOfSight.push({ candidate: control, by: verdict.outOfSight });
       else if ('covered' in verdict) covered.push({ candidate: control, by: verdict.covered, ...(verdict.dialog ? { underDialog: true } : {}) });
       else return verdict.rect;
       return null;
     });
   }
-  return { covered, hidden };
+  return { covered, hidden, outOfSight };
 }
 
 /**
  * The controls something else is drawn over, at the point a click would land,
- * and those the application has hidden inside a container with no area.
+ * those the application has hidden inside a container with no area, and
+ * those scrolled out of sight.
  *
  * **Why.** The accessibility tree lists a control under another window or an
  * open menu as readily as one in plain view. A Hop drawn to one was refused by
@@ -1029,13 +1121,22 @@ async function throughFrames(
  * click; a text box, which a person reaches some other way if at all and is
  * unmeasured; and a control with something inside it that has area, as an
  * element laid out with `display: contents` has, which Playwright clicks.
+ * Where every label for it is scrolled out of sight, it is out of sight.
+ *
+ * **What counts as out of sight** is a control no part of which shows: wholly
+ * outside the window, or outside a container around it that clips what it
+ * holds, as a pane scrolled away from it does (R32). Until 2026-10-15 these
+ * were kept, on the reading that a click scrolls them into view, which is
+ * true of Playwright and not of a person, who sees nothing to click; R32
+ * was corrected on 2026-10-12 to its own words, and `OutOfSightCandidate`
+ * has the measurement. A control partly in view is kept. Each is recorded
+ * with the first of its containers, innermost first, and then the window,
+ * that leaves none of it.
  *
  * **What is kept untested:** a control with no box, unless it sits inside a
- * covered or hidden one, one wholly out of view or out of sight inside a
- * container that scrolls, since the click scrolls it in first, and one the
- * test cannot answer for. Each errs toward offering the control, which at
- * worst costs a timeout and a journaled reason, never a silently missing
- * control.
+ * covered, hidden or out-of-sight one, and one the test cannot answer for.
+ * Each errs toward offering the control, which at worst costs a timeout and
+ * a journaled reason, never a silently missing control.
  *
  * Two passes. One call tests every control by its box, which cannot know the
  * element, so it asks whether an element around the one on top has the
@@ -1052,12 +1153,15 @@ async function outOfReachAmong(
 ): Promise<{
   covered: CoveredCandidate[];
   hidden: HiddenCandidate[];
+  outOfSight: OutOfSightCandidate[];
   layered: LayeredCandidate[];
   labeled: (LabeledCandidate & { via: Locator })[];
 }> {
-  const labeled = await throughLabels(doc, controls, timeoutMs, elements);
+  // Every control here shares a document, so one path names its view.
+  const view = viewOf(controls[0]?.frame ?? []);
+  const labeled = await throughLabels(doc, controls, timeoutMs, elements, view);
   const tested = controls.filter((control) => control.box !== undefined && !labeled.decided.has(control));
-  if (!tested.length && !labeled.decided.size) return { covered: [], hidden: [], layered: [], labeled: [] };
+  if (!tested.length && !labeled.decided.size) return { covered: [], hidden: [], outOfSight: [], layered: [], labeled: [] };
 
   const suspects = await answered(
     'the page, asked what is on top of each control,',
@@ -1078,7 +1182,7 @@ async function outOfReachAmong(
         const x1 = Math.min(window.innerWidth, box.x + box.width);
         const y1 = Math.min(window.innerHeight, box.y + box.height);
         // Wholly outside the window: scrolled away, or hidden somewhere with
-        // no area, which only the element itself can say.
+        // no area, which only the element itself can tell apart.
         if (x1 - x0 < 1 || y1 - y0 < 1) return 'outside the window';
         const x = (x0 + x1) / 2;
         const y = (y0 + y1) / 2;
@@ -1117,6 +1221,7 @@ async function outOfReachAmong(
 
   const covered: CoveredCandidate[] = [...labeled.covered];
   const hidden: HiddenCandidate[] = [...labeled.hidden];
+  const outOfSight: OutOfSightCandidate[] = [...labeled.outOfSight];
   const layered: LayeredCandidate[] = [];
   // Every suspect in one call, with each element found once per role
   // (`Elements`), rather than one call per control. Measured on RStudio
@@ -1133,38 +1238,36 @@ async function outOfReachAmong(
   // Each is tested against the element itself, and at the center of the
   // part of it that shows: inside the window and inside every container
   // that clips it. A container that clips and has no area hides it, R32.
-  // Otherwise none showing means it is scrolled out of sight inside one of
-  // them, not covered, since the click scrolls it into view first; measured
-  // on Bobolink Editor on 2026-09-30, where a link in a preview pane read as
-  // covered by whatever was drawn where it would have been. A control this
-  // cannot reach, or a page that does not answer in time, stays in the draw.
+  // Otherwise none showing means it is scrolled out of sight, R32 too, and
+  // not covered; measured on Bobolink Editor on 2026-09-30, where a link in
+  // a preview pane read as covered by whatever was drawn where it would
+  // have been. A control this cannot reach, or a page that does not answer
+  // in time, stays in the draw.
   const asked = tested.filter((_control, index) => suspects[index]);
   const handles = await elements.of(asked);
   const answers = await answered(
     'the page, asked what is on top of each suspect control,',
     doc.evaluate(
-      ({ found, typedAll }) => {
-        const verdictOf = (element: Element, typed: boolean): { hidden: string } | { layered: string } | { covered: string; dialog: boolean } | null => {
+      ({ found, typedAll, view }) => {
+        const verdictOf = (
+          element: Element,
+          typed: boolean
+        ): { hidden: string } | { outOfSight: string } | { layered: string } | { covered: string; dialog: boolean } | null => {
             const up = (node: Element): Element | null => {
               const root = node.getRootNode();
               return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
             };
-            const describe = (node: Element): string => {
+            const describe = (node: Element, withText = true): string => {
               const attributes = ['role', 'aria-label', 'id', 'class']
                 .map((name) => [name, node.getAttribute(name)] as const)
                 .filter(([, value]) => value)
                 .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
                 .join('');
               const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
-              return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
+              return `<${node.tagName.toLowerCase()}${attributes}>${withText ? text : ''}`;
             };
             const own = element.getBoundingClientRect();
-            let [x0, y0, x1, y1] = [
-              Math.max(0, own.left),
-              Math.max(0, own.top),
-              Math.min(window.innerWidth, own.right),
-              Math.min(window.innerHeight, own.bottom),
-            ];
+            let [x0, y0, x1, y1] = [own.left, own.top, own.right, own.bottom];
             // The root's overflow, and the body's when the root's is visible and
             // it passes up, applies to the window, which is already the starting
             // box, rather than to the element's own box. RStudio's html is 1200
@@ -1172,6 +1275,13 @@ async function outOfReachAmong(
             // control there to nothing, so none could be found covered, and it
             // hid four working Console controls on the first try at R32.
             // Measured on 2026-10-02.
+            // Which of the containers, innermost first, and then the window
+            // first leaves none of it showing, to name what keeps it out of
+            // sight: a pane scrolled away from it, though its content runs
+            // past the window too, is the pane's doing. Every container is
+            // still walked, since one with no area hides it whatever the
+            // rest do.
+            let away: string | undefined;
             const rootStyle = getComputedStyle(document.documentElement);
             const bodyPassesUp = rootStyle.overflowX === 'visible' && rootStyle.overflowY === 'visible';
             for (let node = up(element); node; node = up(node)) {
@@ -1181,8 +1291,13 @@ async function outOfReachAmong(
               const clip = node.getBoundingClientRect();
               if (clip.width < 1 || clip.height < 1) return { hidden: describe(node) };
               [x0, y0, x1, y1] = [Math.max(x0, clip.left), Math.max(y0, clip.top), Math.min(x1, clip.right), Math.min(y1, clip.bottom)];
+              if (away === undefined && (x1 - x0 < 1 || y1 - y0 < 1)) away = describe(node, false);
             }
-            if (x1 - x0 < 1 || y1 - y0 < 1) return null;
+            [x0, y0, x1, y1] = [Math.max(x0, 0), Math.max(y0, 0), Math.min(x1, window.innerWidth), Math.min(y1, window.innerHeight)];
+            if (away === undefined && (x1 - x0 < 1 || y1 - y0 < 1)) away = view;
+            // None of it showing: scrolled out of sight (R32), in the window
+            // or in a container that scrolls.
+            if (away !== undefined) return { outOfSight: away };
             const [x, y] = [(x0 + x1) / 2, (y0 + y1) / 2];
 
             let top = document.elementFromPoint(x, y);
@@ -1207,7 +1322,7 @@ async function outOfReachAmong(
           };
         return found.map((element, index) => (element ? verdictOf(element as Element, typedAll[index] === true) : null));
       },
-      { found: handles, typedAll: asked.map(takesTypedValue) }
+      { found: handles, typedAll: asked.map(takesTypedValue), view }
     ),
     timeoutMs
   ).catch(() => asked.map(() => null));
@@ -1217,33 +1332,52 @@ async function outOfReachAmong(
     const control = tested[index];
     if (!control) continue;
     if (verdict && 'hidden' in verdict) hidden.push({ candidate: control, by: verdict.hidden });
+    else if (verdict && 'outOfSight' in verdict) outOfSight.push({ candidate: control, by: verdict.outOfSight });
     else if (verdict && 'layered' in verdict) layered.push({ candidate: control, by: verdict.layered });
     else if (verdict) covered.push({ candidate: control, by: verdict.covered, ...(verdict.dialog ? { underDialog: true } : {}) });
   }
 
-  // A control with no box cannot be tested itself, and is kept, except inside
-  // one that is covered or hidden: an option in a closed native dropdown has
-  // no box, and choosing it needs no click, so it would otherwise reach a
-  // dropdown no pointer can. Measured on buggy's Category dropdown on
-  // 2026-09-30.
-  const coveredBy = new Map<PageCandidate | KeyCandidate, CoveredCandidate>(covered.map((entry) => [entry.candidate, entry]));
-  const hiddenBy = new Map<PageCandidate, string>(hidden.map((entry) => [entry.candidate, entry.by]));
+  carryInward(controls, labeled.decided, { covered, hidden, outOfSight });
+  return { covered, hidden, outOfSight, layered, labeled: labeled.reached };
+}
+
+/**
+ * A control with no box cannot be tested itself, and is kept, except inside
+ * one that is covered, hidden or out of sight, which it then is too: an
+ * option in a closed native dropdown has no box, and choosing it needs no
+ * click, so it would otherwise reach a dropdown no pointer can. Measured on
+ * buggy's Category dropdown on 2026-09-30. Adds to the lists it is given,
+ * skipping a control already decided.
+ */
+function carryInward(
+  controls: readonly PageCandidate[],
+  decided: ReadonlySet<PageCandidate>,
+  found: { covered: CoveredCandidate[]; hidden: HiddenCandidate[]; outOfSight: OutOfSightCandidate[] }
+): void {
+  const coveredBy = new Map<PageCandidate | KeyCandidate, CoveredCandidate>(found.covered.map((entry) => [entry.candidate, entry]));
+  const hiddenBy = new Map<PageCandidate, string>(found.hidden.map((entry) => [entry.candidate, entry.by]));
+  const outOfSightBy = new Map<PageCandidate, string>(found.outOfSight.map((entry) => [entry.candidate, entry.by]));
   for (const control of controls) {
-    if ((control.box !== undefined && hasArea(control.box)) || labeled.decided.has(control)) continue;
+    if ((control.box !== undefined && hasArea(control.box)) || decided.has(control)) continue;
+    if (coveredBy.has(control) || hiddenBy.has(control) || outOfSightBy.has(control)) continue;
     for (let outer = control.within; outer; outer = outer.within) {
       const under = coveredBy.get(outer);
       if (under !== undefined) {
-        covered.push({ ...under, candidate: control });
+        found.covered.push({ ...under, candidate: control });
         break;
       }
       const inside = hiddenBy.get(outer);
       if (inside !== undefined) {
-        hidden.push({ candidate: control, by: inside });
+        found.hidden.push({ candidate: control, by: inside });
+        break;
+      }
+      const away = outOfSightBy.get(outer);
+      if (away !== undefined) {
+        found.outOfSight.push({ candidate: control, by: away });
         break;
       }
     }
   }
-  return { covered, hidden, layered, labeled: labeled.reached };
 }
 
 /** Roles a Hop clicks, which a control with no area of its own cannot take. */
@@ -1251,24 +1385,28 @@ const CLICKED_ROLES = new Set(['button', 'checkbox', 'link', 'menuitem', 'menuit
 
 /**
  * The controls with no area of their own, decided by their labels: those
- * reached through a label that shows, those whose label is covered, and
- * those with no label that shows, which are hidden. See `outOfReachAmong`.
- * One call per such control; a page with none costs nothing.
+ * reached through a label that shows, those whose label is covered, those
+ * whose every label is scrolled out of sight, and those with no label at
+ * all with area, which are hidden. See `outOfReachAmong`. One call for them
+ * all; a page with none costs nothing.
  */
 async function throughLabels(
   doc: Frame,
   controls: readonly PageCandidate[],
   timeoutMs: number | undefined,
-  elements: Elements
+  elements: Elements,
+  view: string
 ): Promise<{
   reached: (LabeledCandidate & { via: Locator })[];
   covered: CoveredCandidate[];
   hidden: HiddenCandidate[];
+  outOfSight: OutOfSightCandidate[];
   decided: Set<PageCandidate>;
 }> {
   const reached: (LabeledCandidate & { via: Locator })[] = [];
   const covered: CoveredCandidate[] = [];
   const hidden: HiddenCandidate[] = [];
+  const outOfSight: OutOfSightCandidate[] = [];
   const decided = new Set<PageCandidate>();
   const flat = controls.filter(
     (control) => control.box !== undefined && !hasArea(control.box) && CLICKED_ROLES.has(control.role)
@@ -1278,20 +1416,21 @@ async function throughLabels(
   const handles = await elements.of(flat);
   const verdicts = await answered(
     'the page, asked for the labels of controls with no area,',
-    doc.evaluate((found) => {
+    doc.evaluate(({ found, view }) => {
       const verdictOf = (element: Element):
           | { labeled: string; inside: boolean; id: string }
           | { covered: string; dialog: boolean }
           | { hidden: string }
+          | { outOfSight: string }
           | null => {
-          const describe = (node: Element): string => {
+          const describe = (node: Element, withText = true): string => {
             const attributes = ['role', 'aria-label', 'id', 'class']
               .map((name) => [name, node.getAttribute(name)] as const)
               .filter(([, value]) => value)
               .map(([name, value]) => ` ${name}="${String(value).slice(0, 60)}"`)
               .join('');
             const text = (node.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 40);
-            return `<${node.tagName.toLowerCase()}${attributes}>${text}`;
+            return `<${node.tagName.toLowerCase()}${attributes}>${withText ? text : ''}`;
           };
           const area = (node: Element) => {
             const rect = node.getBoundingClientRect();
@@ -1302,11 +1441,39 @@ async function throughLabels(
           if ([...element.querySelectorAll('*')].some(area)) return null;
           const labels = [...((element as HTMLInputElement).labels ?? [])].filter(area);
           if (!labels.length) return { hidden: `${describe(element)}, with no label that shows,` };
+          const up = (node: Element): Element | null => {
+            const root = node.getRootNode();
+            return node.assignedSlot ?? node.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+          };
+          // What of a label shows: inside every container that clips it and
+          // the window, read as a control's own box is in `outOfReachAmong`,
+          // with what first leaves none of it.
+          const rootStyle = getComputedStyle(document.documentElement);
+          const bodyPassesUp = rootStyle.overflowX === 'visible' && rootStyle.overflowY === 'visible';
+          const showing = (label: Element): { x: number; y: number } | { away: string } => {
+            const own = label.getBoundingClientRect();
+            let [x0, y0, x1, y1] = [own.left, own.top, own.right, own.bottom];
+            for (let node = up(label); node; node = up(node)) {
+              if (node === document.documentElement || (node === document.body && bodyPassesUp)) continue;
+              const style = getComputedStyle(node);
+              if (style.overflowX === 'visible' && style.overflowY === 'visible') continue;
+              const clip = node.getBoundingClientRect();
+              [x0, y0, x1, y1] = [Math.max(x0, clip.left), Math.max(y0, clip.top), Math.min(x1, clip.right), Math.min(y1, clip.bottom)];
+              if (x1 - x0 < 1 || y1 - y0 < 1) return { away: describe(node, false) };
+            }
+            [x0, y0, x1, y1] = [Math.max(x0, 0), Math.max(y0, 0), Math.min(x1, window.innerWidth), Math.min(y1, window.innerHeight)];
+            if (x1 - x0 < 1 || y1 - y0 < 1) return { away: view };
+            return { x: (x0 + x1) / 2, y: (y0 + y1) / 2 };
+          };
           let cover: Element | null = null;
+          let away: string | undefined;
           for (const label of labels) {
-            const rect = label.getBoundingClientRect();
-            const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
-            const y = Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1);
+            const point = showing(label);
+            if ('away' in point) {
+              away ??= point.away;
+              continue;
+            }
+            const { x, y } = point;
             let top = document.elementFromPoint(x, y);
             while (top?.shadowRoot) {
               const inner = top.shadowRoot.elementFromPoint(x, y);
@@ -1318,12 +1485,12 @@ async function throughLabels(
             }
             cover ??= top;
           }
-          return cover
-            ? { covered: describe(cover), dialog: cover.closest('[role="dialog"], [role="alertdialog"], dialog') !== null }
-            : null;
+          if (cover) return { covered: describe(cover), dialog: cover.closest('[role="dialog"], [role="alertdialog"], dialog') !== null };
+          // Every label scrolled out of sight (R32), as a control of its own would be.
+          return away === undefined ? null : { outOfSight: away };
         };
       return found.map((element) => (element ? verdictOf(element as Element) : null));
-    }, handles),
+    }, { found: handles, view }),
     timeoutMs
   ).catch(() => flat.map(() => null));
   for (const [index, verdict] of verdicts.entries()) {
@@ -1338,10 +1505,10 @@ async function throughLabels(
       reached.push({ candidate: control, by: verdict.labeled, via });
     } else if ('covered' in verdict) {
       covered.push({ candidate: control, by: verdict.covered, ...(verdict.dialog ? { underDialog: true } : {}) });
-    }
+    } else if ('outOfSight' in verdict) outOfSight.push({ candidate: control, by: verdict.outOfSight });
     else hidden.push({ candidate: control, by: verdict.hidden });
   }
-  return { reached, covered, hidden, decided };
+  return { reached, covered, hidden, outOfSight, decided };
 }
 
 /** Whether a box has any area at all, before it is placed against the viewport. */

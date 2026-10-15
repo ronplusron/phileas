@@ -112,8 +112,8 @@ Trip in the next section starts.
 ## 4. Three fates from one Journey
 
 ```
-EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed carnatic --routes 3 --trip-length 150 --hop-delay-ms 300 --show front
-node demo/eighty-days/measure.mjs demo/eighty-days/phileas/.phileas-journals/carnatic/<run>
+EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed aouda --routes 3 --trip-length 150 --hop-delay-ms 300 --show front
+node demo/eighty-days/measure.mjs demo/eighty-days/phileas/.phileas-journals/aouda/<run>
 ```
 
 The `<run>` folder is named on the run's second line. The guided command fills
@@ -129,14 +129,15 @@ chart shows the line it has drawn round the world.
 With this seed the three games go three ways, and the guided command prints
 them when the run ends:
 
-- **Route 1 loses.** By way of Shanghai and Yokohama it crosses to San
-  Francisco, and the wager is lost there, at Trip hop 100.
-- **Route 2 wins.** It sails straight for Yokohama, crosses the Pacific,
-  follows the book overland by Salt Lake City, Fort Kearney and Omaha to New
-  York, and reaches the Reform Club by way of Queenstown and Liverpool, at
-  Trip hop 126.
-- **Route 3 is still going** when its Trip ends, having reached Liverpool by
-  way of Shanghai, San Francisco, Omaha, New York and Queenstown.
+- **Route 1 loses.** It sails straight for Yokohama, crosses to San
+  Francisco, goes on by Omaha to New York and over by Queenstown, and the
+  wager is lost at Liverpool, at Trip hop 131.
+- **Route 2 wins.** The same way round, Yokohama, San Francisco, Omaha, New
+  York, Queenstown and Liverpool, and it reaches the Reform Club in time, at
+  Trip hop 123.
+- **Route 3 is still going** when its Trip ends, having reached Omaha by way
+  of Shanghai, Yokohama, Honolulu, San Francisco, Salt Lake City and Fort
+  Kearney.
 
 Each Route that ends offers "Set out again", and the rest of its Trip starts
 the game over from London, which is why the places listed carry on past it.
@@ -162,7 +163,7 @@ game and shows the same Journey finding them.
 ## 6. The same seed, the same game
 
 ```
-EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed carnatic --routes 3 --trip-length 150 --hop-delay-ms 300 --show front -- --grep 'route 1$'
+EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-findings.json phileas run demo/eighty-days/phileas --seed aouda --routes 3 --trip-length 150 --hop-delay-ms 300 --show front -- --grep 'route 1$'
 ```
 
 Route 1 of section 4's Journey again, on its own, about two and a half minutes.
@@ -170,7 +171,7 @@ The guided command compares the two journals and says whether every Hop
 matched, and prints how the game went both times. By hand, run `measure.mjs`
 on the new run folder and read it against section 4's.
 
-Route 1 again: the same Shanghai, the same San Francisco, the same loss at
+Route 1 again: the same Yokohama, the same San Francisco, the same loss at
 the same Hop.
 
 A Route that had found a bug would walk straight back to it, which is what
@@ -195,7 +196,7 @@ EIGHTY_DAYS_PLANT=kiouni-throw EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phile
 
 The bug: the raise that brings the offer for Kiouni to £2,000 throws an
 error in the page. The Fix ends at Kholby with the offer at £1,800, so one
-raise is left for the Trip to choose. It does at Trip hop 9.
+raise is left for the Trip to choose. It does at Trip hop 25.
 
 Point at the line for that Hop: the failed check, what it saw, and the
 finding's id, which is the same every time the same bug is seen. The Route
@@ -221,7 +222,7 @@ Delete the known findings file, putting it back as it was before section 8,
 then run section 8's command again.
 
 The same Route, from the same seed, plays the same game straight back to
-Trip hop 9 and the same finding. The guided command compares the two
+Trip hop 25 and the same finding. The guided command compares the two
 journals and says whether every Hop matched. This is what makes a finding
 worth filing: whoever gets the report can watch it happen again, from the
 seed alone. It had to be run against the file as it was, since a finding
@@ -236,7 +237,7 @@ phileas known add <id> --issue demo-1 demo/eighty-days/phileas/.phileas-journals
 Then section 8's command once more. `<id>` is the finding's id from
 section 8; the guided command fills it in.
 
-Filed, the bug no longer ends the Route. Point at Trip hop 9 again: the
+Filed, the bug no longer ends the Route. Point at Trip hop 25 again: the
 line now says the finding is known, with its issue, and the Route carries
 on to the end of its Trip and passes. Point at the summary: it still lists
 the finding, as seen, with its issue. A filed bug stops blocking without
@@ -246,13 +247,14 @@ going quiet. One not seen in a later Journey is counted at its end, and
 ## 12. Several at once
 
 ```
-EIGHTY_DAYS_PLANT=carnatic-log-error,export-throw,sail-console-error,coal-hang EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-several.json phileas run demo/eighty-days/phileas --fix hong-kong --seed mudge --routes 5 --trip-length 150 --hop-delay-ms 300 --show front
+EIGHTY_DAYS_PLANT=carnatic-log-error,export-throw,sail-console-error,coal-hang EIGHTY_DAYS_KNOWN=demo/eighty-days/phileas/.phileas-journals/present/known-several.json phileas run demo/eighty-days/phileas --fix hong-kong --seed aouda --routes 5 --trip-length 150 --hop-delay-ms 300 --show front
 ```
 
 Four bugs on together, five Routes from Hong Kong, a few minutes. The
 guided command prints how each Route ended, then the summary: each finding
 once, with how often it was seen. With this seed, Game > Export the ledger
-throws in four of the Routes and the Carnatic's log error ends the fifth.
+throws in three of the Routes and the Carnatic's log error ends the other
+two.
 Every Route ended at its first bug, since none was known yet. The sledge's
 and the Henrietta's bugs were planted and not reached, and the summary does
 not pretend otherwise: it lists what was seen, never what was not looked

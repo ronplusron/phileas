@@ -51,7 +51,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs four hundred and eighty-one tests, after a
+through, and `npm test` runs four hundred and eighty-six tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -120,8 +120,8 @@ once, and one on RStudio's reader of its session log's times. Three more
 say on each Hop's own line when its finding arrived and when each stubbed
 call came.
 Six came with covered controls: one left out and recorded with what covers
-it, a cover that lets clicks through and controls scrolled out of sight
-kept, a covered text box left out while its neighbor's shortcut stays, what
+it, a cover that lets clicks through, and controls scrolled out of sight
+found out of sight rather than covered, a covered text box left out while its neighbor's shortcut stays, what
 took an abandoned click journaled, a page all covered stranding, and a seed
 retracing its Route with a control covered. Four came with hidden controls
 (R32): one in a pane with no area left out and recorded with that pane,
@@ -210,7 +210,14 @@ and the plugin shipped at the package's version.
 Four more came with the page drawing each Route as a line: a journal
 read into each step's parts, one cut off mid-write beside its whole
 control, the page never asking through a browser dialog, and the setup
-said only where what ran does not bear it out.
+said only where what ran does not bear it out. Five came with offering
+only what shows (R32): controls out of sight counted by what keeps them
+there and never named, in the survey's lines and on the pool; an option
+and a radio reached through its label going out of sight with what holds
+them; a frame out of sight, below the window and in a pane scrolled away;
+a page with everything out of sight stranding; and a Fix step on a target
+out of sight refused, with a code step bringing it into view as the
+control.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -246,7 +253,11 @@ weighting; `docs/PLAN.md` has both under that order. **Frames are read
 since 2026-10-09:** every frame drawn with area, each frame's controls at
 its place, named as `frame "Data Browser" > button "Pin column mpg"`, and
 a link in a frame that leaves the application excluded by the engine.
-`docs/HISTORY.md` has it. Weighting the draw, stage 5, is next.
+`docs/HISTORY.md` has it. **Only what shows is offered since 2026-10-15**
+(R32): a control no part of which shows, in the window, a pane or a frame,
+is left out of the pool and counted on it by what keeps it out of sight,
+never named, and reaching it waits for scrolling as a move of its own.
+Weighting the draw, stage 5, is next.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stopped where it stood
@@ -285,8 +296,9 @@ R script with code in it; `session-data`, code run in the console;
 `r-markdown-further`, that document created, with text and an R chunk
 added at its end; `zoomed-plots`, the Plots pane zoomed so the other
 panes are hidden; or `data-viewer`, `mtcars` shown in the data viewer,
-whose frame offers 69 controls since frames are read, the same six for
-each column, which `docs/OUTSTANDING.md` 1.15 records as crowding. Its Journey fails the run when the machine's R libraries
+whose frame holds 69 controls, the same six for each column, which
+`docs/OUTSTANDING.md` 1.15 records as crowding; 39 of them show at the
+start, and the rest are out of sight in its column list. Its Journey fails the run when the machine's R libraries
 changed. Its Routes see the person's own R library after their own, so an
 install still lands in the Route's; `PHILEAS_R_PERSONAL_LIBRARY=0` leaves
 it out, a folder's path names another, and the Journey's start says which.
@@ -362,7 +374,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Twenty defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Nineteen defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
@@ -372,8 +384,7 @@ itself forward partway through a Route, one a Positron Route saving
 outside its home folder, one a known finding with nothing particular
 in it matching every finding of its check, and one the log check keeping
 only the lines of an error that look like errors, and one the home folder
-guard blaming a Journey for a copy of the application it did not see,
-and one a control scrolled out of sight offered against R32. That file holds what is wrong, confirmed by reading the
+guard blaming a Journey for a copy of the application it did not see. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
@@ -473,7 +484,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own four hundred and eighty-one tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own four hundred and eighty-six tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

@@ -199,11 +199,18 @@ export const rstudio: AppUnderTest = {
     // one is explored. Raised on 2026-09-28; with it off, Open File and Load
     // Workspace each opened in the page and the stub recorded nothing. The
     // stub stays, for any native dialog this does not reach.
+    //
+    // No check for a newer RStudio at startup. On 2026-10-15, once 2026.10.0
+    // build 233 was out, the copy of build 232 opened Update Available before
+    // its workbench, and that launch failed on it; the next launch did not
+    // meet it, so it comes and goes. The batch of 2026-10-08 never met it,
+    // most likely because no newer release existed then. The name is the
+    // one in the release's own `user-prefs-schema.json`.
     const config = path.join(homeIn(userDataDir), '.config', 'rstudio');
     await fs.promises.mkdir(config, { recursive: true });
     await fs.promises.writeFile(
       path.join(config, 'rstudio-prefs.json'),
-      JSON.stringify({ native_file_dialogs: false }, null, 2)
+      JSON.stringify({ native_file_dialogs: false, check_for_updates: false }, null, 2)
     );
   },
 

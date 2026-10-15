@@ -152,6 +152,42 @@ test('a target that is not on screen fails the Fix and lists what is', async ({ 
   expect(step).not.toHaveProperty('action');
 });
 
+test('a target scrolled out of sight fails the Fix, saying so, and a code step scrolling it into view first passes', async ({ page, app }) => {
+  // R32: a Fix acts only on what shows, as a Trip does, and scrolling is not
+  // a move yet, so the failure says what would bring the target into view.
+  const farDown = async () =>
+    page.evaluate(() => {
+      document.getElementById('probe-far')?.remove();
+      const far = document.createElement('button');
+      far.id = 'probe-far';
+      far.textContent = 'Far down';
+      far.style.cssText = 'position: absolute; top: 5000px; left: 10px;';
+      document.body.append(far);
+    });
+  await farDown();
+  const away = await routeWithFix(page, app, ({ step }) => step({ kind: 'act', target: 'button "Far down"' }));
+  expect(away.outcome).toBeInstanceOf(FixFailure);
+  const failed = away.entries.find((entry) => entry.kind === 'fix-step');
+  expect(failed?.kind === 'fix-step' ? failed.error : '').toMatch(
+    /button "Far down" is in the page but scrolled out of the window after \d+ ms, so no person could see it\. Scrolling is not a move yet, so a `code` step/
+  );
+
+  // The control: the same target, brought into view by a code step first.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await farDown();
+  const shown = await routeWithFix(page, app, async ({ page: inPage, step }) => {
+    await step({
+      kind: 'code',
+      label: 'bring Far down into view',
+      action: () => inPage.evaluate(() => document.getElementById('probe-far')?.scrollIntoView()),
+    });
+    await step({ kind: 'act', target: 'button "Far down"' });
+  });
+  expect(shown.outcome).not.toBeInstanceOf(FixFailure);
+  const acted = shown.entries.filter((entry) => entry.kind === 'fix-step');
+  expect(acted.at(-1)).toMatchObject({ stepKind: 'act', target: { name: 'Far down' } });
+});
+
 test('a Fix step waits for a target that appears after the step before it settled', async ({ page, app }) => {
   // Positron's New File list filled in after the step that opened it had
   // settled, and a single survey lost 1 of 7 Routes to it on 2026-09-27. Here
