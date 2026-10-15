@@ -1623,6 +1623,159 @@ menu, but the common keys never keep a Route from stranding, by design
 (`GLOSSARY.md`, "Common keys"). Whether a stranding a key would undo is
 still a stranding is part of what this needs deciding.
 
+### 2.29 Phileas against an explorer a language model drives
+
+Asked on 2026-10-15: "Can an LLM do what Phileas does? What's the point of
+Phileas, if an LLM can be told to do the work?" Then: "Is there anything
+else worth adding to Phileas, or has it reached its limit of usefulness vs.
+reliance on LLM?" The comparison below was asked to be recorded, in the
+words "Record that comparison in OUTSTANDING." Nothing is decided, and
+whether to run it has not been asked.
+
+**What was said in answer, a reading and not a decision.** A model explores
+well, choosing moves with intent and judging what it sees. What Phileas
+offers by design is what 2.1 keeps a model out of: a Route that retraces
+exactly from its seed or its journal (R8, R12), runs at no cost per Hop,
+so a batch of 600 Routes, 12,000 Hops, cost nothing in model spend, and
+checks whose verdicts do not change from one run to the next. Its weak
+side is on record too: the two studies in `research/` put what it can reach
+at about 5 or 6 bugs in 100, every finding has needed a person or a model
+after the run to judge it, and `PRODUCT_REQUIREMENTS.md` section 11 still
+asks whether it is worth its cost. Raised in the same discussion: "You're
+not giving me much hope about Phileas."
+
+**The measurement proposed:** a model-driven explorer and Phileas, each
+against the same planted bugs, such as Eighty Days' 8, counting the bugs
+found per hour and per dollar. Open: how the model explorer is built, what
+it may read, and whether its findings must replay to count.
+
+### 2.30 Checks that know what the application is meant to do
+
+Asked on 2026-10-15: "how do we design tests that know intent?" Most bugs
+the studies found out of reach need a state and a check that knows what
+should be true, and today nearly every check notices only that something
+errored. Nothing is decided; what follows is what was proposed in answer.
+
+**Where intent can come from,** never from the application's code (`../CLAUDE.md`)
+or from bug reports (decided 2026-09-27, `PLAN.md`): the application
+agreeing with itself at one moment (R18) or over time (R20), an answer
+worked out independently (R21), and conventions any application keeps.
+
+**Ten candidates on RStudio,** asked for as "Seems pretty limited in scope,
+though. Give me ten examples from RStudio." Each holds whatever a Route did
+before it. Every detail of RStudio's screens here is from memory and
+unmeasured on 2026.10.0, so each needs a probe before it is written:
+
+1. The Environment pane's count of rows and columns for an object matches
+   the data viewer's for it (R18).
+2. A source tab marked unsaved matches Save being enabled, and saving clears
+   both (R18).
+3. The Files pane lists what is on disk in the Route's home (R21, the disk
+   as the answer).
+4. The Console's path, the Files pane's working folder and `getwd()` agree
+   (R18).
+5. Each command run in the Console appears last in the History pane, in
+   order (R18).
+6. A pane zoomed, then View > Panes > Show All Panes, restores every pane
+   (R20).
+7. A Global Options setting changed and OK pressed is kept; Cancel keeps
+   nothing (R20).
+8. Help's Previous topic then Next topic returns to the same topic, and the
+   Plots pane's previous then next to the same plot (R20).
+9. A column sorted ascending shows its values in order, and its summary's
+   mean matches a separate R's `mean()` (R21).
+10. After Clear objects from the workspace, the Environment pane is empty
+    and `ls()` returns nothing (R18).
+
+The answer given to "limited in scope", a reading: each check states one
+fact, but runs after every Hop on every path that reaches its screen, so
+its breadth is the number of paths, which is what a scripted test lacks.
+
+**A model proposing checks,** asked as "If I use an LLM to build these, how
+would it know what a test would be?" Proposed in answer: a short list of
+templates true of almost any application, kept in the engine since nothing
+in it is one application's: a pair of controls that undo each other, one
+fact stated twice on screen, OK keeps a change and Cancel does not, open
+then close returns where it was, and a sort or filter does what it says and
+clearing it restores everything. A model finds where each template fits,
+from the controls named in the journals' pools and what each Hop's effect
+changed, such as `button "Previous topic (⌥⇧F2)"` and `button "Next topic
+(⌥⇧F3)"` in one RStudio pool; a person accepts or rejects each proposal;
+what is accepted becomes ordinary code that runs the same every time. This
+is the second use in 2.1, helping write an application's own checks.
+
+**The limit, raised as** "if it uses the journals, how does it know if a
+journal is all correct or is encountering a bug that it doesn't
+recognize?" It cannot tell from journals alone. A bug present only
+sometimes shows as a proposal that holds on most Routes and fails on a
+few, which a person then reads. A bug present always looks normal in every
+journal, and a check learned from it would protect it. So a model takes a
+check's shape from the journals, never its expected answer, which is read
+from the screen at run time; and what an application specifically means to
+do, such as what a summary should compute, comes from a person or from an
+independent answer (R21).
+
+**An order suggested, not agreed:** this comparison (2.29) and the first
+template checks before weighting the draw, stage 5, since the evidence so
+far puts the limit on judgment and setup rather than on where Routes go.
+Also suggested with it: a model drafting Fixes that build the state the
+studies found most bugs need, which stay code that replays; and scrolling
+as a move (1.9).
+
+### 2.31 Probe Hops, a short determined sequence inside the Trip
+
+Phase 6's relations (R20) need the engine to take moves of its own, which
+`GLOSSARY.md` calls probe Hops. Discussed on 2026-10-15 with Help's
+Previous and Next topic as the example, and put this way: "So it's like a
+mini-Fix: After Hop 9, what happens next is determined, like a Fix step."
+
+**As it was worked through, a reading and not a decision.** A Hop drawn by
+the seed does what a relation names, such as Previous topic; before the
+next Hop is drawn, the engine itself takes the undoing move, Next topic,
+settles, and compares a reading taken before the Hop with one taken after
+the probe. The reading is one value, such as Help's topic, held only for
+those few steps and written on the probe's journal line; nothing carries
+past the probe or between Routes. A probe takes no draw, so the Trip's
+stream and a replay are unchanged. Global Options works the same way: after
+a Hop presses OK, the engine reopens it, reads the setting and closes it,
+rather than waiting for a later Hop to reopen it by chance.
+
+**Like a Fix step:** no draw, and each step settled, checked and journaled.
+**Unlike one:** a Hop starts it, not the start of every Route; the adapter
+declares it once for every Journey, where a Journey's author writes a Fix;
+and its failure is a finding about the application, not a broken setup
+(R11). Not 2.22, which sets state up again partway through a Route.
+
+**Still open, with `PLAN.md` phase 6:** whether probes count toward the
+Trip length; where the Route continues from, since after the probe the
+screen is where the probe left it; and what is recorded when a relation
+cannot apply, such as Next topic disabled, which must never read as held.
+
+### 2.32 A replay stopped by a target now out of sight does not say so
+
+Noticed on 2026-10-15, when only what shows began to be offered (R32), and
+asked to be recorded. A journal written before then can hold a Hop that
+acted on a control scrolled out of sight. Replayed now, that control is
+counted out of sight rather than offered, and the replay stops with
+`CouldNotReplay` in `src/replay.ts`: "is not on offer now", the same as for
+a control that is gone, renamed or moved. Saying it is out of sight, and
+by what, needs the chooser seam handed the survey's out-of-sight controls,
+which it is not today. Nothing is decided.
+
+### 2.33 A pool can differ between a hidden window and a shown one
+
+Seen once on 2026-10-15, on RStudio 2026.10.0 with the `data-viewer` Fix,
+`phileas survey` run in each mode: hidden, 39 of the data viewer frame's 69
+controls showed and 30 were out of sight in its column list; shown, behind
+other windows, 33 and 36. Before R32 this could change nothing, since every
+control was offered whatever showed. Now how much fits decides the pool,
+so a seed recorded in one mode may draw differently from the first Hop
+where the pools differ when replayed in the other. Why they differed is not
+known: the window may be a different size when shown, or the list may have
+settled differently, and each mode ran once. `../ORIENTATION.md` already
+says to match the window mode in a replay until a replay across modes is
+measured; this is the first measurement that a pool depends on it.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias
