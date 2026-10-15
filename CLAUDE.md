@@ -397,10 +397,22 @@ following the `cypress/` and `.storybook/` precedent:
 phileas/
   adapter/            that application's AppUnderTest implementation
   journeys/           the Journey's Booking, naming the Fix it opens with
-  fixes/              one file per Fix, and index.ts listing them by name
+  fixes/              the Fixes, by area, and index.ts listing them by name
+  checks/             the adapter's own checks, by area, and index.ts listing them
   journey.spec.ts     the spec Playwright collects
 tests/                the scripted suite, keeping Playwright's default meaning
 ```
+
+**`fixes/` and `checks/` share one shape, agreed on 2026-10-15:** a
+subfolder per area of the application, the same areas in both, such as
+`fixes/viewer/data-viewer.ts` beside `checks/viewer/`, so the checks a Fix
+is likely to make apply sit under the same name. **The subfolders are a
+convention, not a requirement: a file is a file.** A name is what
+`index.ts` declares, never the file's path, so moving a file renames
+nothing, and one file may hold several, as Eighty Days' `stage-two.ts`
+holds five Fixes. Agreed before either folder has it: the Fixes are still
+flat and the adapters' checks still inline, and `docs/OUTSTANDING.md` has
+the move.
 
 `kit` and `app` were both rejected as directory names. `app` is actively
 harmful, because it collides with "the application" and caused a misreading in

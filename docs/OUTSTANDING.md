@@ -925,6 +925,33 @@ engine cannot yet do and so meets the plan's rule against the demo
 flattering the engine, or waiting for scrolling as a move of its own
 (1.9), which would reach what is below the window as a person does.
 
+### 1.28 Fixes and checks in subfolders by area
+
+Agreed on 2026-10-15, while asking how a hundred checks would be named and
+where they would live: "OK let's do parallel structures. We'll change Fixes
+to use subdirectories. Though subdirectories are a convention, not a
+requirement--a file is a file." Said before it, of the flat `fixes/`:
+"maybe that's a downside of fixes, that it's all flat", and "Presumably
+we'd have more fixes", as stage 5's Fixes a model drafts would bring.
+`../CLAUDE.md` has the layout.
+
+**What it means, as agreed:** `fixes/` and a new `checks/` each hold a
+subfolder per area of the application, the same areas in both, with
+`index.ts` naming each entry. A name is what `index.ts` declares, not the
+file's path, which is what "a file is a file" settles, so the existing
+Fixes keep their names and no journal, seed or `--fix` command changes.
+
+**To do, on a branch of its own:** move RStudio's 7 Fixes, Positron's 4,
+the rail demo's 2 and Eighty Days' 3 files into area folders, then the
+checks the adapters declare inline, `buggy`'s one and Positron's one, into
+`checks/`. First, search for anything that finds a Fix by its file rather
+than through `index.ts`. The suite and each demo's seed tests show nothing
+moved.
+
+**Not decided:** the areas for the two demos, whose games have no panes;
+and whether a check's name carries its area as its first word, as in
+`source-unsaved-mark-matches-save`, which was proposed and not answered.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long
@@ -1708,8 +1735,8 @@ fits the proposing described below, done beforehand in the adapter as
 
 **Ten candidates on RStudio,** asked for as "Seems pretty limited in scope,
 though. Give me ten examples from RStudio." Each holds whatever a Route did
-before it. Every detail of RStudio's screens here is from memory and
-unmeasured on 2026.10.0, so each needs a probe before it is written:
+before it. Every detail of RStudio's screens here was from memory; each
+was probed on 2026.10.0 the same day, below the list:
 
 1. The Environment pane's count of rows and columns for an object matches
    the data viewer's for it (R18).
@@ -1731,6 +1758,57 @@ unmeasured on 2026.10.0, so each needs a probe before it is written:
    mean matches a separate R's `mean()` (R21).
 10. After Clear objects from the workspace, the Environment pane is empty
     and `ls()` returns nothing (R18).
+
+**Probed on 2026-10-15,** by `trial/rstudio/probes/intent-candidates.spec.ts`,
+each candidate set up from the console and both of its sides read, with
+`intent-screens.spec.ts` beside it writing out each screen's accessibility
+tree to learn the panes' names. Eight hold as written, one in part, and one
+not:
+
+- **1 holds:** "32 obs. of 11 variables" in the Environment pane against
+  "Showing 1 to 16 of 32 entries, 11 total columns" in the viewer's frame,
+  whose address names the object, `obj=cars2`, one frame per viewer. A
+  search makes it "Showing 1 to 7 of 7 entries (filtered from 32 total
+  entries)", so the total is what compares. It applies only to an object
+  the pane lists: `View(mtcars)` has no row, since `mtcars` is not in the
+  global environment, so the `data-viewer` Fix as it stands never meets it.
+- **2 holds:** the tab adds " \*" to the file's name while the main
+  toolbar's Save is enabled; ⌘S clears both and typing brings both back. An R script was
+  measured, and not what Save follows while a data viewer's tab is
+  selected.
+- **3 holds for what is not hidden:** the pane leaves out `.config` and
+  `.local`, and showed a file R wrote and one written from outside within
+  4 s. How soon it follows is not measured, which a check after every Hop
+  would need.
+- **4 does not hold:** after `setwd()` into a new folder, the console's
+  toolbar and `getwd()` agree, the toolbar with a trailing slash, and the
+  Files pane stays at Home. Only the toolbar against `getwd()` is left, and reading
+  `getwd()` takes typing in the console.
+- **5 holds:** History listed the commands in order, adding one while the
+  pane showed. Not measured: History after the console is cleared.
+- **6 holds:** after View > Panes > Zoom Plots every other pane has no
+  width, and Show All Panes put each back at its size to the pixel.
+- **7 holds:** "Restore most recently opened project at startup" changed
+  and Cancel kept nothing; changed and OK was kept.
+- **8 holds:** Previous then Next topic returned from "R: Arithmetic Mean"
+  to "R: Median Value", read from the Help toolbar's button and the frame's
+  address, and Previous then Next plot to the same image's address. Next
+  topic stays enabled at the end of the history and does nothing there, so
+  a Detour cannot tell from it that the check does not apply.
+- **9 holds in part:** sorted ascending, all 32 of `mpg`'s values were in
+  order and the button then read "Sort column mpg descending". The column's
+  summary shows only "[10.4, 33.9] 0% NA", expanded or not, and no mean, so
+  what an independent answer can be compared with is the range, which
+  matched a separate `Rscript`.
+- **10 holds:** Clear objects asks in an `alertdialog`, "Confirm Remove
+  Objects", with "Include hidden objects" ticked; after Yes the pane reads
+  "Environment is empty" and `length(ls())` is 0.
+
+**Proposed then, not agreed:** 2 first, a check of one moment whose both
+sides are in the page's tree already read after every Hop; 1 next, once a
+Fix leaves an object the pane lists in a viewer. And for any of them, shown
+to fire by making the page contradict itself on purpose, as was done for
+Positron's on 2026-09-27, since no defect can be planted in RStudio.
 
 The answer given to "limited in scope", a reading: each check states one
 fact, but runs after every Hop on every path that reaches its screen, so

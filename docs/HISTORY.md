@@ -25,6 +25,47 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-15: ten checks that know intent, probed on RStudio before any is written
+
+**Why.** Stage 5 opens with checks that know what an application is meant
+to do, and the ten RStudio candidates proposed for it that day were written
+from memory of RStudio's screens. Asked for in the words "start stage 5
+part 1 by probing the 2.30 RStudio candidates on 2026.10.0, read-only, and
+report what holds before writing any check."
+
+**What landed.** Two probes and no check:
+`trial/rstudio/probes/intent-screens.spec.ts` writes out the accessibility
+tree of each screen the candidates read, page and frames, into a folder
+the run names; `trial/rstudio/probes/intent-candidates.spec.ts` sets up
+each candidate's state from the console and prints both of its sides. The
+snapshots were read by hand and deleted.
+
+**Measured on RStudio 2026.10.0.** Eight held as written. The Environment
+pane's "32 obs. of 11 variables" matched the data viewer's "of 32 entries,
+11 total columns", and after a search the viewer counted against "(filtered
+from 32 total entries)"; an object not in the global environment, such as
+`mtcars`, has no row to compare. A tab marked unsaved went with Save
+enabled, and saving cleared both. The Files pane listed what was on disk
+apart from hidden entries, and followed a write within 4 s. History listed
+commands in order. Zoom Plots then Show All Panes restored every pane to
+the pixel. OK kept a Global Options setting and Cancel kept nothing.
+Previous then Next returned to the same Help topic and the same plot,
+though Next topic stays enabled at the end of the history. Clear objects
+left the pane reading "Environment is empty" and `ls()` with nothing.
+**One held in part:** a sorted column was in order, but its summary shows
+only a range, "[10.4, 33.9]", never a mean; the range matched a separate
+`Rscript`. **One did not hold:** after `setwd()` the console's path and
+`getwd()` agreed and the Files pane stayed at Home.
+
+**Decided the same day: Fixes and checks in subfolders by area.** Asked
+while discussing how a hundred checks would be named, and agreed in the
+words "OK let's do parallel structures. We'll change Fixes to use
+subdirectories. Though subdirectories are a convention, not a
+requirement--a file is a file." So a name is what `index.ts` declares and
+never the file's path, and moving a file renames nothing. `../CLAUDE.md`
+has the layout. Only the decision landed; the Fixes are moved on a branch
+of their own.
+
 ## 2026-10-15: only what shows is offered
 
 **Why.** R32 was corrected on 2026-10-12 to offer only what a person could
