@@ -1507,9 +1507,10 @@ run after every hop like the universal tier.
 `metamorphic.ts` (R20) is not a per-hop invariant, and treating it as one is
 the easy mistake. A relation compares two states, so the engine has to take
 moves of its own: when a hop has just performed the operation a relation names,
-the engine performs the counterpart, compares, and records those hops in the
-journal marked as probe hops. Whether probe hops count toward the Trip length
-is undecided and is decided here.
+the engine performs the counterpart, compares, and records those moves in the
+journal as Detour steps, named so on 2026-10-15 and called probe hops before;
+`OUTSTANDING.md` 2.31 has the shape discussed. Whether Detour steps count
+toward the Trip length is undecided and is decided here.
 
 `specified.ts` (R21) takes an expected value the adapter computed from a
 source of truth and compares it to the screen. `../CLAUDE.md` records the

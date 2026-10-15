@@ -1661,6 +1661,49 @@ or from bug reports (decided 2026-09-27, `PLAN.md`): the application
 agreeing with itself at one moment (R18) or over time (R20), an answer
 worked out independently (R21), and conventions any application keeps.
 
+**Two sources an application may have, used where they exist and never
+required.** Both assessed on 2026-10-15 against RStudio's data viewer:
+
+- **Its documentation.** Answered on 2026-09-27, as `PLAN.md` records, with
+  "Can't count on documentation", which still holds: many applications have
+  none, and where it exists it can lag the release. RStudio's User Guide
+  page on the data viewer, read through a tool that summarizes a page,
+  states rules a check can use: the footer gives the record count before
+  and after filtering, column filters are joined with AND, search and
+  filters add together, the corner cell restores the original order after
+  a sort, clearing every filter brings back every record, and factors of
+  over 256 levels are filtered as text. About eight candidate checks. It is
+  silent on pinning, hiding and the column summaries, all on today's
+  screen, and it describes 50 columns shown at a time with "Cols >" arrows,
+  which is unmeasured on 2026.10.0: every RStudio journal kept views
+  `mtcars`, 11 columns, where no arrows would show. A check built from it
+  that fails may mean the page is out of date rather than that RStudio is
+  wrong, so a person judges.
+- **Its own scripted suite.** RStudio's end-to-end tests, in `e2e/rstudio`
+  of its repository: 183 test files, 6 for the data viewer, about 4,500
+  lines and 562 assertions, counted on 2026-10-15. Many test titles are
+  already rules that hold whatever came before, such as sort headers
+  cycling through ascending, descending and unsorted, the sidebar's pin and
+  sort icons agreeing with the columns' state, and the column summaries
+  reflecting the filtered rows rather than the whole frame. They cover what
+  the User Guide does not, are current, and show that columns are still
+  paged in a window, at an unmeasured width. Settled the same day, in the
+  words "don't copy the RStudio e2e tests, but learn from them": a rule is
+  read from a test and stated in this project's own words; no code,
+  selector or page object is copied, since RStudio's source is AGPL (1.8),
+  and discovery never comes to depend on them. A scripted test asserts one
+  sequence, so each rule has to be widened to hold after any path, and
+  some will not widen. Several tests are named for RStudio issues; a rule
+  from one is still a fair check, but a finding it makes is no evidence of
+  the engine finding bugs nobody knew of, for the reason `PLAN.md` gives
+  for setting aside checks taken from known bugs on 2026-09-27.
+
+A reading, not a decision: of the sources so far, an application's own
+suite is the richest where one exists, and Positron has one too. A model
+reading its titles and assertions, proposing rules for a person to accept,
+fits the proposing described below, done beforehand in the adapter as
+`../CLAUDE.md`'s section on source access allows.
+
 **Ten candidates on RStudio,** asked for as "Seems pretty limited in scope,
 though. Give me ten examples from RStudio." Each holds whatever a Route did
 before it. Every detail of RStudio's screens here is from memory and
@@ -1715,6 +1758,48 @@ from the screen at run time; and what an application specifically means to
 do, such as what a summary should compute, comes from a person or from an
 independent answer (R21).
 
+**A hundred checks, asked as** "So let's say we end up with 100 checks of
+this nature. Does this mean that after each hop, all 100 checks are
+reviewed to see if they apply?" Answered, a reading: in principle every
+check is considered after every Hop, as `../CLAUDE.md` asks until
+something is measured slow, but each declares when it applies, so almost
+all are set aside for nothing. A relation (R20) starts only when the Hop's
+target is the one it names, a lookup by name. A check of one moment (R18)
+names the screen it is about, answered from the accessibility tree already
+read after the Hop, with no further call to the application. An
+independent answer (R21) costs most, so it runs only while its screen is
+up, computed once for each state.
+
+Two consequences matter more than speed. **False alarms add up:** a Route
+ends at its first failure, so if each check wrongly fails one time in
+1,000 and about 10 apply on a Hop, a Route of 20 Hops ends on a false alarm
+about one time in five. Each check has to be nearly perfect, which is why a
+person accepts each and why the planted defect that makes it fire, with
+the application quiet without it, matters more as the count grows. **The
+journal:** every check is recorded on every Hop, as passed, failed or not
+run with why, decided on 2026-09-26 (`PLAN.md`) so that an absent check is
+never read as one that passed. With a hundred, nearly all would be "not on
+this screen". Said in answer, the same day: "listing every check is a bad
+idea. All that's doing is saying, 'here are the 100 checks that were
+available' which is noise 99% of the time." Not decided, and it sits
+against that decision of 2026-09-26.
+
+A reading, not a decision, of how both could hold: tell apart a check that
+does not apply on this screen from one that cannot run at all, such as one
+not built, excluded for the run, or with no log named. The first is left
+off a Hop's line; the second is said once, on the Route's opening line,
+as `checksIncluded` and `checksExcluded` already are in part. What the
+omission would lose is a check whose test of when it applies is wrong and
+so never runs, which would look exactly like one whose screen never came
+up; a count of how often each check ran, per Route and per Journey, in the
+summary, is what would show it, and is close to 1.26.
+
+Said next, the same day: "Logging which check was triggered would be
+useful." Meaning each Hop's line names the checks that applied and ran,
+passed or failed, rather than every check there is: asked, and confirmed
+with "Yes, that's what I meant." How a check that cannot run at all is
+then recorded, and whether to count how often each ran, is still open.
+
 **An order suggested, not agreed:** this comparison (2.29) and the first
 template checks before weighting the draw, stage 5, since the evidence so
 far puts the limit on judgment and setup rather than on where Routes go.
@@ -1722,23 +1807,38 @@ Also suggested with it: a model drafting Fixes that build the state the
 studies found most bugs need, which stay code that replays; and scrolling
 as a move (1.9).
 
-### 2.31 Probe Hops, a short determined sequence inside the Trip
+### 2.31 Detours, a short determined sequence inside the Trip
 
-Phase 6's relations (R20) need the engine to take moves of its own, which
-`GLOSSARY.md` calls probe Hops. Discussed on 2026-10-15 with Help's
-Previous and Next topic as the example, and put this way: "So it's like a
-mini-Fix: After Hop 9, what happens next is determined, like a Fix step."
+A metamorphic check (R20) needs the engine to take moves of its own between
+Hops. Discussed on 2026-10-15 with Help's Previous and Next topic as the
+example, and put this way: "So it's like a mini-Fix: After Hop 9, what
+happens next is determined, like a Fix step." **Named the same day:** "Call
+the sequence a Detour and each move is a Detour Step, similar to Fix Step."
+They were called probe hops until then, in `GLOSSARY.md` and `PLAN.md`;
+"probe" was set aside since it already names the investigation scripts in
+`trial/*/probes/`, and "hop" since a Hop is drawn from the seed and these
+are not. `GLOSSARY.md` has both terms.
 
 **As it was worked through, a reading and not a decision.** A Hop drawn by
-the seed does what a relation names, such as Previous topic; before the
-next Hop is drawn, the engine itself takes the undoing move, Next topic,
-settles, and compares a reading taken before the Hop with one taken after
-the probe. The reading is one value, such as Help's topic, held only for
-those few steps and written on the probe's journal line; nothing carries
-past the probe or between Routes. A probe takes no draw, so the Trip's
-stream and a replay are unchanged. Global Options works the same way: after
-a Hop presses OK, the engine reopens it, reads the setting and closes it,
-rather than waiting for a later Hop to reopen it by chance.
+the seed does what a metamorphic check names, such as Previous topic;
+before the next Hop is drawn, the engine takes the check's Detour, here one
+Detour step, Next topic, settles, and compares a reading taken before the
+Hop with one taken after the Detour. The reading is one value, such as
+Help's topic, held only for the Detour and written on its journal lines;
+nothing carries past it or between Routes. A Detour takes no draw, so the
+Trip's stream and a replay are unchanged. Global Options works the same
+way: after a Hop presses OK, the Detour reopens it, reads the setting and
+closes it, rather than waiting for a later Hop to reopen it by chance.
+
+**How one is declared, as discussed, not built:** in the adapter, once for
+every Journey, with the Hop's target that starts it (`when`), the Detour
+steps as named targets in order, as a Fix's `act` steps are written
+(`steps`), what to read before and after (`read`), and how the two readings
+must compare (`expect`). Named targets rather than code, so a journal holds
+each step whole and a replay can retrace it, the lesson of 1.18's `code`
+steps. A Detour step whose target is not on screen, such as Next topic
+disabled, means the check does not apply, journaled as such and never as
+held.
 
 **Like a Fix step:** no draw, and each step settled, checked and journaled.
 **Unlike one:** a Hop starts it, not the start of every Route; the adapter
@@ -1746,10 +1846,10 @@ declares it once for every Journey, where a Journey's author writes a Fix;
 and its failure is a finding about the application, not a broken setup
 (R11). Not 2.22, which sets state up again partway through a Route.
 
-**Still open, with `PLAN.md` phase 6:** whether probes count toward the
-Trip length; where the Route continues from, since after the probe the
-screen is where the probe left it; and what is recorded when a relation
-cannot apply, such as Next topic disabled, which must never read as held.
+**Still open, with `PLAN.md` phase 6:** whether Detour steps count toward
+the Trip length; and where the Route continues from, since after the
+Detour the screen is where the Detour left it. "Relation" stays plain
+English for what a metamorphic check asserts, not a term of its own.
 
 ### 2.32 A replay stopped by a target now out of sight does not say so
 

@@ -349,6 +349,9 @@ candidates, none yet followed by hand. `docs/HISTORY.md` has the reading
 against the bar. Step-6 probes, each steering a Route straight to a
 candidate's steps against a control, are in `trial/positron/probes/`, run
 with `npx playwright test -c probes <name>` from `trial/positron`.
+RStudio's are in `trial/rstudio/probes/`, run the same way from
+`trial/rstudio`, and are mostly measurements, such as how long a survey
+of Help takes; `docs/GLOSSARY.md` defines a probe.
 
 **A bug already found no longer ends a Route,** since 2026-09-27. A consumer
 keeps `known-findings.json` beside its spec; a Route that meets a finding in

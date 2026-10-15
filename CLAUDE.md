@@ -354,6 +354,11 @@ fits, and are never forced:
   continuation, where each Hop is drawn from the seed. In a Journey with no Fix,
   a Route is all Trip. Avoid "trip" as a verb in this project, as in a check
   that trips; say fires or fails, so the noun stays unambiguous.
+- **Detour** is one too, named on 2026-10-15: the few moves a check takes
+  itself between two Hops, each a **Detour step**, as a Fix has Fix steps.
+  Not a Hop, since nothing in it is drawn from the seed. They were planned
+  as probe hops, and "probe" stays the word for the investigation scripts
+  in `trial/*/probes/`.
 - **Passepartout** was reserved for the module that travels and has been dropped.
   `docs/HISTORY.md` records why. Watch for a place it genuinely fits rather
   than reinstating it as a label.

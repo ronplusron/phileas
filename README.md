@@ -111,4 +111,5 @@ Journey is shown finding each one.
 | `tests/` | This engine's own tests. |
 | `proving-ground/` | Applications built to be tested, each broken in one chosen way, with the adapter each needs. |
 | `trial/` | The adapter and Journeys for a measured trial against a real application, Positron first. `docs/PLAN.md` has the trial. |
+| `trial/*/probes/` | Probes for each trial: scripts that settle one question about the application, apart from any Journey. `docs/GLOSSARY.md` defines them. |
 | `demo/` | Applications built to show Phileas at work, apart from `proving-ground/`. `docs/DEMO_PLAN_TRAIN.md` plans the first; `npm run demo:train` runs it, and `npm run demo:train:present` presents it. `docs/DEMO_PLAN_EIGHTY_DAYS.md` plans the second; `npm run demo:eighty-days` runs it, and `npm run demo:eighty-days:present` presents it. `demo/presenting.mjs` is the runner the guided demos share, and `demo/watching.mjs` the watcher. |
