@@ -257,7 +257,10 @@ a link in a frame that leaves the application excluded by the engine.
 (R32): a control no part of which shows, in the window, a pane or a frame,
 is left out of the pool and counted on it by what keeps it out of sight,
 never named, and reaching it waits for scrolling as a move of its own.
-Weighting the draw, stage 5, is next.
+**Stage 5 is next, placed on 2026-10-15** ahead of weighting the draw,
+now stage 6: checks that know intent, a model measured against Phileas,
+Fixes a model drafts, and scrolling as a move, in that order. `docs/PLAN.md`
+has it.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stopped where it stood

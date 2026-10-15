@@ -144,7 +144,7 @@ a user of the engine never meets.
 | Term | Meaning |
 |---|---|
 | Phase | One of the sections of `PLAN.md`'s build order, numbered 0 to 10, each a block of the engine's work ending at a boundary, which is either a real verification point or bookkeeping. Phases say what the work is, not the order it is done in. |
-| Stage | One numbered item in the order the work is actually done in, under `PLAN.md`'s current order, "The order from 2026-10-05". A stage can be part of a phase, several phases, or work no phase holds. Called a step until 2026-10-09; the Positron trial's numbered steps and the demo plans' stage one and stage two are separate lists and keep their own names. |
+| Stage | One numbered item in the order the work is actually done in, under `PLAN.md`'s current order, "The order from 2026-10-05". A stage can be part of a phase, several phases, or work no phase holds. Renumbered on 2026-10-15 when a new stage 5 was placed, so `HISTORY.md` names stages 5 to 8 of before then by their old numbers. Called a step until 2026-10-09; the Positron trial's numbered steps and the demo plans' stage one and stage two are separate lists and keep their own names. |
 | Semirandom | A known start and an unpredictable continuation: what a Fix followed by a Trip makes a Route. A Route with no Fix is random instead. |
 | Planner | The for-loop in a Journey's spec file that registers one Playwright test per Route. It decides how many Routes there are, and must never decide what they explore. |
 | Chooser | The named seam that picks a target from the pool. Today it's always the seeded draw. |

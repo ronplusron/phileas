@@ -1049,8 +1049,8 @@ stage, and `GLOSSARY.md` has how a stage differs from a phase.
    planted defect whose check exists switched on, finding them by traveling
    rather than by being steered, under the uniform draw. Done on 2026-10-06,
    and `HISTORY.md` has it: every plant was found, once two hang plants were
-   made long enough to find. **It is a coverage check, not stage 5's
-   baseline,** agreed the same day: every plant sits on `buggy`'s opening
+   made long enough to find. **It is a coverage check, not the baseline
+   for weighting the draw,** agreed the same day: every plant sits on `buggy`'s opening
    screen, so Routes ended within a few Hops and it measured how often a draw
    lands on a plant, not how well a Route explores. Moving plants deeper is
    phase 8 proper.
@@ -1065,28 +1065,37 @@ stage, and `GLOSSARY.md` has how a stage differs from a phase.
    shortened by a probe, none followed by hand, and triage taking hours
    rather than minutes. `HISTORY.md` has the runs, the triage and the
    reading against the bar. The trial is finished. An RStudio batch comes
-   next, placed on 2026-10-08 and described below the list, and then stage
-   5.
-5. **Weighting the draw toward new targets,** below, measured on Eighty
+   next, placed on 2026-10-08 and described below the list, and then
+   weighting the draw.
+5. **Checks that know intent, a model measured against Phileas, Fixes a
+   model drafts, and scrolling as a move,** in that order, placed on
+   2026-10-15 and described below the list.
+6. **Weighting the draw toward new targets,** below, measured on Eighty
    Days' `screens` layout.
-6. **The rest of replay from the journal,** as `OUTSTANDING.md` 1.18 lists
+7. **The rest of replay from the journal,** as `OUTSTANDING.md` 1.18 lists
    it, starting with the new step kinds.
-7. **The rest of phase 5,** with the stranded encoding first, then no
+8. **The rest of phase 5,** with the stranded encoding first, then no
    navigation away with its evidence from foreign processes, then the rest
    in phase 5's own order.
-8. **Recording a Fix, then phases 6, 7, 8 in full, 9 and 10,** as below.
+9. **Recording a Fix, then phases 6, 7, 8 in full, 9 and 10,** as below.
+
+**Renumbered on 2026-10-15,** when the new stage 5 was placed: weighting
+the draw, the rest of replay, the rest of phase 5 and the stage after it
+were stages 5 to 8 until then, and `HISTORY.md` names them by their old
+numbers. Passages below that placed work before weighting the draw name it
+rather than its number.
 
 **Stages 1 and 2 swapped the same day,** proposed when asked whether the proof
 would take the wider log rule into account, and taken with "y": every RStudio
 journal predated that rule, so the proof would have been its first RStudio
 run.
 
-Stages 3 and 5 were proposed in both orders around the rest of replay, and
+Stage 3 and weighting the draw were proposed in both orders around the rest of replay, and
 the one above was taken with "OK let's do this." after a recommendation.
 Placing stage 4 after stage 3 rather than before it is a reading, not part of
 the answer, which said only before weighting.
 
-**An RStudio batch before stage 5, placed on 2026-10-08.** Raised in the
+**An RStudio batch before weighting the draw, placed on 2026-10-08.** Raised in the
 words "We did a ton of extensive testing with Positron. It feels like we
 didn't do nearly as much with RStudio", and asked for with "Let's take care
 of that". Counted the same day from the Route journals kept: 828 for
@@ -1112,7 +1121,7 @@ taken from options offered:
 
 **Done on 2026-10-08:** 594 of 600 passed, one RStudio bug filed, and four
 engine repairs or defects found along the way; `HISTORY.md` has the runs
-and the triage. Reading inside frames is next, then stage 5.
+and the triage. Reading inside frames is next, then weighting the draw.
 - **A Trip of 20 Hops,** asked for as "Whatever we did for Positron",
   which was 20 in step 6.
 - **No bar set in advance.**
@@ -1120,7 +1129,7 @@ and the triage. Reading inside frames is next, then stage 5.
   goes before weighting, as the Positron trial did, so the two compare.
 
 **Reading inside frames, placed after the RStudio batch on 2026-10-08,**
-also before stage 5. Asked for in the words "Let's move reading inside frames
+also before weighting the draw. Asked for in the words "Let's move reading inside frames
 forward", once the batch's data viewer Fix showed RStudio's grid drawn in a
 frame the survey does not read, and placed from three offered, right after
 the batch, over after weighting the draw and after the rest of replay. It
@@ -1176,11 +1185,40 @@ since every read inside it is refused and logged as a console error, and an
 id made fresh each launch is written `<id>` in a frame's label, measured on
 Positron's webviews.
 
-**Offering only what shows, placed on 2026-10-12,** before stage 5, on a
+**Offering only what shows, placed on 2026-10-12,** before weighting the draw, on a
 branch of its own once the repair of the slow survey merges. R32 was
 corrected that day to its own words, and the engine then still offered a
 control scrolled out of sight. Proposed with the correction and taken with
-"YES". **Built on 2026-10-15;** `HISTORY.md` has it. Stage 5 is next.
+"YES". **Built on 2026-10-15;** `HISTORY.md` has it.
+
+**Stage 5, placed on 2026-10-15,** ahead of weighting the draw. Proposed as
+a suggestion while discussing whether a language model makes the engine
+pointless, recorded in `OUTSTANDING.md` 2.30 as not agreed, and then taken
+in the words "Let's turn the suggestion into in an agreement and reorder",
+"Let's do all four of these" and "Make the order 2, 1, A, B", with the
+stages renumbered in the words "This is now Stage 5, and the current Stage
+5 becomes 6 and so on." The reason given with the suggestion, not with the
+answer: the evidence so far puts the engine's limit on judgment and setup,
+not on where Routes go, which is what weighting the draw improves. In
+order:
+
+1. **Checks that know intent,** part of phase 6 brought forward: checks of
+   one moment (R18) first, since they need no Detours, then metamorphic
+   checks (R20) with their Detours. Drawn from the templates and the
+   RStudio candidates in `OUTSTANDING.md` 2.30, each shown to fire on a
+   planted defect and to stay quiet without one.
+2. **A model measured against Phileas,** `OUTSTANDING.md` 2.29: what the
+   model explorer may read and how its findings count are designed first,
+   then both run against Eighty Days' 8 planted bugs, counted per hour and
+   per dollar.
+3. **Fixes a model drafts:** a person names a state in a sentence, such as
+   an R reference class object open in the Object Explorer, a model drafts
+   the Fix, and a person accepts it, after which it runs as any Fix does.
+   Each names a state and never a bug, since a Fix aimed at one bug is a
+   scripted test with extra steps. Its `code` steps replay from the journal
+   only once the new step kinds in stage 7 exist.
+4. **Scrolling as a move,** `OUTSTANDING.md` 1.9, since offering only what
+   shows left the part of a long page out of sight unreachable.
 
 ### After the trial: weighting the draw toward new targets
 
@@ -1192,7 +1230,8 @@ proposal, not with the answer: before the trial ends, the trial would be
 measuring a chooser its bar was not set against. `OUTSTANDING.md` has the
 idea and what needs deciding before it is built. **Placed again on
 2026-10-05,** once the trial had stopped with no word on resuming: stage 5
-of "The order from 2026-10-05", after the trial's remaining steps.
+of "The order from 2026-10-05", after the trial's remaining steps, and stage
+6 since 2026-10-15.
 
 It is a second chooser behind the choosing seam, so the hop loop does not
 change and the seeded draw stays available. Whether it replaces the seeded

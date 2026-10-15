@@ -301,7 +301,8 @@ repeating it.
   hovering. A Hop today can click, type, press a key, select, focus and click a
   menu entry.
   Virtualized lists and long panes need scrolling before their contents exist
-  to be found. **Since 2026-10-15 scrolling matters more:** only what shows
+  to be found. **Scrolling is placed as the last part of stage 5 of
+  `PLAN.md`'s order, on 2026-10-15.** **Since 2026-10-15 scrolling matters more:** only what shows
   is offered (R32), so the part of a long page, list or dialog out of sight
   is unreachable until something brings it into view, which a Hop does
   today, if at all, only as a side effect, such as Tab moving focus onto a
@@ -588,7 +589,7 @@ screens with such a group. Open: how a group is recognized. Same role and
 a name identical but for one word catches this case and could merge
 controls that only look alike, so it is to be measured against the pools
 kept, RStudio's and Positron's, before anything is chosen. It belongs with
-weighting the draw, stage 5.
+weighting the draw, stage 6.
 
 **A document of thousands of links, measured on RStudio on 2026-10-12.**
 Help showing the manual "Writing R Extensions" holds 7,581 links in its
@@ -1629,8 +1630,9 @@ Asked on 2026-10-15: "Can an LLM do what Phileas does? What's the point of
 Phileas, if an LLM can be told to do the work?" Then: "Is there anything
 else worth adding to Phileas, or has it reached its limit of usefulness vs.
 reliance on LLM?" The comparison below was asked to be recorded, in the
-words "Record that comparison in OUTSTANDING." Nothing is decided, and
-whether to run it has not been asked.
+words "Record that comparison in OUTSTANDING." **Placed on 2026-10-15** as
+the second part of stage 5 in `PLAN.md`'s order, after the first checks
+that know intent; how it is built is still open, below.
 
 **What was said in answer, a reading and not a decision.** A model explores
 well, choosing moves with intent and judging what it sees. What Phileas
@@ -1800,12 +1802,14 @@ passed or failed, rather than every check there is: asked, and confirmed
 with "Yes, that's what I meant." How a check that cannot run at all is
 then recorded, and whether to count how often each ran, is still open.
 
-**An order suggested, not agreed:** this comparison (2.29) and the first
-template checks before weighting the draw, stage 5, since the evidence so
+**An order suggested, then agreed:** this comparison (2.29) and the first
+template checks before weighting the draw, since the evidence so
 far puts the limit on judgment and setup rather than on where Routes go.
 Also suggested with it: a model drafting Fixes that build the state the
 studies found most bugs need, which stay code that replays; and scrolling
-as a move (1.9).
+as a move (1.9). **Agreed on 2026-10-15, all four,** in the order checks
+that know intent, this comparison, Fixes a model drafts, then scrolling,
+as stage 5 of `PLAN.md`'s order, which has the words.
 
 ### 2.31 Detours, a short determined sequence inside the Trip
 
