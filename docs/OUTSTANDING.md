@@ -1975,6 +1975,48 @@ settled differently, and each mode ran once. `../ORIENTATION.md` already
 says to match the window mode in a replay until a replay across modes is
 measured; this is the first measurement that a pool depends on it.
 
+### 2.34 Routes that carry on past a failure, rather than ending at the first
+
+Raised on 2026-10-16, after clearing RStudio's WCAG known findings showed
+that a Journey of 100 Routes would fail every Route at Fix step 1 on one
+fault found on every screen, and that settling a check's findings takes a
+Journey per layer of them, since a Route sees nothing past its first
+failure: the WCAG check took five Journeys on 2026-10-14. Proposed first
+in a narrow form, a Journey declared for collecting, whose Routes record
+every new finding and carry on. Then widened, in the words: "this doesn't
+have to be for letting check failures settle. This could just be any
+Route. So a Journey of 100 Routes with Trip length 10 would always result
+in 100 Routes with 10 Hops, and with possibly up to 10 failures each (plus
+any Fix failures)." Asked to be recorded with its trade-off. Nothing is
+decided, and the wider form reverses `PRODUCT_REQUIREMENTS.md` R16, a
+Must, and the commitment in `../CLAUDE.md` that the first violation ends
+the Route.
+
+**What it would buy:** every Route completes its Trip, so a Journey always
+travels its whole booking; every finding along each path, not only the
+first; and no Journeys spent letting the known findings settle.
+
+**What R16 protects against, a reading and not measured:** one bug becoming
+many failures. A window gone blank fails on every step after it, and an
+error left on screen can set off checks reading that screen, so each later
+finding on a Route may be a consequence of the first rather than a bug of
+its own: the "cascading noise that buries the Hop that mattered."
+
+**What would stay as it is, as proposed:** a hang or a crash still ends the
+Route, as a known hang already does, since an application that does not
+answer cannot be traveled; and a failed Fix still ends it, since a Trip
+from a broken setup says nothing about the Route meant to be traveled
+(R11).
+
+**What would make the noise manageable, as proposed:** each finding after a
+Route's first failure marked as coming after it, so triage can weigh it,
+and one signature counted once per Route.
+
+**What would decide it:** R16's reason is written as reasoning and has not
+been measured. One batch on RStudio run both ways, ending at the first
+failure and carrying on, would show how much of what follows a first
+failure is new.
+
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias
