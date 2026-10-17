@@ -91,11 +91,13 @@ export function describePlaced(placed: Placed, steps: readonly StepSpan[]): stri
 }
 
 /**
- * The steps that started at or before a moment, latest first, as the failure
- * lists them: how long before the moment each began, and what it did.
+ * The steps that started at or before a moment, in the order they ran, as the
+ * failure lists them: how long before the moment each began, and what it did.
+ * Latest first until 2026-10-16, changed as confusing to read; journals
+ * written before then keep that order in their outcome's text.
  */
 export function stepsBefore(at: number, steps: readonly StepSpan[], count = STEPS_LISTED): string[] {
-  const before = steps.filter((step) => step.startedAt <= at).slice(-count).reverse();
+  const before = steps.filter((step) => step.startedAt <= at).slice(-count);
   const width = Math.max(0, ...before.map((step) => step.name.length));
   return before.map(
     (step) =>

@@ -275,3 +275,19 @@ test("phileas run uses the engine's reporter unless Playwright's arguments name 
     expect(runReporter(own)).toEqual(own);
   }
 });
+
+test('the summary counts the checks besides the universal ones that applied, never listing them, and says nothing where there are none', () => {
+  const base = { endErrors: [], config: 'trial/rstudio/phileas', env: { PHILEAS_SEED: 's' }, cwd: '/' };
+  const text = summaryLines({
+    ...base,
+    routes: [
+      { outcome: 'passed', routeNumber: 1, hops: 20, tripLength: 20, checks: { inForce: ['a', 'b', 'c'], applied: ['a'] } },
+      { outcome: 'passed', routeNumber: 2, hops: 20, tripLength: 20, checks: { inForce: ['a', 'b', 'c'], applied: ['a', 'b'] } },
+    ],
+  }).join('\n');
+  expect(text).toContain('Checks besides the universal ones: 2 of 3 applied on some step.');
+  expect(text).not.toMatch(/\bc\b.*applied nowhere/);
+  // The control: with no checks besides the universal ones, no line at all.
+  const none = summaryLines({ ...base, routes: [{ outcome: 'passed', routeNumber: 1, hops: 20, tripLength: 20, checks: { inForce: [], applied: [] } }] }).join('\n');
+  expect(none).not.toContain('Checks besides the universal ones');
+});

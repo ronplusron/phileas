@@ -169,6 +169,38 @@ function valueText(value) {
 }
 
 /**
+ * How many of the checks other than the universal ones ran on a step, as a
+ * suffix to its line, or nothing: `checked: 10`. Agreed on 2026-10-16
+ * (docs/HISTORY.md, 2026-10-16) so a step says how much was looked at without
+ * naming checks that passed; a failed one is still named, by `failedText`.
+ * Out of the opening line's `checksInForce`, so a journal from before that
+ * date, which has none, prints no count rather than one counted from lines
+ * that held every check.
+ * @param {readonly { check: string, result?: string }[] | undefined} checks
+ * @param {Extract<JournalEntry, { kind: 'route' }> | undefined} opening
+ * @returns {string}
+ */
+function checkedText(checks, opening) {
+  const count = checkedOf(checks, opening);
+  return count ? `   checked: ${count}` : '';
+}
+
+/**
+ * The count `checkedText` prints, or undefined where there is nothing to say.
+ * A check recorded as not run on the step, one that could not look, is not
+ * counted, since it checked nothing.
+ * @param {readonly { check: string, result?: string }[] | undefined} checks
+ * @param {Extract<JournalEntry, { kind: 'route' }> | undefined} opening
+ * @returns {number | undefined}
+ */
+function checkedOf(checks, opening) {
+  const inForce = new Set(opening?.checksInForce ?? []);
+  if (!inForce.size) return undefined;
+  const count = (checks ?? []).filter((check) => inForce.has(check.check) && check.result !== 'not-run').length;
+  return count || undefined;
+}
+
+/**
  * The checks that failed on a Hop, as a suffix to its line, or nothing.
  *
  * Only failures are printed. A line listing eight passes per Hop would bury
@@ -514,6 +546,7 @@ export function renderEntry(entry, routeNumber, { brief = false, opening } = {})
         entry.error ? `failed: ${entry.error}` : effectText(entry.effect),
         caughtText(entry.caught, step),
         recoveredText(entry.checks),
+        checkedText(entry.checks, opening),
         knownText(entry.checks),
         failedText(entry.checks, step, brief),
       ].join('');
@@ -530,6 +563,7 @@ export function renderEntry(entry, routeNumber, { brief = false, opening } = {})
         entry.abandoned ? `   (gave up: ${entry.abandoned}${underText(entry.interceptedBy)})` : '',
         caughtText(entry.caught, step),
         recoveredText(entry.checks),
+        checkedText(entry.checks, opening),
         knownText(entry.checks),
         failedText(entry.checks, step, brief),
       ].join('');
@@ -609,6 +643,7 @@ export function renderJournal(text) {
  *   abandoned?: string,
  *   caught: string[],
  *   recovered?: string,
+ *   checked?: number,
  *   failed: { check: string, observation: string, findings: { id: string, arrived?: string }[] }[],
  *   known: { id: string, standing: string }[],
  * }} RouteStep
@@ -637,6 +672,13 @@ export function journalSteps(text) {
   let build;
   /** @type {Extract<JournalEntry, { kind: 'outcome' }> | undefined} */
   let ending;
+  /** @type {Extract<JournalEntry, { kind: 'route' }> | undefined} */
+  let opening;
+  /** @param {readonly { check: string, result?: string }[] | undefined} checks */
+  const checked = (checks) => {
+    const count = checkedOf(checks, opening);
+    return count ? { checked: count } : {};
+  };
   for (const [index, raw] of lines.entries()) {
     if (raw.trim() === '') continue;
     /** @type {JournalEntry} */
@@ -649,6 +691,7 @@ export function journalSteps(text) {
       continue;
     }
     if (entry.kind === 'route') {
+      opening = entry;
       build = entry.build;
       out.opening = {
         routeNumber: entry.routeNumber,
@@ -672,6 +715,7 @@ export function journalSteps(text) {
         ...(entry.error ? { error: entry.error } : {}),
         caught: caughtParts(entry.caught, step),
         ...recoveredOf(entry.checks),
+        ...checked(entry.checks),
         failed: failedOf(entry.checks, step),
         known: knownOf(entry.checks),
       });
@@ -687,6 +731,7 @@ export function journalSteps(text) {
         ...(entry.abandoned ? { abandoned: `${entry.abandoned}${underText(entry.interceptedBy)}` } : {}),
         caught: caughtParts(entry.caught, step),
         ...recoveredOf(entry.checks),
+        ...checked(entry.checks),
         failed: failedOf(entry.checks, step),
         known: knownOf(entry.checks),
       });

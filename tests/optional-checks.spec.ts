@@ -126,13 +126,15 @@ test('a check the run excludes, and one the adapter has off by default, are each
   const entries = await route(page, app, { ...buggy, checksByDefault: { 'no-unexpected-dialog': 'off' } });
   const opening = entries.find((entry) => entry.kind === 'route');
   expect(opening?.kind === 'route' ? opening.checksExcluded : undefined).toEqual(['console-error']);
+  // Once, on the opening line, with why, and on no step's line, since neither
+  // can run anywhere in the Route (docs/HISTORY.md, 2026-10-16).
+  const unavailable = opening?.kind === 'route' ? (opening.checksUnavailable ?? []) : [];
   for (const [name, why] of [
     ['console-error', 'excluded for this run'],
     ['no-unexpected-dialog', 'off by default for this application'],
   ]) {
-    const recorded = checksNamed(entries, name ?? '');
-    expect(recorded.length).toBeGreaterThan(0);
-    for (const check of recorded) expect(check).toMatchObject({ result: 'not-run', observation: why });
+    expect(unavailable).toContainEqual({ check: name, reason: why });
+    expect(checksNamed(entries, name ?? '')).toEqual([]);
   }
   // The control: a check nothing names still runs.
   const responding = checksNamed(entries, 'still-responding');

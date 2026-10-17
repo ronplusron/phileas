@@ -63,10 +63,12 @@ test("without the run's folder the predicate refuses rather than letting those l
   expect(() => excluded(link('home'))).toThrow(/PHILEAS_TEMP_FOLDER is unset/);
 });
 
-test('before launch, native dialogs are switched off and the package library exists', async () => {
+test('before launch, native dialogs and the update check are switched off and the package library exists', async () => {
   await rstudio.beforeLaunch?.(profile);
   const prefs = JSON.parse(fs.readFileSync(path.join(profile, 'home', '.config', 'rstudio', 'rstudio-prefs.json'), 'utf8'));
-  expect(prefs).toEqual({ native_file_dialogs: false });
+  // The update check since 2026-10-15, when Update Available interrupted a
+  // launch; this test was not changed with it, and failed from then on.
+  expect(prefs).toEqual({ native_file_dialogs: false, check_for_updates: false });
   expect(fs.statSync(path.join(profile, 'home', 'R', 'library')).isDirectory()).toBe(true);
 });
 

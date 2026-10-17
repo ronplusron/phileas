@@ -25,6 +25,94 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-16: a check says when it applies, and RStudio's first check of its own
+
+**Why.** Stage 5 writes checks that know intent, and every check was
+written on every step's journal line, including the ones that could never
+run. With a hundred checks a line would be nearly all checks with nothing
+to look at, which was raised the day before: "listing every check is a bad
+idea. All that's doing is saying, 'here are the 100 checks that were
+available' which is noise 99% of the time." So before the first
+check, the engine was taught to say when one applies. Worked out against
+mockups of an RStudio Route with data viewer and Global Options checks,
+and taken in the words "OK yes, Do the print count and only name
+failures", "That line is fine" of the summary's count, and "OK looks good"
+of the journal's shape.
+
+**What landed in the engine.**
+- **`AppCheck.appliesWhen`,** beside `run`, bounded and judged as `run` is:
+  one that throws is a broken check, one that does not answer is recorded
+  as not run on that step. A check with none applies on every step.
+- **A step's journal line holds only checks that ran:** the universal ones
+  that can, and the adapter's that applied. **The opening line holds, once,**
+  what is the same on every step: `checksUnavailable`, each check that
+  cannot run on the Route with why, such as the two not built yet;
+  `checksNarrowed`, each narrowing's reason, which had repeated on every
+  step, about 450 characters a step on RStudio; and `checksInForce`, the
+  checks besides the universal ones that can run. Measured on the first
+  RStudio Route with it: one Hop's checks came to 337 bytes.
+- **A step's printed line counts the checks besides the universal ones that
+  ran on it,** as `checked: 1`, and a failure is named by the `CHECK
+  FAILED` the line already printed. A step where none applied adds
+  nothing, and a journal from before, with no `checksInForce`, prints no
+  count. The page reads the same count from `journalSteps`.
+- **The Journey's summary gets one line,** `Checks besides the universal
+  ones: 1 of 1 applied on some step.`, and no list of the rest: most of an
+  adapter's hundred would be normal not to meet in a Journey that stays in
+  one area. Proposed and dropped before building: a line naming every check
+  that applied nowhere, and a tally at each Route's end, once each step's
+  line showed its count.
+- **Tests:** three new against `buggy`, on a check that applies beside one
+  that does not and is never run, an `appliesWhen` that throws, and one that
+  does not answer; one on the printed count, the page's and an older
+  journal's; one on the summary's count. Five changed, which read every
+  check from every step. 491 tests.
+
+**RStudio's first check, `unsaved-mark-matches-save`,** in
+`trial/rstudio/phileas/checks/source/`, the first in a `checks/` folder by
+area: the Source pane's selected document is marked unsaved exactly when
+the main toolbar's Save is enabled. Measured first, by
+`trial/rstudio/probes/save-follows.spec.ts`: the main Save follows only the
+selected tab, a data viewer selected has no mark and Save disabled even
+with an unsaved script behind it, and Help shown or the console focused
+changes nothing. One exception, a new `Untitled1` with nothing typed, has no
+mark and Save enabled, and the rule for it was agreed in the words "the
+check holds both ways on the selected document, except a never-saved
+Untitled document, where only the unsaved mark means Save enabled." A tab's
+`textContent` holds a hidden mark on every tab, so the check reads the text
+that shows.
+
+**Shown to apply, stay quiet and fire,** by
+`trial/rstudio/probes/unsaved-mark-check.spec.ts` on RStudio 2026.10.0:
+with nothing open it does not apply; with an unsaved script, the script
+saved, a data viewer selected and a new Untitled document it applies and is
+quiet; with the mark hidden in the page it fires one way, and with Save
+disabled in the page the other. Then a Journey of one Route of 12 Hops from
+the `script` Fix, seed `bf60259a34a0`, passed: Fix step 1, before a document
+was open, counted nothing, and every step after it `checked: 1`.
+
+**Found on the way: a test failing since 0.13.0.**
+`tests/rstudio-adapter.spec.ts` expected the adapter's preferences file to
+hold `native_file_dialogs` alone, and the adapter has also written `check_for_updates: false` since
+2026-10-15, so the test failed on `main` from then on, run there at
+`1a842b4` as the control, while `../ORIENTATION.md` counted every test as
+passing. It now expects both. Version 0.14.0, for the journal's new shape
+and `appliesWhen`.
+
+**A failure's steps are listed in the order they ran,** asked for the same
+day as "confusing as is": the list under a failed Route, "Steps before it",
+was latest first since 2026-09-30, and is now oldest first, ending on the
+step the finding arrived in, the "started … before" column counting down
+to it. Journals written before keep the old order, since the list is
+written into the outcome's text.
+
+**RStudio's WCAG known findings cleared,** asked for the same day: all 22,
+none filed or dismissed, the 21 from 2026-10-14 and one a Journey with
+`wcag-aa` on added that day, an image with no text in the Open File
+dialog's path breadcrumb. Each was taken out with `phileas known remove`,
+so a Journey that runs `wcag-aa` reports each as new again. The 8 log
+findings stay.
+
 ## 2026-10-15: ten checks that know intent, probed on RStudio before any is written
 
 **Why.** Stage 5 opens with checks that know what an application is meant

@@ -43,15 +43,18 @@ its window fails still-responding rather than going unnoticed. Since
 judged the same way: `buggy`'s declares one, and Positron's one.
 `docs/PLAN.md` has where what such a check asserts must come from.
 
-**Two checks are absent, and every Hop says so.** No navigation away and named
-controls are not built yet, and each Hop's journal line records them as not
-run. So is the log check wherever the adapter names no log. The open defect
+**Two checks are absent, and every Route says so.** No navigation away and
+named controls are not built yet, and each Route's opening line records them,
+once, among the checks that cannot run on it, since 2026-10-16; until then
+every Hop's line did. So is the log check wherever the adapter names no log.
+An adapter's own check is recorded on the steps where it applies, and a
+step's printed line counts them (`docs/HISTORY.md`, 2026-10-16). The open defect
 in `docs/DEFECTS.md` stays open until the foreign-process half of no
 navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs four hundred and eighty-six tests, after a
+through, and `npm test` runs four hundred and ninety-one tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -217,7 +220,12 @@ and a radio reached through its label going out of sight with what holds
 them; a frame out of sight, below the window and in a pane scrolled away;
 a page with everything out of sight stranding; and a Fix step on a target
 out of sight refused, with a code step bringing it into view as the
-control.
+control. Five came with checks saying when they apply: an adapter's check
+that does not apply left off the line and never run, beside one that does
+and one with no `appliesWhen`; an `appliesWhen` that throws, and one that
+does not answer; a step's line counting the checks besides the universal
+ones, an older journal's printing no count; and the summary counting them
+without a list.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -293,6 +301,10 @@ package vulnerability check, is `ronplusron/phileas` issue 97.
 its `known-findings.json` is settled: seven entries filed against five
 issues, issue 97's one error being three entries, and one dismissed as a
 false alarm.
+**Its adapter has one check of its own since 2026-10-16,**
+`unsaved-mark-matches-save`, in `trial/rstudio/phileas/checks/source/`: the
+selected document's unsaved mark against the main toolbar's Save.
+`docs/HISTORY.md` has what it was measured from.
 `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
 R script with code in it; `session-data`, code run in the console;
 `r-markdown`, the dialog for a new R Markdown document;
@@ -490,7 +502,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own four hundred and eighty-six tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own four hundred and ninety-one tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

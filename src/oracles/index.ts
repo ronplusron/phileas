@@ -36,10 +36,11 @@ import {
  * window still showing something, no unexpected dialog, and an error appended
  * to a log the adapter names. Two are not built yet, no navigation away (none
  * of it: the stub's recorder is read only by a fixture, and the
- * foreign-process half does not exist) and named controls, and every Hop's
- * journal line says so rather than leaving them out. After them run the checks
- * an adapter declares for its own application (R18), judged the same way;
- * `AppCheck` says where what they assert must come from.
+ * foreign-process half does not exist) and named controls, and the Route's
+ * opening line says so, once, as it says of any check that cannot run on it
+ * (`checksOnTheRoute`). After them run the checks an adapter declares for its
+ * own application (R18), judged the same way, each on the steps where it
+ * applies; `AppCheck` says where what they assert must come from.
  *
  * **Every check here was made to fire on a planted defect before it shipped.**
  * `tests/checks.spec.ts` has one per check, against `buggy` launched with that
@@ -106,10 +107,70 @@ const GONE = /Target (?:page, context or browser )?(?:has been )?closed|crashed|
 const MAIN_ERRORS = '__phileasMainErrors';
 
 /**
- * Short, since it is written on every Hop. `docs/PLAN.md` has the trial that
- * built the rest first, and says when these follow.
+ * Written once, on a Route's opening line, since 2026-10-16. `docs/PLAN.md`
+ * has the trial that built the rest first, and says when these follow.
  */
 const NOT_BUILT = 'not built yet (docs/PLAN.md)';
+
+/** The two universal checks not yet built, which never run. */
+const UNBUILT: ReadonlySet<UniversalCheck> = new Set<UniversalCheck>(['no-navigation-away', 'named-controls']);
+
+/** Why the log check never runs on a Route whose adapter names no log. */
+const NO_LOG_NAMED = 'the adapter names no log in logPaths';
+
+/**
+ * What is the same about the checks on every step of a Route, said once on
+ * its opening line rather than on every step, agreed on 2026-10-16
+ * (docs/HISTORY.md, 2026-10-16): each check that cannot run at all, with why;
+ * each narrowing's reason; and the checks other than the universal ones that
+ * can run, which a step's printed count is out of.
+ *
+ * Read from the adapter and the run's choice alone, so the journal can name
+ * them before the Route watches anything. It refuses nothing: a declaration
+ * that is wrong is `startWatching`'s to refuse, inside the Route, where the
+ * journal records why.
+ */
+export function checksOnTheRoute(
+  cfg: AppUnderTest,
+  choice: CheckChoice
+): {
+  unavailable: { check: string; reason: string }[];
+  narrowed: Record<string, string>;
+  inForce: string[];
+} {
+  const offWhy = (name: string) => {
+    const state = stateOf(cfg, choice, name);
+    return state.runs ? undefined : state.why;
+  };
+  const unavailable: { check: string; reason: string }[] = [];
+  const narrowed: Record<string, string> = {};
+  for (const check of CHECK_ORDER) {
+    const narrowing = cfg.narrowedChecks?.[check];
+    if (narrowing) narrowed[check] = narrowing.reason;
+    const off = offWhy(check);
+    if (off !== undefined) unavailable.push({ check, reason: off });
+    else if (narrowing?.kind === 'off') unavailable.push({ check, reason: 'switched off by the adapter' });
+    else if (UNBUILT.has(check)) unavailable.push({ check, reason: NOT_BUILT });
+    else if (check === 'log-error' && namesNoLog(cfg)) unavailable.push({ check, reason: NO_LOG_NAMED });
+  }
+  const inForce: string[] = OPTIONAL_CHECKS.filter((name) => offWhy(name) === undefined);
+  for (const own of cfg.checks ?? []) {
+    const off = offWhy(own.name);
+    if (off !== undefined) unavailable.push({ check: own.name, reason: off });
+    else inForce.push(own.name);
+  }
+  return { unavailable, narrowed, inForce };
+}
+
+/**
+ * Whether the adapter names no log for this Route. Logs named from the
+ * profile folder count as named without asking: the adapter's function is
+ * called once per Route, by `startWatching`, and one that names none there
+ * is recorded on each step as not run, as before.
+ */
+function namesNoLog(cfg: AppUnderTest): boolean {
+  return typeof cfg.logPaths !== 'function' && (cfg.logPaths ?? []).length === 0;
+}
 
 /**
  * A Hop's checks found something wrong, and the Route ends here (R16).
@@ -181,7 +242,7 @@ function failureMessage(where: string, failed: readonly JournaledCheck[], steps:
   return (
     `${count} failed after ${where}, which is when the checks read it. The cause may be an earlier ` +
     `step: when it arrived, and the steps before it, are below.\n\n${blocks.join('\n')}\n\n` +
-    `  Steps before it, latest first:\n${stepsBefore(reference, steps)
+    `  Steps before it, in order:\n${stepsBefore(reference, steps)
       .map((line) => `    ${line}`)
       .join('\n')}`
   );
@@ -348,6 +409,9 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
     return state.runs ? undefined : state.why;
   };
   const optional = OPTIONAL_CHECKS.filter((name) => offWhy(name) === undefined).map((name) => OPTIONAL[name]);
+  // What can never run on this Route is on its opening line, once, and is
+  // left off every step's.
+  const unavailable = new Set(checksOnTheRoute(cfg, choice).unavailable.map((entry) => entry.check));
   const varying = cfg.varyingInSignatures ?? [];
   refuseUnfitVarying(varying);
   // Under the rules in force now, so an entry written before a rule changed
@@ -599,7 +663,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
         judged(check, cfg.narrowedChecks?.[check], known, varying, run, offWhy(check));
 
       const universal = await Promise.all(
-        CHECK_ORDER.map((check) => {
+        CHECK_ORDER.filter((check) => !unavailable.has(check)).map((check) => {
           switch (check) {
             case 'uncaught-error':
               return judge(check, async () => {
@@ -654,9 +718,17 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
       // The optional ones that run, then the adapter's own, after the
       // built-in ones and one at a time, so each Hop's line lists them in a
       // fixed order. Neither is narrowed: one is the engine's and chosen, and
-      // the other the adapter wrote.
+      // the other the adapter wrote. One of the adapter's that does not apply
+      // here is left off the line (`AppCheck.appliesWhen`).
       const own: JournaledCheck[] = [];
       for (const appCheck of [...optional, ...appChecks]) {
+        if (unavailable.has(appCheck.name)) continue;
+        const applies = await appliesHere(appCheck, { page, app, tree }, responsiveTimeoutMs);
+        if (applies === false) continue;
+        if (applies !== true) {
+          own.push({ check: appCheck.name, result: 'not-run', observation: applies.notRun });
+          continue;
+        }
         own.push(
           await judged(
             appCheck.name,
@@ -738,6 +810,37 @@ export function assertAppChecks(checks: readonly AppCheck[]): void {
 }
 
 /**
+ * Whether an adapter check applies to the screen as it stands: true where it
+ * declares no `appliesWhen`, and bounded by the responsive wait as `run` is.
+ * One that does not answer in time could not look, and says so; one that
+ * throws is the check's own fault, as for `run`, so a broken `appliesWhen`
+ * never reads as a screen the check did not apply to.
+ */
+async function appliesHere(
+  check: AppCheck,
+  context: AppCheckContext,
+  responsiveTimeoutMs: number
+): Promise<boolean | { notRun: string }> {
+  if (!check.appliesWhen) return true;
+  const answer = await within(
+    Promise.resolve().then(() => check.appliesWhen?.(context)),
+    responsiveTimeoutMs,
+    'rejections-too'
+  );
+  if (answer === TIMED_OUT) return { notRun: `it did not answer whether it applies within ${responsiveTimeoutMs} ms` };
+  if (!answer.ok) {
+    if (GONE.test(firstLine(answer.error))) {
+      return { notRun: `the application could not be reached: ${firstLine(answer.error)}` };
+    }
+    throw new AdapterCheckError(check.name, answer.error);
+  }
+  if (typeof answer.value !== 'boolean') {
+    throw new AdapterCheckError(check.name, new Error(`appliesWhen answered ${JSON.stringify(answer.value)}, not true or false`));
+  }
+  return answer.value;
+}
+
+/**
  * One adapter check, bounded by the responsive wait.
  *
  * A check that does not answer in time, or cannot reach an application that
@@ -806,8 +909,10 @@ async function shownAgainWithin(page: Page, waitMs: number): Promise<number | un
 /**
  * One check's verdict, with the adapter's narrowing applied (R19).
  *
- * A check switched off is recorded as not run, with the adapter's reason,
- * and is never run at all, so a check that would hang is not waited on.
+ * A check switched off is recorded as not run, and is never run at all, so a
+ * check that would hang is not waited on. A narrowing's reason is not written
+ * here: since 2026-10-16 the Route's opening line holds it, once, as
+ * `checksNarrowed`, where it had repeated on every step.
  */
 async function judged(
   check: string,
@@ -819,21 +924,20 @@ async function judged(
 ): Promise<JournaledCheck> {
   if (off !== undefined) return { check, result: 'not-run', observation: off };
   if (narrowing?.kind === 'off') {
-    return { check, result: 'not-run', observation: 'switched off by the adapter', narrowed: narrowing.reason };
+    return { check, result: 'not-run', observation: 'switched off by the adapter' };
   }
 
   const verdict = await run();
   if (!Array.isArray(verdict)) {
     if ('recovered' in verdict) {
       const { afterMs, observation } = verdict.recovered;
-      return { check, result: 'passed', observation, recovered: { afterMs }, ...(narrowing ? { narrowed: narrowing.reason } : {}) };
+      return { check, result: 'passed', observation, recovered: { afterMs } };
     }
     return { check, result: 'not-run', observation: verdict.notRun };
   }
   const checkedAt = Date.now();
   const observed = verdict.map((entry): Observed => (typeof entry === 'string' ? { text: entry, arrival: { at: checkedAt } } : entry));
 
-  const reason = narrowing ? { narrowed: narrowing.reason } : {};
   const accepted = narrowing ? observed.filter((entry) => narrowing.accept(entry.text)).map((entry) => entry.text) : [];
   const violations = observed.filter((entry) => !accepted.includes(entry.text));
 
@@ -870,7 +974,6 @@ async function judged(
       check,
       result: 'failed',
       observation: unknown.map((finding) => finding.violation).join('\n'),
-      ...reason,
       ...recorded,
     };
   }
@@ -880,7 +983,7 @@ async function judged(
       ({ record }) => `known finding ${record.id}${record.issue ? `, issue ${record.issue}` : ', unfiled'}: ${record.signature}`
     ),
   ];
-  return { check, result: 'passed', ...(notes.length ? { observation: notes.join('\n') } : {}), ...reason, ...recorded };
+  return { check, result: 'passed', ...(notes.length ? { observation: notes.join('\n') } : {}), ...recorded };
 }
 
 /** The checks that failed, if any. */

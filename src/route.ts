@@ -28,6 +28,7 @@ import { readKnownFindings } from './known.mjs';
 import { replayFix, replayFromEnvironment, replayOf, type ReplayPlan } from './replay.js';
 import {
   CheckFailure,
+  checksOnTheRoute,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,
   failedChecks,
   startWatching,
@@ -921,6 +922,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   // Read before the journal opens, so a name this application cannot run
   // stops the Route before it records anything.
   const choice = checkChoiceFromEnvironment(cfg);
+  const onTheRoute = checksOnTheRoute(cfg, choice);
   const journalDirectory = journalFolder(journalsRoot, journeySeed, requireRun());
   const outputDir = routeOutputDir(journalDirectory);
   const journal = Journal.open(journalDirectory, {
@@ -937,6 +939,9 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     ...(cfg.exclusions.groups ? { allowedExclusionGroups: allowedGroups } : {}),
     ...(choice.included.length ? { checksIncluded: choice.included } : {}),
     ...(choice.excluded.length ? { checksExcluded: choice.excluded } : {}),
+    ...(onTheRoute.unavailable.length ? { checksUnavailable: onTheRoute.unavailable } : {}),
+    ...(Object.keys(onTheRoute.narrowed).length ? { checksNarrowed: onTheRoute.narrowed } : {}),
+    checksInForce: onTheRoute.inForce,
     ...(known ? { knownFindings: { version: known.version, entries: known.entries.length } } : {}),
     ...(cfg.varyingInSignatures?.length
       ? { varyingInSignatures: cfg.varyingInSignatures.map(([pattern, replacement]) => [String(pattern), replacement] as const) }

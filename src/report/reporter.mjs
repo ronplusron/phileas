@@ -40,12 +40,16 @@ const JOURNAL_ANNOTATION = 'phileas-journal';
  * or Hop, the outcome line where the Route wrote one, and how many Hops a
  * replay skipped. A line cut off mid-write, by a Route that died, is skipped.
  * @param {string} file
- * Also how long each brief blank window lasted, for the summary.
- * @returns {{ opening?: Extract<JournalEntry, { kind: 'route' }>, last?: Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' }>, outcome?: Extract<JournalEntry, { kind: 'outcome' }>, hops: number, skipped: number, blanks: number[] }}
+ * Also how long each brief blank window lasted, for the summary, and which
+ * of the checks besides the universal ones ran on any step, out of those in
+ * force (docs/HISTORY.md, 2026-10-16), empty in a journal from before 2026-10-16.
+ * @returns {{ opening?: Extract<JournalEntry, { kind: 'route' }>, last?: Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' }>, outcome?: Extract<JournalEntry, { kind: 'outcome' }>, hops: number, skipped: number, blanks: number[], applied: string[] }}
  */
 export function readEnding(file) {
   /** @type {ReturnType<typeof readEnding>} */
-  const ending = { hops: 0, skipped: 0, blanks: [] };
+  const ending = { hops: 0, skipped: 0, blanks: [], applied: [] };
+  /** @type {Set<string>} */
+  const applied = new Set();
   let text;
   try {
     text = fs.readFileSync(file, 'utf8');
@@ -68,11 +72,16 @@ export function readEnding(file) {
       if (entry.kind === 'trip-hop' && entry.abandoned?.startsWith(REPLAY_SKIPPED)) ending.skipped += 1;
       const recovered = entry.checks?.find((check) => check.recovered)?.recovered;
       if (recovered) ending.blanks.push(recovered.afterMs);
+      const inForce = new Set(ending.opening?.checksInForce ?? []);
+      for (const check of entry.checks ?? []) {
+        if (inForce.has(check.check) && check.result !== 'not-run') applied.add(check.check);
+      }
     } else if (entry.kind === 'outcome') {
       ending.outcome = entry;
       ending.hops = entry.hops;
     }
   }
+  ending.applied = [...applied];
   return ending;
 }
 
@@ -129,11 +138,13 @@ function failedCheckLines(last) {
  * the Route ended without writing one.
  * @param {RouteResult} result
  * @param {{ follow: boolean, cwd: string }} options
- * @returns {{ lines: string[], outcome: 'passed' | 'failed' | 'stranded' | 'skipped' | 'unfinished', routeNumber?: number, hops: number, tripLength?: number, journal?: string, blanks?: number[] }}
+ * @returns {{ lines: string[], outcome: 'passed' | 'failed' | 'stranded' | 'skipped' | 'unfinished', routeNumber?: number, hops: number, tripLength?: number, journal?: string, blanks?: number[], checks?: { inForce: readonly string[], applied: readonly string[] } }}
  */
 export function routeLines(result, { follow, cwd }) {
   const journal = result.annotations.find((note) => note.type === JOURNAL_ANNOTATION)?.description;
-  const ending = journal ? readEnding(journal) : { hops: 0, skipped: 0, blanks: [] };
+  const ending = journal ? readEnding(journal) : { hops: 0, skipped: 0, blanks: [], applied: [] };
+  // What the summary counts checks from: those in force, and those that ran.
+  const checks = { inForce: ending.opening?.checksInForce ?? [], applied: ending.applied };
   const routeNumber = ending.opening?.routeNumber ?? Number(/route (\d+)/.exec(result.title)?.[1] ?? 0);
   // A test that is not a Route, such as a probe a person runs through the
   // same config, has no number, and is named by its title.
@@ -145,7 +156,7 @@ export function routeLines(result, { follow, cwd }) {
 
   if (result.status === 'skipped') {
     const why = result.annotations.find((note) => note.type === 'skip')?.description;
-    return { lines: [`${route}  skipped${why ? `: ${why}` : ''}`], outcome: 'skipped', routeNumber, hops: 0, tripLength, journal };
+    return { lines: [`${route}  skipped${why ? `: ${why}` : ''}`], outcome: 'skipped', routeNumber, hops: 0, tripLength, journal, checks };
   }
 
   const outcome = ending.outcome;
@@ -153,7 +164,7 @@ export function routeLines(result, { follow, cwd }) {
     // Passed with no outcome line: a test that wrote no journal, since a Route
     // that passes always closes one. Said as passed, never as failed, which
     // is what this said before 2026-10-02 of a probe that passed.
-    return { lines: [`${route}  passed${journal ? '' : ', with no journal'}`], outcome: 'passed', routeNumber, hops: ending.hops, tripLength, journal, blanks: ending.blanks };
+    return { lines: [`${route}  passed${journal ? '' : ', with no journal'}`], outcome: 'passed', routeNumber, hops: ending.hops, tripLength, journal, blanks: ending.blanks, checks };
   }
   if (!outcome) {
     // No outcome line: cut off by its deadline, stopped, or failed before its
@@ -198,7 +209,7 @@ export function routeLines(result, { follow, cwd }) {
   if (result.status !== 'passed' && result.status !== 'skipped') lines.push(...attachmentLines(result, cwd));
   /** @type {'passed' | 'failed' | 'stranded' | 'unfinished'} */
   const kind = outcome ? outcome.outcome : 'unfinished';
-  return { lines, outcome: kind, routeNumber, hops: ending.hops, tripLength, journal, blanks: ending.blanks };
+  return { lines, outcome: kind, routeNumber, hops: ending.hops, tripLength, journal, blanks: ending.blanks, checks };
 }
 
 /**
@@ -308,7 +319,7 @@ function rerunFlags(env) {
  * to the known findings, any failure at the Journey's end, and the commands
  * to run it again.
  * @param {{
- *   routes: { outcome: string, routeNumber?: number, hops: number, tripLength?: number, journal?: string, blanks?: readonly number[] }[],
+ *   routes: { outcome: string, routeNumber?: number, hops: number, tripLength?: number, journal?: string, blanks?: readonly number[], checks?: { inForce: readonly string[], applied: readonly string[] } }[],
  *   journeyEnd?: { findings: JourneyFindings, file: string },
  *   endErrors: readonly { message?: string }[],
  *   config: string,
@@ -347,6 +358,16 @@ export function summaryLines({ routes, journeyEnd, endErrors, config, env, cwd =
       `Brief blank windows: ${all.length} step${all.length === 1 ? '' : 's'}, in Route${blanked.length === 1 ? '' : 's'} ${where}; ` +
         `each showed something again, at most ${Math.max(...all)} ms later, and failed nothing. phileas show prints each.`
     );
+  }
+
+  // How many of the checks besides the universal ones ran on any step of any
+  // Route, as one count and never a list: most checks of an adapter's
+  // hundred are normal not to meet in a Journey that stays in one area, so
+  // naming them would be dozens of names a run (docs/HISTORY.md, 2026-10-16).
+  const inForce = new Set(routes.flatMap((route) => route.checks?.inForce ?? []));
+  if (inForce.size) {
+    const applied = new Set(routes.flatMap((route) => route.checks?.applied ?? []));
+    lines.push(`Checks besides the universal ones: ${applied.size} of ${inForce.size} applied on some step.`);
   }
 
   if (journeyEnd) lines.push(...renderJourneyFindings(journeyEnd.findings, journeyEnd.file));

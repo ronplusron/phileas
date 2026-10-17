@@ -102,9 +102,9 @@ export interface Booking {
 
   /**
    * Checks no Route runs although the application has them on by default,
-   * by name, each recorded on every Hop as excluded. `phileas run
-   * --check-off <names>` excludes another set for one run, replacing this
-   * one, and `--check-off none` none.
+   * by name, each recorded on each Route's opening line as excluded.
+   * `phileas run --check-off <names>` excludes another set for one run,
+   * replacing this one, and `--check-off none` none.
    */
   excludeChecks?: readonly string[];
 }

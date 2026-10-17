@@ -317,6 +317,22 @@ export interface AppCheck {
   readonly why: string;
 
   /**
+   * Whether this check has anything to look at on the screen as it stands,
+   * read from the same settled tree `run` is handed. A check that does not
+   * apply is left off the step's line entirely, so a hundred checks do not
+   * fill every line with ones that had nothing to look at; agreed on
+   * 2026-10-16, docs/HISTORY.md, 2026-10-16. Absent, the check applies on every
+   * step.
+   *
+   * **The same rules as `run`:** it reads and never acts, it answers the same
+   * on a replay, and it is bounded by the responsive wait. One that does not
+   * answer in time is recorded as not run; one that throws is a broken check.
+   * A test should show it true on the screen it is written for, since one
+   * that never answers yes reads on a run exactly like a screen never reached.
+   */
+  appliesWhen?(context: AppCheckContext): Promise<boolean> | boolean;
+
+  /**
    * What is wrong right now: an empty list when nothing is, or why the check
    * could not look.
    *
@@ -590,8 +606,9 @@ export interface AppUnderTest {
    * Separate from what the adapter defines for a check to work well on its
    * application, such as patterns in `varyingInSignatures`, which apply
    * whether or not the check runs by default. A check this switches off is
-   * recorded on every Hop as off, and a Journey or a run can still include
-   * it; one that cannot run at all belongs in `narrowedChecks` instead.
+   * recorded as off on each Route's opening line, and a Journey or a run can
+   * still include it; one that cannot run at all belongs in `narrowedChecks`
+   * instead.
    */
   checksByDefault?: Readonly<Record<string, 'on' | 'off'>>;
 

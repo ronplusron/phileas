@@ -907,6 +907,11 @@ in the reading of a journal that the page and `phileas show` share,
 `journalSteps` and the renderer in `src/report/render.mjs`, so both say it
 alike, rather than in the page alone.
 
+**Changed on 2026-10-16:** each step's printed line counts the checks
+besides the universal ones that ran on it, and a check that cannot run at
+all is said once, on the opening line; `HISTORY.md` has it. What an opened
+Route lists by name, and what a run's heading says, is still this item's.
+
 ### 1.27 Eighty Days under its candidate floor, once only what shows is offered
 
 `DEMO_PLAN_EIGHTY_DAYS.md` sets a floor: every place offers at least a dozen
@@ -1773,9 +1778,20 @@ not:
   the pane lists: `View(mtcars)` has no row, since `mtcars` is not in the
   global environment, so the `data-viewer` Fix as it stands never meets it.
 - **2 holds:** the tab adds " \*" to the file's name while the main
-  toolbar's Save is enabled; ⌘S clears both and typing brings both back. An R script was
-  measured, and not what Save follows while a data viewer's tab is
-  selected.
+  toolbar's Save is enabled; ⌘S clears both and typing brings both back.
+  **Probed further on 2026-10-16,** by
+  `trial/rstudio/probes/save-follows.spec.ts`: the main Save follows only
+  the selected document tab. A data viewer
+  selected has no mark and Save disabled, even with an unsaved script
+  behind it; Help shown or the console focused changes nothing; the
+  selected document's own Save agrees with the main one throughout. The
+  one exception is a new `Untitled1` with nothing typed: no mark, and Save
+  enabled. Save All is enabled even with nothing open, so it cannot be a
+  side of the check. A tab's `textContent` holds a hidden mark on every
+  tab, so only the text that shows tells them apart. **The rule agreed the
+  same day:** on the selected document, the mark and Save enabled go
+  together both ways, except a never-saved `Untitled` document, where only
+  the mark means Save enabled.
 - **3 holds for what is not hidden:** the pane leaves out `.config` and
   `.local`, and showed a file R wrote and one written from outside within
   4 s. How soon it follows is not measured, which a check after every Hop
@@ -1804,11 +1820,11 @@ not:
   Objects", with "Include hidden objects" ticked; after Yes the pane reads
   "Environment is empty" and `length(ls())` is 0.
 
-**Proposed then, not agreed:** 2 first, a check of one moment whose both
-sides are in the page's tree already read after every Hop; 1 next, once a
-Fix leaves an object the pane lists in a viewer. And for any of them, shown
-to fire by making the page contradict itself on purpose, as was done for
-Positron's on 2026-09-27, since no defect can be planted in RStudio.
+**2 is built, on 2026-10-16,** as `unsaved-mark-matches-save`, shown to
+fire by making the page contradict itself on purpose, as was done for
+Positron's on 2026-09-27, since no defect can be planted in RStudio;
+`HISTORY.md` has it. **Proposed then, not agreed:** 1 next, once a Fix
+leaves an object the pane lists in a viewer.
 
 The answer given to "limited in scope", a reading: each check states one
 fact, but runs after every Hop on every path that reaches its screen, so
@@ -1878,7 +1894,8 @@ Said next, the same day: "Logging which check was triggered would be
 useful." Meaning each Hop's line names the checks that applied and ran,
 passed or failed, rather than every check there is: asked, and confirmed
 with "Yes, that's what I meant." How a check that cannot run at all is
-then recorded, and whether to count how often each ran, is still open.
+recorded, and what is counted, were agreed and built on 2026-10-16;
+`HISTORY.md` has it.
 
 **An order suggested, then agreed:** this comparison (2.29) and the first
 template checks before weighting the draw, since the evidence so

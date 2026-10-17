@@ -521,6 +521,9 @@ below is unchanged, and what the trial builds is the first part of it.
      line carries every check's result as passed, failed, or not run with the
      reason, so an absent check is never read as a passing one. This settles
      what a report says about the foreign-process check off macOS too.
+     **Changed on 2026-10-16:** a check that can never run on a Route is
+     said once, on its opening line, and an adapter's check is on the steps
+     where it applies; `HISTORY.md` has it.
    - **Each planted defect is switched on by its own launch flag,** the way
      `--buggy-fail-items` already is, so `buggy` stays the unbroken baseline
      and no recorded seed moves.
@@ -1206,7 +1209,9 @@ order:
    one moment (R18) first, since they need no Detours, then metamorphic
    checks (R20) with their Detours. Drawn from the templates and the
    RStudio candidates in `OUTSTANDING.md` 2.30, each shown to fire on a
-   planted defect and to stay quiet without one.
+   planted defect and to stay quiet without one. **First, the engine is
+   taught to say when a check applies,** agreed and built on 2026-10-16;
+   `HISTORY.md` has it.
 2. **A model measured against Phileas,** `OUTSTANDING.md` 2.29: what the
    model explorer may read and how its findings count are designed first,
    then both run against Eighty Days' 8 planted bugs, counted per hour and

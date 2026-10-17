@@ -60,10 +60,15 @@ export interface JournaledCandidate {
 /**
  * The result of one check after one Hop.
  *
- * Written empty by phase 4, and filled since 2026-09-26. **Every check is
- * written on every Hop, including one that did not run**, with the reason it
- * did not. A check left out of the line would read exactly like one that
- * passed, which is a clean result claiming evidence nobody gathered.
+ * Written empty by phase 4, and filled since 2026-09-26. **Since 2026-10-16
+ * a step's line holds only the checks that ran on it:** every universal one
+ * that can run, and the adapter's that applied (`AppCheck.appliesWhen`). A
+ * check that cannot run at all, such as one not built or excluded for the
+ * run, is named once on the Route's opening line, `checksUnavailable`, so a
+ * check absent from a step's line did not apply, and never reads as passing.
+ * A check that could not look on this step, such as a page that did not
+ * answer, is still written here as not run. Before that date every check was
+ * written on every step, the ones that could never run included.
  */
 export interface JournaledCheck {
   readonly check: string;
@@ -73,7 +78,11 @@ export interface JournaledCheck {
    * what a narrowing accepted on a pass.
    */
   readonly observation?: string;
-  /** The adapter's reason, where it narrowed or switched off this check (R19). */
+  /**
+   * The adapter's reason, where it narrowed or switched off this check (R19).
+   * Written on every step until 2026-10-16, and since then once on the
+   * opening line, as `checksNarrowed`.
+   */
   readonly narrowed?: string;
   /**
    * Each violation this check saw, by its signature, and whether it was a
@@ -475,6 +484,18 @@ export interface OpeningEntry {
    */
   readonly checksIncluded?: readonly string[];
   readonly checksExcluded?: readonly string[];
+  /**
+   * What is the same about the checks on every step, written once here since
+   * 2026-10-16, and absent before, when each step repeated it:
+   * `checksUnavailable`, each check that cannot run at all on this Route,
+   * with why; `checksNarrowed`, each narrowing's reason by check (R19); and
+   * `checksInForce`, the checks other than the universal ones that can run,
+   * the optional ones chosen and the adapter's own, which a step's printed
+   * count is out of.
+   */
+  readonly checksUnavailable?: readonly { readonly check: string; readonly reason: string }[];
+  readonly checksNarrowed?: Readonly<Record<string, string>>;
+  readonly checksInForce?: readonly string[];
   /**
    * Which known findings the Route ran with: the file's version and how many
    * it held. Written because the file decides where a Route ends, though not

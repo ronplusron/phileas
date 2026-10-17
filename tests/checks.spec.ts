@@ -329,23 +329,25 @@ healthy('on the unplanted application, nothing fires, and what cannot run says w
   });
   expect(outcome.kind).toBe('passed');
 
-  const hops = journalIn(root).filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  const entries = journalIn(root);
+  const hops = entries.filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
   expect(hops).toHaveLength(12);
+  // What can never run is said once, on the opening line, with why, so an
+  // absent check never reads as a passing one (docs/HISTORY.md, 2026-10-16).
+  const opening = entries.find((entry) => entry.kind === 'route');
+  const unavailable = opening?.kind === 'route' ? (opening.checksUnavailable ?? []) : [];
+  expect(unavailable.map((entry) => entry.check).sort()).toEqual(['log-error', 'named-controls', 'no-navigation-away']);
+  expect(unavailable.find((entry) => entry.check === 'log-error')?.reason).toBe('the adapter names no log in logPaths');
+  for (const unbuilt of ['no-navigation-away', 'named-controls']) {
+    expect(unavailable.find((entry) => entry.check === unbuilt)?.reason).toMatch(/not built yet/);
+  }
+  expect(opening?.kind === 'route' ? opening.checksInForce : undefined).toEqual(['count-matches-list']);
+  const runs = CHECK_ORDER.filter((check) => !['log-error', 'named-controls', 'no-navigation-away'].includes(check));
   for (const hop of hops) {
-    // Every check on every Hop, in a fixed order, including the ones that did
-    // not run: an absent check would read exactly like a passing one.
-    // The adapter's own checks follow the built-in ones, in declared order.
-    expect(hop.checks.map((check) => check.check)).toEqual([...CHECK_ORDER, 'count-matches-list']);
-    expect(hop.checks.filter((check) => check.result === 'failed')).toEqual([]);
-    expect(result(hop.checks, 'log-error')).toEqual({
-      check: 'log-error',
-      result: 'not-run',
-      observation: 'the adapter names no log in logPaths',
-    });
-    for (const unbuilt of ['no-navigation-away', 'named-controls']) {
-      expect(result(hop.checks, unbuilt)?.result).toBe('not-run');
-      expect(result(hop.checks, unbuilt)?.observation).toMatch(/not built yet/);
-    }
+    // The rest on every Hop, in a fixed order, with the adapter's own after
+    // the built-in ones, in declared order, and nothing that cannot run.
+    expect(hop.checks.map((check) => check.check)).toEqual([...runs, 'count-matches-list']);
+    expect(hop.checks.filter((check) => check.result !== 'passed')).toEqual([]);
   }
 });
 
@@ -376,11 +378,15 @@ narrowedTest('a narrowing accepts what it names, and the journal says so (R19)',
   });
   expect(outcome.kind).toBe('passed');
 
-  const hop = journalIn(root).find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  const entries = journalIn(root);
+  const hop = entries.find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  const opening = entries.find((entry) => entry.kind === 'route');
   const consoleCheck = result(hop?.checks ?? [], 'console-error');
-  // Passed, and not silently: the reason and what it accepted are both there.
+  // Passed, and not silently: what it accepted is on the Hop, and the reason
+  // once on the opening line.
   expect(consoleCheck?.result).toBe('passed');
-  expect(consoleCheck?.narrowed).toBe('the ticket check logs on purpose');
+  expect(opening?.kind === 'route' ? opening.checksNarrowed?.['console-error'] : undefined).toBe('the ticket check logs on purpose');
+  expect(consoleCheck?.narrowed).toBeUndefined();
   expect(consoleCheck?.observation).toMatch(/accepted by the narrowing: .*could not be checked/);
 });
 
@@ -416,10 +422,12 @@ elsewhereTest('a narrowing that names something else accepts nothing, and the ch
     (thrown: unknown) => thrown
   );
   expect(error).toBeInstanceOf(CheckFailure);
-  const hop = journalIn(root).find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  const entries = journalIn(root);
+  const hop = entries.find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  const opening = entries.find((entry) => entry.kind === 'route');
   const consoleCheck = result(hop?.checks ?? [], 'console-error');
   expect(consoleCheck?.result).toBe('failed');
-  expect(consoleCheck?.narrowed).toBe('the timetable logs on purpose');
+  expect(opening?.kind === 'route' ? opening.checksNarrowed?.['console-error'] : undefined).toBe('the timetable logs on purpose');
   expect(consoleCheck?.observation).not.toMatch(/accepted by the narrowing/);
 });
 
@@ -480,7 +488,7 @@ const switchedOff = planted('console-error', {
 const offTest = createTest(switchedOff);
 offTest.afterEach(removeScratch);
 
-offTest('a check switched off is recorded as not run, with the reason (R19)', async ({ page, app }) => {
+offTest('a check switched off is recorded once as unable to run, with the reason (R19)', async ({ page, app }) => {
   const root = scratch();
   await runRoute({
     page,
@@ -493,13 +501,18 @@ offTest('a check switched off is recorded as not run, with the reason (R19)', as
     journalsRoot: root,
     chooser: always('Check the tickets'),
   });
-  const hop = journalIn(root).find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
-  expect(result(hop?.checks ?? [], 'console-error')).toEqual({
+  const entries = journalIn(root);
+  const hop = entries.find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  const opening = entries.find((entry) => entry.kind === 'route');
+  // Off the Hop's line, and on the opening line with both reasons, once.
+  expect(result(hop?.checks ?? [], 'console-error')).toBeUndefined();
+  expect(opening?.kind === 'route' ? opening.checksUnavailable?.find((entry) => entry.check === 'console-error') : undefined).toEqual({
     check: 'console-error',
-    result: 'not-run',
-    observation: 'switched off by the adapter',
-    narrowed: 'this application logs errors in normal use',
+    reason: 'switched off by the adapter',
   });
+  expect(opening?.kind === 'route' ? opening.checksNarrowed?.['console-error'] : undefined).toBe('this application logs errors in normal use');
+  // The control: a check nothing switched off is on the Hop's line.
+  expect(result(hop?.checks ?? [], 'uncaught-error')?.result).toBe('passed');
 });
 
 const throwing = planted('renderer-throw');
@@ -837,6 +850,70 @@ own('an adapter check that throws ends the Route as a broken check, not a findin
   );
   expect('thrown' in outcome && outcome.thrown).toBeInstanceOf(AdapterCheckError);
   expect('thrown' in outcome && String(outcome.thrown)).toMatch(/breaks threw.*a selector the check got wrong/);
+});
+
+// docs/HISTORY.md, 2026-10-16: a check says from the tree whether it has
+// anything to look at, and one that does not is left off the step's line,
+// never run, and never written as passed.
+own('an adapter check that does not apply is left off the line and never run, beside one that does', async ({ page, app }) => {
+  let ranElsewhere = 0;
+  const mentions = (context: { tree: unknown }, text: string) => JSON.stringify(context.tree ?? '').includes(text);
+  const { outcome, root } = await oneHopWith(
+    page,
+    app,
+    [
+      // buggy's list is titled Items on every screen a Route reaches here.
+      { ...ownCheck('on-the-items-screen', () => []), appliesWhen: (context) => mentions(context, 'Items') },
+      {
+        ...ownCheck('on-a-screen-buggy-lacks', () => {
+          ranElsewhere += 1;
+          return ['should never have run'];
+        }),
+        appliesWhen: (context) => mentions(context, 'a control buggy has nowhere'),
+      },
+      // The control: a check with no appliesWhen applies on every step.
+      ownCheck('everywhere', () => []),
+    ],
+    'own-applies'
+  );
+  expect(outcome).toEqual({ value: { kind: 'passed', hops: 1 } });
+  expect(ranElsewhere).toBe(0);
+  const entries = journalIn(root);
+  const opening = entries.find((entry) => entry.kind === 'route');
+  expect(opening?.kind === 'route' ? opening.checksInForce : undefined).toEqual(['on-the-items-screen', 'on-a-screen-buggy-lacks', 'everywhere']);
+  const hop = entries.find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  const own = (hop?.checks ?? []).filter((check) => !(CHECK_ORDER as readonly string[]).includes(check.check));
+  expect(own).toEqual([
+    { check: 'on-the-items-screen', result: 'passed' },
+    { check: 'everywhere', result: 'passed' },
+  ]);
+});
+
+own('an appliesWhen that throws ends the Route as a broken check, and one that does not answer is not run', async ({ page, app }) => {
+  const broken = await oneHopWith(
+    page,
+    app,
+    [{ ...ownCheck('applies-badly', () => []), appliesWhen: () => { throw new Error('a role the check got wrong'); } }],
+    'applies-throw'
+  );
+  expect('thrown' in broken.outcome && broken.outcome.thrown).toBeInstanceOf(AdapterCheckError);
+  expect('thrown' in broken.outcome && String(broken.outcome.thrown)).toMatch(/applies-badly threw.*a role the check got wrong/);
+});
+
+own('an appliesWhen that does not answer in time is recorded as not run, and the Route goes on', async ({ page, app }) => {
+  const { outcome, root } = await oneHopWith(
+    page,
+    app,
+    [{ ...ownCheck('applies-slowly', () => []), appliesWhen: () => new Promise<boolean>(() => {}) }],
+    'applies-hang'
+  );
+  expect(outcome).toEqual({ value: { kind: 'passed', hops: 1 } });
+  const hop = journalIn(root).find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  expect(result(hop?.checks ?? [], 'applies-slowly')).toEqual({
+    check: 'applies-slowly',
+    result: 'not-run',
+    observation: 'it did not answer whether it applies within 1000 ms',
+  });
 });
 
 own("an adapter check's violation is matched against known findings like a built-in one", async ({ page, app }) => {

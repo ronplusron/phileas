@@ -411,3 +411,36 @@ test('a journal as data cut off mid-write has no outcome, and says where it ende
   expect(finished.outcome).toMatchObject({ outcome: 'passed', hops: 3 });
   expect(finished.unreadable).toEqual([]);
 });
+
+// docs/HISTORY.md, 2026-10-16: a step's line counts the checks besides the
+// universal ones that ran on it, out of the opening line's checksInForce, and
+// names only a failure, which `CHECK FAILED` already does.
+test("a step's line counts the checks besides the universal ones that ran, and an older journal prints no count", () => {
+  const opening = { ...(ENTRIES[0] as Extract<JournalEntry, { kind: 'route' }>), checksInForce: ['viewer-sort', 'viewer-range', 'options-kept'] };
+  const sample = ENTRIES.find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
+  if (!sample) throw new Error('the sample journal has no Trip hop');
+  const hop = (checks: TripHopEntry['checks']): TripHopEntry => ({ ...sample, checks });
+  const universal = { check: 'uncaught-error', result: 'passed' as const };
+
+  const two = renderEntry(hop([universal, { check: 'viewer-sort', result: 'passed' }, { check: 'viewer-range', result: 'passed' }]), 3, { opening });
+  expect(two).toMatch(/ {3}checked: 2$/);
+  // A check that could not look on this step checked nothing, and is not counted.
+  const one = renderEntry(hop([universal, { check: 'viewer-sort', result: 'passed' }, { check: 'viewer-range', result: 'not-run', observation: 'it did not answer' }]), 3, { opening });
+  expect(one).toMatch(/ {3}checked: 1$/);
+  // A step where none applied adds nothing, and nor does a universal check alone.
+  expect(renderEntry(hop([universal]), 3, { opening })).not.toContain('checked:');
+  // A failure is counted, and named by CHECK FAILED as before.
+  const failed = renderEntry(
+    hop([universal, { check: 'viewer-sort', result: 'passed' }, { check: 'viewer-range', result: 'failed', observation: 'the range is wrong' }]),
+    3,
+    { opening }
+  );
+  expect(failed).toContain('   checked: 2   CHECK FAILED: viewer-range: the range is wrong');
+  // An older journal, every check on every step and no checksInForce, prints no count.
+  expect(renderEntry(hop([universal, { check: 'viewer-sort', result: 'passed' }]), 3, { opening: ENTRIES[0] as Extract<JournalEntry, { kind: 'route' }> })).not.toContain('checked:');
+
+  // The page reads the same count, from the same journal.
+  const lines = [opening, hop([universal, { check: 'viewer-sort', result: 'passed' }, { check: 'options-kept', result: 'passed' }])];
+  const steps = journalSteps(lines.map((entry) => JSON.stringify(entry)).join('\n'));
+  expect(steps.steps[0]).toMatchObject({ kind: 'hop', checked: 2 });
+});

@@ -92,17 +92,18 @@ test('a span names the steps that ran while the line could have been written, an
   );
 });
 
-test('the steps before a moment are listed latest first, capped, with a Hop that gave up marked', () => {
+test('the steps before a moment are listed in the order they ran, capped, with a Hop that gave up marked', () => {
   const lines = stepsBefore(LOGGED, ROUTE, 7);
   expect(lines).toHaveLength(7);
-  expect(lines[0]).toBe('hop 32  started  1.1 s before  click button "Refresh Find in Files results"  (gave up)');
+  // The earliest of the seven first, and the step the finding arrived in last.
+  expect(lines[0]).toContain('hop 26');
   // The step that caused it, five back, is in the list: the reason for listing any.
-  expect(lines[5]).toBe('hop 27  started  5.6 s before  click button "Yes"');
-  expect(lines[6]).toContain('hop 26');
+  expect(lines[1]).toBe('hop 27  started  5.6 s before  click button "Yes"');
+  expect(lines[6]).toBe('hop 32  started  1.1 s before  click button "Refresh Find in Files results"  (gave up)');
   // A Fix step is a step like any other, and is listed when the count reaches it.
-  expect(stepsBefore(LOGGED, ROUTE).at(-1)).toContain('Fix step 1');
+  expect(stepsBefore(LOGGED, ROUTE)[0]).toContain('Fix step 1');
   // Nothing that started after the moment.
-  expect(stepsBefore(at('14:49:48.000'), ROUTE)[0]).toContain('hop 28');
+  expect(stepsBefore(at('14:49:48.000'), ROUTE).at(-1)).toContain('hop 28');
 });
 
 test('the times on a finding go into the journal and come back unchanged', () => {
