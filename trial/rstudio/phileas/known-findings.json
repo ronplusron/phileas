@@ -62,5 +62,201 @@
     "added": "2026-10-08",
     "source": "journey",
     "issue": "ronplusron/phileas#97"
+  },
+  {
+    "id": "22fcbee4",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-input-field-name: .GCOP2I3BC4",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "661eb31c",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-children: .GCOP2I3BC4",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "c4ec8daf",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-children: div[aria-label=\"TabSet1 minimized\"] > div:nth-child(4) > .rstheme_center > tbody > tr > td[align=\"left\"][width=\"100%\"] > table[aria-label=\"accessibleName_ minimized\"][cellpadding=\"0\"][role=\"tablist\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "bb9a04cc",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-required-children: div[aria-label=\"TabSet2 minimized\"] > div:nth-child(4) > .rstheme_center > tbody > tr > td[align=\"left\"][width=\"100%\"] > table[aria-label=\"accessibleName_ minimized\"][cellpadding=\"0\"][role=\"tablist\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "80c751db",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-valid-attr: #rstudio_tutorial_frame >>> .rstudio-tutorials-install-learnr-link",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "cb932c58",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: aria-valid-attr: #rstudio_tutorial_frame >>> .rstudio-tutorials-install-shiny-link",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "b74cff6d",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: button-name: td[align=\"left\"]:nth-child(8) > .GCOP2I3BPW.GCOP2I3BOW[aria-haspopup=\"true\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "74a809a0",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: color-contrast: #rstudio_help_frame >>> h1",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "9b3f74b4",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: image-alt: #gwt-uid-<n> > table[cellpadding=\"0\"][cellspacing=\"0\"][role=\"presentation\"] > tbody > tr > td[align=\"left\"]:nth-child(1) > .gwt-Image[height=\"16\"][width=\"16\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "c017e0b5",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: image-alt: td[align=\"left\"] > table[cellpadding=\"0\"][cellspacing=\"0\"][role=\"presentation\"] > tbody > tr > td[align=\"left\"]:nth-child(1) > .gwt-Image",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "e7773c2d",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: image-alt: td[colspan=\"1\"][height=\"\"][width=\"\"] > .GCOP2I3BFJ > div:nth-child(3) > .breadcrumb[aria-label=\"Selected path breadcrumb\"] > .GCOP2I3BOJ > .GCOP2I3BNJ[height=\"24\"][width=\"25\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "a61f23d8",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"agrep\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "07b7bfa9",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"fields.alias\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "f790a997",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"fields.concept\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "1db526e8",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"fields.keyword\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "a5fdc254",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"fields.title\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "25cb2b12",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"ignore.case\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "5b677047",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"types.demo\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "114cbc51",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"types.help\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "e584ff43",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[name=\"types.vignette\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "09599a9f",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: label: #rstudio_help_frame >>> input[type=\"text\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "6edce58a",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: meta-viewport: meta[name=\"viewport\"]",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "cbc36521",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: nested-interactive: .gwt-MenuItemSeparator",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "0335140c",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: scrollable-region-focusable: .GCOP2I3BGQC > div:nth-child(3) > .GCOP2I3BMH > div:nth-child(2) > div",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "54fc89bc",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: scrollable-region-focusable: .GCOP2I3BIH > div:nth-child(3) > .GCOP2I3BMH > div:nth-child(2) > div",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "e26c72b5",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: scrollable-region-focusable: #rstudio_help_frame >>> <example> > pre",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "9e5b2059",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: select-name: .GCOP2I3BPNB:nth-child(1) > td:nth-child(2) > select",
+    "added": "2026-10-17",
+    "source": "journey"
+  },
+  {
+    "id": "331be034",
+    "check": "wcag-aa",
+    "signature": "wcag-aa: select-name: #rstudio_change_spelling_language_select",
+    "added": "2026-10-17",
+    "source": "journey"
   }
 ]

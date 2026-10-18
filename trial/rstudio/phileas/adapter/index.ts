@@ -187,6 +187,28 @@ export const rstudio: AppUnderTest = {
     [/div\[(?:aria-posinset|data-col-idx)="\d+"\]/g, 'div[<column>]'],
     [/(aria-label="(?:Show and scroll|Scroll) to column )[^"]+"/g, '$1<name>"'],
     [/(#rstudio_data_viewer_frame >>> span\[title=")[^"]+"\]/g, '$1<name>"]'],
+    // An element id GWT, RStudio's toolkit, numbers as it builds each widget,
+    // such as `#gwt-uid-514`, so the same widget has another number on
+    // another launch. Measured on 2026.11.0-daily+78 on 2026-10-17: ten
+    // settling Journeys with the accessibility check found 12 image-alt rows
+    // as #gwt-uid-514 to #gwt-uid-525, two labels and two dropdowns the same
+    // way, and kept adding them under new numbers, so the known findings
+    // never settled. The engine takes out only a UUID or eight hex digits.
+    [/#gwt-uid-\d+/g, '#gwt-uid-<n>'],
+    // A code example in one of R's manuals shown in Help, by where it sits:
+    // the same fault in the manuals' example template is found once per
+    // example. Measured on 2026.11.0-daily+78 on 2026-10-17: one Journey
+    // reached "R Data Import/Export" and found 11, such as
+    // `.example:nth-child(15) > pre`, `.smallexample.example:nth-child(33) >
+    // pre` and `#Binary-connections > .example > pre`, and the manuals hold
+    // hundreds more.
+    [/(#rstudio_help_frame >>> )(?:#[\w-]+ > )?(?:\.smallexample)?\.example(?::nth-child\(\d+\))? > pre\b/g, '$1<example> > pre'],
+    // A minimized pane's table, which axe-core named by two sets of
+    // attributes on different runs, `[cellpadding="0"][role="presentation"]`
+    // and `[cellpadding="0"][cellspacing="0"]`, for the one element: on
+    // 2026-10-17, each of TabSet1's and TabSet2's minimized tablist was two
+    // findings. Named by its class alone.
+    [/\.rstheme_center(?:\[[^\]]*\])+/g, '.rstheme_center'],
   ],
 
   async beforeLaunch(userDataDir: string): Promise<void> {

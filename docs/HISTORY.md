@@ -25,6 +25,50 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-17: RStudio's WCAG findings settled, on a daily build
+
+**Why.** Once RStudio's 22 WCAG known findings were cleared, any Journey
+with `wcag-aa` on failed its Routes within a step or two, each on the first
+fault common to every screen. Asked for in the words "let's do some
+settling. Run 10 Journeys, each with 10 Routes of length 10, with WCAG
+checks", so each Journey's end would add what it found and the next would
+travel past it.
+
+**On a daily build, not the release.** A first settling ran on 2026.10.0
+and was stopped during its fourth Journey, its findings put back, in the
+words "I want to use a more current version of RStudio, which might have
+some changes." The release then installed was 2026.11.0-daily+78, a
+pre-release, copied with `prepare-app.mjs` to
+`~/Applications/RStudio-2026.11.0-daily-fuses.app`. A short Journey on it
+first, 2 Routes of 15 Hops with no Fix and no WCAG, passed with nothing
+found and both guards clean. Its new sidebar shows "Posit Assistant Not
+Installed"; no exclusion was written against the sidebar, and it is not
+surveyed for one. Findings from this build are from a pre-release and say
+so.
+
+**Two settlings, the first stopped.** The first ran all ten Journeys and
+never settled: 84 WCAG findings, more each Journey, because GWT, RStudio's
+toolkit, numbers each widget's element id as it builds it, `#gwt-uid-514`
+and on, so one fault had a new signature on every launch. The adapter now
+takes the number out, `#gwt-uid-<n>`. The second, from the 8 log findings
+alone, ran all ten: its Journeys' Routes went 0, 5, 7, 9, 10, 8, 7, 10, 9
+and 9 passed of 10, every failure `wcag-aa`, and the count went 3, 9, 13,
+14, 14, 16, 37, 38, 38 and 39. The jump to 37 was one Journey reaching
+"R Data Import/Export" in Help, whose code examples carried one fault 10
+times over.
+
+**Two more patterns, then re-signed.** A manual's code example in Help is
+named `<example> > pre` wherever it sits, and a minimized pane's table,
+which axe-core named by two sets of attributes on different runs, by its
+class alone. A one-Hop Journey's end then re-signed the file under them:
+10 of the examples merged into one, each minimized tablist's two into one,
+and the 39 became 28. Each pattern has a test with its control in
+`tests/rstudio-adapter.spec.ts`.
+
+**What is left:** 28 WCAG findings and 8 log findings, all unfiled. Two
+stopped Journeys left four Route profiles in the system temp folder, which
+their Journeys' ends reported and nothing has removed.
+
 ## 2026-10-16: a check says when it applies, and RStudio's first check of its own
 
 **Why.** Stage 5 writes checks that know intent, and every check was

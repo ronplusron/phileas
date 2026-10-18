@@ -183,6 +183,57 @@ test("the data viewer's rows and columns are one finding each, as axe-core names
   expect(signed('#pinnedBody > tr[data-row="0"]')).not.toBe(signed('#pinned_cols'));
 });
 
+test("a widget GWT numbers as it builds it is one finding, whatever its number", async () => {
+  const { signatureOf } = await import('../src/index');
+  const signed = (observation: string) => signatureOf('wcag-aa', observation, 'ann', rstudio.varyingInSignatures);
+  // Selectors as recorded on RStudio 2026.11.0-daily+78 on 2026-10-17.
+  const row = (n: number) =>
+    `image-alt: #gwt-uid-${n} > table[cellpadding="0"][cellspacing="0"][role="presentation"] > tbody > tr > td[align="left"]:nth-child(1) > .gwt-Image[height="16"][width="16"]`;
+  expect(signed(row(514))).toBe(signed(row(525)));
+  expect(signed('label: #gwt-uid-661')).toBe(signed('label: #gwt-uid-662'));
+  // The control: different faults on numbered widgets stay different.
+  expect(signed('label: #gwt-uid-661')).not.toBe(signed(row(514)));
+});
+
+test("a code example in Help's manuals is one finding, wherever it sits", async () => {
+  const { signatureOf } = await import('../src/index');
+  const signed = (selector: string) =>
+    signatureOf('wcag-aa', `scrollable-region-focusable: #rstudio_help_frame >>> ${selector}`, 'ann', rstudio.varyingInSignatures);
+  // Selectors as recorded on RStudio 2026.11.0-daily+78 on 2026-10-17.
+  const one = signed('.example:nth-child(15) > pre');
+  for (const other of [
+    '.smallexample.example:nth-child(33) > pre',
+    '#Binary-connections > .example > pre',
+    '#Re_002dshaping-data > .example:nth-child(9) > pre',
+    '#DBI > .smallexample.example > pre',
+  ]) {
+    expect(signed(other)).toBe(one);
+  }
+  // The control: something else in the Help frame stays itself.
+  expect(signed('h1')).not.toBe(one);
+});
+
+test("a minimized pane's table is one finding, whichever attributes axe-core names it by", async () => {
+  const { signatureOf } = await import('../src/index');
+  const signed = (attributes: string) =>
+    signatureOf(
+      'wcag-aa',
+      `aria-required-children: div[aria-label="TabSet1 minimized"] > div:nth-child(4) > .rstheme_center${attributes} > tbody > tr > td[align="left"][width="100%"] > table[aria-label="accessibleName_ minimized"][cellpadding="0"][role="tablist"]`,
+      'ann',
+      rstudio.varyingInSignatures
+    );
+  // The two forms recorded on 2026-10-17.
+  expect(signed('[cellpadding="0"][role="presentation"]')).toBe(signed('[cellpadding="0"][cellspacing="0"]'));
+  // The control: the other pane's table stays apart.
+  const other = signatureOf(
+    'wcag-aa',
+    'aria-required-children: div[aria-label="TabSet2 minimized"] > div:nth-child(4) > .rstheme_center[cellpadding="0"][role="presentation"] > tbody > tr > td[align="left"][width="100%"] > table[aria-label="accessibleName_ minimized"][cellpadding="0"][role="tablist"]',
+    'ann',
+    rstudio.varyingInSignatures
+  );
+  expect(other).not.toBe(signed('[cellpadding="0"][role="presentation"]'));
+});
+
 test("one element is one finding whatever order axe-core lists its attributes in", async () => {
   const { steadySelector } = await import('../src/index');
   expect(steadySelector('.GCOP2I3BNJ[width="25"][height="24"]')).toBe(steadySelector('.GCOP2I3BNJ[height="24"][width="25"]'));

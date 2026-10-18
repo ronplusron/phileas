@@ -54,7 +54,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs four hundred and ninety-one tests, after a
+through, and `npm test` runs four hundred and ninety-four tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -225,7 +225,9 @@ that does not apply left off the line and never run, beside one that does
 and one with no `appliesWhen`; an `appliesWhen` that throws, and one that
 does not answer; a step's line counting the checks besides the universal
 ones, an older journal's printing no count; and the summary counting them
-without a list.
+without a list. Three more hold RStudio's accessibility findings to one
+signature each: a widget GWT numbers as it builds it, a code example in
+Help's manuals, and a minimized pane's table named two ways.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -502,7 +504,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own four hundred and ninety-one tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own four hundred and ninety-four tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs
