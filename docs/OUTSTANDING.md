@@ -930,6 +930,28 @@ engine cannot yet do and so meets the plan's rule against the demo
 flattering the engine, or waiting for scrolling as a move of its own
 (1.9), which would reach what is below the window as a person does.
 
+### 1.28 A test that a check's name begins with its area
+
+Since 2026-10-19 a check written from then on begins its name with its
+area, as `../CLAUDE.md` says beside the layout. Nothing enforces it. A
+misnamed check is noticed only after findings are filed under its name,
+when renaming it turns each into a new one. Proposed the same day and
+deferred, in the words "Add it to OUTSTANDING and move on."
+
+**What was proposed:** a test in `tests/` that walks each consumer's
+`checks/` folder, imports each file in an area subfolder, and fails when
+the check it exports does not begin with that folder's name and a hyphen,
+naming the file, the name and the prefix expected. The three named before
+the rule, `count-matches-list`, `no-error-notification` and
+`unsaved-mark-matches-save`, are listed as allowed; a file directly in
+`checks/` is skipped, since folders are a convention. It cannot tell
+whether a check sits in the right folder, only whether its name agrees
+with the one it is in.
+
+**Why it may matter more later:** stage 5 brings checks that know intent,
+some drafted by a model, and a convention kept only in prose is most
+likely to slip there. When to build it was not said.
+
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

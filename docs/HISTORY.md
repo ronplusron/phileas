@@ -37,7 +37,8 @@ three existing names alone." A check's name begins every signature it
 produces, so renaming `count-matches-list`, `no-error-notification` or
 `unsaved-mark-matches-save` would turn each of its known findings into a
 new one, while the rule costs nothing for checks not yet written.
-`../CLAUDE.md` has it beside the layout.
+`../CLAUDE.md` has it beside the layout. A test enforcing it was proposed
+and deferred; `OUTSTANDING.md` has it.
 
 **Also measured that day:** the Fix and check move, in the entry after
 this one, was run on the real applications, two Routes of ten Hops each. Positron
