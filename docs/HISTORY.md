@@ -25,6 +25,57 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-19: how the data viewer pages, a Fix for it, and its first check
+
+**Why.** The second RStudio check of one moment, the data viewer's counts
+against the Environment pane's, needs a viewer showing an object the pane
+lists, which `data-viewer`'s `mtcars` is not. Raised before writing it:
+"mtcars and cars2 would be enough to do some testing of the data viewer,
+but it won't be enough to test pagination." So a frame big enough to page
+was measured first.
+
+**Measured on RStudio 2026.11.0-daily+78,** by
+`trial/rstudio/probes/viewer-paging.spec.ts`, with `paged`, 1,000 rows by
+120 columns built from sequences with no randomness: an id, 39 numbers, 40
+text columns and 40 factors.
+- **No column paging.** The User Guide's "Cols >" arrows, 50 columns at a
+  time, did not appear. The grid scrolls sideways, drawing only the columns
+  near the view: 9 of 120 as opened, 12 halfway across, 4 at the end.
+- **Rows load as the grid scrolls,** and the footer follows: "Showing 1 to
+  16 of 1,000 entries, 120 total columns" as opened, "Showing 985 to 1,000"
+  at the bottom. Scrolling sideways leaves it as it was.
+- **What a Route can reach:** grid cells are in no pool. The frame's
+  candidates are the column list's buttons that show, 39 as opened, with 36
+  of its items out of sight; a column off the screen is reached only through
+  its "Scroll to column" button, once that shows.
+
+**The Fix, `data-viewer-paged`,** in `trial/rstudio/phileas/fixes/data-viewer/`,
+builds `paged` in the console, waits for the Environment pane to list it,
+and views it. The R is written inside the `code` step, so the step's
+recorded source holds what it typed.
+
+**The check, `data-viewer-counts-match-environment`,** in
+`checks/data-viewer/`, the first named for its area under the rule decided
+the same day: the viewer's footer counts the rows, before any filter, and
+the columns that the Environment pane states for the object it shows. It
+applies when the Source pane shows a data viewer, "<object> Data Browser",
+for an object the pane lists while it shows.
+
+**Shown to apply, stay quiet and fire,** by
+`trial/rstudio/probes/data-viewer-counts-check.spec.ts`: it does not apply
+with nothing open, with History shown in place of Environment, or on
+`mtcars`; it applies and is quiet on `paged` as opened and searched, "1 of 1
+entries (filtered from 1,000 total entries)". Two states were measured
+rather than asserted, and it was quiet on both: a column hidden, where the
+footer adds "(1 hidden)" and keeps "120 total columns", and `paged` cut to
+500 rows in the console, where the viewer refreshed to 500. It fired with
+the footer made to say 999 rows, and with the pane made to say 119 columns.
+
+**Then a Journey,** 2 Routes of 15 Hops from `data-viewer-paged`, seed
+`2b581781d624`, passed, both checks applying on most steps. Its Routes ran
+with R 4.6.1, and the person's own R library now exists with one package,
+both new on this machine since 2026-10-17.
+
 ## 2026-10-19: a check's name begins with its area, from now on
 
 **Why.** With checks in subfolders by area, a check named after its area

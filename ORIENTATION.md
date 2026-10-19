@@ -303,10 +303,12 @@ package vulnerability check, is `ronplusron/phileas` issue 97.
 its `known-findings.json` is settled: seven entries filed against five
 issues, issue 97's one error being three entries, and one dismissed as a
 false alarm.
-**Its adapter has one check of its own since 2026-10-16,**
-`unsaved-mark-matches-save`, in `trial/rstudio/phileas/checks/source/`: the
-selected document's unsaved mark against the main toolbar's Save.
-`docs/HISTORY.md` has what it was measured from.
+**Its adapter has two checks of its own:** `unsaved-mark-matches-save`,
+since 2026-10-16, in `trial/rstudio/phileas/checks/source/`, the selected
+document's unsaved mark against the main toolbar's Save; and
+`data-viewer-counts-match-environment`, since 2026-10-19, in
+`checks/data-viewer/`, the data viewer's rows and columns against the
+Environment pane's. `docs/HISTORY.md` has what each was measured from.
 `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
 R script with code in it; `session-data`, code run in the console;
 `r-markdown`, the dialog for a new R Markdown document;
@@ -315,7 +317,10 @@ added at its end; `zoomed-plots`, the Plots pane zoomed so the other
 panes are hidden; or `data-viewer`, `mtcars` shown in the data viewer,
 whose frame holds 69 controls, the same six for each column, which
 `docs/OUTSTANDING.md` 1.15 records as crowding; 39 of them show at the
-start, and the rest are out of sight in its column list. Its Journey fails the run when the machine's R libraries
+start, and the rest are out of sight in its column list; or
+`data-viewer-paged`, `paged`, 1,000 rows by 120 columns built in the
+console and shown in the data viewer, which the Environment pane lists.
+Its Journey fails the run when the machine's R libraries
 changed. Its Routes see the person's own R library after their own, so an
 install still lands in the Route's; `PHILEAS_R_PERSONAL_LIBRARY=0` leaves
 it out, a folder's path names another, and the Journey's start says which.

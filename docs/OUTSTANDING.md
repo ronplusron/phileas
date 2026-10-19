@@ -1710,8 +1710,10 @@ required.** Both assessed on 2026-10-15 against RStudio's data viewer:
   over 256 levels are filtered as text. About eight candidate checks. It is
   silent on pinning, hiding and the column summaries, all on today's
   screen, and it describes 50 columns shown at a time with "Cols >" arrows,
-  which is unmeasured on 2026.10.0: every RStudio journal kept views
-  `mtcars`, 11 columns, where no arrows would show. A check built from it
+  which was unmeasured until 2026-10-19: on 2026.11.0-daily+78 a frame of
+  120 columns showed no arrows and no column paging at all, only a grid
+  scrolled sideways, so on that build the page is out of date there
+  (`HISTORY.md`, 2026-10-19). A check built from it
   that fails may mean the page is out of date rather than that RStudio is
   wrong, so a person judges.
 - **Its own scripted suite.** RStudio's end-to-end tests, in `e2e/rstudio`
@@ -1824,8 +1826,9 @@ not:
 **2 is built, on 2026-10-16,** as `unsaved-mark-matches-save`, shown to
 fire by making the page contradict itself on purpose, as was done for
 Positron's on 2026-09-27, since no defect can be planted in RStudio;
-`HISTORY.md` has it. **Proposed then, not agreed:** 1 next, once a Fix
-leaves an object the pane lists in a viewer.
+`HISTORY.md` has it. **1 is built, on 2026-10-19,** as
+`data-viewer-counts-match-environment`, with a Fix of its own,
+`data-viewer-paged`, whose frame the pane lists; `HISTORY.md` has both.
 
 The answer given to "limited in scope", a reading: each check states one
 fact, but runs after every Hop on every path that reaches its screen, so

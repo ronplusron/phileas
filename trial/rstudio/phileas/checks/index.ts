@@ -1,4 +1,5 @@
 import type { AppCheck } from '@drugstoresushi/phileas';
+import { dataViewerCountsMatchEnvironment } from './data-viewer/data-viewer-counts-match-environment';
 import { unsavedMarkMatchesSave } from './source/unsaved-mark-matches-save';
 
 /**
@@ -7,4 +8,4 @@ import { unsavedMarkMatchesSave } from './source/unsaved-mark-matches-save';
  * it reads, as ../../../../CLAUDE.md lays out; its name is the one it
  * declares, never its file's path.
  */
-export const checks: readonly AppCheck[] = [unsavedMarkMatchesSave];
+export const checks: readonly AppCheck[] = [unsavedMarkMatchesSave, dataViewerCountsMatchEnvironment];
