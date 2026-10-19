@@ -1,5 +1,6 @@
 import type { AppCheck } from '@drugstoresushi/phileas';
-import type { Frame, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { viewedObject, viewerFrame } from './viewer';
 
 /**
  * The data viewer counts the same rows and columns for an object as the
@@ -33,14 +34,6 @@ const FOOTER =
 
 const count = (text: string) => Number(text.replace(/,/g, ''));
 
-/** The object the Source pane's data viewer shows, if one is showing. */
-async function viewedObject(page: Page): Promise<string | undefined> {
-  const panel = page.getByRole('region', { name: 'Source' }).getByRole('tabpanel', { name: / Data Browser$/ });
-  if ((await panel.count()) === 0) return undefined;
-  const name = await panel.first().getAttribute('aria-label');
-  return name?.replace(/ Data Browser$/, '') || undefined;
-}
-
 /** The Environment pane's rows and columns for an object, if it lists one while it shows. */
 async function environmentCount(page: Page, object: string): Promise<{ rows: number; columns: number } | undefined> {
   const rows = await page
@@ -55,10 +48,6 @@ async function environmentCount(page: Page, object: string): Promise<{ rows: num
     }
   }
   return undefined;
-}
-
-function viewerFrame(page: Page, object: string): Frame | undefined {
-  return page.frames().find((frame) => frame.url().includes('gridviewer.html') && frame.url().includes(`obj=${encodeURIComponent(object)}&`));
 }
 
 export const dataViewerCountsMatchEnvironment: AppCheck = {

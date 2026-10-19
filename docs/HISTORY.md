@@ -25,6 +25,69 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-19: the data viewer's sort and its footer's rows, two checks
+
+**Why.** Three checks were chosen from rules read off the titles of
+RStudio's own data viewer tests, stated in this project's words with
+nothing copied: a sorted column's values are in order; the footer names
+the rows, and past ~200 columns the columns, in view; and the sort cycle
+returns the original order, which needs a Detour. The first two are checks
+of one moment, so each was probed first.
+
+**Measured on RStudio 2026.11.0-daily+78,** by two probes in
+`trial/rstudio/probes/`. The first runs of each read nothing, since they
+looked for the sort button inside a column header and it is not there; a
+short scratch probe of the page's structure, since deleted, showed where
+things are, and both were corrected.
+- **Where things are.** A header is a `th[role=columnheader]` naming its
+  column in a span, with `aria-sort` none, ascending or descending, and a
+  `title` giving the column's kind. The sort buttons are in the summary
+  sidebar. Row names sit in `#pinnedTable` and the data in `#rsGridData`,
+  each row of both carrying `aria-rowindex`, the first body row's being 2.
+- **Sorting, `viewer-sort-order.spec.ts`,** on `sorts`, 300 rows built from
+  sequences with no randomness, each column read whole by scrolling.
+  Numbers and Dates came in order, logicals FALSE before TRUE, and text in
+  the order `localeCompare(..., 'en')` gives: 10, 9, Äpfel, apple, apple2,
+  banana, Banana, cherry, éclair, Zebra, which neither code points nor
+  numeric collation give. A factor came in level order, low, mid, high,
+  and its header says only "integer with 3 levels". NA came last both ways.
+  The sidebar's button reads "Sort column x ascending", then "... descending",
+  then "Remove sort on column x", and the third click restored the original
+  order every time.
+- **The footer, `viewer-footer-range.spec.ts`,** on `paged` and `wide`.
+  "Showing X to Y" named the first and last rows wholly in view, by
+  position rather than row name, as opened, scrolled, half a row off,
+  sorted by `id` descending, searched and with a column hidden, changing at
+  once with each scroll. "columns X to Y", past 200 columns, counted
+  columns partly in view too, left out a pinned column once scrolled away
+  from it, and lagged a sideways scroll by up to 500 ms. A header's
+  `data-col-idx` counts within the ~200 columns fetched, not across the
+  frame. So the columns half was left open; `OUTSTANDING.md` has why.
+
+**The checks,** in `trial/rstudio/phileas/checks/data-viewer/`, beside a
+module of their own, `viewer.ts`, for finding the viewer the Source pane
+shows, which the counts check now imports too:
+- **`data-viewer-sorted-column-in-order`:** a column whose header is marked
+  sorted, and shows at least in part, has its values in the rows wholly in
+  view in that order, NA last, compared as its header's kind says. It does
+  not apply to a sorted factor.
+- **`data-viewer-footer-rows-in-view`:** the footer's X and Y are the
+  positions of the first and last rows wholly in view.
+
+**Shown to apply, stay quiet and fire,** by `data-viewer-sort-check.spec.ts`
+and `data-viewer-rows-check.spec.ts`, and the counts check's own test run
+again after its move, all three passing:
+- The sort check did not apply with nothing open, unsorted, with a sort
+  removed, or on a factor. It applied and was quiet on numbers, text,
+  logicals and dates each way, half way down and at the bottom with NAs
+  in view, and on text searched. It fired on a text cell made "zzz" at the
+  top of an ascending column, a number cell made "50", and one made "NA".
+- The rows check did not apply with nothing open, or on a frame of no rows,
+  where the viewer draws no footer. It applied and was quiet as opened,
+  scrolled a quarter, half way and half a row, at the bottom, sorted, and
+  searched. It fired with the footer made to say 2 to 17, and with the last
+  row in view renumbered.
+
 ## 2026-10-19: the data viewer past 200 columns, and its counts check repaired
 
 **Why.** Asked whether anything tests the viewer's column paging, "which

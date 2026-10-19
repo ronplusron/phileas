@@ -1831,6 +1831,33 @@ Positron's on 2026-09-27, since no defect can be planted in RStudio;
 `data-viewer-counts-match-environment`, with a Fix of its own,
 `data-viewer-paged`, whose frame the pane lists; `HISTORY.md` has both.
 
+**Three more chosen on 2026-10-19,** from a list of rules read off the
+titles of RStudio's own data viewer tests, before Detours are built:
+- **A sorted column's drawn values are in order:** built the same day, as
+  `data-viewer-sorted-column-in-order`; `HISTORY.md` has it. It leaves a
+  sorted factor alone, since a factor sorts by levels the page does not
+  state.
+- **The footer's "Showing X to Y" matches the rows drawn, and past ~200
+  columns its "columns X to Y" the headers in view:** the rows half built
+  the same day, as `data-viewer-footer-rows-in-view`. **The columns half
+  is open,** for two reasons measured on 2026.11.0-daily+78 by
+  `trial/rstudio/probes/viewer-footer-range.spec.ts`. A header's
+  `data-col-idx` counts within the ~200 columns the page fetches, so f002,
+  the frame's column 302, reads 101, and nothing measured yet gives a
+  header's place in the whole frame; the summary sidebar lists every
+  column in order and may, unmeasured. And this half of the footer lagged a
+  sideways scroll: read at once it still named the range before, "columns
+  300 to 303" where 500 ms later it said "301 to 306", so a check of it
+  could read a footer the settle wait has not waited for. It also counts a
+  column partly in view, where the rows half counts only rows wholly in
+  view, and leaves out a pinned column once scrolled away from it.
+- **Sorting cycles ascending, descending and unsorted, and unsorted
+  restores the original row order:** a relation (R20), so it waits for
+  Detours (2.31). Measured already: the summary sidebar's sort button reads
+  "Sort column x ascending", then "Sort column x descending", then "Remove
+  sort on column x", the header's `aria-sort` follows, and the third click
+  restored the order every time it was tried.
+
 The answer given to "limited in scope", a reading: each check states one
 fact, but runs after every Hop on every path that reaches its screen, so
 its breadth is the number of paths, which is what a scripted test lacks.

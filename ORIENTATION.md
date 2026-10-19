@@ -267,10 +267,12 @@ a link in a frame that leaves the application excluded by the engine.
 (R32): a control no part of which shows, in the window, a pane or a frame,
 is left out of the pool and counted on it by what keeps it out of sight,
 never named, and reaching it waits for scrolling as a move of its own.
-**Stage 5 is next, placed on 2026-10-15** ahead of weighting the draw,
-now stage 6: checks that know intent, a model measured against Phileas,
-Fixes a model drafts, and scrolling as a move, in that order. `docs/PLAN.md`
-has it.
+**Stage 5 is under way, placed on 2026-10-15** ahead of weighting the
+draw, now stage 6: checks that know intent, a model measured against
+Phileas, Fixes a model drafts, and scrolling as a move, in that order.
+`docs/PLAN.md` has it. Its first part, checks that know intent, is being
+built on RStudio: four checks of one moment exist, below, and Detours for
+the relations come next.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stopped where it stood
@@ -280,6 +282,9 @@ release with two fuses switched back on, since the installed release refuses
 the ordinary launch: for example
 `PHILEAS_APP_DIR=~/Applications/RStudio-2026.10.0-fuses.app phileas run trial/rstudio/phileas`,
 the current release since 2026-10-08; the 2026.09.1 copy is still there.
+**The checks of stage 5 are measured on a pre-release,** a fused copy of
+2026.11.0-daily+78 at `~/Applications/RStudio-2026.11.0-daily-fuses.app`,
+since 2026-10-19.
 **On a machine without that copy,** `node trial/rstudio/prepare-app.mjs`
 makes one from `/Applications/RStudio.app` and prints where it put it; the
 machine needs R, with `Rscript` on the PATH, for the trial's R library guard.
@@ -299,16 +304,20 @@ and the one failure was issue 64. **A batch of 600 on 2026.10.0** followed
 on 2026-10-08, 100 Routes of 20 Hops from each of six starts, two at a
 time: 594 passed, and its one new RStudio bug, detaching utils breaking the
 package vulnerability check, is `ronplusron/phileas` issue 97.
-`docs/HISTORY.md` has it, and the engine repairs it led to. Every entry in
-its `known-findings.json` is settled: seven entries filed against five
-issues, issue 97's one error being three entries, and one dismissed as a
-false alarm.
-**Its adapter has two checks of its own:** `unsaved-mark-matches-save`,
+`docs/HISTORY.md` has it, and the engine repairs it led to. Its
+`known-findings.json` holds 36 entries: the 8 log findings are settled,
+seven filed against five issues, issue 97's one error being three
+entries, and one dismissed as a false alarm; the 28 WCAG findings, from
+the check that is off by default, are all unfiled.
+**Its adapter has four checks of its own:** `unsaved-mark-matches-save`,
 since 2026-10-16, in `trial/rstudio/phileas/checks/source/`, the selected
-document's unsaved mark against the main toolbar's Save; and
-`data-viewer-counts-match-environment`, since 2026-10-19, in
-`checks/data-viewer/`, the data viewer's rows and columns against the
-Environment pane's. `docs/HISTORY.md` has what each was measured from.
+document's unsaved mark against the main toolbar's Save; and three in
+`checks/data-viewer/`, each from 2026-10-19:
+`data-viewer-counts-match-environment`, the data viewer's rows and columns
+against the Environment pane's; `data-viewer-sorted-column-in-order`, a
+column marked sorted showing its values in order; and
+`data-viewer-footer-rows-in-view`, the footer's "Showing X to Y" against
+the rows in view. `docs/HISTORY.md` has what each was measured from.
 `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
 R script with code in it; `session-data`, code run in the console;
 `r-markdown`, the dialog for a new R Markdown document;
