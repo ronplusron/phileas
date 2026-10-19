@@ -25,6 +25,41 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-19: the data viewer past 200 columns, and its counts check repaired
+
+**Why.** Asked whether anything tests the viewer's column paging, "which
+columns show when clicking left or right for the next or previous set of
+columns", the probe of the same morning had found none at 120 columns. The
+viewer's own address carries `max_display_columns=200`, so the probe was
+given a column count, `PROBE_COLUMNS`, and run again at 450.
+
+**Measured on RStudio 2026.11.0-daily+78, at 450 columns:**
+- **Still no column paging,** no "Cols >" arrows and no control to page
+  columns left or right. The grid scrolls sideways through all 450.
+- **The footer changes form past 200 columns:** it counts the columns in
+  view, "Showing 1 to 16 of 1,000 entries, columns 1 to 5 of 450", then
+  "columns 263 to 268 of 450" halfway across and "columns 450 to 450 of
+  450" at the end, where at 120 it reads "120 total columns" throughout.
+  Read too soon after the viewer opens it can still be in the first form;
+  only one footer exists.
+- **The headers in view match the footer:** `t113` to `t118` halfway,
+  columns 263 to 268. At 120 columns the grid shows 6 as opened, 6 halfway
+  and 1 at the end. **The figures in the entry below, 9, 12 and 4, are
+  corrected by these:** they counted header cells the page built, and at
+  450 it builds 200 whatever shows. The probe now counts only those in the
+  grid's view.
+
+**Found and repaired: the counts check missed a frame past 200 columns.**
+`data-viewer-counts-match-environment` read the columns only as "N total
+columns", so on such a frame it recorded not run on every step, saying the
+footer was not a count it knew. It now reads the total after "of" in the
+second form too. A second test in
+`trial/rstudio/probes/data-viewer-counts-check.spec.ts`, on `wide`, 1,000
+rows by 450 columns, shows it quiet as opened and scrolled to the last
+column, and firing with the Environment pane made to say 449 columns. As the
+control, the old pattern returns nothing on the wide footer and 120 on the
+narrow one.
+
 ## 2026-10-19: how the data viewer pages, a Fix for it, and its first check
 
 **Why.** The second RStudio check of one moment, the data viewer's counts

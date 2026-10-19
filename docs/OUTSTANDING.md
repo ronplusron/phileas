@@ -1710,9 +1710,10 @@ required.** Both assessed on 2026-10-15 against RStudio's data viewer:
   over 256 levels are filtered as text. About eight candidate checks. It is
   silent on pinning, hiding and the column summaries, all on today's
   screen, and it describes 50 columns shown at a time with "Cols >" arrows,
-  which was unmeasured until 2026-10-19: on 2026.11.0-daily+78 a frame of
-  120 columns showed no arrows and no column paging at all, only a grid
-  scrolled sideways, so on that build the page is out of date there
+  which was unmeasured until 2026-10-19: on 2026.11.0-daily+78 frames of
+  120 and 450 columns showed no arrows and no column paging at all, only a
+  grid scrolled sideways, and past 200 columns a footer counting the
+  columns in view, so on that build the page is out of date there
   (`HISTORY.md`, 2026-10-19). A check built from it
   that fails may mean the page is out of date rather than that RStudio is
   wrong, so a person judges.
@@ -1949,10 +1950,28 @@ declares it once for every Journey, where a Journey's author writes a Fix;
 and its failure is a finding about the application, not a broken setup
 (R11). Not 2.22, which sets state up again partway through a Route.
 
-**Still open, with `PLAN.md` phase 6:** whether Detour steps count toward
-the Trip length; and where the Route continues from, since after the
-Detour the screen is where the Detour left it. "Relation" stays plain
-English for what a metamorphic check asserts, not a term of its own.
+**Decided on 2026-10-19,** each from options laid out with a
+recommendation, worked through on a sort cycle: a Hop sorts `mpg`
+ascending, and the Detour clicks its header twice more, to descending and
+then unsorted, and compares the row order with the order before the Hop.
+- **Detour steps do not count toward the Trip length,** answered "No": a
+  Trip of 10 draws 10 Hops whichever checks are on, and the Route deadline
+  bounds the extra time. Counting them would make switching a check on cut
+  how far every Route travels.
+- **A Route continues from where the Hop left the screen, when the Detour
+  can get back there,** asked for as "/pros-cons and rec" and then taken in
+  the words "OK let's do back, when possible." A Detour declares its way
+  back, such as a third click returning the sort cycle to ascending, so
+  the next Hop draws from the screen the seed's own Hop made. One with no
+  way back, such as one that ends with Cancel, continues from where it
+  ends and says so in the journal. The reason given with the
+  recommendation: only the seed decides where a Route goes, and a check
+  steering every later Hop would break that. What it costs: more steps per
+  Detour, a way back to declare and get right, and a way back that
+  restores the main thing and not, say, the scroll position.
+
+"Relation" stays plain English for what a metamorphic check asserts, not a
+term of its own.
 
 ### 2.32 A replay stopped by a target now out of sight does not say so
 

@@ -11,9 +11,12 @@ import { rstudio } from '../phileas/adapter';
  * columns at a time with "Cols >" arrows; that is unmeasured on any build
  * here.
  *
- * Builds `paged`, 1,000 rows by 120 columns, from sequences with no
- * randomness, so every launch sees the same data: an id, 39 numbers, 40 text
- * columns and 40 factors. Views it, then prints at each state: the
+ * Builds `paged`, 1,000 rows by 120 columns, or as many columns as
+ * PROBE_COLUMNS says, from sequences with no randomness, so every launch sees
+ * the same data: an id, then numbers, text and factors in about equal
+ * thirds. At 120, the first run on 2026-10-19 found no column paging; the
+ * viewer's own address carries `max_display_columns=200`, so 450 asks
+ * whether paging starts past 200. Views it, then prints at each state: the
  * Environment pane's row for it, the viewer's footer, the column headers
  * shown, every button in the viewer's frame whose name speaks of columns or
  * paging, the first and last row ids shown, and what a survey offers in the
@@ -25,11 +28,17 @@ import { rstudio } from '../phileas/adapter';
  */
 const test = createTest(rstudio);
 
+const COLUMNS = Number(process.env.PROBE_COLUMNS ?? 120);
+const OTHERS = COLUMNS - 1;
+const NUMBERS = Math.floor(OTHERS / 3);
+const TEXTS = Math.floor((OTHERS - NUMBERS) / 2);
+const FACTORS = OTHERS - NUMBERS - TEXTS;
+const WIDTH = Math.max(2, String(Math.max(NUMBERS, TEXTS, FACTORS)).length);
 const BUILD =
   'paged <- data.frame(id = 1:1000, ' +
-  'setNames(lapply(1:39, function(j) (1:1000 * j) %% 997 / 10), sprintf("n%02d", 1:39)), ' +
-  'setNames(lapply(1:40, function(j) sprintf("r%04d-%d", 1:1000, j)), sprintf("t%02d", 1:40)), ' +
-  'setNames(lapply(1:40, function(j) factor(letters[(1:1000 + j) %% 5 + 1])), sprintf("f%02d", 1:40)))';
+  `setNames(lapply(1:${NUMBERS}, function(j) (1:1000 * j) %% 997 / 10), sprintf("n%0${WIDTH}d", 1:${NUMBERS})), ` +
+  `setNames(lapply(1:${TEXTS}, function(j) sprintf("r%04d-%d", 1:1000, j)), sprintf("t%0${WIDTH}d", 1:${TEXTS})), ` +
+  `setNames(lapply(1:${FACTORS}, function(j) factor(letters[(1:1000 + j) %% 5 + 1])), sprintf("f%0${WIDTH}d", 1:${FACTORS})))`;
 
 function say(line: string): void {
   process.stdout.write(`probe viewer paging: ${line}\n`);
@@ -73,9 +82,33 @@ async function report(page: Page, app: ElectronApplication, state: string): Prom
   }
   const footer = await frame.getByText(/^Showing /).first().innerText().catch((error: Error) => `unreadable: ${error.message.split('\n')[0]}`);
   say(`footer: "${footer}"`);
+  // Every element whose own text starts "Showing ", and whether it shows:
+  // past 200 columns, on 2026-10-19, the tree held a footer reading "columns
+  // 1 to 5 of 450" while the first match above read "450 total columns".
+  const footers = await frame
+    .evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('*')]
+        .filter((element) => [...element.childNodes].some((node) => node.nodeType === 3 && (node.textContent ?? '').trim().startsWith('Showing ')))
+        .map((element) => {
+          const box = element.getBoundingClientRect();
+          return `${element.tagName.toLowerCase()}#${element.id}${box.width > 0 && box.height > 0 && getComputedStyle(element).visibility !== 'hidden' ? ' shown' : ' not shown'}: "${(element.textContent ?? '').trim()}"`;
+        })
+    )
+    .catch((error: Error) => [`unreadable: ${error.message}`]);
+  say(`every footer: ${JSON.stringify(footers)}`);
+  say(`frame address: ${frame.url().replace(/^http:\/\/127\.0\.0\.1:\d+/, '')}`);
   const grid = await frame
     .evaluate(() => {
-      const headers = [...document.querySelectorAll('[role="columnheader"]')].map((cell) => (cell.textContent ?? '').trim()).filter(Boolean);
+      // Only headers in the grid's view: at 450 columns the page builds 200
+      // header cells whatever shows, measured on 2026-10-19.
+      const view = document.getElementById('gridViewport')?.getBoundingClientRect();
+      const headers = [...document.querySelectorAll('[role="columnheader"]')]
+        .filter((cell) => {
+          const box = cell.getBoundingClientRect();
+          return box.width > 0 && (!view || (box.right > view.left && box.left < view.right));
+        })
+        .map((cell) => (cell.textContent ?? '').trim())
+        .filter(Boolean);
       const ids = [...document.querySelectorAll('[role="row"]')]
         .map((row) => (row.querySelector('[role="gridcell"]')?.textContent ?? '').trim())
         .filter((text) => /^\d+$/.test(text))
@@ -117,7 +150,7 @@ async function report(page: Page, app: ElectronApplication, state: string): Prom
   }
 }
 
-test('how the data viewer pages 1,000 rows by 120 columns', async ({ page, app }) => {
+test(`how the data viewer pages 1,000 rows by ${COLUMNS} columns`, async ({ page, app }) => {
   test.setTimeout(10 * 60_000);
   await page.getByRole('textbox', { name: /^Cursor at row \d+$/ }).first().waitFor({ timeout: 30_000 });
   await page.waitForTimeout(1_500);

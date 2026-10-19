@@ -16,6 +16,11 @@ import type { Frame, Page } from '@playwright/test';
  * - A search makes it "Showing 1 to 7 of 7 entries (filtered from 32 total
  *   entries)", so the total is what compares.
  * - The footer kept its count as the grid scrolled down and sideways.
+ * - **Past 200 columns the footer counts the columns in view instead,**
+ *   "Showing 1 to 16 of 1,000 entries, columns 1 to 5 of 450", measured on
+ *   2026-10-19 at 450 columns; the viewer's address carries
+ *   `max_display_columns=200`. The total is the number after "of". Read only
+ *   in the first form, a frame that wide was recorded as not run.
  *
  * It applies when the Source pane shows a data viewer, named "<object> Data
  * Browser", for an object the Environment pane lists while it shows: `mtcars`
@@ -23,7 +28,8 @@ import type { Frame, Page } from '@playwright/test';
  * reads the live page when the checks run.
  */
 const ENVIRONMENT_COUNT = /^([\d,]+) obs\. of (\d+) variables?$/;
-const FOOTER = /of ([\d,]+) entries(?: \(filtered from ([\d,]+) total entries\))?, ([\d,]+) total columns/;
+const FOOTER =
+  /of ([\d,]+) entries(?: \(filtered from ([\d,]+) total entries\))?, (?:([\d,]+) total columns|columns [\d,]+ to [\d,]+ of ([\d,]+))/;
 
 const count = (text: string) => Number(text.replace(/,/g, ''));
 
@@ -75,9 +81,10 @@ export const dataViewerCountsMatchEnvironment: AppCheck = {
     const footer = await frame.getByText(/^Showing /).first().innerText({ timeout: 2_000 }).catch(() => undefined);
     if (footer === undefined) return { notRun: `the data viewer for ${object} shows no footer to read` };
     const match = FOOTER.exec(footer);
-    if (!match?.[1] || !match[3]) return { notRun: `the data viewer's footer for ${object} reads "${footer}", which is not a count this check knows` };
+    const total = match?.[3] ?? match?.[4];
+    if (!match?.[1] || !total) return { notRun: `the data viewer's footer for ${object} reads "${footer}", which is not a count this check knows` };
     const rows = count(match[2] ?? match[1]);
-    const columns = count(match[3]);
+    const columns = count(total);
     const wrong: string[] = [];
     if (rows !== listed.rows) wrong.push(`${rows} rows against the Environment pane's ${listed.rows}`);
     if (columns !== listed.columns) wrong.push(`${columns} columns against the Environment pane's ${listed.columns}`);

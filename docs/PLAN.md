@@ -1553,8 +1553,10 @@ the easy mistake. A relation compares two states, so the engine has to take
 moves of its own: when a hop has just performed the operation a relation names,
 the engine performs the counterpart, compares, and records those moves in the
 journal as Detour steps, named so on 2026-10-15 and called probe hops before;
-`OUTSTANDING.md` 2.31 has the shape discussed. Whether Detour steps count
-toward the Trip length is undecided and is decided here.
+`OUTSTANDING.md` 2.31 has the shape discussed. **Decided on 2026-10-19,**
+and 2.31 has both answers: Detour steps do not count toward the Trip
+length, and a Route continues from where the Hop left the screen when the
+Detour declares a way back, else from where the Detour ends.
 
 `specified.ts` (R21) takes an expected value the adapter computed from a
 source of truth and compares it to the screen. `../CLAUDE.md` records the
