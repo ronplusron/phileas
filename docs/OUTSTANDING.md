@@ -948,6 +948,12 @@ the rule, `count-matches-list`, `no-error-notification` and
 whether a check sits in the right folder, only whether its name agrees
 with the one it is in.
 
+**Not decided: a check moved to another area.** It keeps its name, as
+`../CLAUDE.md` says, so its prefix no longer matches its folder and the
+test as proposed would fail on a correct move. Either each move adds the
+check to the allowed list, or the test reads a check's area from
+somewhere other than its folder.
+
 **Why it may matter more later:** stage 5 brings checks that know intent,
 some drafted by a model, and a convention kept only in prose is most
 likely to slip there. When to build it was not said.

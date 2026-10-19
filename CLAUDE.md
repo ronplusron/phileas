@@ -421,8 +421,9 @@ written from then on. The three named before it keep their names,
 `count-matches-list`, `no-error-notification` and
 `unsaved-mark-matches-save`, because a check's name begins every signature
 it produces, and renaming one turns each of its known findings into a new
-one. The area in the name is a word, not a path: moving the file later
-still renames nothing.
+one. The prefix names the area the check was written for, and a check
+moved to another area keeps its name for the same reason, so after a move
+the name and the folder disagree, deliberately.
 
 `kit` and `app` were both rejected as directory names. `app` is actively
 harmful, because it collides with "the application" and caused a misreading in
