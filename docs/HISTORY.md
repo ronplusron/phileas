@@ -25,6 +25,27 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-19: a check's name begins with its area, from now on
+
+**Why.** With checks in subfolders by area, a check named after its area
+was proposed on 2026-10-15, as `source-unsaved-mark-matches-save` for a
+check in `checks/source/`, and left unanswered while three checks were
+written without it.
+
+**Decided** in the words "Yes for checks written from now on; leave the
+three existing names alone." A check's name begins every signature it
+produces, so renaming `count-matches-list`, `no-error-notification` or
+`unsaved-mark-matches-save` would turn each of its known findings into a
+new one, while the rule costs nothing for checks not yet written.
+`../CLAUDE.md` has it beside the layout.
+
+**Also measured that day:** the Fix and check move, in the entry after
+this one, was run on the real applications, two Routes of ten Hops each. Positron
+2026.09.1 with the `session` Fix and RStudio 2026.10.0 with the `script`
+Fix both passed every Route, and each adapter's check applied from its new
+file; Positron's recorded "passed" on every step, not "not run", so
+`release.ts` read the release as current.
+
 ## 2026-10-19: Fixes and checks moved into subfolders by area
 
 **Why.** Agreed on 2026-10-15 that `fixes/` and a new `checks/` share one

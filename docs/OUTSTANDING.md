@@ -930,20 +930,6 @@ engine cannot yet do and so meets the plan's rule against the demo
 flattering the engine, or waiting for scrolling as a move of its own
 (1.9), which would reach what is below the window as a person does.
 
-### 1.28 Whether a check's name carries its area
-
-Proposed on 2026-10-15, with checks moving into subfolders by area, and
-not answered: a check's name beginning with its area, as in
-`source-unsaved-mark-matches-save` for a check in `checks/source/`.
-`../CLAUDE.md` has the layout, and `HISTORY.md` the move.
-
-**What it would cost the checks that exist.** A check's name begins every
-signature it produces, so renaming `count-matches-list`,
-`no-error-notification` or RStudio's `unsaved-mark-matches-save`, which
-sits in `checks/source/` without the prefix, turns each of its known
-findings into a new one.
-Deciding it for checks not yet written costs nothing.
-
 ## 2. Undecided
 
 Product questions that are still open -- what fault injection covers, how long

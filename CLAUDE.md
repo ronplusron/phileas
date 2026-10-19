@@ -415,6 +415,15 @@ Fixes. A check imports nothing from the adapter, since the adapter imports
 the checks; what both need goes in a module of its own, as Positron's
 `release.ts`.
 
+**A check's name begins with its area**, as `source-unsaved-mark-matches-save`
+would for a check in `checks/source/`, decided on 2026-10-19 for checks
+written from then on. The three named before it keep their names,
+`count-matches-list`, `no-error-notification` and
+`unsaved-mark-matches-save`, because a check's name begins every signature
+it produces, and renaming one turns each of its known findings into a new
+one. The area in the name is a word, not a path: moving the file later
+still renames nothing.
+
 `kit` and `app` were both rejected as directory names. `app` is actively
 harmful, because it collides with "the application" and caused a misreading in
 the originating session.
