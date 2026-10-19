@@ -936,7 +936,7 @@ Since 2026-10-19 a check written from then on begins its name with its
 area, as `../CLAUDE.md` says beside the layout. Nothing enforces it. A
 misnamed check is noticed only after findings are filed under its name,
 when renaming it turns each into a new one. Proposed the same day and
-deferred, in the words "Add it to OUTSTANDING and move on."
+deferred to here.
 
 **What was proposed:** a test in `tests/` that walks each consumer's
 `checks/` folder, imports each file in an area subfolder, and fails when

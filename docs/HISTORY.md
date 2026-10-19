@@ -32,20 +32,13 @@ was proposed on 2026-10-15, as `source-unsaved-mark-matches-save` for a
 check in `checks/source/`, and left unanswered while three checks were
 written without it.
 
-**Decided** in the words "Yes for checks written from now on; leave the
-three existing names alone." A check's name begins every signature it
-produces, so renaming `count-matches-list`, `no-error-notification` or
+**Chosen on 2026-10-19:** the prefix for checks written from then on, with
+the three existing names left alone. A check's name begins every signature
+it produces, so renaming `count-matches-list`, `no-error-notification` or
 `unsaved-mark-matches-save` would turn each of its known findings into a
 new one, while the rule costs nothing for checks not yet written.
 `../CLAUDE.md` has it beside the layout. A test enforcing it was proposed
 and deferred; `OUTSTANDING.md` has it.
-
-**Also measured that day:** the Fix and check move, in the entry after
-this one, was run on the real applications, two Routes of ten Hops each. Positron
-2026.09.1 with the `session` Fix and RStudio 2026.10.0 with the `script`
-Fix both passed every Route, and each adapter's check applied from its new
-file; Positron's recorded "passed" on every step, not "not run", so
-`release.ts` read the release as current.
 
 ## 2026-10-19: Fixes and checks moved into subfolders by area
 
@@ -85,7 +78,12 @@ function's source, was printed before the move and after it, and all 19
 were identical, so no journal or replay sees a different Fix. Names were
 not changed, Fixes' or checks'. The rail demo's 6 tests and Eighty Days'
 25 passed. The engine's suite passed 484 of 486, and a frames timing test
-of the two passed when run alone.
+of the two passed when run alone. After the merge, two Routes of ten Hops
+each ran on the real applications: Positron 2026.09.1 with the `session`
+Fix and RStudio 2026.10.0 with the `script` Fix. Both passed every Route,
+and each adapter's check applied from its new file. Positron's recorded
+"passed" on every step, not "not run", so `release.ts` read the release as
+current.
 
 **A test bug found on the way, and repaired.** The test of a window
 created already shown made its profile folder and then launched outside
