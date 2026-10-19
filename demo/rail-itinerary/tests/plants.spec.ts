@@ -9,7 +9,7 @@ import {
   type Chooser,
 } from '@drugstoresushi/phileas';
 import { railItinerary } from '../phileas/adapter/index';
-import { openAlps } from '../phileas/fixes/open-alps';
+import { openAlps } from '../phileas/fixes/itinerary/open-alps';
 
 /**
  * Each planted bug, reached on purpose, and the check that catches it.

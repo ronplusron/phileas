@@ -1,6 +1,6 @@
 import { createTest, deriveRouteStreams, requireSeed, runRoute, type Chooser, type Fix } from '@drugstoresushi/phileas';
 import { positron } from '../phileas/adapter';
-import { session } from '../phileas/fixes/session';
+import { session } from '../phileas/fixes/console/session';
 import { knownFindings } from '../phileas/paths';
 import { probeJournals } from './paths';
 

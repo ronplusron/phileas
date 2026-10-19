@@ -1,4 +1,4 @@
-import { notebook } from '../phileas/fixes/notebook';
+import { notebook } from '../phileas/fixes/editor/notebook';
 import { control, key, probeCases } from './steer';
 
 /**

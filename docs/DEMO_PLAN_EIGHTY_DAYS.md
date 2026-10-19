@@ -590,7 +590,7 @@ run the default Fix unawares.
 - **One Fix per stage-two section where a plant sits late in the game**,
   so the section's Trip starts near its bug rather than needing a seed that
   wanders there from London: `kholby`, `fort-kearney`, `new-york`, `london`
-  and `reform-club`, in `phileas/fixes/stage-two.ts`. The plants reached
+  and `reform-club`, in `phileas/fixes/here/stage-two.ts`. The plants reached
   from the menu, and the Carnatic's, need none beyond `hong-kong`.
 
 **A plant never sits on a Fix's path.** A Fix that walked through a planted

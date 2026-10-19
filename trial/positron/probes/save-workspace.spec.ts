@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createTest, deriveRouteStreams, journalFolder, requireRun, requireSeed, runRoute, type Candidate, type Chooser } from '@drugstoresushi/phileas';
 import { positron } from '../phileas/adapter';
-import { notebook } from '../phileas/fixes/notebook';
+import { notebook } from '../phileas/fixes/editor/notebook';
 import { knownFindings } from '../phileas/paths';
 import { probeJournals } from './paths';
 

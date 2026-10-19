@@ -1,5 +1,5 @@
-import { notebook } from '../phileas/fixes/notebook';
-import { quarto } from '../phileas/fixes/quarto';
+import { notebook } from '../phileas/fixes/editor/notebook';
+import { quarto } from '../phileas/fixes/editor/quarto';
 import { key, menu, probeCases } from './steer';
 
 /**

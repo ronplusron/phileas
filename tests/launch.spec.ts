@@ -234,12 +234,15 @@ test('a window created already shown is never visible, not even for a moment', a
   // to catch the flash, or the empty record below could mean the record is
   // blind rather than that the window stayed off the screen.
   const dir = await makeUserDataDir(shownAtCreation);
-  const plain = await _electron.launch({
-    executablePath: resolveBundle(shownAtCreation).executable,
-    cwd: dir,
-    args: [`--user-data-dir=${dir}`, '--buggy-shown-at-creation'],
-  });
+  // Launched inside the try, so a launch that throws still removes the
+  // profile folder rather than leaving it for the suite's leftover check.
+  let plain: ElectronApplication | undefined;
   try {
+    plain = await _electron.launch({
+      executablePath: resolveBundle(shownAtCreation).executable,
+      cwd: dir,
+      args: [`--user-data-dir=${dir}`, '--buggy-shown-at-creation'],
+    });
     await reachMainProcess(plain);
     await prepareWindows(plain, 'hidden');
     await plain.firstWindow();
@@ -247,7 +250,7 @@ test('a window created already shown is never visible, not even for a moment', a
     expect(await sightings(plain), 'the record never started, so this asserts nothing').toBeDefined();
     expect((await sightings(plain))?.length).toBeGreaterThan(0);
   } finally {
-    await plain.close().catch(() => {});
+    await plain?.close().catch(() => {});
     await fs.promises.rm(dir, { recursive: true, force: true });
   }
 

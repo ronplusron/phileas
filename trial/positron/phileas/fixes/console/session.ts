@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import type { Fix } from '@drugstoresushi/phileas';
-import { EARLY_R_BINARY, positronFamily, positronVersion } from '../adapter';
+import { EARLY_R_BINARY, positronFamily, positronVersion } from '../../adapter';
 
 /**
  * A Fix that starts an interpreter session, so every Route's Trip begins with

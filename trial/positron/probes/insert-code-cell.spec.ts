@@ -1,4 +1,4 @@
-import { quarto } from '../phileas/fixes/quarto';
+import { quarto } from '../phileas/fixes/editor/quarto';
 import { control, key, probeCases } from './steer';
 
 /**

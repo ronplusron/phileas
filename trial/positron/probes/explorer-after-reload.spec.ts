@@ -1,5 +1,5 @@
-import { dataExplorer } from '../phileas/fixes/data-explorer';
-import { session } from '../phileas/fixes/session';
+import { dataExplorer } from '../phileas/fixes/data-explorer/data-explorer';
+import { session } from '../phileas/fixes/console/session';
 import { control, key, menu, probeCases, type Want } from './steer';
 
 /**

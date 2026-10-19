@@ -98,7 +98,7 @@ Electron application gets, such as Quit, and anything the adapter lists.
 PHILEAS_FIX=hong-kong PHILEAS_HOP_DELAY_MS=700 PHILEAS_SHOW=front phileas survey demo/eighty-days/phileas
 ```
 
-Show `demo/eighty-days/phileas/fixes/hong-kong.ts`. Twenty-seven steps, each
+Show `demo/eighty-days/phileas/fixes/here/hong-kong.ts`. Twenty-seven steps, each
 a line copied from a survey like section 2's, playing Fogg's choices from the
 book: the Mongolia, the passport, Kiouni bought for £2,000 after four raises,
 Aouda rescued, the Rangoon. Nobody read the game's code to write it.

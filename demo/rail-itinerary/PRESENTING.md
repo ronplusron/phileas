@@ -138,7 +138,7 @@ phileas run --seed <anything> --routes 5 --trip-length 100 --show front --follow
 PHILEAS_FIX=open-alps PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
 ```
 
-Show the Fix, in `fixes/open-alps.ts`:
+Show the Fix, in `fixes/itinerary/open-alps.ts`:
 
 ```ts
 export const openAlps: Fix = ({ step }) => step({ kind: 'act', target: 'button "Open Alps by rail"' });
@@ -154,7 +154,7 @@ where every Route's Trip begins.
 PHILEAS_FIX=add-leg-then-buy PHILEAS_HOP_DELAY_MS=2000 PHILEAS_SHOW=front phileas survey demo/rail-itinerary/phileas
 ```
 
-Show `fixes/add-leg-then-buy.ts`. This Fix opens the same itinerary, adds a leg from
+Show `fixes/itinerary/add-leg-then-buy.ts`. This Fix opens the same itinerary, adds a leg from
 Geneva to Zurich, and opens the ticket purchase dialog, in nine steps. It was
 built one step at a time: run the survey, copy the line for the next control,
 run the survey again.

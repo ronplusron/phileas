@@ -1,4 +1,4 @@
-import { session } from '../phileas/fixes/session';
+import { session } from '../phileas/fixes/console/session';
 import { control, key, menu, probeCases } from './steer';
 
 /**

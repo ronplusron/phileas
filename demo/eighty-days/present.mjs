@@ -103,7 +103,7 @@ const sections = [
       say('A Fix is written by copying lines from that listing, one step at a time. This one plays');
       say("Fogg's choices from the book, London to Hong Kong, so every Route's Trip starts where the");
       say("book's Fogg stood on the quay:\n");
-      showCode(excerpt('fixes/hong-kong.ts', /export const toHongKong[\s\S]*?\n\};/));
+      showCode(excerpt('fixes/here/hong-kong.ts', /export const toHongKong[\s\S]*?\n\};/));
       const lines = await phileasShown('survey', [CONFIG], { PHILEAS_FIX: 'hong-kong', ...FIX_HOLD });
       print(fixAndAfter(lines));
       say('That listing is where every Trip in the next section begins: a known start.');

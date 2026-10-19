@@ -1,5 +1,5 @@
-import { quarto } from '../phileas/fixes/quarto';
-import { session } from '../phileas/fixes/session';
+import { quarto } from '../phileas/fixes/editor/quarto';
+import { session } from '../phileas/fixes/console/session';
 import { control, key, menu, probeCases } from './steer';
 
 /**

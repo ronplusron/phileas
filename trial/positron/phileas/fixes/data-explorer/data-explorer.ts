@@ -1,5 +1,5 @@
 import type { Fix } from '@drugstoresushi/phileas';
-import { session } from './session';
+import { session } from '../console/session';
 
 /**
  * A Fix that shows a dataset in the data explorer, so every Route's Trip

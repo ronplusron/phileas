@@ -1,10 +1,10 @@
 import { defineFixes } from '@drugstoresushi/phileas';
-import { dataViewer } from './data-viewer';
-import { script } from './script';
-import { rMarkdown } from './r-markdown';
-import { rMarkdownFurther } from './r-markdown-further';
-import { sessionData } from './session-data';
-import { zoomedPlots } from './zoomed-plots';
+import { dataViewer } from './data-viewer/data-viewer';
+import { script } from './source/script';
+import { rMarkdown } from './source/r-markdown';
+import { rMarkdownFurther } from './source/r-markdown-further';
+import { sessionData } from './console/session-data';
+import { zoomedPlots } from './plots/zoomed-plots';
 
 /**
  * RStudio's Fixes, by the name a Journey or `phileas run --fix` chooses them

@@ -10,7 +10,7 @@ import {
   type Fix,
 } from '@drugstoresushi/phileas';
 import { positron, positronFamily } from '../phileas/adapter';
-import { session } from '../phileas/fixes/session';
+import { session } from '../phileas/fixes/console/session';
 import { probeJournals } from './paths';
 
 /**

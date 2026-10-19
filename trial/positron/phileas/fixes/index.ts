@@ -1,8 +1,8 @@
 import { defineFixes } from '@drugstoresushi/phileas';
-import { dataExplorer } from './data-explorer';
-import { notebook } from './notebook';
-import { quarto } from './quarto';
-import { session } from './session';
+import { dataExplorer } from './data-explorer/data-explorer';
+import { notebook } from './editor/notebook';
+import { quarto } from './editor/quarto';
+import { session } from './console/session';
 
 /**
  * The trial's Fixes, by the name a Journey or `phileas run --fix` chooses

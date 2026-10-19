@@ -1,7 +1,7 @@
 import { defineFixes } from '@drugstoresushi/phileas';
-import { accept } from './accept';
-import { toHongKong } from './hong-kong';
-import { toFortKearney, toKholby, toLondon, toNewYork, toReformClub } from './stage-two';
+import { accept } from './here/accept';
+import { toHongKong } from './here/hong-kong';
+import { toFortKearney, toKholby, toLondon, toNewYork, toReformClub } from './here/stage-two';
 
 /**
  * The demo's Fixes, by the name the Journey or `phileas run --fix` chooses

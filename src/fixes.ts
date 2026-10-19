@@ -5,8 +5,10 @@ import type { Fix } from './route.js';
  * A consumer's Fixes, each under the name a Journey and `phileas run --fix`
  * choose it by.
  *
- * A consumer keeps them in `phileas/fixes/`, one file each, with
- * `fixes/index.ts` listing them through `defineFixes`. Named here rather than
+ * A consumer keeps them in `phileas/fixes/`, in a subfolder per area of the
+ * application by convention, with `fixes/index.ts` listing them through
+ * `defineFixes`; the name listed there is the only one, whatever the file
+ * is called or wherever it sits. Named here rather than
  * chosen by a variable each consumer invents: before this, three consumers had
  * three such variables, each named as if it chose a Journey, and nothing in a
  * run's printed settings or journal said which Fix it had used.

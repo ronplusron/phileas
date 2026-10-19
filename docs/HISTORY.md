@@ -25,6 +25,53 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-19: Fixes and checks moved into subfolders by area
+
+**Why.** Agreed on 2026-10-15 that `fixes/` and a new `checks/` share one
+shape, a subfolder per area of the application, with a name declared in
+code and never taken from the file's path. The 2026-10-15 entry below has
+the words it was agreed in. RStudio's first check landed in
+`checks/source/` before this, so only the older two moved.
+
+**Searched first** for anything that finds a Fix by its file rather than
+through `fixes/index.ts`. The engine finds none that way: `--fix`, the
+journal and replay all go by the name `index.ts` lists. What did go by file
+was a consumer's own code and docs: the Positron probes' imports, both
+demos' plant tests, both demos' `present.mjs`, which shows a Fix's source
+on screen by its file, both `PRESENTING.md`s, and an RStudio probe that
+arrived on main while this was in progress. Each was updated.
+
+**The areas**, chosen that day. RStudio's are its panes, `source/`,
+`console/`, `plots/` and `data-viewer/`, the last asked for in the words
+"Call it data-viewer, not viewer." Positron's are `console/`, `editor/` and
+`data-explorer/`. The rail demo's two are in `itinerary/`, after the screen
+both start from. Eighty Days, whose panels are Here, Circuit, Ledger,
+Bradshaw and About, has all three files in `here/`, the panel every Fix
+ends on; `stage-two.ts` still holds five. Buggy's check is in
+`checks/inventory/` and Positron's in `checks/notifications/`, since
+notifications belong to no pane a Fix has.
+
+**Positron's check needed a module of its own.** It read the release and
+the notification selector from the adapter, and the adapter now imports
+the checks, so the two would have imported each other. The release
+reading, and whether the checks were studied on this release, moved into
+`trial/positron/phileas/release.ts`, and the selector into the check's
+file, which the adapter's readiness imports.
+
+**Measured unchanged.** Every Fix's journal fingerprint, the hash of its
+function's source, was printed before the move and after it, and all 19
+were identical, so no journal or replay sees a different Fix. Names were
+not changed, Fixes' or checks'. The rail demo's 6 tests and Eighty Days'
+25 passed. The engine's suite passed 484 of 486, and a frames timing test
+of the two passed when run alone.
+
+**A test bug found on the way, and repaired.** The test of a window
+created already shown made its profile folder and then launched outside
+its `try`, so a launch that threw left the folder behind for the suite's
+leftover check; it did when the package was missing. Launched inside the
+`try`, the same missing package now leaves nothing. The suite's other
+failure, the RStudio adapter test, was repaired on main meanwhile.
+
 ## 2026-10-17: RStudio's WCAG findings settled, on a daily build
 
 **Why.** Once RStudio's 22 WCAG known findings were cleared, any Journey

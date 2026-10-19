@@ -1,6 +1,6 @@
 import { defineFixes } from '@drugstoresushi/phileas';
-import { addLegThenBuy } from './add-leg-then-buy';
-import { openAlps } from './open-alps';
+import { addLegThenBuy } from './itinerary/add-leg-then-buy';
+import { openAlps } from './itinerary/open-alps';
 
 /**
  * The demo's Fixes, by the name the Journey or `phileas run --fix` chooses

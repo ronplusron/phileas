@@ -144,7 +144,7 @@ const sections = [
     async run() {
       say('A Fix is written by copying a line from the survey. This one opens an itinerary, so every');
       say("Route's Trip starts inside it:\n");
-      showCode(excerpt('fixes/open-alps.ts', /export const openAlps[^\n]*/));
+      showCode(excerpt('fixes/itinerary/open-alps.ts', /export const openAlps[^\n]*/));
       const lines = await phileasShown('survey', ['demo/rail-itinerary/phileas'],
         { PHILEAS_FIX: 'open-alps', ...SURVEY_HOLD });
       print(fixAndAfter(lines));
@@ -156,7 +156,7 @@ const sections = [
       say('This Fix opens the same itinerary, adds a leg from Geneva to Zurich, and opens the');
       say('ticket purchase dialog. It was built one step at a time: run the survey, copy the next');
       say('line, run the survey again.\n');
-      showCode(excerpt('fixes/add-leg-then-buy.ts', /export const addLegThenBuy[\s\S]*?\n\};/));
+      showCode(excerpt('fixes/itinerary/add-leg-then-buy.ts', /export const addLegThenBuy[\s\S]*?\n\};/));
       say('One step is ordinary Playwright code instead of a copied line. The From and To lists name');
       say('the same stations, so a copied line cannot say which list it means. A Fix can always drop');
       say('down to Playwright for a step like that.\n');

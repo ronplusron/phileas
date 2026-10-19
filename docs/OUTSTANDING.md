@@ -930,32 +930,19 @@ engine cannot yet do and so meets the plan's rule against the demo
 flattering the engine, or waiting for scrolling as a move of its own
 (1.9), which would reach what is below the window as a person does.
 
-### 1.28 Fixes and checks in subfolders by area
+### 1.28 Whether a check's name carries its area
 
-Agreed on 2026-10-15, while asking how a hundred checks would be named and
-where they would live: "OK let's do parallel structures. We'll change Fixes
-to use subdirectories. Though subdirectories are a convention, not a
-requirement--a file is a file." Said before it, of the flat `fixes/`:
-"maybe that's a downside of fixes, that it's all flat", and "Presumably
-we'd have more fixes", as stage 5's Fixes a model drafts would bring.
-`../CLAUDE.md` has the layout.
+Proposed on 2026-10-15, with checks moving into subfolders by area, and
+not answered: a check's name beginning with its area, as in
+`source-unsaved-mark-matches-save` for a check in `checks/source/`.
+`../CLAUDE.md` has the layout, and `HISTORY.md` the move.
 
-**What it means, as agreed:** `fixes/` and a new `checks/` each hold a
-subfolder per area of the application, the same areas in both, with
-`index.ts` naming each entry. A name is what `index.ts` declares, not the
-file's path, which is what "a file is a file" settles, so the existing
-Fixes keep their names and no journal, seed or `--fix` command changes.
-
-**To do, on a branch of its own:** move RStudio's 7 Fixes, Positron's 4,
-the rail demo's 2 and Eighty Days' 3 files into area folders, then the
-checks the adapters declare inline, `buggy`'s one and Positron's one, into
-`checks/`. First, search for anything that finds a Fix by its file rather
-than through `index.ts`. The suite and each demo's seed tests show nothing
-moved.
-
-**Not decided:** the areas for the two demos, whose games have no panes;
-and whether a check's name carries its area as its first word, as in
-`source-unsaved-mark-matches-save`, which was proposed and not answered.
+**What it would cost the checks that exist.** A check's name begins every
+signature it produces, so renaming `count-matches-list`,
+`no-error-notification` or RStudio's `unsaved-mark-matches-save`, which
+sits in `checks/source/` without the prefix, turns each of its known
+findings into a new one.
+Deciding it for checks not yet written costs nothing.
 
 ## 2. Undecided
 

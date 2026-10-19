@@ -12,7 +12,7 @@ import {
   type Fix,
 } from '@drugstoresushi/phileas';
 import { rstudio } from '../phileas/adapter';
-import { script } from '../phileas/fixes/script';
+import { script } from '../phileas/fixes/source/script';
 
 /**
  * `unsaved-mark-matches-save` firing inside a real Route, to show it at work

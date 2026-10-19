@@ -10,9 +10,9 @@ import {
   type Fix,
 } from '@drugstoresushi/phileas';
 import { eightyDays } from '../phileas/adapter/index';
-import { accept } from '../phileas/fixes/accept';
-import { toHongKong } from '../phileas/fixes/hong-kong';
-import { toFortKearney, toKholby, toLondon, toNewYork, toReformClub } from '../phileas/fixes/stage-two';
+import { accept } from '../phileas/fixes/here/accept';
+import { toHongKong } from '../phileas/fixes/here/hong-kong';
+import { toFortKearney, toKholby, toLondon, toNewYork, toReformClub } from '../phileas/fixes/here/stage-two';
 
 /**
  * Each planted bug, reached on purpose, and the check that catches it.
