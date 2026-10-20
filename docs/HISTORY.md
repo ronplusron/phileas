@@ -25,6 +25,38 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-19: a check after a Fix step that ran is a finding, not a Fix failure
+
+**Why.** RStudio's data viewer counted more rows than it drew in a launch
+whose window opened fitted to the screen, and the rows check fired after
+the `data-viewer-paged` Fix's step that ran `View(paged)`. The engine
+reported it as a Fix failure: "a broken precondition, not a finding about
+the route ahead: expect every Route in this Journey to report the same
+thing." Neither was true. The Fix had done its job, and the bug showed in
+2 launches in 5. Asked whether running checks on Fixes was the problem, the
+answer that they had been decided on 2026-09-23 was refused as a reason, in
+the words "We want to build things that work correctly, not beholden to
+decisions we made in the past." On the merits: running the checks after
+every Fix step is right, since without them a Fix that breaks the
+application is charged to the first Trip hop, and ten Routes then show ten
+hop failures for one broken setup. Reporting every check that fires there
+as a broken Fix is not. Built in the words "Build the Fix-failure split on
+this branch, before the merge."
+
+**What changed.** A step that could not be taken, its target not on offer,
+its code throwing or the step malformed, is a Fix failure as before (R11).
+A check that fails after a step that was taken ends the Route as a
+`CheckFailure`, named by the step it came after, "A check failed after Fix
+step 4, "run View(paged)"", and judged as any finding is: carried past once
+known, and one finding across Routes by its signature. R11 is narrowed to
+say so, and `CLAUDE.md`, `GLOSSARY.md` and `PLAN.md` with it. The test in
+`tests/checks.spec.ts` that a check failing in a Fix is a Fix failure now
+holds the opposite, that it is a finding and never said as a broken
+precondition; the tests of steps that cannot be taken stay as they were.
+
+**What it does not change:** a Route in a fitted RStudio launch still ends
+on the viewer's screen while the rows check is on, now as a finding.
+
 ## 2026-10-19: Detours, and the first relations
 
 **Why.** A metamorphic check (R20) compares two moments, so the engine has
@@ -53,8 +85,11 @@ recommendation.** On 2026-10-19, worked through on a sort cycle:
 
 Then, once the shape was proposed in full, the same day:
 - **Relations are declared in a list of their own,** `relations`, beside
-  an adapter's `checks`, chosen over making a relation a kind of check, in
-  the same area folders, their names beginning with the area.
+  an adapter's `checks`, chosen over making a relation a kind of check,
+  with their files in the same area folders. Both relations written since
+  begin their names with their area, as checks written from 2026-10-19
+  do; whether that rule covers relations was not asked, and is a reading,
+  not something decided.
 - **Only the first relation that applies to a Hop takes its Detour,** and
   the others that matched are recorded as not taken, chosen over taking
   each in turn, which would leave a later one's reading before the Hop out
@@ -97,7 +132,8 @@ existing tests changed with it: three list `buggy`'s checks in force, and
 the typing test now counts what a Detour step typed too, which the way back
 had made 22 keystrokes against 21 Hop characters on a seeded Route whose
 draws were otherwise unchanged. `npm test`: 500. Version 0.15.0, for
-relations and the journal's two new line kinds.
+relations, the journal's two new line kinds, and a check after a Fix step
+that ran reported as a finding (the entry above).
 
 **Then RStudio's first relation,** `data-viewer-sort-cycle-restores-order`,
 check 10 of the three chosen that day: a column sorted ascending from the

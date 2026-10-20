@@ -303,7 +303,15 @@ and the runner runs all of them after every hop.
 - **R11 (Must)** A failure in the fix is reported as distinct from a failure
   found while traveling. Ten routes failing on one broken precondition is one
   problem, not ten, and the fix is fixed, so a failure in it says nothing
-  about the route that was about to be traveled.
+  about the route that was about to be traveled. **A failure in the fix is a
+  step that could not be taken.** A check that finds something wrong after a
+  step that was taken has found the application's fault on the screen the
+  fix reached, and is reported as a finding, naming the step it came after;
+  ten routes meeting it are one finding, by what it saw. Narrowed on
+  2026-10-19, after RStudio's data viewer showed a bug on a fix's last screen
+  in 2 launches in 5, and the report called it a broken precondition every
+  route would meet. Asked for in the words "We want to build things that
+  work correctly, not beholden to decisions we made in the past."
 - **R12 (Must)** Someone who did not run the journey can reproduce a finding
   from the report alone, without asking whoever ran it. That holds on another
   machine, where what the application depends on may differ, such as another

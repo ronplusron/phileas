@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Nineteen defects are recorded.** The launch layer landed in phase 1, so this
+**Twenty defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -363,6 +363,41 @@ step kinds that let typed text sit on the line as data rather than as a
 name inside code. Until a replay exists nothing compares the recorded
 content either, so a changed Fix shows only to someone reading two
 journals side by side.
+
+## A relation edited after a Route was recorded changes its replay, with nothing saying so
+
+**Filed 2026-10-19, confirmed by reading the code, when relations landed.**
+Each Route's opening line names the relations in force, in
+`checksInForce`, and each `detour-step` line records the step a Detour
+took. Nothing records what a relation is: its `when`, its steps, its way
+back, or its `read` and `expect`, which are code. Nothing compares the
+recorded Detour steps with the ones taken now either. So an edited relation
+reaches a replay, or a seed run again, unannounced:
+
+- **Its steps or way back changed:** RStudio's sort cycle with its way back
+  dropped leaves the column unsorted where the recorded Route had it sorted
+  ascending, and every Hop after it acts on another screen.
+- **Its `expect` changed:** loosened to compare fewer rows, a finding the old
+  relation made stops coming back, and the replay reports not reproduced,
+  which reads as a fixed bug.
+
+**Why it is a defect and not a limit.** It is R13's failure: a recorded
+finding that stops reproducing reads as fixed, through the record meant to
+prevent it. It is the shape of the Fix fingerprint entry above, worse in
+one part, since a Fix's steps are on its lines and a relation's code is
+nowhere. **Half of it is older than relations:** an adapter's check has no
+fingerprint either, so an edited `run` already changes a replay's verdict
+unannounced. What relations add is that they act, so an edited one changes
+where a Route goes as well as what is judged.
+
+**Not firing yet:** no Journey has run with a relation, so no journal holds
+one to replay. It starts to cost once a relation's findings are filed.
+
+**What would close it, not decided:** a fingerprint of each relation and
+check, its source hashed, on the opening line, with a replay refusing, or
+saying, where one differs; and a replay comparing each recorded Detour step
+with the one it takes. Agreed on 2026-10-19 to record this now and repair
+it later.
 
 ## A Positron Route can save outside its home folder
 

@@ -412,13 +412,20 @@ export interface FixContext {
 export type Fix = (context: FixContext) => Promise<void>;
 
 /**
- * A failure inside the Fix, which is a different finding from a failed Route.
+ * A Fix step that could not be taken, which is a different finding from a
+ * failed Route: its target not on offer, its code throwing, or the step
+ * malformed.
  *
  * R11: ten Routes failing on one broken precondition is one problem, not ten,
  * and the Fix is fixed, so a failure in it says nothing about the Route that
  * was about to be traveled. If the two reported through one channel, a single
  * broken setup step would look like a catastrophic morning and bury whatever
  * else the Journey found.
+ *
+ * **A check failing after a step that ran is not one,** since 2026-10-19: the
+ * Fix did its job, and what the check found is the application's, on the
+ * screen the Fix reached. That ends the Route as a `CheckFailure`, named by
+ * the step it came after. docs/HISTORY.md, 2026-10-19, has why.
  */
 export class FixFailure extends Error {
   constructor(
@@ -427,14 +434,8 @@ export class FixFailure extends Error {
     // one beside it. Anything reading a cause chain finds it where it expects.
     override readonly cause: unknown
   ) {
-    // A check failing after a step that ran is said as that, never as the
-    // step failing: on RStudio on 2026-10-13 an accessibility check found
-    // what was already on screen after the Fix's first step, and "The Fix
-    // failed at step" sent a reader looking at a step that had worked.
     super(
-      (cause instanceof CheckFailure
-        ? `A check failed after Fix step "${step}", which itself ran, so this Route never started traveling. `
-        : `The Fix failed at step "${step}", so this Route never started traveling. `) +
+      `The Fix failed at step "${step}", so this Route never started traveling. ` +
         `A Fix failure is a broken precondition, not a finding about the route ahead: ` +
         `expect every Route in this Journey to report the same thing.\n\n` +
         (cause instanceof Error ? (cause.stack ?? cause.message) : String(cause))
@@ -1623,10 +1624,15 @@ async function runFix(
     });
     steps += 1;
 
-    // A check failing after a Fix step is a Fix failure, not a failed Route
-    // (R11): ten Routes failing on one broken step is one problem.
+    // A check failing after a step that ran is a finding about the
+    // application on the screen the Fix reached, not a broken Fix: the step
+    // did its job. It ends the Route as any finding does (R16), named by the
+    // step it came after, and ten Routes meeting it are one finding by its
+    // signature. Split from Fix failures on 2026-10-19, after RStudio's
+    // data viewer showed a bug on the Fix's last screen in 2 launches in 5,
+    // and the report called it a broken precondition every Route would meet.
     const failed = failedChecks(checks);
-    if (failed.length) throw new FixFailure(label, new CheckFailure(`Fix step ${number}, "${label}"`, failed, timeline));
+    if (failed.length) throw new CheckFailure(`Fix step ${number}, "${label}"`, failed, timeline);
     // After the entry, as on a Trip hop, so the pause never reads as the
     // step's own cost.
     await pauseToWatch(hopDelayMs);

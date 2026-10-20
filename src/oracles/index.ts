@@ -177,9 +177,9 @@ function namesNoLog(cfg: AppUnderTest): boolean {
  * A Hop's checks found something wrong, and the Route ends here (R16).
  *
  * Its own class so that a check failing is told apart from the engine
- * breaking. Where it happens after a Fix step, it arrives inside a
- * `FixFailure`, since a Fix that breaks the application is one problem however
- * many Routes run it (R11).
+ * breaking. After a Fix step that ran it is thrown as it is, named by that
+ * step, since what it found is the application's and the step did its job;
+ * it arrived inside a `FixFailure` until 2026-10-19.
  */
 export class CheckFailure extends Error {
   constructor(

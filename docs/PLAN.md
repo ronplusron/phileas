@@ -1386,7 +1386,10 @@ handful of steps against a Trip of tens, and it would leave a Fix that breaks
 the application to be noticed by whichever Trip hop happens to hit it first. And
 **a check that fails after a Fix step is reported as a Fix failure**, not as a
 failed Route, for R11's reason: ten Routes failing on one broken step is one
-problem, and the Fix step's own line is where it belongs.
+problem, and the Fix step's own line is where it belongs. **Changed on
+2026-10-19:** a check failing after a step that was taken is a finding on the
+screen the Fix reached, named by that step; only a step that could not be
+taken is a Fix failure. `HISTORY.md` has why.
 
 `oracles/implicit/` is R17, one check per item, each with its evidence:
 

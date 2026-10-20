@@ -313,8 +313,10 @@ export interface FixStepEntry {
   readonly effect: HopEffect;
   /**
    * Every check's result after this step, since the checks run after Fix
-   * steps too. A check failing here is a Fix failure, for the same reason as
-   * `error`. Empty in journals written before 2026-09-26, and for a survey.
+   * steps too. A check failing here is a finding on the screen the Fix
+   * reached, and ends the Route as any finding does; it was a Fix failure
+   * until 2026-10-19. Empty in journals written before 2026-09-26, and for a
+   * survey.
    */
   readonly checks: readonly JournaledCheck[];
   /** What the engine's stubs caught during this step, where they caught anything. See `CaughtByStubs`. */

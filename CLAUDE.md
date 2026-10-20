@@ -109,6 +109,15 @@ Ten Routes failing on one broken precondition is one bug, not ten. If the Fix
 and the Trip report through the same channel, a single broken setup
 step looks like a catastrophic morning and buries whatever else was found.
 
+**A broken precondition is a step that could not be taken,** not a check
+that fired after one that was. That is the application's fault on the screen
+the Fix reached, reported as a finding with the step it came after, and ten
+Routes meeting it are one finding by its signature. Calling it a broken Fix
+sends a reader to a setup that worked, and promises every Route will meet it
+when a bug may show in only some launches, as RStudio's data viewer did on
+2026-10-19. The checks still run after every Fix step, so a Fix that breaks
+the application is caught at the step that broke it.
+
 ## The planner is a for-loop, and must not become a component
 
 Playwright collects tests before running them, so Routes have to be generated
@@ -398,7 +407,7 @@ phileas/
   adapter/            that application's AppUnderTest implementation
   journeys/           the Journey's Booking, naming the Fix it opens with
   fixes/              the Fixes, by area, and index.ts listing them by name
-  checks/             the adapter's own checks, by area, and index.ts listing them
+  checks/             the adapter's own checks and relations, by area, and index.ts listing each
   journey.spec.ts     the spec Playwright collects
 tests/                the scripted suite, keeping Playwright's default meaning
 ```
@@ -413,7 +422,11 @@ carries, never the file's path, so moving a file renames nothing, and one
 file may hold several, as Eighty Days' `here/stage-two.ts` holds five
 Fixes. A check imports nothing from the adapter, since the adapter imports
 the checks; what both need goes in a module of its own, as Positron's
-`release.ts`.
+`release.ts`. **Relations live in `checks/` too,** in the same area
+folders, and `index.ts` lists them apart, as `relations` beside `checks`,
+decided on 2026-10-19: a relation is a metamorphic check (R20), declared
+with its own shape, a Detour and a way back, which `AppRelation` in
+`src/app-under-test.ts` states.
 
 **A check's name begins with its area**, as `source-unsaved-mark-matches-save`
 would for a check in `checks/source/`, decided on 2026-10-19 for checks

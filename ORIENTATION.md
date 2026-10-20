@@ -421,7 +421,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Nineteen defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Twenty defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
@@ -431,7 +431,7 @@ itself forward partway through a Route, one a Positron Route saving
 outside its home folder, one a known finding with nothing particular
 in it matching every finding of its check, and one the log check keeping
 only the lines of an error that look like errors, and one the home folder
-guard blaming a Journey for a copy of the application it did not see. That file holds what is wrong, confirmed by reading the
+guard blaming a Journey for a copy of the application it did not see, and one a relation edited after a Route was recorded changing its replay unannounced. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the

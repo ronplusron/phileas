@@ -521,7 +521,10 @@ const throwing = planted('renderer-throw');
 const fixTest = createTest(throwing);
 fixTest.afterEach(removeScratch);
 
-fixTest('a check failing after a Fix step is a Fix failure, not a failed Route (R11)', async ({ page, app }) => {
+// A check failing after a Fix step that ran is a finding on the screen the
+// Fix reached, not a broken Fix, since 2026-10-19; a step that could not be
+// taken is still a Fix failure, which tests/fix-step.spec.ts shows.
+fixTest('a check failing after a Fix step that ran is a finding, named by the step, not a Fix failure', async ({ page, app }) => {
   const root = scratch();
   const error = await runRoute({
     page,
@@ -540,11 +543,11 @@ fixTest('a check failing after a Fix step is a Fix failure, not a failed Route (
     (thrown: unknown) => thrown
   );
 
-  expect(error).toBeInstanceOf(FixFailure);
-  expect((error as FixFailure).cause).toBeInstanceOf(CheckFailure);
-  // Said as a check failing after a step that ran, never as the step failing.
-  expect((error as FixFailure).message).toMatch(/^A check failed after Fix step ".+", which itself ran,/);
-  expect((error as FixFailure).message).not.toMatch(/The Fix failed at step/);
+  expect(error).toBeInstanceOf(CheckFailure);
+  expect(error).not.toBeInstanceOf(FixFailure);
+  expect((error as CheckFailure).message).toMatch(/^A check failed after Fix step 1, "button \"Weigh the trunk\"", which is when the checks read it/);
+  // Never said as a broken precondition every Route will meet.
+  expect((error as CheckFailure).message).not.toMatch(/broken precondition|every Route in this Journey/);
 
   const entries = journalIn(root);
   const step = entries.find((entry): entry is FixStepEntry => entry.kind === 'fix-step');
