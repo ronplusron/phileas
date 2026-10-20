@@ -594,13 +594,14 @@ run the default Fix unawares.
   from the menu, and the Carnatic's, need none beyond `hong-kong`.
 
 **A plant never sits on a Fix's path.** A Fix that walked through a planted
-bug would fail inside the Fix on every Route, which is reported as one
-Fix failure and never reaches the Trip at all. So each section's Fix stops
+bug would end every Route inside the Fix, as a finding named by the Fix
+step it came after (a Fix failure until 2026-10-19), and never reach the
+Trip at all. So each section's Fix stops
 short of its plant, and no plant is placed on the default Fix's path: the
 Kiouni plant, for one, is shown with a Fix that ends at Kholby, never with
 the default. The guided demo's own check of each section's seed would
-catch a Fix that strayed onto a plant, since the finding would appear as a
-Fix failure rather than on a Trip Hop. So the Fixes past Hong Kong go on by
+catch a Fix that strayed onto a plant, since the finding would appear after
+a Fix step rather than on a Trip Hop. So the Fixes past Hong Kong go on by
 the Tankadere rather than the Carnatic, cross the prairie with the sail
 down, and take coal on the Henrietta.
 
