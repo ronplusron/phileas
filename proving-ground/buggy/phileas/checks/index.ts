@@ -1,5 +1,6 @@
-import type { AppCheck } from '@drugstoresushi/phileas';
+import type { AppCheck, AppRelation } from '@drugstoresushi/phileas';
 import { countMatchesList } from './inventory/count-matches-list';
+import { inventoryClearRestoresList } from './inventory/inventory-clear-restores-list';
 
 /**
  * Buggy's own checks, run after the built-in ones on every Hop in this order.
@@ -8,3 +9,10 @@ import { countMatchesList } from './inventory/count-matches-list';
  * the list beneath it.
  */
 export const checks: readonly AppCheck[] = [countMatchesList];
+
+/**
+ * Buggy's own relations, each started by a Hop it names, with a Detour of its
+ * own after it. `inventory-clear-restores-list` clears a search a Hop typed
+ * and compares the list with the one before.
+ */
+export const relations: readonly AppRelation[] = [inventoryClearRestoresList];

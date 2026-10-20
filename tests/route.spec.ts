@@ -38,6 +38,7 @@ import {
   type Chooser,
   type FixStepEntry,
   type JournaledCandidate,
+  type DetourStepEntry,
   type TripHopEntry,
 } from '../src/index';
 import { renderEntry } from '../src/report/render.mjs';
@@ -1421,9 +1422,11 @@ test('typing arrives as one keystroke per character', async ({ page, app }) => {
     journalsRoot: dir,
   });
 
+  // A Hop's typing, and a Detour step's: buggy's relation types the Hop's
+  // value back into the search on its way back, since 2026-10-19.
   const typed = readJournal(path.join(inRun(dir), `route-001-${streams.routeSeed}.jsonl`)).filter(
-    (entry): entry is TripHopEntry =>
-      entry.kind === 'trip-hop' && entry.action === 'type' && entry.target.name === 'Search items'
+    (entry): entry is TripHopEntry | DetourStepEntry =>
+      (entry.kind === 'trip-hop' || entry.kind === 'detour-step') && entry.action === 'type' && entry.target?.name === 'Search items'
   );
   const characters = typed.reduce((sum, entry) => sum + (entry.value ?? '').length, 0);
 

@@ -357,6 +357,103 @@ export interface AppCheckContext {
 export type AppCheckVerdict = readonly string[] | { readonly notRun: string };
 
 /**
+ * A relation the adapter declares for its own application: the application
+ * agreeing with itself over time (R20), such as a sort cycled back to
+ * unsorted restoring the order it had. A Hop whose target `when` names
+ * starts it; the engine reads a value before the Hop acts, takes the
+ * relation's Detour, reads again, and compares the two. Its Detour takes no
+ * draw, so the Trip's stream is unchanged, and its steps do not count toward
+ * the Trip length.
+ *
+ * **What it asserts comes from the application agreeing with itself,** as an
+ * `AppCheck`'s does: never from a bug report or the application's own code.
+ * docs/HISTORY.md, 2026-10-19, has the decisions, taken on 2026-10-15 and
+ * 2026-10-19.
+ *
+ * Judged as a check is, by the signature of each violation, so a known
+ * finding is carried past. Only the first relation that applies to a Hop
+ * takes its Detour; the others are recorded as not taken.
+ */
+export interface AppRelation {
+  /** As `AppCheck.name`, and unique among the adapter's checks and relations together. */
+  readonly name: string;
+
+  /** What should hold, and why it should: the report's reason for the relation. */
+  readonly why: string;
+
+  /**
+   * The Hop's target that starts it, matched against the target as the
+   * journal and `phileas survey` write it, such as `button "Clear search"`
+   * or `frame "Data Browser" > button "Sort column mpg ascending"`. What it
+   * captures is handed to `steps` and `back`.
+   */
+  readonly when: RegExp;
+
+  /**
+   * Whether the relation has anything to compare on the screen as it stands,
+   * before the Hop acts, as `AppCheck.appliesWhen` is asked after one. Absent,
+   * a Hop `when` matches always starts it. It reads and never acts.
+   */
+  appliesWhen?(context: RelationContext): Promise<boolean> | boolean;
+
+  /**
+   * The value compared, read before the Hop acts and again after the Detour.
+   * It reads and never acts, and is bounded by the responsive wait. It goes
+   * on the journal's line whole, so keep it small: the rows in view, not a
+   * frame's every row.
+   */
+  read(context: RelationContext): Promise<RelationReading> | RelationReading;
+
+  /**
+   * The Detour's steps, taken after the Hop, each a target as a Fix's `act`
+   * step names one, with a value for text to type. Named targets rather than
+   * code, so a journal holds each step whole. A first step not on offer means
+   * the relation does not apply; a later one not on offer is a finding,
+   * unless something covers or hides it.
+   */
+  steps(hop: DetourHop): readonly DetourStep[];
+
+  /** What is wrong, comparing the reading before the Hop with the one after the Detour: an empty list when nothing is. */
+  expect(before: RelationReading, after: RelationReading): readonly string[];
+
+  /**
+   * The way back to where the Hop left the screen, taken after the
+   * comparison, so the next Hop draws from the screen the seed's own Hop
+   * made. Absent, the Route continues from where the Detour ended, and the
+   * journal says so.
+   */
+  back?(hop: DetourHop): readonly DetourStep[];
+}
+
+/** The Hop a relation starts from: its target as written, what `when` captured, how it acted, and any value typed. */
+export interface DetourHop {
+  readonly target: string;
+  readonly match: readonly string[];
+  readonly action: string;
+  readonly value?: string;
+}
+
+/** One step of a Detour: a target as a Fix's `act` step takes one, and text to type where it takes typing. */
+export interface DetourStep {
+  readonly target: string;
+  readonly value?: string;
+}
+
+/** What a relation's `appliesWhen` and `read` are handed: what a check is, and the Hop. */
+export interface RelationContext extends AppCheckContext {
+  readonly hop: DetourHop;
+}
+
+/** A value a relation reads, plain data so a journal holds it. */
+export type RelationReading =
+  | string
+  | number
+  | boolean
+  | null
+  | readonly RelationReading[]
+  | { readonly [key: string]: RelationReading };
+
+/**
  * A log for the log check: its absolute path, or the path marked as a log the
  * application creates only when it first writes to it.
  *
@@ -618,6 +715,14 @@ export interface AppUnderTest {
    * from.
    */
   checks?: readonly AppCheck[];
+
+  /**
+   * Relations of this application's own (R20), each started by a Hop it
+   * names and taking a Detour of its own after it. See `AppRelation`. Turned
+   * on and off by name as checks are, and named on each Route's opening line
+   * among the checks in force.
+   */
+  relations?: readonly AppRelation[];
 
   /**
    * What varies from run to run in this application's own messages, taken out

@@ -27,7 +27,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { renderJourneyFindings } from '../known.mjs';
 import { currentEntry } from '../legacy.mjs';
-import { JOURNEY_END, REPLAY_SKIPPED, REPORTER_PRESENT, firstSentence, routeLabel, targetText } from './render.mjs';
+import { JOURNEY_END, REPLAY_SKIPPED, REPORTER_PRESENT, firstSentence, routeLabel, stepWhere } from './render.mjs';
 
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
 /** @typedef {import('../known.mjs').JourneyFindings} JourneyFindings */
@@ -43,7 +43,7 @@ const JOURNAL_ANNOTATION = 'phileas-journal';
  * Also how long each brief blank window lasted, for the summary, and which
  * of the checks besides the universal ones ran on any step, out of those in
  * force (docs/HISTORY.md, 2026-10-16), empty in a journal from before 2026-10-16.
- * @returns {{ opening?: Extract<JournalEntry, { kind: 'route' }>, last?: Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' }>, outcome?: Extract<JournalEntry, { kind: 'outcome' }>, hops: number, skipped: number, blanks: number[], applied: string[] }}
+ * @returns {{ opening?: Extract<JournalEntry, { kind: 'route' }>, last?: Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' | 'detour-step' | 'detour' }>, outcome?: Extract<JournalEntry, { kind: 'outcome' }>, hops: number, skipped: number, blanks: number[], applied: string[] }}
  */
 export function readEnding(file) {
   /** @type {ReturnType<typeof readEnding>} */
@@ -66,7 +66,10 @@ export function readEnding(file) {
       continue;
     }
     if (entry.kind === 'route') ending.opening = entry;
-    else if (entry.kind === 'trip-hop' || entry.kind === 'fix-step') {
+    else if (entry.kind === 'trip-hop' || entry.kind === 'fix-step' || entry.kind === 'detour-step' || entry.kind === 'detour') {
+      // A Detour's steps and its relation's verdict are steps too: a Route
+      // can end on one, and a relation that ran counts among the checks that
+      // applied.
       ending.last = entry;
       if (entry.kind === 'trip-hop') ending.hops = entry.hop;
       if (entry.kind === 'trip-hop' && entry.abandoned?.startsWith(REPLAY_SKIPPED)) ending.skipped += 1;
@@ -109,7 +112,7 @@ function oneLine(text, limit) {
 /**
  * What a Route that failed on a check saw, one line per failed check, with the
  * finding's id, which `phileas known add` takes.
- * @param {Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' }>} last
+ * @param {Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' | 'detour-step' | 'detour' }>} last
  * @returns {string[]}
  */
 function failedCheckLines(last) {
@@ -187,9 +190,7 @@ export function routeLines(result, { follow, cwd }) {
     if (outcome.outcome === 'failed') {
       const last = ending.last;
       if (last && last.checks.some((check) => check.result === 'failed')) {
-        const where =
-          last.kind === 'trip-hop' ? `hop ${last.hop}, ${last.action} ${targetText(last.target)}` : `Fix step ${last.step}, ${last.label}`;
-        lines.push(`    failed checks after ${where}:`);
+        lines.push(`    failed checks after ${stepWhere(last)}:`);
         lines.push(...failedCheckLines(last));
         lines.push(`    when each arrived, and the steps before it: phileas show ${quoted(shown(journal ?? '', cwd))}`);
         journalNamed = true;

@@ -1552,11 +1552,12 @@ run after every hop like the universal tier.
 the easy mistake. A relation compares two states, so the engine has to take
 moves of its own: when a hop has just performed the operation a relation names,
 the engine performs the counterpart, compares, and records those moves in the
-journal as Detour steps, named so on 2026-10-15 and called probe hops before;
-`OUTSTANDING.md` 2.31 has the shape discussed. **Decided on 2026-10-19,**
-and 2.31 has both answers: Detour steps do not count toward the Trip
-length, and a Route continues from where the Hop left the screen when the
-Detour declares a way back, else from where the Detour ends.
+journal as Detour steps, named so on 2026-10-15 and called probe hops before.
+**Built on 2026-10-19,** ahead of the rest of this phase as stage 5's first
+part: an adapter declares its relations beside its checks, and the engine
+takes their Detours in `route.ts` rather than in a `metamorphic.ts` of their
+own, since a Detour is steps of the Route. `HISTORY.md` has the decisions
+and what was built.
 
 `specified.ts` (R21) takes an expected value the adapter computed from a
 source of truth and compares it to the screen. `../CLAUDE.md` records the

@@ -38,9 +38,14 @@ export function checkNames(names: readonly string[]): string[] {
   return [...new Set(names.map((name) => name.trim()).filter(Boolean))].sort();
 }
 
-/** Every check this application can run: the built-in ones, every optional one, and its own. */
+/** Every check this application can run: the built-in ones, every optional one, its own, and its relations. */
 export function checksOf(cfg: AppUnderTest): string[] {
-  return [...UNIVERSAL_CHECKS, ...OPTIONAL_CHECKS, ...(cfg.checks ?? []).map((check) => check.name)];
+  return [
+    ...UNIVERSAL_CHECKS,
+    ...OPTIONAL_CHECKS,
+    ...(cfg.checks ?? []).map((check) => check.name),
+    ...(cfg.relations ?? []).map((relation) => relation.name),
+  ];
 }
 
 /** Whether a check runs for this application when nothing includes or excludes it. */

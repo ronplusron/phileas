@@ -39,6 +39,7 @@ export const PLANTS = {
   blank: { button: 'Fold the map', check: 'window-showing-content' },
   dialog: { button: 'Ring the bell', check: 'no-unexpected-dialog' },
   miscount: { button: 'Count the luggage', check: 'count-matches-list' },
+  'stuck-search': { button: 'Fasten the search', check: 'inventory-clear-restores-list' },
 };
 
 /**
@@ -78,7 +79,10 @@ export function routeFound(file) {
   /** @param {{ target?: { source?: string, name?: string } }} hop */
   const clicked = (hop) => (hop.target?.source === 'page' ? byButton.get(hop.target.name ?? '') : undefined);
   const plantsClicked = /** @type {string[]} */ ([...new Set(hops.map(clicked).filter(Boolean))]);
-  const failedHop = outcome?.outcome === 'failed' ? hops[hops.length - 1] : undefined;
+  // The last step of any kind: a relation fails on its Detour's line, after
+  // the Hop that started it, and a check can fail after a Detour step.
+  const steps = entries.filter((entry) => entry.kind === 'trip-hop' || entry.kind === 'detour-step' || entry.kind === 'detour');
+  const failedHop = outcome?.outcome === 'failed' ? steps[steps.length - 1] : undefined;
   const failed = (failedHop?.checks ?? []).filter((check) => check.result === 'failed').map((check) => check.check);
   if (!failedHop || !failed.length) {
     return { route, outcome: outcome?.outcome ?? 'unfinished', hops: hops.length, plantsClicked, reason: outcome?.reason };

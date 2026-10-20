@@ -25,6 +25,108 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-19: Detours, and the first relations
+
+**Why.** A metamorphic check (R20) compares two moments, so the engine has
+to take moves of its own between Hops, and stage 5's first part placed it
+after the checks of one moment. Discussed on 2026-10-15 with Help's
+Previous and Next topic as the example, and put this way: "So it's like a
+mini-Fix: After Hop 9, what happens next is determined, like a Fix step."
+Named the same day: "Call the sequence a Detour and each move is a Detour
+Step, similar to Fix Step." They were probe hops until then; "probe" was
+set aside since it names the investigation scripts in `trial/*/probes/`,
+and "hop" since a Hop is drawn from the seed and these are not.
+"Relation" stays plain English for what such a check asserts.
+
+**Decided before building, each from options laid out with a
+recommendation.** On 2026-10-19, worked through on a sort cycle:
+- **Detour steps do not count toward the Trip length,** answered "No": a
+  Trip of 10 draws 10 Hops whichever checks are on, and the Route deadline
+  bounds the extra time.
+- **A Route continues from where the Hop left the screen, when the Detour
+  can get back there,** asked for as "/pros-cons and rec" and taken in the
+  words "OK let's do back, when possible." A Detour declares its way back;
+  one with none continues from where it ends, and the journal says so. The
+  reason given with the recommendation: only the seed decides where a Route
+  goes. What it costs: more steps per Detour, a way back to get right, and
+  one that restores the main thing and not, say, the scroll position.
+
+Then, once the shape was proposed in full, the same day:
+- **Relations are declared in a list of their own,** `relations`, beside
+  an adapter's `checks`, chosen over making a relation a kind of check, in
+  the same area folders, their names beginning with the area.
+- **Only the first relation that applies to a Hop takes its Detour,** and
+  the others that matched are recorded as not taken, chosen over taking
+  each in turn, which would leave a later one's reading before the Hop out
+  of date once an earlier one had no way back.
+- **A Detour step missing after an earlier step acted is a finding only
+  where nothing covers or hides it,** taken in the words "Use the middle
+  way: a finding only when the target is absent and nothing covers or
+  hides it", after "rec" asked for the recommendation. With a dialog, an
+  overlay or a cover in the way, or the target only out of sight, the
+  Detour is broken off and the Route goes on from where it is. A first
+  step missing means the relation did not apply.
+
+**What was built.** An adapter's `relations`, each an `AppRelation` in
+`src/app-under-test.ts`: a pattern over the Hop's target as the journal
+writes it (`when`), whether it applies before the Hop acts, a `read` taken
+before the Hop and again after the Detour, the Detour's `steps` and any
+way `back` as named targets, and what `expect` makes of the two readings.
+In `src/route.ts`, after a Trip hop's line and checks, the first relation
+that applies takes its Detour: each step found as a Fix's `act` step is,
+through a search the two now share, `findStepTarget`, acted on, settled,
+checked and journaled as `detour-step`; then the readings compared and the
+verdict judged as a check's is, by signature, against the known findings,
+on a `detour` line; then the way back. A relation is turned on and off by
+name as a check is, and named on the opening line among the checks in
+force. The survey now says when a modal dialog was all it read, which the
+rule for a missing step needs. The renderer, the reporter, `phileas show
+--json`, the page and replay read the two new lines, and a Route that
+fails on a relation is replayed to the Hop that started it.
+
+**Shown on `buggy`,** by `tests/relations.spec.ts`, 6 tests. Its relation,
+`inventory-clear-restores-list`, is the clear that does not clear phase 6
+named: a Hop typing into an empty search starts it, the Detour clears the
+search, the list is compared with the one before, and the way back types
+the Hop's value again. A new plant, `stuck-search`, "Fasten the search",
+leaves the list filtered after Clear search, with the count still agreeing
+with the list, so no check of one moment sees it; the relation fires on
+it. With the relation holding, a Route of 2 Hops asked its chooser and its
+value generator twice each, so the Detour's two steps took no draw. Four
+existing tests changed with it: three list `buggy`'s checks in force, and
+the typing test now counts what a Detour step typed too, which the way back
+had made 22 keystrokes against 21 Hop characters on a seeded Route whose
+draws were otherwise unchanged. `npm test`: 500. Version 0.15.0, for
+relations and the journal's two new line kinds.
+
+**Then RStudio's first relation,** `data-viewer-sort-cycle-restores-order`,
+check 10 of the three chosen that day: a column sorted ascending from the
+sidebar, on an unsorted frame at its top, starts a Detour that sorts it
+descending and removes the sort, the row names in view are compared with
+those before, and the way back sorts it ascending again. On
+2026.11.0-daily+78, `data-viewer-sort-cycle-check.spec.ts` ran a real Route
+from `data-viewer-paged`, steered onto two columns' ascending buttons: the
+first took its Detour, which held, and its way back, and the second, on a
+frame left sorted, took none. Asked by hand around a real cycle, the
+relation was quiet, and fired with two row names swapped.
+
+**Found on the way: a likely RStudio finding.** That Route's first run
+ended as a Fix failure on `data-viewer-footer-rows-in-view`, the footer
+saying rows 1 to 15 with 9 wholly in view. Taken first for a check reading
+a viewer still being laid out, and filed as a defect, it was not: one
+launch sampled every 200 ms never met it, and the check was then made to
+read a mismatch again for 2 s before failing, which the next mismatch
+outlasted; that re-read was taken out again once the probe below showed
+nothing transient to wait for, and the check reads once, as it did. `trial/rstudio/probes/viewer-row-height.spec.ts` found what
+decides it, over 16 launches: a window that opened fitted to the display's
+work area, at y 33 and 861 high, drew all 120 columns in each row, so the
+text columns wrapped onto two lines and rows were 37 px where the footer
+counted rows of 23; one that opened at y 0, 900 high, drew 10 columns and
+agreed, even when moved to the fitted bounds before the viewer opened. The
+defect entry was taken out, since the check read the screen rightly, and
+`OUTSTANDING.md` holds what is not known. The relation's Route test runs
+with that check off and says why.
+
 ## 2026-10-19: the data viewer's sort and its footer's rows, two checks
 
 **Why.** Three checks were chosen from rules read off the titles of

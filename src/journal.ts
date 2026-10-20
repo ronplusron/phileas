@@ -578,6 +578,66 @@ export interface NoteEntry {
   readonly at: string;
 }
 
+/**
+ * One step of a relation's Detour, taken after the Trip hop that started it:
+ * settled, checked and journaled as a Fix step is, and named by its target as
+ * a Fix's `act` step is. Not a Hop, since nothing in it is drawn from the
+ * seed, and not counted toward the Trip length. Since 2026-10-19.
+ */
+export interface DetourStepEntry {
+  readonly kind: 'detour-step';
+  /** The Trip hop the Detour follows. */
+  readonly hop: number;
+  /** The relation whose Detour this is. */
+  readonly relation: string;
+  /** Position within the Detour, counting from 1, the way back included. */
+  readonly step: number;
+  /** Present on a step of the way back, after the comparison. */
+  readonly back?: true;
+  /** The step's target as the relation named it, with the value typed if any. */
+  readonly label: string;
+  /** The control it found, as a Trip hop's target is written. Absent where it found none. */
+  readonly target?: JournaledCandidate;
+  readonly action?: HopAction;
+  readonly value?: string;
+  /** Why the step could not be taken, on the step that could not. */
+  readonly error?: string;
+  readonly startedAt: string;
+  readonly durationMs: number;
+  readonly effect: HopEffect;
+  readonly checks: readonly JournaledCheck[];
+  readonly caught?: CaughtByStubs;
+}
+
+/**
+ * How a relation's Detour came out, written after its steps and before any
+ * way back: the readings compared and the relation's verdict, judged as a
+ * check's is and held in `checks`, so a Journey's end and a replay read its
+ * findings where they read every other check's. Since 2026-10-19.
+ */
+export interface DetourEntry {
+  readonly kind: 'detour';
+  readonly hop: number;
+  readonly relation: string;
+  /**
+   * `held` or `failed` where the readings were compared; `did-not-apply`
+   * where its first step was not on offer; `broken-off` where a later step
+   * was covered or hidden, which is no finding; `not-run` where a reading
+   * could not be taken.
+   */
+  readonly outcome: 'held' | 'failed' | 'did-not-apply' | 'broken-off' | 'not-run';
+  readonly reason?: string;
+  readonly before?: unknown;
+  readonly after?: unknown;
+  /** Whether the relation declares a way back, which follows as `back` steps; absent, the Route goes on from where the Detour ended. */
+  readonly wayBack: boolean;
+  /** Other relations that matched the Hop and were not taken, since only the first that applies is. */
+  readonly notTaken?: readonly string[];
+  /** The relation's verdict, as one check: absent where nothing was compared. */
+  readonly checks: readonly JournaledCheck[];
+  readonly at: string;
+}
+
 /** How the Route ended. Absent from the file when the run died first. */
 export interface ClosingEntry {
   readonly kind: 'outcome';
@@ -613,6 +673,8 @@ export type JournalEntry =
   | PoolEntry
   | FixStepEntry
   | TripHopEntry
+  | DetourStepEntry
+  | DetourEntry
   | NoteEntry
   | ClosingEntry;
 

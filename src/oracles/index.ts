@@ -5,6 +5,7 @@ import {
   UNIVERSAL_CHECKS,
   type AppCheck,
   type AppCheckContext,
+  type AppRelation,
   type AppUnderTest,
   type LogPath,
   type Narrowing,
@@ -154,7 +155,7 @@ export function checksOnTheRoute(
     else if (check === 'log-error' && namesNoLog(cfg)) unavailable.push({ check, reason: NO_LOG_NAMED });
   }
   const inForce: string[] = OPTIONAL_CHECKS.filter((name) => offWhy(name) === undefined);
-  for (const own of cfg.checks ?? []) {
+  for (const own of [...(cfg.checks ?? []), ...(cfg.relations ?? [])]) {
     const off = offWhy(own.name);
     if (off !== undefined) unavailable.push({ check: own.name, reason: off });
     else inForce.push(own.name);
@@ -260,6 +261,13 @@ export interface Watch {
    * See `startWatching` for why this is where a hang shows.
    */
   bounded<T>(what: string, call: Promise<T>, boundMs: number): Promise<T | typeof STALLED>;
+  /**
+   * A relation's verdict, judged as a check's is: each violation by its
+   * signature, a known finding carried past, and any other one failing it.
+   */
+  judgeRelation(name: string, violations: readonly string[]): Promise<JournaledCheck>;
+  /** The adapter's relations that run on this Route, in the order declared. */
+  readonly relations: readonly AppRelation[];
 }
 
 /** What `Watch.bounded` returns when a call outran its bound and the responsive wait together. */
@@ -398,7 +406,7 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
   const appChecks = cfg.checks ?? [];
   // Before anything is watched, so a mistake in the declaration stops the
   // Route at its start rather than on its first Hop.
-  assertAppChecks(appChecks);
+  assertAppChecks(appChecks, cfg.relations ?? []);
   assertCheckDefaults(cfg);
   const choice: CheckChoice = options.choice ?? { included: [], excluded: [] };
   // An optional check that does not run is left off each Hop's line, as one
@@ -658,6 +666,8 @@ export async function startWatching(options: WatchOptions): Promise<Watch> {
 
   return {
     bounded,
+    relations: (cfg.relations ?? []).filter((relation) => !unavailable.has(relation.name)),
+    judgeRelation: (name, violations) => judged(name, undefined, known, varying, () => [...violations], offWhy(name)),
     async check(tree) {
       const judge = (check: UniversalCheck, run: () => Promise<Verdict> | Verdict) =>
         judged(check, cfg.narrowedChecks?.[check], known, varying, run, offWhy(check));
@@ -784,15 +794,22 @@ export class AdapterCheckError extends Error {
 }
 
 /**
- * Refuse checks an adapter declared that could not be told apart in a
- * journal or a signature: a name that is not lower-case words joined by
- * hyphens, one used twice, one a built-in check already has, or a check with
- * no reason given.
+ * Refuse checks and relations an adapter declared that could not be told
+ * apart in a journal or a signature: a name that is not lower-case words
+ * joined by hyphens, one used twice across both, one a built-in check
+ * already has, or one with no reason given. A relation's `when` must not
+ * carry the `g` or `y` flag, which would make it remember where it last
+ * matched and answer differently on a replay.
  */
-export function assertAppChecks(checks: readonly AppCheck[]): void {
+export function assertAppChecks(checks: readonly AppCheck[], relations: readonly AppRelation[] = []): void {
   const builtIn = new Set<string>([...UNIVERSAL_CHECKS, ...OPTIONAL_CHECKS]);
   const seen = new Set<string>();
-  for (const check of checks) {
+  for (const relation of relations) {
+    if (!(relation.when instanceof RegExp) || relation.when.global || relation.when.sticky) {
+      throw new Error(`The adapter's relation ${relation.name} needs when to be a pattern without the g or y flag, which would make it answer differently on a replay.`);
+    }
+  }
+  for (const check of [...checks, ...relations]) {
     if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(check.name)) {
       throw new Error(`The adapter's check ${JSON.stringify(check.name)} is not named in lower-case words joined by hyphens.`);
     }

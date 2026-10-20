@@ -512,13 +512,17 @@ export const PAGE = /* html */ `<!doctype html>
         stops.append(el('li', { class: 'note' }, 'Before hop ' + step.before + ': ' + step.text));
         continue;
       }
-      if (step.kind !== leg) {
-        leg = step.kind;
-        stops.append(el('li', { class: 'leg' }, step.kind === 'fix' ? 'Fix' + (opening && opening.fix ? ', ' + opening.fix : '') : 'Trip'));
+      // A Detour's steps and its relation's verdict belong to the Trip, under
+      // the Hop that started them.
+      const stepLeg = step.kind === 'fix' ? 'fix' : 'trip';
+      if (stepLeg !== leg) {
+        leg = stepLeg;
+        stops.append(el('li', { class: 'leg' }, stepLeg === 'fix' ? 'Fix' + (opening && opening.fix ? ', ' + opening.fix : '') : 'Trip'));
       }
       const look = step.failed.length || step.error ? 'broke' : step.known.length ? 'known' : step.abandoned ? 'gave-up' : step.effect === 'no change' ? 'still' : 'changed';
+      const label = { fix: 'fix ', hop: 'hop ', detour: 'detour ', relation: 'after hop ' }[step.kind] + step.number;
       stops.append(el('li', { class: 'stop ' + step.kind + ' ' + look },
-        el('span', { class: 'n' }, (step.kind === 'fix' ? 'fix ' : 'hop ') + step.number),
+        el('span', { class: 'n' }, label),
         el('span', { class: 'act' }, step.action),
         el('span', { class: 'what' },
           el('span', { class: 'target' }, step.target),

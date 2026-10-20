@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { currentSignature, findingId, readKnownFindings } from '../known.mjs';
 import { readEnding, replayVerdict } from './reporter.mjs';
-import { buildText, platformText, ranWithText, setupText, targetText } from './render.mjs';
+import { buildText, platformText, ranWithText, setupText, stepWhere } from './render.mjs';
 
 /** @typedef {import('../journal').JournalEntry} JournalEntry */
 /** @typedef {import('../build').JournaledBuild} JournaledBuild */
@@ -158,12 +158,7 @@ export function summarizeRoute(journal, standing = standingFrom(knownFileFor(pat
   const newFindings = [
     ...new Set(failedChecks.flatMap((check) => check.findings.filter((finding) => !finding.known).map((finding) => finding.id))),
   ];
-  const failedAt =
-    failed.length && last
-      ? last.kind === 'trip-hop'
-        ? `hop ${last.hop}, ${last.action} ${targetText(last.target)}`
-        : `Fix step ${last.step}, ${last.label}`
-      : undefined;
+  const failedAt = failed.length && last ? stepWhere(last) : undefined;
   const verdict = replayVerdict(ending);
   return {
     routeNumber,

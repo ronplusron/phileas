@@ -455,6 +455,12 @@ export interface SurveyResult {
    */
   readonly unreadFrames: readonly UnreadFrame[];
   /**
+   * Whether a modal dialog was open, native or marked `aria-modal`, so that
+   * only the dialog was surveyed. A Detour reads it to tell a step's target
+   * missing under a dialog from one missing outright.
+   */
+  readonly modal: boolean;
+  /**
    * The accessibility tree this survey read, which is the "before" half of the
    * Hop's effect (R31). Handed back rather than read again, so the effect costs
    * nothing extra.
@@ -768,7 +774,7 @@ export async function survey(options: SurveyOptions): Promise<SurveyResult> {
 async function surveyWith(options: SurveyOptions, elements: Elements): Promise<SurveyResult> {
   const { page, app, exclusions, hopIndex, tally, timeoutMs } = options;
 
-  const { candidates: pageCandidates, unnamed, tree, frames, unread } = await surveyPage(page, timeoutMs, elements);
+  const { candidates: pageCandidates, unnamed, tree, frames, unread, modal } = await surveyPage(page, timeoutMs, elements);
   const { menuCandidates, menuSource } = await surveyMenu(app, timeoutMs);
 
   const found: SurveyedCandidate[] = [
@@ -884,6 +890,7 @@ async function surveyWith(options: SurveyOptions, elements: Elements): Promise<S
       ? { offered: true, count: candidates.filter((c) => c.source === 'menu').length }
       : menuSource,
     unreadFrames: unread,
+    modal,
     tree,
   };
 }
@@ -1698,6 +1705,7 @@ async function surveyPage(
   tree: unknown;
   frames: readonly ReadFrame[];
   unread: readonly UnreadFrame[];
+  modal: boolean;
 }> {
   // **While a modal dialog is open, only the dialog is surveyed.** Measured on
   // 2026-09-24 with the demo's ticket dialog, opened with showModal(): the
@@ -1830,6 +1838,7 @@ async function surveyPage(
     tree,
     frames: read.frames,
     unread: read.unread,
+    modal: modalOpen,
   };
 }
 

@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { requireAppDir, type AppUnderTest } from '@drugstoresushi/phileas';
 import type { ElectronApplication, Page } from '@playwright/test';
-import { checks } from '../checks';
+import { checks, relations } from '../checks';
 import { libraryList, personalLibrary } from '../personal-library';
 import { CLIENT_INIT, rRanWith, rRunsWith } from '../which-r';
 
@@ -378,6 +378,7 @@ export const rstudio: AppUnderTest = {
   // RStudio's own checks, each on the steps where it applies; ../checks has
   // each one and what it was measured from.
   checks,
+  relations,
 
   /**
    * The workbench window, never the splash. Without RS_NO_SPLASH, RStudio

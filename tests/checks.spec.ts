@@ -341,7 +341,9 @@ healthy('on the unplanted application, nothing fires, and what cannot run says w
   for (const unbuilt of ['no-navigation-away', 'named-controls']) {
     expect(unavailable.find((entry) => entry.check === unbuilt)?.reason).toMatch(/not built yet/);
   }
-  expect(opening?.kind === 'route' ? opening.checksInForce : undefined).toEqual(['count-matches-list']);
+  // buggy's relation is in force too, named after its checks; it runs only
+  // after a Hop that types into an empty search.
+  expect(opening?.kind === 'route' ? opening.checksInForce : undefined).toEqual(['count-matches-list', 'inventory-clear-restores-list']);
   const runs = CHECK_ORDER.filter((check) => !['log-error', 'named-controls', 'no-navigation-away'].includes(check));
   for (const hop of hops) {
     // The rest on every Hop, in a fixed order, with the adapter's own after
@@ -880,7 +882,7 @@ own('an adapter check that does not apply is left off the line and never run, be
   expect(ranElsewhere).toBe(0);
   const entries = journalIn(root);
   const opening = entries.find((entry) => entry.kind === 'route');
-  expect(opening?.kind === 'route' ? opening.checksInForce : undefined).toEqual(['on-the-items-screen', 'on-a-screen-buggy-lacks', 'everywhere']);
+  expect(opening?.kind === 'route' ? opening.checksInForce : undefined).toEqual(['on-the-items-screen', 'on-a-screen-buggy-lacks', 'everywhere', 'inventory-clear-restores-list']);
   const hop = entries.find((entry): entry is TripHopEntry => entry.kind === 'trip-hop');
   const own = (hop?.checks ?? []).filter((check) => !(CHECK_ORDER as readonly string[]).includes(check.check));
   expect(own).toEqual([

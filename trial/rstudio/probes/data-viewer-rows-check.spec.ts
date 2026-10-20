@@ -91,6 +91,22 @@ test('data-viewer-footer-rows-in-view applies, stays quiet, and fires on a contr
     },
   } as unknown as Parameters<typeof dataViewerPaged>[0]);
   await page.waitForTimeout(3_000);
+
+  // A launch whose window opened fitted to the screen draws every column, its
+  // text wraps, and its rows are 37 px where the footer counts rows of 23, so
+  // the footer names more rows than are in view, a likely RStudio finding,
+  // docs/OUTSTANDING.md 2.35. There the check is right to fire as the viewer
+  // opens, and the states below, written for a viewer that agrees, do not
+  // hold.
+  const rowHeight = await frameFor(page)?.evaluate(
+    () => document.querySelector<HTMLElement>('#rsGridData tr[aria-rowindex]')?.getBoundingClientRect().height ?? 0
+  );
+  if ((rowHeight ?? 0) > 30) {
+    const fitted = await verdict(context, `paged, as opened, rows ${rowHeight} px`);
+    expect(fitted.applies).toBe(true);
+    expect(JSON.stringify(fitted.found)).toMatch(/says rows 1 to (\d+), and rows 1 to (?!\1\b)\d+ are wholly in view/);
+    return;
+  }
   expect(await verdict(context, 'paged, as opened')).toEqual({ applies: true, found: [] });
 
   for (const [share, rows] of [

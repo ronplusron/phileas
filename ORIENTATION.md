@@ -54,7 +54,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs four hundred and ninety-four tests, after a
+through, and `npm test` runs five hundred tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -227,7 +227,13 @@ does not answer; a step's line counting the checks besides the universal
 ones, an older journal's printing no count; and the summary counting them
 without a list. Three more hold RStudio's accessibility findings to one
 signature each: a widget GWT numbers as it builds it, a code example in
-Help's manuals, and a minimized pane's table named two ways.
+Help's manuals, and a minimized pane's table named two ways. Six came
+with relations and their Detours (R20), on `buggy`'s search: one that
+holds, taking its Detour and its way back with no draw and no Hop of the
+Trip; a first step not on offer, which does not apply; a later one absent,
+which is a finding; one in the way of a rule, which breaks the Detour off;
+only the first relation that applies taking its Detour; and the
+stuck-search plant making it fire, with a replay aimed at its Hop.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -271,8 +277,9 @@ never named, and reaching it waits for scrolling as a move of its own.
 draw, now stage 6: checks that know intent, a model measured against
 Phileas, Fixes a model drafts, and scrolling as a move, in that order.
 `docs/PLAN.md` has it. Its first part, checks that know intent, is being
-built on RStudio: four checks of one moment exist, below, and Detours for
-the relations come next.
+built on RStudio: four checks of one moment exist, below, and since
+2026-10-19 the engine takes Detours for an adapter's relations (R20), with
+RStudio's first relation, the sort cycle, below.
 
 **RStudio Desktop was the next thing to do,** decided 2026-09-28 in place of
 carrying on with the Positron trial below, which stopped where it stood
@@ -317,7 +324,13 @@ document's unsaved mark against the main toolbar's Save; and three in
 against the Environment pane's; `data-viewer-sorted-column-in-order`, a
 column marked sorted showing its values in order; and
 `data-viewer-footer-rows-in-view`, the footer's "Showing X to Y" against
-the rows in view. `docs/HISTORY.md` has what each was measured from.
+the rows in view, which in a window that opened fitted to the screen meets
+the viewer's footer counting more rows than it draws, a likely RStudio
+finding that `docs/OUTSTANDING.md` holds. **And one relation,**
+`data-viewer-sort-cycle-restores-order`: a column sorted ascending from the
+sidebar starts a Detour that sorts it descending and then removes the sort,
+compares the rows in view with those before, and sorts it ascending again
+on the way back. `docs/HISTORY.md` has what each was measured from.
 `phileas run --fix <name>` chooses one of its Fixes: `script`, a new
 R script with code in it; `session-data`, code run in the console;
 `r-markdown`, the dialog for a new R Markdown document;
@@ -518,7 +531,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own four hundred and ninety-four tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own five hundred tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

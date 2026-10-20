@@ -503,6 +503,47 @@ export function firstSentence(text) {
 }
 
 /**
+ * How a relation's Detour came out, in words: what it is, how it came out,
+ * why where there is a reason, and where the Route goes on from where no way
+ * back is declared and the Detour took steps.
+ * @param {Extract<JournalEntry, { kind: 'detour' }>} entry
+ * @returns {string}
+ */
+export function detourText(entry) {
+  const said = {
+    held: 'held',
+    failed: 'did not hold',
+    'did-not-apply': 'did not apply',
+    'broken-off': 'broken off',
+    'not-run': 'not run',
+  }[entry.outcome];
+  const reason = entry.reason && entry.outcome !== 'failed' ? `: ${entry.reason}` : '';
+  const from = !entry.wayBack && (entry.outcome === 'held' || entry.outcome === 'failed') ? '; no way back, so the Route goes on from where the Detour ended' : '';
+  const others = entry.notTaken?.length ? `; also matched, not taken: ${entry.notTaken.join(', ')}` : '';
+  return `relation ${entry.relation} after hop ${entry.hop}: ${said}${reason}${from}${others}`;
+}
+
+/**
+ * Where a Route's last step was, in words, as a failure names it: a Trip hop
+ * by its action and target, a Fix step by its label, a Detour step and a
+ * relation's verdict by the Hop they followed.
+ * @param {Extract<JournalEntry, { kind: 'trip-hop' | 'fix-step' | 'detour-step' | 'detour' }>} last
+ * @returns {string}
+ */
+export function stepWhere(last) {
+  switch (last.kind) {
+    case 'trip-hop':
+      return `hop ${last.hop}, ${last.action} ${targetText(last.target)}`;
+    case 'fix-step':
+      return `Fix step ${last.step}, ${last.label}`;
+    case 'detour-step':
+      return `hop ${last.hop}'s Detour step ${last.step}, ${last.label}`;
+    case 'detour':
+      return `hop ${last.hop}'s Detour, ${last.relation}`;
+  }
+}
+
+/**
  * One journal entry as one line, or nothing for an entry a person has no use
  * for, which is a pool: every Hop already names what it acted on.
  *
@@ -568,6 +609,22 @@ export function renderEntry(entry, routeNumber, { brief = false, opening } = {})
         failedText(entry.checks, step, brief),
       ].join('');
     }
+    case 'detour-step': {
+      const step = { name: `hop ${entry.hop}'s Detour step ${entry.step}`, startedAt: Date.parse(entry.startedAt) };
+      return [
+        column(`${route}    detour ${entry.step}${entry.back ? ', back' : ''}`, 22),
+        column(entry.action ?? '', 11),
+        column(shortened(entry.label, 39), 40),
+        entry.error ? `gave up: ${entry.error}` : effectText(entry.effect),
+        caughtText(entry.caught, step),
+        recoveredText(entry.checks),
+        checkedText(entry.checks, opening),
+        knownText(entry.checks),
+        failedText(entry.checks, step, brief),
+      ].join('');
+    }
+    case 'detour':
+      return `${route}    ${detourText(entry)}${knownText(entry.checks)}${failedText(entry.checks, { name: `hop ${entry.hop}'s Detour`, startedAt: Date.parse(entry.at) }, brief)}`;
     case 'note':
       return `${route}  note before hop ${entry.hop}: ${entry.note}`;
     case 'outcome': {
@@ -632,9 +689,13 @@ export function renderJournal(text) {
 /**
  * One step of a Route as a page draws it: a Fix step or a Trip hop, with the
  * same words its printed line uses, kept apart so each can be laid out.
+ * A Detour step is `detour`, numbered within its Detour, with `hop` the Trip
+ * hop it followed; a relation's verdict is `relation`, numbered by that Hop,
+ * with its relation as the target and how it came out as the effect.
  * @typedef {{
- *   kind: 'fix' | 'hop',
+ *   kind: 'fix' | 'hop' | 'detour' | 'relation',
  *   number: number,
+ *   hop?: number,
  *   action: string,
  *   target: string,
  *   value?: string,
@@ -732,6 +793,35 @@ export function journalSteps(text) {
         caught: caughtParts(entry.caught, step),
         ...recoveredOf(entry.checks),
         ...checked(entry.checks),
+        failed: failedOf(entry.checks, step),
+        known: knownOf(entry.checks),
+      });
+    } else if (entry.kind === 'detour-step') {
+      const step = { name: `hop ${entry.hop}'s Detour step ${entry.step}`, startedAt: Date.parse(entry.startedAt) };
+      out.steps.push({
+        kind: 'detour',
+        number: entry.step,
+        hop: entry.hop,
+        action: entry.action ?? '',
+        target: entry.back ? `${entry.label}, on the way back` : entry.label,
+        effect: entry.error ? '' : effectText(entry.effect),
+        ...(entry.error ? { error: entry.error } : {}),
+        caught: caughtParts(entry.caught, step),
+        ...recoveredOf(entry.checks),
+        ...checked(entry.checks),
+        failed: failedOf(entry.checks, step),
+        known: knownOf(entry.checks),
+      });
+    } else if (entry.kind === 'detour') {
+      const step = { name: `hop ${entry.hop}'s Detour`, startedAt: Date.parse(entry.at) };
+      out.steps.push({
+        kind: 'relation',
+        number: entry.hop,
+        hop: entry.hop,
+        action: '',
+        target: entry.relation,
+        effect: detourText(entry),
+        caught: [],
         failed: failedOf(entry.checks, step),
         known: knownOf(entry.checks),
       });

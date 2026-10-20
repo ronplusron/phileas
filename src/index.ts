@@ -15,6 +15,11 @@ export type {
   AppCheck,
   AppCheckContext,
   AppCheckVerdict,
+  AppRelation,
+  DetourHop,
+  DetourStep,
+  RelationContext,
+  RelationReading,
   LogPath,
 } from './app-under-test.js';
 export { UNIVERSAL_CHECKS, OPTIONAL_CHECKS } from './app-under-test.js';
@@ -181,6 +186,8 @@ export {
   type PoolEntry,
   type FixStepEntry,
   type TripHopEntry,
+  type DetourStepEntry,
+  type DetourEntry,
   type HopAction,
   type NoteEntry,
   type ClosingEntry,

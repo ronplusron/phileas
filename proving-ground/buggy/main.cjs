@@ -102,6 +102,7 @@ const PLANTS = [
   'second-window',
   'late-log-error',
   'late-renderer-throw',
+  'stuck-search',
 ];
 const plants = process.argv
   .filter((arg) => arg.startsWith('--buggy-plant='))

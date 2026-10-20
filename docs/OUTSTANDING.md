@@ -35,11 +35,11 @@ no navigation away, named controls, and the rest of phase 6.
 
 ### 1.2 Planted defects, and the applications still to build
 
-`proving-ground/buggy` exists and is structurally ordinary on purpose. **Fourteen
+`proving-ground/buggy` exists and is structurally ordinary on purpose. **Fifteen
 defects are planted in it**, each behind its own launch flag: thirteen make the
 universal checks fire, two of them 1,500 ms after their click so the error
-arrives during a later Hop, and one makes the check `buggy`'s adapter declares
-fire. A test steers a Route straight to each, which proves the
+arrives during a later Hop, one makes the check `buggy`'s adapter declares
+fire, and one, since 2026-10-19, its relation (R20). A test steers a Route straight to each, which proves the
 check and not the search. **Since 2026-10-06 Journeys found every one by
 traveling,** `BUGGY_PLANT` switching them on and `proving-ground/buggy/measure.mjs`
 reading what each Route found; but every plant sits on the opening screen,
@@ -1852,11 +1852,9 @@ titles of RStudio's own data viewer tests, before Detours are built:
   column partly in view, where the rows half counts only rows wholly in
   view, and leaves out a pinned column once scrolled away from it.
 - **Sorting cycles ascending, descending and unsorted, and unsorted
-  restores the original row order:** a relation (R20), so it waits for
-  Detours (2.31). Measured already: the summary sidebar's sort button reads
-  "Sort column x ascending", then "Sort column x descending", then "Remove
-  sort on column x", the header's `aria-sort` follows, and the third click
-  restored the order every time it was tried.
+  restores the original row order:** a relation (R20), built the same day
+  with Detours, as `data-viewer-sort-cycle-restores-order`; `HISTORY.md`
+  has both.
 
 The answer given to "limited in scope", a reading: each check states one
 fact, but runs after every Hop on every path that reaches its screen, so
@@ -1938,68 +1936,6 @@ as a move (1.9). **Agreed on 2026-10-15, all four,** in the order checks
 that know intent, this comparison, Fixes a model drafts, then scrolling,
 as stage 5 of `PLAN.md`'s order, which has the words.
 
-### 2.31 Detours, a short determined sequence inside the Trip
-
-A metamorphic check (R20) needs the engine to take moves of its own between
-Hops. Discussed on 2026-10-15 with Help's Previous and Next topic as the
-example, and put this way: "So it's like a mini-Fix: After Hop 9, what
-happens next is determined, like a Fix step." **Named the same day:** "Call
-the sequence a Detour and each move is a Detour Step, similar to Fix Step."
-They were called probe hops until then, in `GLOSSARY.md` and `PLAN.md`;
-"probe" was set aside since it already names the investigation scripts in
-`trial/*/probes/`, and "hop" since a Hop is drawn from the seed and these
-are not. `GLOSSARY.md` has both terms.
-
-**As it was worked through, a reading and not a decision.** A Hop drawn by
-the seed does what a metamorphic check names, such as Previous topic;
-before the next Hop is drawn, the engine takes the check's Detour, here one
-Detour step, Next topic, settles, and compares a reading taken before the
-Hop with one taken after the Detour. The reading is one value, such as
-Help's topic, held only for the Detour and written on its journal lines;
-nothing carries past it or between Routes. A Detour takes no draw, so the
-Trip's stream and a replay are unchanged. Global Options works the same
-way: after a Hop presses OK, the Detour reopens it, reads the setting and
-closes it, rather than waiting for a later Hop to reopen it by chance.
-
-**How one is declared, as discussed, not built:** in the adapter, once for
-every Journey, with the Hop's target that starts it (`when`), the Detour
-steps as named targets in order, as a Fix's `act` steps are written
-(`steps`), what to read before and after (`read`), and how the two readings
-must compare (`expect`). Named targets rather than code, so a journal holds
-each step whole and a replay can retrace it, the lesson of 1.18's `code`
-steps. A Detour step whose target is not on screen, such as Next topic
-disabled, means the check does not apply, journaled as such and never as
-held.
-
-**Like a Fix step:** no draw, and each step settled, checked and journaled.
-**Unlike one:** a Hop starts it, not the start of every Route; the adapter
-declares it once for every Journey, where a Journey's author writes a Fix;
-and its failure is a finding about the application, not a broken setup
-(R11). Not 2.22, which sets state up again partway through a Route.
-
-**Decided on 2026-10-19,** each from options laid out with a
-recommendation, worked through on a sort cycle: a Hop sorts `mpg`
-ascending, and the Detour clicks its header twice more, to descending and
-then unsorted, and compares the row order with the order before the Hop.
-- **Detour steps do not count toward the Trip length,** answered "No": a
-  Trip of 10 draws 10 Hops whichever checks are on, and the Route deadline
-  bounds the extra time. Counting them would make switching a check on cut
-  how far every Route travels.
-- **A Route continues from where the Hop left the screen, when the Detour
-  can get back there,** asked for as "/pros-cons and rec" and then taken in
-  the words "OK let's do back, when possible." A Detour declares its way
-  back, such as a third click returning the sort cycle to ascending, so
-  the next Hop draws from the screen the seed's own Hop made. One with no
-  way back, such as one that ends with Cancel, continues from where it
-  ends and says so in the journal. The reason given with the
-  recommendation: only the seed decides where a Route goes, and a check
-  steering every later Hop would break that. What it costs: more steps per
-  Detour, a way back to declare and get right, and a way back that
-  restores the main thing and not, say, the scroll position.
-
-"Relation" stays plain English for what a metamorphic check asserts, not a
-term of its own.
-
 ### 2.32 A replay stopped by a target now out of sight does not say so
 
 Noticed on 2026-10-15, when only what shows began to be offered (R32), and
@@ -2066,6 +2002,37 @@ and one signature counted once per Route.
 been measured. One batch on RStudio run both ways, ending at the first
 failure and carrying on, would show how much of what follows a first
 failure is new.
+
+### 2.35 RStudio's data viewer counting more rows than it draws, in a window opened fitted to the screen
+
+Found on 2026-10-19 by `data-viewer-footer-rows-in-view`, and asked to be
+treated as an RStudio finding and probed before anything was committed.
+`HISTORY.md` has how it was found. Measured on 2026.11.0-daily+78 by
+`trial/rstudio/probes/viewer-row-height.spec.ts`, over 16 launches of the
+same probe: a window that opened at y 33, 1200 by 861, fitted to the
+display's work area, drew all 120 of `paged`'s columns in each row, the
+text columns wrapped onto two lines, rows were 37 px, and the footer said
+"Showing 1 to 15" over 9 rows wholly in view, having counted rows of 23. One
+that opened at y 0, 1200 by 900, drew 10 columns and agreed, even moved to
+the fitted bounds before `View(paged)`. Zoom, pixel ratio and fonts were
+the same in both. Nothing is decided.
+
+**Not known:**
+- **What in RStudio ties the grid's column drawing to how the window
+  opened.** The bounds when the viewer opens are not it.
+- **Whether a person meets it.** A reading, not measured: y 0 sits above
+  the menu bar, where macOS puts no window it shows, so a window opening at
+  y 33 may be one that was shown and fitted, as a person's always is, and
+  then the hidden runs that open at y 0 would be the unusual ones. Measuring
+  it with the window shown, `PHILEAS_SHOW=back`, would say.
+- **Whether the installed release does the same,** 2026.10.0, or only the
+  daily build.
+- **Whether to file it,** and where, once a person has seen it by hand.
+
+**What it does to the check's tests:** `data-viewer-rows-check.spec.ts`
+expects the check quiet as the viewer opens, and in a launch that opens
+fitted it rightly fires there, so the test fails on such a launch. The
+sort-cycle relation's Route test runs with the check off for that reason.
 
 ## 3. Declined
 

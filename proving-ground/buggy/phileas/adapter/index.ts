@@ -2,7 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AppUnderTest } from '@drugstoresushi/phileas';
 import type { Page } from '@playwright/test';
-import { checks } from '../checks';
+import { checks, relations } from '../checks';
 
 /**
  * The adapter for the proving-ground application.
@@ -83,6 +83,7 @@ export const buggy: AppUnderTest = {
   },
 
   checks,
+  relations,
 
   /**
    * Resolve once the data has arrived, not merely once a window exists.

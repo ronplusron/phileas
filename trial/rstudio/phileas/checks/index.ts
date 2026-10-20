@@ -1,6 +1,7 @@
-import type { AppCheck } from '@drugstoresushi/phileas';
+import type { AppCheck, AppRelation } from '@drugstoresushi/phileas';
 import { dataViewerCountsMatchEnvironment } from './data-viewer/data-viewer-counts-match-environment';
 import { dataViewerFooterRowsInView } from './data-viewer/data-viewer-footer-rows-in-view';
+import { dataViewerSortCycleRestoresOrder } from './data-viewer/data-viewer-sort-cycle-restores-order';
 import { dataViewerSortedColumnInOrder } from './data-viewer/data-viewer-sorted-column-in-order';
 import { unsavedMarkMatchesSave } from './source/unsaved-mark-matches-save';
 
@@ -16,3 +17,9 @@ export const checks: readonly AppCheck[] = [
   dataViewerSortedColumnInOrder,
   dataViewerFooterRowsInView,
 ];
+
+/**
+ * RStudio's own relations, each started by a Hop it names, with a Detour of
+ * its own after it, kept in the same area folders as the checks.
+ */
+export const relations: readonly AppRelation[] = [dataViewerSortCycleRestoresOrder];

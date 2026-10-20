@@ -1,4 +1,13 @@
-import { readJournal, sourceHash, type FixStepEntry, type JournaledCandidate, type JournalEntry, type TripHopEntry } from './journal.js';
+import {
+  readJournal,
+  sourceHash,
+  type DetourEntry,
+  type DetourStepEntry,
+  type FixStepEntry,
+  type JournaledCandidate,
+  type JournalEntry,
+  type TripHopEntry,
+} from './journal.js';
 import { REPLAY_SKIPPED, targetText } from './report/render.mjs';
 import type { Chooser, Fix, FixStep, ValueGenerator } from './route.js';
 import type { SurveyedCandidate } from './survey.js';
@@ -19,12 +28,17 @@ import type { SurveyedCandidate } from './survey.js';
  * its checks and its journal are the ones every Route uses.
  */
 
-/** What a replay needs from one journal: the Route it opened as, its Fix steps and Trip hops in order, and how it ended. */
+/**
+ * What a replay needs from one journal: the Route it opened as, its Fix steps
+ * and Trip hops in order, every step in order with the Detours among them,
+ * and how it ended.
+ */
 export interface Recorded {
   readonly file: string;
   readonly opening: Extract<JournalEntry, { kind: 'route' }>;
   readonly fixSteps: readonly FixStepEntry[];
   readonly hops: readonly TripHopEntry[];
+  readonly steps: readonly (FixStepEntry | TripHopEntry | DetourStepEntry | DetourEntry)[];
   readonly outcome?: Extract<JournalEntry, { kind: 'outcome' }>;
 }
 
@@ -39,6 +53,10 @@ export function readRecorded(file: string): Recorded {
     opening,
     fixSteps: entries.filter((entry): entry is FixStepEntry => entry.kind === 'fix-step'),
     hops: entries.filter((entry): entry is TripHopEntry => entry.kind === 'trip-hop'),
+    steps: entries.filter(
+      (entry): entry is FixStepEntry | TripHopEntry | DetourStepEntry | DetourEntry =>
+        entry.kind === 'fix-step' || entry.kind === 'trip-hop' || entry.kind === 'detour-step' || entry.kind === 'detour'
+    ),
     ...(outcome ? { outcome } : {}),
   };
 }
@@ -64,17 +82,18 @@ export interface ReplayPlan {
 
 /**
  * The finding a journal records its Route failing on: every finding of every
- * failed check on the last step it wrote, the Fix's or the Trip's, that was
- * not already known. Empty for a Route that did not fail on a check.
+ * failed check on the last step it wrote, the Fix's, the Trip's or a
+ * Detour's, that was not already known. Empty for a Route that did not fail
+ * on a check. A Detour's finding is put down to the Hop that started it, so a
+ * replay goes as far as that Hop and takes the Detour again.
  */
 export function findingOf(recorded: Recorded): { hop?: number; signatures: string[] } {
   if (recorded.outcome?.outcome !== 'failed') return { signatures: [] };
-  const steps = [...recorded.fixSteps, ...recorded.hops];
-  const last = steps[steps.length - 1];
+  const last = recorded.steps[recorded.steps.length - 1];
   const signatures = (last?.checks ?? [])
     .filter((check) => check.result === 'failed')
     .flatMap((check) => (check.findings ?? []).filter((finding) => !finding.known).map((finding) => finding.signature));
-  return { ...(last?.kind === 'trip-hop' ? { hop: last.hop } : {}), signatures: [...new Set(signatures)] };
+  return { ...(last !== undefined && last.kind !== 'fix-step' ? { hop: last.hop } : {}), signatures: [...new Set(signatures)] };
 }
 
 /**

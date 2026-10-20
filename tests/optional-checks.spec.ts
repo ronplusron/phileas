@@ -154,7 +154,7 @@ test('a Journey includes and excludes checks, and a run replaces either', () => 
 test('a choice naming a check the application cannot run, or one both ways, is refused by name', () => {
   process.env[CHECK_ON_VARIABLE] = 'wcag-a';
   expect(() => checkChoiceFromEnvironment(buggy)).toThrow(
-    /PHILEAS_CHECK_ON names "wcag-a", which this application cannot run\. It can run: uncaught-error, .*named-controls, wcag-aa, count-matches-list\.$/
+    /PHILEAS_CHECK_ON names "wcag-a", which this application cannot run\. It can run: uncaught-error, .*named-controls, wcag-aa, count-matches-list, inventory-clear-restores-list\.$/
   );
   process.env[CHECK_ON_VARIABLE] = 'wcag-aa';
   process.env[CHECK_OFF_VARIABLE] = 'wcag-aa';

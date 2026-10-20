@@ -1,5 +1,5 @@
 import { test, type ElectronApplication, type Page } from '@playwright/test';
-import type { AppUnderTest } from './app-under-test.js';
+import type { AppRelation, AppUnderTest, DetourHop, DetourStep, RelationReading } from './app-under-test.js';
 import type { Rng, RouteStreams } from './random.js';
 import { caughtSince, type CaughtByStubs } from './caught.js';
 import { effectOf, type HopEffect } from './effect.js';
@@ -11,6 +11,7 @@ import {
   journalFolder,
   sourceHash,
   type ClosingEntry,
+  type DetourEntry,
   type FixStepEntry,
   type HopAction,
   type JournaledCandidate,
@@ -27,6 +28,7 @@ import { frameText, renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
 import { replayFix, replayFromEnvironment, replayOf, type ReplayPlan } from './replay.js';
 import {
+  AdapterCheckError,
   CheckFailure,
   checksOnTheRoute,
   DEFAULT_RESPONSIVE_TIMEOUT_MS,
@@ -1118,6 +1120,18 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // Timed from this side too, through the watch: an application that has
       // stopped answering holds back even the action's own timeout, and how
       // long it held it back is what the still-responding check reads.
+      // A relation this Hop starts, with its reading taken before the Hop
+      // acts. Read only, so it takes no draw; see `detourFor`. A replay's
+      // skipped Hop acts on nothing, so it starts none.
+      const detour =
+        skipped || !watch.relations.length
+          ? undefined
+          : await detourFor(
+              watch.relations,
+              { target: targetText(recordedTarget), action, ...(action === 'type' ? { value } : {}) },
+              { page, app, tree: found.tree, responsiveMs }
+            );
+
       let abandoned: string | undefined = skipped?.skip;
       let interceptedBy: string | undefined;
       try {
@@ -1201,6 +1215,43 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // Where the checks ran, not what caused it: the timeline says when each
       // finding arrived and lists the steps before it.
       if (failed.length) throw new CheckFailure(`hop ${hops}`, failed, timeline);
+
+      // The relation's Detour, after the Hop's own line and checks, so a Hop
+      // that broke the application ends the Route as itself first.
+      if (detour) {
+        const reason =
+          'notRun' in detour ? detour.notRun : abandoned !== undefined ? `the Hop that starts it was abandoned: ${abandoned}` : undefined;
+        if (reason !== undefined) {
+          journal.write({
+            kind: 'detour',
+            hop: hops,
+            relation: detour.relation.name,
+            outcome: 'not-run',
+            reason,
+            wayBack: detour.relation.back !== undefined,
+            checks: [],
+            at: new Date().toISOString(),
+          });
+        } else if (!('notRun' in detour)) {
+          await runDetour(detour, {
+            page,
+            app,
+            hop: hops,
+            tree: settling.tree,
+            journal,
+            watch,
+            caught,
+            timeline,
+            settleTimeoutMs,
+            settleQuietMs,
+            exclusions: cfg.exclusions,
+            tally,
+            hopTimeoutMs,
+            hopDelayMs,
+            responsiveMs,
+          });
+        }
+      }
 
       // After the entry is written, not before, so that `durationMs` stays the
       // Hop's own cost and a watched journal is comparable with an unwatched
@@ -1350,6 +1401,79 @@ async function settledOrStalled(
 /** The pause for watching, which changes no draw and is never recorded as time a Hop took. */
 async function pauseToWatch(ms: number): Promise<void> {
   if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Why a step's target is not on offer: excluded, covered, hidden, out of
+ * sight, absent while a modal dialog is all that is surveyed, or absent with
+ * nothing in the way. A Fix step fails on any of them; a Detour step after
+ * the first is a finding only where it is `absent`.
+ */
+type Unoffered = {
+  readonly why: 'excluded' | 'covered' | 'hidden' | 'out-of-sight' | 'under-a-dialog' | 'absent';
+  readonly text: string;
+};
+
+/**
+ * Find a step's target on screen as a person names it, `button "Save"`,
+ * surveying again until it appears, within the hop timeout, since a list can
+ * fill in after the step that opened it has settled: Positron's New File list,
+ * measured 2026-09-27, lost 1 of 7 `quarto` Routes to a single survey. A
+ * survey takes no draw, so waiting changes nothing a replay depends on. An
+ * excluded target is refused at once: waiting cannot change a rule. Shared by
+ * a Fix's `act` steps and a relation's Detour steps.
+ */
+async function findStepTarget(
+  target: string,
+  context: {
+    page: Page;
+    app: ElectronApplication;
+    exclusions: AppUnderTest['exclusions'];
+    tally: ExclusionTally;
+    hopIndex: number;
+    hopTimeoutMs: number;
+  }
+): Promise<{ match: SurveyedCandidate } | { missing: Unoffered }> {
+  const { page, app, exclusions, tally, hopIndex, hopTimeoutMs } = context;
+  const deadline = Date.now() + hopTimeoutMs;
+  let found = await survey({ page, app, exclusions, hopIndex, tally, timeoutMs: hopTimeoutMs });
+  let match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+  while (!match && !found.excluded.some((entry) => targetText(entry.candidate) === target) && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, FIX_TARGET_POLL_MS));
+    found = await survey({ page, app, exclusions, hopIndex, tally, timeoutMs: hopTimeoutMs });
+    match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
+  }
+  if (match) return { match };
+  // Waited for like a target not yet drawn, since a cover can go away, a
+  // hidden pane can come back and a page can scroll; named if none did.
+  const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
+  const under = found.covered.find((entry) => targetText(journaled(entry.candidate)) === target);
+  const inside = found.hidden.find((entry) => targetText(journaled(entry.candidate)) === target);
+  const away = found.outOfSight.find((entry) => targetText(journaled(entry.candidate)) === target);
+  const onScreen = found.candidates
+    .filter((candidate) => !isCommonKey(candidate))
+    .map((candidate) => targetText(journaled(candidate)))
+    .join('; ');
+  const missing: Unoffered = refused
+    ? { why: 'excluded', text: `${target} is on screen but excluded (${refused.rule}), so it cannot be acted on.` }
+    : under
+      ? { why: 'covered', text: `${target} is on screen but covered by ${under.by} after ${hopTimeoutMs} ms, so a click cannot reach it.` }
+      : inside
+        ? { why: 'hidden', text: `${target} is in the page but hidden: ${inside.by} has no area, after ${hopTimeoutMs} ms, so no person could see it.` }
+        : away
+          ? {
+              why: 'out-of-sight',
+              text:
+                `${target} is in the page but scrolled out of ${away.by} after ${hopTimeoutMs} ms, so no person could see it. ` +
+                `Scrolling is not a move yet, so a \`code\` step before this one would have to bring it into view.`,
+            }
+          : found.modal
+            ? {
+                why: 'under-a-dialog',
+                text: `${target} is not on screen after ${hopTimeoutMs} ms, and a modal dialog is open, which is all that is surveyed while it is. What is: ${onScreen}.`,
+              }
+            : { why: 'absent', text: `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${onScreen}.` };
+  return { missing };
 }
 
 /** What a Fix step is, as its `fix-step` line records it beside the label. See `FixStepEntry`. */
@@ -1513,43 +1637,9 @@ async function runFix(
    * hop would, adding what it found to the step's `content`.
    */
   const actOn = (target: string, value: string | undefined, content: StepContent) => async () => {
-    // Surveyed again until the target appears, within the hop timeout, since
-    // a list can fill in after the step that opened it has settled: Positron's
-    // New File list, measured 2026-09-27, lost 1 of 7 `quarto` Routes to a
-    // single survey. A survey takes no draw, so waiting changes nothing a
-    // replay depends on. An excluded target fails at once: waiting cannot
-    // change a rule.
-    const deadline = Date.now() + hopTimeoutMs;
-    let found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
-    let match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
-    while (!match && !found.excluded.some((entry) => targetText(entry.candidate) === target) && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, FIX_TARGET_POLL_MS));
-      found = await survey({ page, app, exclusions, hopIndex: steps, tally, timeoutMs: hopTimeoutMs });
-      match = found.candidates.find((candidate) => targetText(journaled(candidate)) === target);
-    }
-    if (!match) {
-      const refused = found.excluded.find((entry) => targetText(entry.candidate) === target);
-      // Waited for like a target not yet drawn, since a cover can go away, a
-      // hidden pane can come back and a page can scroll; named if none did.
-      const under = found.covered.find((entry) => targetText(journaled(entry.candidate)) === target);
-      const inside = found.hidden.find((entry) => targetText(journaled(entry.candidate)) === target);
-      const away = found.outOfSight.find((entry) => targetText(journaled(entry.candidate)) === target);
-      throw new Error(
-        refused
-          ? `${target} is on screen but excluded (${refused.rule}), so a Fix cannot act on it either.`
-          : under
-          ? `${target} is on screen but covered by ${under.by} after ${hopTimeoutMs} ms, so a click cannot reach it.`
-          : inside
-          ? `${target} is in the page but hidden: ${inside.by} has no area, after ${hopTimeoutMs} ms, so no person could see it.`
-          : away
-          ? `${target} is in the page but scrolled out of ${away.by} after ${hopTimeoutMs} ms, so no person could see it. ` +
-            `Scrolling is not a move yet, so a \`code\` step before this one would have to bring it into view.`
-          : `${target} is not on screen after ${hopTimeoutMs} ms. What is: ${found.candidates
-              .filter((candidate) => !isCommonKey(candidate))
-              .map((candidate) => targetText(journaled(candidate)))
-              .join('; ')}.`
-      );
-    }
+    const found = await findStepTarget(target, { page, app, exclusions, tally, hopIndex: steps, hopTimeoutMs });
+    if ('missing' in found) throw new Error(found.missing.text);
+    const match = found.match;
     const action = await actionFor(match, hopTimeoutMs);
     content.target = journaled(match);
     content.action = action;
@@ -1590,6 +1680,226 @@ async function runFix(
   };
 
   await fix({ page, app, rng, step });
+}
+
+/** A relation chosen to take its Detour after a Hop, with its reading from before the Hop acted. */
+interface DetourPlan {
+  readonly relation: AppRelation;
+  readonly hop: DetourHop;
+  readonly before: RelationReading;
+  readonly notTaken: readonly string[];
+}
+
+/**
+ * Ask a relation one of its questions, bounded by the responsive wait. One
+ * that does not answer in time could not look, and says so; one that throws
+ * is the relation's own fault, as for a check.
+ */
+async function askRelation<T>(relation: AppRelation, what: string, call: () => Promise<T> | T, timeoutMs: number): Promise<T | { notRun: string }> {
+  let timer: NodeJS.Timeout | undefined;
+  const late = new Promise<{ notRun: string }>((resolve) => {
+    timer = setTimeout(() => resolve({ notRun: `its ${what} did not answer within ${timeoutMs} ms` }), timeoutMs);
+  });
+  try {
+    return await Promise.race([Promise.resolve().then(call), late]);
+  } catch (error) {
+    throw new AdapterCheckError(relation.name, error);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const notRun = (answer: unknown): answer is { notRun: string } =>
+  typeof answer === 'object' && answer !== null && !Array.isArray(answer) && 'notRun' in answer && Object.keys(answer).length === 1;
+
+/**
+ * Which relation, if any, takes its Detour after this Hop: the first whose
+ * `when` names the Hop's target and that applies to the screen before the
+ * Hop acts, with its reading taken then. The others that matched are
+ * recorded as not taken, decided on 2026-10-19 (docs/HISTORY.md, 2026-10-19).
+ * Reads only, and takes no draw.
+ */
+async function detourFor(
+  relations: readonly AppRelation[],
+  hop: Omit<DetourHop, 'match'>,
+  context: { page: Page; app: ElectronApplication; tree: unknown; responsiveMs: number }
+): Promise<DetourPlan | { notRun: string; relation: AppRelation } | undefined> {
+  const matching = relations.flatMap((relation) => {
+    const match = relation.when.exec(hop.target);
+    return match ? [{ relation, hop: { ...hop, match: [...match] } }] : [];
+  });
+  for (const [index, { relation, hop: started }] of matching.entries()) {
+    const asked = { page: context.page, app: context.app, tree: context.tree, hop: started };
+    const applies = relation.appliesWhen
+      ? await askRelation(relation, 'appliesWhen', () => relation.appliesWhen?.(asked) ?? true, context.responsiveMs)
+      : true;
+    if (notRun(applies)) return { ...applies, relation };
+    if (typeof applies !== 'boolean') throw new AdapterCheckError(relation.name, new Error(`appliesWhen answered ${JSON.stringify(applies)}, not true or false`));
+    if (!applies) continue;
+    const before = await askRelation(relation, 'read', () => relation.read(asked), context.responsiveMs);
+    if (notRun(before)) return { ...before, relation };
+    const notTaken = matching.filter((_, other) => other !== index).map((entry) => entry.relation.name);
+    return { relation, hop: started, before, notTaken };
+  }
+  return undefined;
+}
+
+/**
+ * A relation's Detour, after the Hop that started it (R20): each step taken
+ * as a Fix's `act` step is, settled, checked and journaled; the relation's
+ * reading compared with the one from before the Hop, and its verdict judged
+ * as a check's is; then any way back. No step takes a draw, and none counts
+ * toward the Trip length. docs/HISTORY.md, 2026-10-19, has the decisions.
+ *
+ * A first step not on offer means the relation did not apply. A later one not
+ * on offer is a finding when nothing covers or hides it; with something in
+ * the way, the Detour is broken off and the Route goes on from where it is,
+ * decided on 2026-10-19. A check failing after a step ends the Route there,
+ * as after a Hop, and so does a relation that does not hold.
+ */
+async function runDetour(
+  plan: DetourPlan,
+  context: {
+    page: Page;
+    app: ElectronApplication;
+    hop: number;
+    tree: unknown;
+    journal: Pick<Journal, 'write'>;
+    watch: Watch;
+    caught: () => Promise<CaughtByStubs | undefined>;
+    timeline: StepSpan[];
+    settleTimeoutMs: number;
+    settleQuietMs: number;
+    exclusions: AppUnderTest['exclusions'];
+    tally: ExclusionTally;
+    hopTimeoutMs: number;
+    hopDelayMs: number;
+    responsiveMs: number;
+  }
+): Promise<void> {
+  const { page, app, hop, journal, watch, caught, timeline, settleTimeoutMs, settleQuietMs, exclusions, tally, hopTimeoutMs, hopDelayMs } = context;
+  const { relation } = plan;
+  let tree = context.tree;
+  let number = 0;
+
+  /** Take one step, or say why its target is not on offer. */
+  const take = async (step: DetourStep, back: boolean): Promise<Unoffered | undefined> => {
+    const label = step.value === undefined ? step.target : `${step.target}, typing ${JSON.stringify(step.value)}`;
+    const found = await findStepTarget(step.target, { page, app, exclusions, tally, hopIndex: hop, hopTimeoutMs });
+    if ('missing' in found) return found.missing;
+    number += 1;
+    const startedAt = new Date();
+    const span: StepSpan = { name: `hop ${hop}'s Detour step ${number}`, what: label, startedAt: startedAt.getTime() };
+    timeline.push(span);
+    const action = await actionFor(found.match, hopTimeoutMs);
+    if (action === 'type' && step.value === undefined) {
+      throw new AdapterCheckError(relation.name, new Error(`its Detour step ${step.target} takes typing, so give the value to type: { target, value }.`));
+    }
+    let error: string | undefined;
+    try {
+      const acted = await watch.bounded(
+        `hop ${hop}'s Detour step ${number}'s ${action} on ${step.target}`,
+        act(app, page, found.match, action, step.value ?? '', hopTimeoutMs),
+        hopTimeoutMs
+      );
+      if (acted === STALLED) error = 'the application stopped answering';
+    } catch (thrown) {
+      if (!isAbandonment(thrown)) throw thrown;
+      error = thrown instanceof Error ? thrown.message.split('\n')[0] : String(thrown);
+    }
+    const settling = await settledOrStalled(watch, page, settleTimeoutMs, settleQuietMs);
+    const effect = effectOf(tree, settling.tree, 'The page stopped answering while the settle wait read it, so what the step did could not be read.');
+    tree = settling.tree;
+    const checks = await watch.check(settling.tree);
+    const stopped = await caught();
+    stopIfEndedAround();
+    span.endedAt = Date.now();
+    journal.write({
+      kind: 'detour-step',
+      hop,
+      relation: relation.name,
+      step: number,
+      ...(back ? { back: true as const } : {}),
+      label,
+      target: journaled(found.match),
+      action,
+      ...(step.value === undefined ? {} : { value: step.value }),
+      ...(error === undefined ? {} : { error }),
+      startedAt: startedAt.toISOString(),
+      durationMs: span.endedAt - startedAt.getTime(),
+      effect,
+      checks,
+      ...(stopped ? { caught: stopped } : {}),
+    });
+    const failed = failedChecks(checks);
+    if (failed.length) throw new CheckFailure(`hop ${hop}'s Detour step ${number}, ${label}`, failed, timeline);
+    await pauseToWatch(hopDelayMs);
+    // A step whose action gave up did nothing a person meant, as a Fix step's
+    // would not, so the Detour is broken off there rather than compared.
+    return error === undefined ? undefined : { why: 'covered', text: `its step ${label} gave up: ${error}` };
+  };
+
+  const ending = (fields: Pick<DetourEntry, 'outcome'> & Partial<Pick<DetourEntry, 'reason' | 'before' | 'after' | 'checks'>>) =>
+    journal.write({
+      kind: 'detour',
+      hop,
+      relation: relation.name,
+      ...fields,
+      checks: fields.checks ?? [],
+      wayBack: relation.back !== undefined,
+      ...(plan.notTaken.length ? { notTaken: plan.notTaken } : {}),
+      at: new Date().toISOString(),
+    });
+
+  const steps = relation.steps(plan.hop);
+  for (const [index, step] of steps.entries()) {
+    const missing = await take(step, false);
+    if (!missing) continue;
+    if (index === 0 && number === 0) {
+      ending({ outcome: 'did-not-apply', reason: `its first step is not on offer: ${missing.text}`, before: plan.before });
+      return;
+    }
+    if (missing.why !== 'absent') {
+      ending({ outcome: 'broken-off', reason: `${missing.text} The Route goes on from where the Detour broke off.`, before: plan.before });
+      return;
+    }
+    const verdict = await watch.judgeRelation(relation.name, [
+      `its Detour step ${index + 1}, ${step.target}, was not on offer after step ${index}, with nothing covering or hiding it`,
+    ]);
+    ending({ outcome: 'failed', reason: missing.text, before: plan.before, checks: [verdict] });
+    if (verdict.result === 'failed') throw new CheckFailure(`hop ${hop}'s Detour, ${relation.name}`, [verdict], timeline);
+    return;
+  }
+
+  const asked = { page, app, tree, hop: plan.hop };
+  const after = await askRelation(relation, 'read', () => relation.read(asked), context.responsiveMs);
+  if (notRun(after)) {
+    ending({ outcome: 'not-run', reason: after.notRun, before: plan.before });
+    return;
+  }
+  const violations = await askRelation(relation, 'expect', () => relation.expect(plan.before, after), context.responsiveMs);
+  if (notRun(violations)) {
+    ending({ outcome: 'not-run', reason: violations.notRun, before: plan.before, after });
+    return;
+  }
+  const verdict = await watch.judgeRelation(relation.name, violations);
+  ending({ outcome: violations.length ? 'failed' : 'held', before: plan.before, after, checks: [verdict] });
+  if (verdict.result === 'failed') throw new CheckFailure(`hop ${hop}'s Detour, ${relation.name}`, [verdict], timeline);
+
+  // The way back, so the next Hop draws from the screen the seed's own Hop
+  // made. One that cannot be taken is said, and the Route goes on from where
+  // it is.
+  for (const step of relation.back?.(plan.hop) ?? []) {
+    const missing = await take(step, true);
+    if (!missing) continue;
+    journal.write({
+      kind: 'note',
+      hop: hop + 1,
+      note: `${relation.name}'s way back broke off: ${missing.text} The Route goes on from where it is.`,
+      at: new Date().toISOString(),
+    });
+    return;
+  }
 }
 
 /** The plain-data form of a candidate, for the record, and what a replay compares with it. */

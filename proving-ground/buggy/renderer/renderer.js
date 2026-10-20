@@ -10,6 +10,10 @@ let query = '';
 let category = '';
 // Set by the miscount plant: the count above the list stops agreeing with it.
 let miscount = false;
+// Set by the stuck-search plant: Clear search empties the box and leaves the
+// list filtered by what was typed, which only a relation over two moments
+// can see, since the count still agrees with the list.
+let stuckSearch = false;
 
 const el = (id) => document.getElementById(id);
 
@@ -117,6 +121,9 @@ const PLANTED = {
     miscount = true;
     render();
   }],
+  'stuck-search': ['Fasten the search', () => {
+    stuckSearch = true;
+  }],
 };
 
 async function addPlanted() {
@@ -146,8 +153,9 @@ try {
   });
 
   el('clear').addEventListener('click', () => {
-    query = '';
     el('search').value = '';
+    if (stuckSearch) return;
+    query = '';
     render();
   });
 
