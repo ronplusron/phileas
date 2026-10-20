@@ -66,6 +66,31 @@ Two further choices matter to anyone deciding whether to rely on it:
   unrelated change from shipping. It runs on demand or on a schedule and
   reports loudly; the existing scripted tests stay the gate.
 
+## Why not have a language model do it?
+
+A language model told to explore an application can do much of what Phileas
+does, and in some ways better: it picks each step with a purpose and can judge
+whether what it sees looks right. Phileas keeps models out of its exploring
+and checking on purpose, for three things a model cannot give:
+
+- **Exact replay.** A Route retraces step for step from its seed or its
+  record. A model's run cannot be repeated, so a crash it hit once may never
+  be seen again.
+- **Almost no cost per step.** A batch of 600 Routes, 12,000 steps, cost
+  nothing in model spend. Sending that many steps through a model costs real
+  money.
+- **Verdicts that do not change.** A check gives the same answer every run. A
+  model's judgment can vary, and since a Route ends at its first problem, a
+  varying judge would end Routes at random.
+
+The case is not settled. Two studies of real bug reports put what Phileas
+could find at about five or six bugs in a hundred, and every finding so far
+has needed a person or a model to judge it after the run. The comparison that
+would settle it has not been run: a model-driven explorer and Phileas against
+the same planted bugs, counting bugs found per hour and per dollar. The two
+can also work together, since a model may already read a finished run's
+record and draft its report, which changes nothing about where a Route goes.
+
 ## Where it stands
 
 Started on 2026-09-20. The build is planned in eleven phases, 0 to 10, and
