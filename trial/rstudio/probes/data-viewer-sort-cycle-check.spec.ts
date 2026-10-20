@@ -81,11 +81,10 @@ test('a real Route takes the relation\'s Detour on an unsorted frame, and not on
     const outcome = await runRoute({
       page,
       app,
-      // The rows check is off for this Route: in a launch whose window opened
-      // fitted to the screen, the viewer's footer counts more rows than it
-      // draws, a likely RStudio finding that docs/OUTSTANDING.md holds, and
-      // the check rightly fires on it. This test is of the relation.
-      cfg: { ...rstudio, checksByDefault: { ...rstudio.checksByDefault, 'data-viewer-footer-rows-in-view': 'off' } },
+      // The rows check is off by default in the adapter until
+      // docs/OUTSTANDING.md 2.35 is settled, so it does not end this Route in
+      // a launch that opens fitted to the screen.
+      cfg: rstudio,
       streams: deriveRouteStreams('sort-cycle', 1),
       journeySeed: 'sort-cycle',
       routeNumber: 1,

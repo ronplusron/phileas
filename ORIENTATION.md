@@ -326,7 +326,8 @@ column marked sorted showing its values in order; and
 `data-viewer-footer-rows-in-view`, the footer's "Showing X to Y" against
 the rows in view, which in a window that opened fitted to the screen meets
 the viewer's footer counting more rows than it draws, a likely RStudio
-finding that `docs/OUTSTANDING.md` holds. **And one relation,**
+finding that `docs/OUTSTANDING.md` 2.35 holds, so the check is off by
+default until that is settled. **And one relation,**
 `data-viewer-sort-cycle-restores-order`: a column sorted ascending from the
 sidebar starts a Detour that sorts it descending and then removes the sort,
 compares the rows in view with those before, and sorts it ascending again

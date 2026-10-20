@@ -160,8 +160,9 @@ text columns wrapped onto two lines and rows were 37 px where the footer
 counted rows of 23; one that opened at y 0, 900 high, drew 10 columns and
 agreed, even when moved to the fitted bounds before the viewer opened. The
 defect entry was taken out, since the check read the screen rightly, and
-`OUTSTANDING.md` holds what is not known. The relation's Route test runs
-with that check off and says why.
+`OUTSTANDING.md` holds what is not known. The check is off by default in
+RStudio's adapter until that is settled, decided the same day, since it
+would otherwise end about 2 Routes in 5 that open the viewer.
 
 ## 2026-10-19: the data viewer's sort and its footer's rows, two checks
 

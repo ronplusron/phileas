@@ -373,7 +373,13 @@ export const rstudio: AppUnderTest = {
   // Journey or a run includes it, decided on 2026-10-14. What it needs here
   // to work well is in varyingInSignatures above: the data viewer's rows,
   // columns and headers, each one finding.
-  checksByDefault: { 'wcag-aa': 'off' },
+  //
+  // Its own `data-viewer-footer-rows-in-view` off too, decided on 2026-10-19
+  // until docs/OUTSTANDING.md 2.35 is settled: in a launch whose window opens
+  // fitted to the screen, the viewer's footer counts more rows than it draws,
+  // and the check rightly fires there, ending about 2 Routes in 5 that open
+  // the viewer. `--check-on data-viewer-footer-rows-in-view` includes it.
+  checksByDefault: { 'wcag-aa': 'off', 'data-viewer-footer-rows-in-view': 'off' },
 
   // RStudio's own checks, each on the steps where it applies; ../checks has
   // each one and what it was measured from.

@@ -2029,10 +2029,12 @@ the same in both. Nothing is decided.
   daily build.
 - **Whether to file it,** and where, once a person has seen it by hand.
 
-**What it does to the check's tests:** `data-viewer-rows-check.spec.ts`
-expects the check quiet as the viewer opens, and in a launch that opens
-fitted it rightly fires there, so the test fails on such a launch. The
-sort-cycle relation's Route test runs with the check off for that reason.
+**What it does to the check:** it rightly fires on this, so it is off by
+default in RStudio's adapter until this is settled, decided on 2026-10-19,
+since it would otherwise end about 2 Routes in 5 that open the viewer;
+`--check-on data-viewer-footer-rows-in-view` includes it. Its own test,
+`data-viewer-rows-check.spec.ts`, asserts that it fires in a fitted
+launch, and runs its other states in the others.
 
 ## 3. Declined
 
