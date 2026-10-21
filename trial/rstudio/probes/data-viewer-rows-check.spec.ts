@@ -94,24 +94,28 @@ test('data-viewer-footer-rows-in-view applies, stays quiet, and fires on a contr
 
   // A launch whose window opened fitted to the screen draws every column, its
   // text wraps, and its rows are 37 px where the footer counts rows of 23, so
-  // the footer names more rows than are in view, a likely RStudio finding,
-  // docs/OUTSTANDING.md 2.35. There the check is right to fire as the viewer
-  // opens, and the states below, written for a viewer that agrees, do not
-  // hold.
+  // the footer names rows that are not in view. It happens only in a hidden
+  // window, which docs/DEFECTS.md has as the engine's. There the check is
+  // right to fire as the viewer opens, and the states below, written for a
+  // viewer that agrees, do not hold.
   const rowHeight = await frameFor(page)?.evaluate(
     () => document.querySelector<HTMLElement>('#rsGridData tr[aria-rowindex]')?.getBoundingClientRect().height ?? 0
   );
   if ((rowHeight ?? 0) > 30) {
     const fitted = await verdict(context, `paged, as opened, rows ${rowHeight} px`);
     expect(fitted.applies).toBe(true);
-    expect(JSON.stringify(fitted.found)).toMatch(/says rows 1 to (\d+), and rows 1 to (?!\1\b)\d+ are wholly in view/);
+    expect(JSON.stringify(fitted.found)).toMatch(/says rows 1 to \d+, and names rows [\d to,]+, not in view at all/);
     return;
   }
   expect(await verdict(context, 'paged, as opened')).toEqual({ applies: true, found: [] });
 
+  // Part-row offsets too, where the footer's rounding decides whether a row
+  // partly in view at either edge is named: probes/viewer-footer-rule.spec.ts.
   for (const [share, rows] of [
     [0.25, 0],
     [0.5, 0.5],
+    [0.5, 0.3],
+    [0.5, 0.7],
     [1, 0],
   ] as const) {
     await scroll(page, share, rows);
@@ -149,33 +153,36 @@ test('data-viewer-footer-rows-in-view applies, stays quiet, and fires on a contr
   await page.waitForTimeout(2_500);
   expect(await verdict(context, 'paged selected again, the control')).toEqual({ applies: true, found: [] });
 
-  // One way: the footer says one row further on.
+  // One way: the footer says one row further on, leaving out row 1, which
+  // is wholly in view at the top. How many rows the footer names depends on
+  // the window's height, so it is read rather than assumed.
   const footerEdited = await frameFor(page)?.evaluate(() => {
-    let n = 0;
     for (const element of document.querySelectorAll<HTMLElement>('*')) {
-      if (element.children.length === 0 && /^Showing 1 to 16 /.test(element.textContent ?? '')) {
-        element.textContent = (element.textContent ?? '').replace('Showing 1 to 16 ', 'Showing 2 to 17 ');
-        n += 1;
+      const match = /^Showing 1 to (\d+) /.exec(element.textContent ?? '');
+      if (element.children.length === 0 && match) {
+        element.textContent = (element.textContent ?? '').replace(match[0], `Showing 2 to ${Number(match[1]) + 1} `);
+        return Number(match[1]);
       }
     }
-    return n;
+    return 0;
   });
   expect(footerEdited, 'the footer was found').toBeGreaterThan(0);
-  const footer = await verdict(context, 'contradiction: footer says 2 to 17');
-  expect(JSON.stringify(footer.found)).toMatch(/says rows 2 to 17, and rows 1 to 16 are wholly in view/);
+  const footer = await verdict(context, 'contradiction: footer one row further on');
+  expect(JSON.stringify(footer.found)).toMatch(/says rows 2 to \d+, and leaves out row 1, wholly in view/);
 
-  // The other way: the footer put back, and the last row in view given another position.
-  const gridEdited = await frameFor(page)?.evaluate(() => {
+  // The other way: the footer put back, and the second row, wholly in view,
+  // given position 40, far below what the footer names.
+  const gridEdited = await frameFor(page)?.evaluate((last) => {
     for (const element of document.querySelectorAll<HTMLElement>('*')) {
-      if (element.children.length === 0 && /^Showing 2 to 17 /.test(element.textContent ?? '')) {
-        element.textContent = (element.textContent ?? '').replace('Showing 2 to 17 ', 'Showing 1 to 16 ');
+      if (element.children.length === 0 && (element.textContent ?? '').startsWith(`Showing 2 to ${last + 1} `)) {
+        element.textContent = (element.textContent ?? '').replace(`Showing 2 to ${last + 1} `, `Showing 1 to ${last} `);
       }
     }
-    const row = document.querySelector<HTMLElement>('#rsGridData tr[aria-rowindex="17"]');
+    const row = document.querySelector<HTMLElement>('#rsGridData tr[aria-rowindex="3"]');
     row?.setAttribute('aria-rowindex', '41');
     return Boolean(row);
-  });
-  expect(gridEdited, 'the row at position 16 was found').toBe(true);
-  const grid = await verdict(context, 'contradiction: row 16 numbered 40');
-  expect(JSON.stringify(grid.found)).toMatch(/says rows 1 to 16, and rows 1 to 40 are wholly in view/);
+  }, footerEdited ?? 0);
+  expect(gridEdited, 'the row at position 2 was found').toBe(true);
+  const grid = await verdict(context, 'contradiction: row 2 numbered 40');
+  expect(JSON.stringify(grid.found)).toMatch(/leaves out row 40, wholly in view, and names row 2, not in view at all/);
 });

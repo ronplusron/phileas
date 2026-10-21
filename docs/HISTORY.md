@@ -25,6 +25,42 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-21: the 37 px rows were the engine's, and the rows check counted wrong
+
+**Why.** The data viewer counting more rows than it drew had been recorded
+on 2026-10-19 as a likely RStudio finding, measured only in hidden windows,
+with two questions open: whether a person meets it, and whether the
+installed release does it too.
+
+**Measured.** By `trial/rstudio/probes/viewer-row-height.spec.ts`: shown,
+`PHILEAS_SHOW=back`, 5 of 5 launches on 2026.11.0-daily+78 opened fitted
+to the screen and drew 10 columns of 23 px rows, so the 37 px layout came
+only of hidden windows; hidden on the installed 2026.10.0, 1 launch of 8
+opened fitted and drew it. **So the reading of 2026-10-19 was wrong:** it
+is not a bug a person meets but a layout the engine's hidden window mode
+produces, now in `DEFECTS.md`, and taken out of `OUTSTANDING.md`.
+
+**The rows check's rule was wrong too.** In a shown launch, scrolled a
+quarter of the way, the footer said rows 247 to 261 with row 247 about
+three quarters in view, and the check, which held the footer to the rows
+wholly in view, fired. `trial/rstudio/probes/viewer-footer-rule.spec.ts`,
+scrolling by tenths of a row, found the footer names a fixed number of rows
+from a rounded top: its first is the first row more than half in view, row
+201 named at 0.61 shown and not at 0.48, and its last is that plus as many
+rows as the view holds, whatever shows at the bottom. Its tests had passed
+only because a window 900 high scrolls to whole rows at the shares they
+used. **Rewritten to what holds whatever the rounding,** rather than
+restating it: every row wholly in view is named, and every named row is at
+least partly in view. `data-viewer-rows-check.spec.ts` adds offsets of 0.3,
+0.5 and 0.7 of a row, reads the footer's count rather than assuming 16, and
+passed 3 shown launches and 6 hidden: quiet at every state where the layout
+is a person's, firing on both contradictions, and firing in the 2 hidden
+launches that opened fitted, "names rows 11 to 15, not in view at all".
+
+**The check stays off by default,** decided the same day, until the
+hidden-layout defect is fixed, since a hidden Journey would otherwise end
+about 1 Route in 3 that opens the viewer on the engine's fault. Version 0.15.1.
+
 ## 2026-10-19: a check after a Fix step that ran is a finding, not a Fix failure
 
 **Why.** RStudio's data viewer counted more rows than it drew in a launch

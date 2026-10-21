@@ -2003,39 +2003,6 @@ been measured. One batch on RStudio run both ways, ending at the first
 failure and carrying on, would show how much of what follows a first
 failure is new.
 
-### 2.35 RStudio's data viewer counting more rows than it draws, in a window opened fitted to the screen
-
-Found on 2026-10-19 by `data-viewer-footer-rows-in-view`, and asked to be
-treated as an RStudio finding and probed before anything was committed.
-`HISTORY.md` has how it was found. Measured on 2026.11.0-daily+78 by
-`trial/rstudio/probes/viewer-row-height.spec.ts`, over 16 launches of the
-same probe: a window that opened at y 33, 1200 by 861, fitted to the
-display's work area, drew all 120 of `paged`'s columns in each row, the
-text columns wrapped onto two lines, rows were 37 px, and the footer said
-"Showing 1 to 15" over 9 rows wholly in view, having counted rows of 23. One
-that opened at y 0, 1200 by 900, drew 10 columns and agreed, even moved to
-the fitted bounds before `View(paged)`. Zoom, pixel ratio and fonts were
-the same in both. Nothing is decided.
-
-**Not known:**
-- **What in RStudio ties the grid's column drawing to how the window
-  opened.** The bounds when the viewer opens are not it.
-- **Whether a person meets it.** A reading, not measured: y 0 sits above
-  the menu bar, where macOS puts no window it shows, so a window opening at
-  y 33 may be one that was shown and fitted, as a person's always is, and
-  then the hidden runs that open at y 0 would be the unusual ones. Measuring
-  it with the window shown, `PHILEAS_SHOW=back`, would say.
-- **Whether the installed release does the same,** 2026.10.0, or only the
-  daily build.
-- **Whether to file it,** and where, once a person has seen it by hand.
-
-**What it does to the check:** it rightly fires on this, so it is off by
-default in RStudio's adapter until this is settled, decided on 2026-10-19,
-since it would otherwise end about 2 Routes in 5 that open the viewer;
-`--check-on data-viewer-footer-rows-in-view` includes it. Its own test,
-`data-viewer-rows-check.spec.ts`, asserts that it fires in a fitted
-launch, and runs its other states in the others.
-
 ## 3. Declined
 
 ### 3.1 Planner-assigned route bias

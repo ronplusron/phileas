@@ -324,10 +324,9 @@ document's unsaved mark against the main toolbar's Save; and three in
 against the Environment pane's; `data-viewer-sorted-column-in-order`, a
 column marked sorted showing its values in order; and
 `data-viewer-footer-rows-in-view`, the footer's "Showing X to Y" against
-the rows in view, which in a window that opened fitted to the screen meets
-the viewer's footer counting more rows than it draws, a likely RStudio
-finding that `docs/OUTSTANDING.md` 2.35 holds, so the check is off by
-default until that is settled. **And one relation,**
+the rows in view, which is off by default: in a hidden window that opens
+fitted to the screen the viewer is laid out as no shown window lays it, an
+engine defect `docs/DEFECTS.md` has, and the check fires there. **And one relation,**
 `data-viewer-sort-cycle-restores-order`: a column sorted ascending from the
 sidebar starts a Detour that sorts it descending and then removes the sort,
 compares the rows in view with those before, and sorts it ascending again
@@ -422,7 +421,7 @@ checks, and the point where a Route can fail for a reason rather than only for
 not finishing. `journal.ts` already carries an empty `checks` field on every
 Hop for it to fill.
 
-**Read `docs/DEFECTS.md` before writing any of it.** Twenty defects are
+**Read `docs/DEFECTS.md` before writing any of it.** Twenty-one defects are
 open, five of them deferred from the review of 2026-09-27, two found tuning
 the Eighty Days demo, one a determinism test that failed once for a
 reason not yet known, one a settle test that failed once the same way, one the Hop a Route ends on depending on when a
@@ -432,7 +431,7 @@ itself forward partway through a Route, one a Positron Route saving
 outside its home folder, one a known finding with nothing particular
 in it matching every finding of its check, and one the log check keeping
 only the lines of an error that look like errors, and one the home folder
-guard blaming a Journey for a copy of the application it did not see, and one a relation edited after a Route was recorded changing its replay unannounced. That file holds what is wrong, confirmed by reading the
+guard blaming a Journey for a copy of the application it did not see, and one a relation edited after a Route was recorded changing its replay unannounced, and one a hidden window laying the application out as no shown window does. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
