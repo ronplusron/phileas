@@ -25,6 +25,40 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-21: a hidden window that had shown for a moment was starved of frames
+
+**Why.** A hidden window could lay the application out as no shown window
+does, recorded in `DEFECTS.md` the same day: RStudio's data viewer, in a
+hidden window that opened fitted to the screen, drew all 120 of `paged`'s
+columns and wrapped them, and the rows check was kept off by default until
+it was fixed.
+
+**Measured,** by `trial/rstudio/probes/hidden-window-signals.spec.ts` on
+2026.11.0-daily+78, in each launch, the main process's view of the window
+and the page's of itself. Visibility state, focus and an
+IntersectionObserver read the same in every launch. **What differed was
+animation frames:** the 1 hidden launch of 10 that opened fitted ran 1 in
+half a second, page and viewer alike, where the 9 that opened at y 0 and 2
+shown launches ran 31. Turning the window's background throttling off did
+not bring them back: of 20 more hidden launches with it off, the 1 that
+opened fitted still ran 1. Nor did showing and hiding a window after the
+launch reproduce it, which kept 31.
+
+**The cause, read in the launch:** the engine made every window transparent
+at the application's first line, but replaced `show()` only later, once it
+reached the main process, and then hid every window already showing. An
+application that called `show()` in between was shown, fitted below the
+menu bar by macOS, and hidden, and that window was starved of frames from
+the start. RStudio's data viewer works out which columns are near the view
+by animation frames, so it drew them all.
+
+**The fix:** `show()` is replaced at the first line too, in
+`TRANSPARENT_FROM_THE_FIRST_LINE` in `src/launch.ts`, so no window is shown
+on the way in. **60 of 60 hidden launches** then opened at y 0, ran about 31
+frames in half a second and drew 10 columns, where about 2 in 30 had opened
+fitted that day without it. The defect is closed, and the rows check is on
+by default again. Version 0.16.1.
+
 ## 2026-10-21: fingerprints for an adapter's checks and relations, and Detours compared on a replay
 
 **Why.** A relation edited after a Route was recorded changed its replay

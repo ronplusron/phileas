@@ -332,6 +332,14 @@ export function showWindows(): boolean {
  *   1. Replace show() on the prototype, so nothing can reveal a window later.
  *      Apps that create a window hidden and reveal it on 'ready-to-show',
  *      which is the common pattern and the right one, never draw at all.
+ *      **Done at the first line too,** since 2026-10-21, in
+ *      `TRANSPARENT_FROM_THE_FIRST_LINE`: replaced only here, an application
+ *      that called show() before the engine reached its main process was
+ *      shown, fitted to the screen by macOS, and then hidden by part 2, and
+ *      a window hidden that way had its animation frames starved, 1 in half
+ *      a second where a window never shown ran 31. RStudio's data viewer
+ *      then laid itself out as no shown window does (docs/HISTORY.md,
+ *      2026-10-21).
  *   2. Hide whatever is already visible.
  *   3. Hide every window created from now on, as it is created. An app that
  *      creates its window with `show: true` never calls show(), and usually
@@ -416,7 +424,9 @@ export async function hideWindows(app: ElectronApplication): Promise<void> {
  * the launch; see `src/first-line.ts`.
  */
 const TRANSPARENT_FROM_THE_FIRST_LINE = `(() => {
-  require('electron').app.on('browser-window-created', (_event, window) => window.setOpacity(0));
+  const { app, BrowserWindow } = require('electron');
+  BrowserWindow.prototype.show = function () {};
+  app.on('browser-window-created', (_event, window) => window.setOpacity(0));
 })()`;
 
 /** How long the first-line install may take, from the process starting. */

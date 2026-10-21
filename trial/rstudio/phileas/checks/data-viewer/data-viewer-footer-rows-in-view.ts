@@ -33,10 +33,10 @@ import { shownViewer } from './viewer';
  * - The footer changed at once with each scroll.
  * - The header row sits inside the grid's viewport, so the view for rows
  *   starts below it.
- * - **It fires on a layout the engine's hidden window mode can produce:** a
- *   hidden window that opens fitted to the screen draws rows 37 px tall, and
- *   the footer still counts them as 23, so it names rows not in view at all.
- *   docs/DEFECTS.md has that.
+ * - **It fired on a layout the engine's hidden window mode produced** until
+ *   2026-10-21: a hidden window that had shown for a moment drew rows 37 px
+ *   tall while the footer counted them as 23, so it named rows not in view
+ *   at all. The engine was fixed the same day (docs/HISTORY.md, 2026-10-21).
  *
  * It applies when the Source pane shows a data viewer whose footer counts
  * rows and that draws at least one row wholly in view, and reads the live

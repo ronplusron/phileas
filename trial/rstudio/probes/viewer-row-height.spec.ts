@@ -30,8 +30,9 @@ import { rstudio } from '../phileas/adapter';
  *
  * **Run shown on 2026-10-21,** `PHILEAS_SHOW=back`: 5 of 5 launches opened
  * fitted and drew 10 columns of 23 px rows, so the 37 px layout comes only
- * of a hidden window, an engine defect docs/DEFECTS.md has. Hidden on the
- * installed 2026.10.0, 1 launch of 8 opened fitted and drew it too.
+ * of a hidden window, an engine defect fixed the same day (docs/HISTORY.md,
+ * 2026-10-21). Hidden on the installed 2026.10.0, 1 launch of 8 opened
+ * fitted and drew it too.
  */
 const test = createTest(rstudio);
 

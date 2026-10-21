@@ -81,9 +81,6 @@ test('a real Route takes the relation\'s Detour on an unsorted frame, and not on
     const outcome = await runRoute({
       page,
       app,
-      // The rows check is off by default in the adapter until the engine's
-      // hidden-layout defect in docs/DEFECTS.md is fixed, so it does not end
-      // this Route in a hidden launch that opens fitted to the screen.
       cfg: rstudio,
       streams: deriveRouteStreams('sort-cycle', 1),
       journeySeed: 'sort-cycle',

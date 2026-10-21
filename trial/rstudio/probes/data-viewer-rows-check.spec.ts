@@ -94,10 +94,11 @@ test('data-viewer-footer-rows-in-view applies, stays quiet, and fires on a contr
 
   // A launch whose window opened fitted to the screen draws every column, its
   // text wraps, and its rows are 37 px where the footer counts rows of 23, so
-  // the footer names rows that are not in view. It happens only in a hidden
-  // window, which docs/DEFECTS.md has as the engine's. There the check is
-  // right to fire as the viewer opens, and the states below, written for a
-  // viewer that agrees, do not hold.
+  // the footer names rows that are not in view. It happened only in a hidden
+  // window that had shown for a moment, until the engine was fixed on
+  // 2026-10-21 (docs/HISTORY.md), and is kept here should it come back. There
+  // the check is right to fire as the viewer opens, and the states below,
+  // written for a viewer that agrees, do not hold.
   const rowHeight = await frameFor(page)?.evaluate(
     () => document.querySelector<HTMLElement>('#rsGridData tr[aria-rowindex]')?.getBoundingClientRect().height ?? 0
   );

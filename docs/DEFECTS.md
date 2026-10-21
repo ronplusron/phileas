@@ -28,7 +28,7 @@ yet", "latent, not active", "that is a separate concern".
 
 ---
 
-**Twenty-one defects are recorded.** The launch layer landed in phase 1, so this
+**Twenty defects are recorded.** The launch layer landed in phase 1, so this
 file is no longer empty for the reason it used to be empty. Five of them were
 found by the whole-codebase review of 2026-09-27 and deferred rather than
 fixed with it, each for the reason its entry gives.
@@ -389,43 +389,6 @@ reached through fewer doors.
 **What would close it, not decided:** hashing every file a check imports,
 which the engine does not know how to find from the check alone; or the
 adapter declaring a version per check, which a person has to remember.
-
-## A hidden window can lay the application out as no shown window does
-
-**Filed 2026-10-21, measured; why is not known.** RStudio's data viewer,
-showing `paged`, 1,000 rows by 120 columns, laid itself out two ways in a
-hidden window, and one way only in a shown one, measured by
-`trial/rstudio/probes/viewer-row-height.spec.ts`:
-
-- **Shown, `PHILEAS_SHOW=back`:** 5 of 5 launches on 2026.11.0-daily+78
-  opened fitted to the display's work area, at y 33, and drew 10 columns of
-  23 px rows, the footer agreeing.
-- **Hidden, the default:** most launches opened at y 0, 1200 by 900, and
-  drew the same way. The rest opened fitted, at y 33, and drew all 120
-  columns, narrower, so 31 text cells of the first row wrapped and rows were
-  37 px, while the footer still counted rows of 23 and named rows not in
-  view: 14 of 33 launches on the daily build on 2026-10-19, and 1 of 8 on
-  the installed 2026.10.0 on 2026-10-21. A hidden window moved to the fitted
-  bounds before the viewer opened drew the narrow layout, so the bounds when
-  it opens are not the cause.
-
-**Why it is a defect and not a limit.** A Journey runs hidden by default, so
-a Route can meet, and a check can report, a layout no person using the
-application meets. RStudio's footer-rows check fires on it, rightly as far
-as the page goes, and the finding is the engine's. It was first recorded on
-2026-10-19 as a likely RStudio finding in `OUTSTANDING.md`, before a
-shown window had been measured; this reverses that reading, and
-`HISTORY.md`, 2026-10-21, has how.
-
-**Not known:** why a hidden window opens at y 0 one launch and fitted the
-next, and why the fitted hidden one draws every column. A reading, not
-measured: the engine keeps a window hidden by replacing its `show` method,
-`launch.ts`, so the window never becomes visible, and the grid may decide
-which columns are near the view from a visibility it never gets.
-
-**What would close it, not decided:** measuring what the grid reads to
-choose its columns in a hidden window, and keeping a hidden window as a
-shown one would be, or failing a Route that meets a layout it cannot trust.
 
 ## A Positron Route can save outside its home folder
 
