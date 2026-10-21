@@ -222,6 +222,23 @@ export function routeLines(result, { follow, cwd }) {
  * @returns {string | undefined}
  */
 export function replayVerdict(ending) {
+  const verdict = bareVerdict(ending);
+  const replays = ending.opening?.replays;
+  if (verdict === undefined || !replays) return verdict;
+  // Which of the adapter's checks and relations were edited since the Route
+  // was recorded, since the replay ran them as they are now.
+  const then = readEnding(replays.journal).opening?.checkFingerprints;
+  const now = ending.opening?.checkFingerprints;
+  const edited = then && now ? Object.keys(then).filter((name) => now[name] !== undefined && now[name] !== then[name]) : [];
+  return edited.length ? `${verdict}; edited since it was recorded: ${edited.join(', ')}` : verdict;
+}
+
+/**
+ * What a replay showed, before saying which checks were edited since.
+ * @param {ReturnType<typeof readEnding>} ending
+ * @returns {string | undefined}
+ */
+function bareVerdict(ending) {
   const replays = ending.opening?.replays;
   if (!replays) return undefined;
   const outcome = ending.outcome;

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { FrameName } from './app-under-test.js';
+import type { AppCheck, AppRelation, FrameName } from './app-under-test.js';
 import type { JournaledBuild } from './build.js';
 import type { JournaledPlatform } from './platform.js';
 import type { CaughtByStubs } from './caught.js';
@@ -499,6 +499,17 @@ export interface OpeningEntry {
   readonly checksNarrowed?: Readonly<Record<string, string>>;
   readonly checksInForce?: readonly string[];
   /**
+   * A fingerprint of each of the adapter's own checks and relations in force,
+   * by name, since 2026-10-21: a hash of its pattern and its functions' own
+   * source, `checkFingerprint`. A replay names each that differs now, so an
+   * edited check or relation is said rather than read as the application
+   * having changed. **It misses an edit in a helper the functions call,** as
+   * a Fix's fingerprint misses a constant outside it; a replay's comparison
+   * of each Detour step with the one recorded is what catches a relation
+   * edited that way, from what it does.
+   */
+  readonly checkFingerprints?: Readonly<Record<string, string>>;
+  /**
    * Which known findings the Route ran with: the file's version and how many
    * it held. Written because the file decides where a Route ends, though not
    * what it draws, and a replay under a newer file would otherwise look like a
@@ -551,6 +562,20 @@ export interface OpeningEntry {
 /** A Fix's fingerprint: the first twelve hex digits of a hash of its source. */
 export function fixFingerprint(fix: (...args: never[]) => unknown): string {
   return sourceHash(fix.toString());
+}
+
+/**
+ * A fingerprint of an adapter's check or relation: its name, a relation's
+ * `when` pattern, and the source of each of its functions, hashed. Like
+ * `fixFingerprint`, it sees only those functions' own text, not a helper or
+ * constant outside them.
+ */
+export function checkFingerprint(own: AppCheck | AppRelation): string {
+  const parts = Object.entries(own)
+    .filter(([key, value]) => key !== 'why' && (typeof value === 'function' || value instanceof RegExp || key === 'name'))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}: ${String(value)}`);
+  return sourceHash(parts.join('\n'));
 }
 
 /** The first twelve hex digits of a SHA-256 hash of some source text. */

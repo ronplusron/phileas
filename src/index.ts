@@ -179,6 +179,7 @@ export {
 export {
   Journal,
   readJournal,
+  checkFingerprint,
   journalPath,
   journalFolder,
   type JournalEntry,
@@ -261,6 +262,10 @@ export {
   findingOf,
   replayFix,
   CouldNotReplay,
+  CouldNotReplayDetour,
+  recordedDetours,
+  sameDetour,
+  changedSinceRecorded,
   REPLAY_VARIABLE,
   REPLAY_WHOLE_VARIABLE,
   REPLAY_CURRENT_FIX_VARIABLE,

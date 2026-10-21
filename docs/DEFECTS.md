@@ -364,40 +364,31 @@ name inside code. Until a replay exists nothing compares the recorded
 content either, so a changed Fix shows only to someone reading two
 journals side by side.
 
-## A relation edited after a Route was recorded changes its replay, with nothing saying so
+## An edit in a check's helper changes a replay's verdict, with nothing saying so
 
-**Filed 2026-10-19, confirmed by reading the code, when relations landed.**
-Each Route's opening line names the relations in force, in
-`checksInForce`, and each `detour-step` line records the step a Detour
-took. Nothing records what a relation is: its `when`, its steps, its way
-back, or its `read` and `expect`, which are code. Nothing compares the
-recorded Detour steps with the ones taken now either. So an edited relation
-reaches a replay, or a seed run again, unannounced:
+**Filed 2026-10-19 for relations, and narrowed on 2026-10-21.** Each
+Route's opening line now holds a fingerprint of each of the adapter's
+checks and relations in force, `checkFingerprints`: its pattern and its own
+functions' source, hashed. A replay names each that differs, on a note and
+in its verdict, runs only the relations in force when the Route was
+recorded, and stops as could not replay where a Hop's Detour is not the one
+recorded. `HISTORY.md`, 2026-10-21, has it.
 
-- **Its steps or way back changed:** RStudio's sort cycle with its way back
-  dropped leaves the column unsorted where the recorded Route had it sorted
-  ascending, and every Hop after it acts on another screen.
-- **Its `expect` changed:** loosened to compare fewer rows, a finding the old
-  relation made stops coming back, and the replay reports not reproduced,
-  which reads as a fixed bug.
+**What is left:** the fingerprint sees only a check's own functions, as a
+Fix's sees only its own function. Most of a check's logic is in helpers
+beside them, such as RStudio's `viewer.ts`, `footerAndRows` and the
+`FOOTER` pattern, and an edit there changes no fingerprint. For a relation
+that changes its steps, the Detour comparison catches it from what it
+does. For an edit that changes only a verdict, of a check or of a
+relation's `read` helper, nothing does: a replay can report a finding not
+reproduced, which reads as a fixed bug, through a check that was edited.
 
-**Why it is a defect and not a limit.** It is R13's failure: a recorded
-finding that stops reproducing reads as fixed, through the record meant to
-prevent it. It is the shape of the Fix fingerprint entry above, worse in
-one part, since a Fix's steps are on its lines and a relation's code is
-nowhere. **Half of it is older than relations:** an adapter's check has no
-fingerprint either, so an edited `run` already changes a replay's verdict
-unannounced. What relations add is that they act, so an edited one changes
-where a Route goes as well as what is judged.
+**Why it is a defect and not a limit.** It is R13's failure, as before,
+reached through fewer doors.
 
-**Not firing yet:** no Journey has run with a relation, so no journal holds
-one to replay. It starts to cost once a relation's findings are filed.
-
-**What would close it, not decided:** a fingerprint of each relation and
-check, its source hashed, on the opening line, with a replay refusing, or
-saying, where one differs; and a replay comparing each recorded Detour step
-with the one it takes. Agreed on 2026-10-19 to record this now and repair
-it later.
+**What would close it, not decided:** hashing every file a check imports,
+which the engine does not know how to find from the check alone; or the
+adapter declaring a version per check, which a person has to remember.
 
 ## A hidden window can lay the application out as no shown window does
 

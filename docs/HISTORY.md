@@ -25,6 +25,40 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-21: fingerprints for an adapter's checks and relations, and Detours compared on a replay
+
+**Why.** A relation edited after a Route was recorded changed its replay
+with nothing saying so, recorded in `DEFECTS.md` on 2026-10-19 and agreed
+then to be repaired before any relation's finding is filed. Three ways
+were laid out, and taken in the words "Hash + replay compare": a hash of
+each check's and relation's own functions, which misses a helper, and a
+replay comparing each Detour step with the one recorded, which catches a
+relation edited anywhere from what it does.
+
+**What was built.**
+- **Fingerprints:** each Route's opening line holds `checkFingerprints`,
+  for each of the adapter's checks and relations in force, a hash of its
+  name, a relation's `when`, and its functions' source, `checkFingerprint`
+  in `src/journal.ts`. Its `why` is left out, so rewording a reason
+  changes nothing.
+- **A replay names what was edited:** on a note before its first Hop, and
+  in its verdict, "edited since it was recorded: ...".
+- **A replay runs only the relations in force when the Route was
+  recorded,** so one added since does not send it somewhere the recording
+  never went, and a note says which were left out.
+- **A replay compares each Hop's Detour with the one recorded:** the same
+  relation, and steps of which one list begins the other. Otherwise it
+  stops as could not replay, `CouldNotReplayDetour`, naming both.
+
+**Shown,** by `tests/fingerprints.spec.ts`, 5 tests on `buggy`'s search: a
+fingerprint changing with a relation's steps, pattern or comparison and not
+its reason; a replay of the same relation saying nothing changed and taking
+the same Detour; one with its steps edited stopping at its Detour; one with
+only its comparison edited replaying and saying it was edited; and one
+added since left out of the replay. The defect is narrowed to what is left,
+an edit in a helper that changes only a verdict. Version 0.16.0, for the opening line's new
+field and a replay's new way to stop.
+
 ## 2026-10-21: the 37 px rows were the engine's, and the rows check counted wrong
 
 **Why.** The data viewer counting more rows than it drew had been recorded

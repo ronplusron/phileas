@@ -7,6 +7,7 @@ import { fixName } from './fixes.js';
 import { readTree } from './frames.js';
 import {
   Journal,
+  checkFingerprint,
   fixFingerprint,
   journalFolder,
   sourceHash,
@@ -26,7 +27,17 @@ import { routeOutputDir } from './output.js';
 import { checkChoiceFromEnvironment } from './check-choice.js';
 import { frameText, renderEntry, targetText } from './report/render.mjs';
 import { readKnownFindings } from './known.mjs';
-import { replayFix, replayFromEnvironment, replayOf, type ReplayPlan } from './replay.js';
+import {
+  changedSinceRecorded,
+  CouldNotReplayDetour,
+  recordedDetours,
+  replayFix,
+  replayFromEnvironment,
+  replayOf,
+  sameDetour,
+  type DetourTaken,
+  type ReplayPlan,
+} from './replay.js';
 import {
   AdapterCheckError,
   CheckFailure,
@@ -926,6 +937,15 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
   // stops the Route before it records anything.
   const choice = checkChoiceFromEnvironment(cfg);
   const onTheRoute = checksOnTheRoute(cfg, choice);
+  // Each of the adapter's own checks and relations in force, fingerprinted,
+  // so a replay can say which were edited since (docs/DEFECTS.md, until
+  // 2026-10-21, had a relation edited after recording change its replay
+  // unannounced).
+  const fingerprints = Object.fromEntries(
+    [...(cfg.checks ?? []), ...(cfg.relations ?? [])]
+      .filter((own) => onTheRoute.inForce.includes(own.name))
+      .map((own) => [own.name, checkFingerprint(own)])
+  );
   const journalDirectory = journalFolder(journalsRoot, journeySeed, requireRun());
   const outputDir = routeOutputDir(journalDirectory);
   const journal = Journal.open(journalDirectory, {
@@ -945,6 +965,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
     ...(onTheRoute.unavailable.length ? { checksUnavailable: onTheRoute.unavailable } : {}),
     ...(Object.keys(onTheRoute.narrowed).length ? { checksNarrowed: onTheRoute.narrowed } : {}),
     checksInForce: onTheRoute.inForce,
+    ...(Object.keys(fingerprints).length ? { checkFingerprints: fingerprints } : {}),
     ...(known ? { knownFindings: { version: known.version, entries: known.entries.length } } : {}),
     ...(cfg.varyingInSignatures?.length
       ? { varyingInSignatures: cfg.varyingInSignatures.map(([pattern, replacement]) => [String(pattern), replacement] as const) }
@@ -965,6 +986,22 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
         : {}),
   }, { follow });
   noteJournal(journal.file);
+
+  // A replay runs only the relations in force when the Route was recorded,
+  // so one added since does not send it somewhere the recording never went,
+  // and says which of the adapter's checks and relations were edited since,
+  // since it runs them as they are now.
+  const inForceThen = replay ? new Set(replay.recorded.opening.checksInForce ?? []) : undefined;
+  const detoursThen = replay ? recordedDetours(replay.recorded) : undefined;
+  if (replay) {
+    const changed = changedSinceRecorded(replay.recorded.opening.checkFingerprints, fingerprints);
+    const notThen = (cfg.relations ?? []).filter((relation) => onTheRoute.inForce.includes(relation.name) && !inForceThen?.has(relation.name));
+    const notes = [
+      ...(changed.length ? [`Edited since the Route was recorded, and run as they are now: ${changed.join(', ')}.`] : []),
+      ...(notThen.length ? [`Not in force when the Route was recorded, so not taken in this replay: ${notThen.map((relation) => relation.name).join(', ')}.`] : []),
+    ];
+    for (const note of notes) journal.write({ kind: 'note', hop: 1, note, at: new Date().toISOString() });
+  }
 
   const tally = createExclusionTally(cfg.exclusions, allowedGroups);
   let hops = 0;
@@ -1124,11 +1161,12 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
       // A relation this Hop starts, with its reading taken before the Hop
       // acts. Read only, so it takes no draw; see `detourFor`. A replay's
       // skipped Hop acts on nothing, so it starts none.
+      const relations = inForceThen ? watch.relations.filter((relation) => inForceThen.has(relation.name)) : watch.relations;
       const detour =
-        skipped || !watch.relations.length
+        skipped || !relations.length
           ? undefined
           : await detourFor(
-              watch.relations,
+              relations,
               { target: targetText(recordedTarget), action, ...(action === 'type' ? { value } : {}) },
               { page, app, tree: found.tree, responsiveMs }
             );
@@ -1219,11 +1257,24 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
 
       // The relation's Detour, after the Hop's own line and checks, so a Hop
       // that broke the application ends the Route as itself first.
+      // On a replay, what this Detour journals is kept to compare with the
+      // one recorded after the same Hop.
+      const takenNow: DetourTaken = { relation: detour?.relation.name ?? '', steps: [] };
+      const writes: Pick<Journal, 'write'> = detoursThen
+        ? {
+            write: (entry) => {
+              if (entry.kind === 'detour-step') (takenNow.steps as string[]).push(entry.label);
+              journal.write(entry);
+            },
+          }
+        : journal;
+      let detourThrew: unknown;
+      try {
       if (detour) {
         const reason =
           'notRun' in detour ? detour.notRun : abandoned !== undefined ? `the Hop that starts it was abandoned: ${abandoned}` : undefined;
         if (reason !== undefined) {
-          journal.write({
+          writes.write({
             kind: 'detour',
             hop: hops,
             relation: detour.relation.name,
@@ -1239,7 +1290,7 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
             app,
             hop: hops,
             tree: settling.tree,
-            journal,
+            journal: writes,
             watch,
             caught,
             timeline,
@@ -1253,6 +1304,18 @@ export async function runRoute(options: RunRouteOptions): Promise<RouteOutcome> 
           });
         }
       }
+      } catch (error) {
+        detourThrew = error;
+      }
+      // A Detour other than the recorded one proves nothing past this Hop,
+      // whatever it then found: the relation was edited, or the screen it
+      // met differs.
+      if (detoursThen) {
+        const then = detoursThen.get(hops);
+        const now = detour ? takenNow : undefined;
+        if (!sameDetour(then, now)) throw new CouldNotReplayDetour(hops, then, now);
+      }
+      if (detourThrew !== undefined) throw detourThrew;
 
       // After the entry is written, not before, so that `durationMs` stays the
       // Hop's own cost and a watched journal is comparable with an unwatched

@@ -54,7 +54,7 @@ navigation away exists.
 
 **Phases 0 through 4 are done, and the first real boundary is passed.**
 `proving-ground/buggy/` is a packaged Electron application built to be traveled
-through, and `npm test` runs five hundred tests, after a
+through, and `npm test` runs five hundred and five tests, after a
 typecheck. Seven launch it,
 refuse a stale bundle, report a bad boot in the application's own words, keep every
 window off the screen, and prove the outbound-link stub took effect rather than
@@ -233,7 +233,12 @@ holds, taking its Detour and its way back with no draw and no Hop of the
 Trip; a first step not on offer, which does not apply; a later one absent,
 which is a finding; one in the way of a rule, which breaks the Detour off;
 only the first relation that applies taking its Detour; and the
-stuck-search plant making it fire, with a replay aimed at its Hop.
+stuck-search plant making it fire, with a replay aimed at its Hop. Five came
+with fingerprints for an adapter's checks and relations: a fingerprint
+changing with a relation's functions and not its reason, a replay of the
+same saying nothing changed, one with its steps edited stopping at its
+Detour, one with only its comparison edited saying so, and a relation added
+since left out of the replay.
 
 The remote is `ronplusron/phileas`, created 2026-09-21 and scanned before
 first publication. It is public for now and will be private again;
@@ -431,7 +436,7 @@ itself forward partway through a Route, one a Positron Route saving
 outside its home folder, one a known finding with nothing particular
 in it matching every finding of its check, and one the log check keeping
 only the lines of an error that look like errors, and one the home folder
-guard blaming a Journey for a copy of the application it did not see, and one a relation edited after a Route was recorded changing its replay unannounced, and one a hidden window laying the application out as no shown window does. That file holds what is wrong, confirmed by reading the
+guard blaming a Journey for a copy of the application it did not see, and one an edit in a check's helper changing a replay's verdict unannounced, and one a hidden window laying the application out as no shown window does. That file holds what is wrong, confirmed by reading the
 code wherever a cause is known, and nothing here restates it.
 
 **Two demos live in `demo/`, apart from `proving-ground/`.** Rail Itinerary is the
@@ -531,7 +536,7 @@ Anything else that loads the engine by name, such as a trial run through the
 `npm run build`, or the compiled engine refuses to load and names the newer
 files. `PHILEAS_ALLOW_STALE_BUILD=1` runs it anyway for one run, and says so.
 
-`npm test` typechecks, then runs the engine's own five hundred tests against `proving-ground/buggy/`.
+`npm test` typechecks, then runs the engine's own five hundred and five tests against `proving-ground/buggy/`.
 It gives the run its own `phileas-suite-*` folder in the system temp folder,
 makes every profile and scratch folder inside it, and fails if anything is
 left there. A Journey keeps to a folder of its own the same way, so two runs

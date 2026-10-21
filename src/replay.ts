@@ -216,6 +216,77 @@ export function sameTarget(offered: JournaledCandidate, recorded: JournaledCandi
 }
 
 /**
+ * What a Detour after one Hop was, or is: the relation that took it, and
+ * the label of each step, the way back included, in order. Absent where the
+ * Hop started none.
+ */
+export interface DetourTaken {
+  readonly relation: string;
+  readonly steps: readonly string[];
+}
+
+/** Each recorded Hop's Detour, by the Hop it followed. */
+export function recordedDetours(recorded: Recorded): Map<number, DetourTaken> {
+  const detours = new Map<number, { relation: string; steps: string[] }>();
+  for (const entry of recorded.steps) {
+    if (entry.kind !== 'detour-step' && entry.kind !== 'detour') continue;
+    const taken = detours.get(entry.hop) ?? { relation: entry.relation, steps: [] };
+    if (entry.kind === 'detour-step') taken.steps.push(entry.label);
+    detours.set(entry.hop, taken);
+  }
+  return detours;
+}
+
+/** A Detour in words, for a refusal. */
+function detourText(detour: DetourTaken | undefined): string {
+  if (!detour) return 'none';
+  return `${detour.relation}'s, ${detour.steps.length ? detour.steps.join(', then ') : 'taking no step'}`;
+}
+
+/**
+ * Whether the Detour a replay took after a Hop is the one recorded: the same
+ * relation, and steps of which one list begins the other, since either Route
+ * may have ended partway through it on a finding.
+ */
+export function sameDetour(recorded: DetourTaken | undefined, taken: DetourTaken | undefined): boolean {
+  if (!recorded || !taken) return recorded === taken;
+  if (recorded.relation !== taken.relation) return false;
+  const shorter = Math.min(recorded.steps.length, taken.steps.length);
+  return recorded.steps.slice(0, shorter).every((step, i) => step === taken.steps[i]);
+}
+
+/**
+ * A replay that took another Detour after a Hop than the one recorded, or
+ * one where none was recorded, or none where one was: the relation was
+ * edited, or the screen it met differs. The replay proves nothing past it,
+ * as for a target not on offer (R13, R14). Its message begins as
+ * `CouldNotReplay`'s does, so the report reads it the same way.
+ */
+export class CouldNotReplayDetour extends Error {
+  constructor(
+    readonly hop: number,
+    readonly recorded: DetourTaken | undefined,
+    readonly taken: DetourTaken | undefined
+  ) {
+    super(`Could not replay hop ${hop}: its Detour when recorded was ${detourText(recorded)}, and now is ${detourText(taken)}.`);
+    this.name = 'CouldNotReplayDetour';
+  }
+}
+
+/**
+ * The adapter's checks and relations whose fingerprint differs from the one
+ * recorded, by name, among those both journals name. Empty for a journal
+ * from before fingerprints were recorded.
+ */
+export function changedSinceRecorded(
+  recorded: Readonly<Record<string, string>> | undefined,
+  now: Readonly<Record<string, string>> | undefined
+): string[] {
+  if (!recorded || !now) return [];
+  return Object.keys(recorded).filter((name) => now[name] !== undefined && now[name] !== recorded[name]);
+}
+
+/**
  * The chooser and the value generator that replay `hops`, in order, the first
  * `count` of them. `journaled` turns a surveyed candidate into the form the
  * journal writes, so the comparison is with what was recorded and not with
