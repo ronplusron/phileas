@@ -1839,18 +1839,9 @@ titles of RStudio's own data viewer tests, before Detours are built:
   state.
 - **The footer's "Showing X to Y" matches the rows drawn, and past ~200
   columns its "columns X to Y" the headers in view:** the rows half built
-  the same day, as `data-viewer-footer-rows-in-view`. **The columns half
-  is open,** for two reasons measured on 2026.11.0-daily+78 by
-  `trial/rstudio/probes/viewer-footer-range.spec.ts`. A header's
-  `data-col-idx` counts within the ~200 columns the page fetches, so f002,
-  the frame's column 302, reads 101, and nothing measured yet gives a
-  header's place in the whole frame; the summary sidebar lists every
-  column in order and may, unmeasured. And this half of the footer lagged a
-  sideways scroll: read at once it still named the range before, "columns
-  300 to 303" where 500 ms later it said "301 to 306", so a check of it
-  could read a footer the settle wait has not waited for. It also counts a
-  column partly in view, where the rows half counts only rows wholly in
-  view, and leaves out a pinned column once scrolled away from it.
+  the same day, as `data-viewer-footer-rows-in-view`, and the columns
+  half on 2026-10-22, as `data-viewer-footer-columns-in-view`, with a Fix
+  past 200 columns, `data-viewer-wide`; `HISTORY.md` has both.
 - **Sorting cycles ascending, descending and unsorted, and unsorted
   restores the original row order:** a relation (R20), built the same day
   with Detours, as `data-viewer-sort-cycle-restores-order`; `HISTORY.md`

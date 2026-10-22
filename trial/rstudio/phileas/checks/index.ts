@@ -1,5 +1,6 @@
 import type { AppCheck, AppRelation } from '@drugstoresushi/phileas';
 import { dataViewerCountsMatchEnvironment } from './data-viewer/data-viewer-counts-match-environment';
+import { dataViewerFooterColumnsInView } from './data-viewer/data-viewer-footer-columns-in-view';
 import { dataViewerFooterRowsInView } from './data-viewer/data-viewer-footer-rows-in-view';
 import { dataViewerSortCycleRestoresOrder } from './data-viewer/data-viewer-sort-cycle-restores-order';
 import { dataViewerSortedColumnInOrder } from './data-viewer/data-viewer-sorted-column-in-order';
@@ -16,6 +17,7 @@ export const checks: readonly AppCheck[] = [
   dataViewerCountsMatchEnvironment,
   dataViewerSortedColumnInOrder,
   dataViewerFooterRowsInView,
+  dataViewerFooterColumnsInView,
 ];
 
 /**

@@ -7,9 +7,7 @@ import { shownViewer } from './viewer';
  * the grid's view: every row wholly in view is among X to Y, and every row
  * from X to Y is at least partly in view. Two places on screen stating one
  * fact (R18). The columns half of the footer, "columns X to Y of N" past
- * ~200 columns, is not checked: the page's own column positions count within
- * the ~200 columns it fetches, not across the frame, and nothing measured
- * yet gives a header's place in the whole.
+ * ~200 columns, is `data-viewer-footer-columns-in-view`.
  *
  * **Measured on RStudio 2026.11.0-daily+78, not taken from its code,** by
  * `trial/rstudio/probes/viewer-footer-range.spec.ts` on 2026-10-19 and

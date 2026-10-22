@@ -282,7 +282,7 @@ never named, and reaching it waits for scrolling as a move of its own.
 draw, now stage 6: checks that know intent, a model measured against
 Phileas, Fixes a model drafts, and scrolling as a move, in that order.
 `docs/PLAN.md` has it. Its first part, checks that know intent, is being
-built on RStudio: four checks of one moment exist, below, and since
+built on RStudio: five checks of one moment exist, below, and since
 2026-10-19 the engine takes Detours for an adapter's relations (R20), with
 RStudio's first relation, the sort cycle, below.
 
@@ -321,15 +321,16 @@ package vulnerability check, is `ronplusron/phileas` issue 97.
 seven filed against five issues, issue 97's one error being three
 entries, and one dismissed as a false alarm; the 28 WCAG findings, from
 the check that is off by default, are all unfiled.
-**Its adapter has four checks of its own:** `unsaved-mark-matches-save`,
+**Its adapter has five checks of its own:** `unsaved-mark-matches-save`,
 since 2026-10-16, in `trial/rstudio/phileas/checks/source/`, the selected
-document's unsaved mark against the main toolbar's Save; and three in
-`checks/data-viewer/`, each from 2026-10-19:
+document's unsaved mark against the main toolbar's Save; and four in
+`checks/data-viewer/`, three from 2026-10-19 and one from 2026-10-22:
 `data-viewer-counts-match-environment`, the data viewer's rows and columns
 against the Environment pane's; `data-viewer-sorted-column-in-order`, a
 column marked sorted showing its values in order; and
 `data-viewer-footer-rows-in-view`, the footer's "Showing X to Y" against
-the rows in view. **And one relation,**
+the rows in view; and `data-viewer-footer-columns-in-view`, past ~200
+columns its "columns X to Y" against the columns in view. **And one relation,**
 `data-viewer-sort-cycle-restores-order`: a column sorted ascending from the
 sidebar starts a Detour that sorts it descending and then removes the sort,
 compares the rows in view with those before, and sorts it ascending again
@@ -344,7 +345,9 @@ whose frame holds 69 controls, the same six for each column, which
 `docs/OUTSTANDING.md` 1.15 records as crowding; 39 of them show at the
 start, and the rest are out of sight in its column list; or
 `data-viewer-paged`, `paged`, 1,000 rows by 120 columns built in the
-console and shown in the data viewer, which the Environment pane lists.
+console and shown in the data viewer, which the Environment pane lists;
+or `data-viewer-wide`, `wide`, 1,000 rows by 450 columns, past where the
+footer counts the columns in view.
 Its Journey fails the run when the machine's R libraries
 changed. Its Routes see the person's own R library after their own, so an
 install still lands in the Route's; `PHILEAS_R_PERSONAL_LIBRARY=0` leaves

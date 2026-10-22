@@ -25,6 +25,67 @@ argument, and re-deriving them would cost it again.
 
 ---
 
+## 2026-10-22: the data viewer's footer columns, a check, and a Fix past 200 columns
+
+**Why.** Of the rule read off RStudio's own data viewer tests on 2026-10-19,
+that the footer's ranges match what is in view, only the rows half had been
+built. The columns half, "columns X to Y of N", which the footer adds past
+~200 columns, was left open for two reasons: a header's `data-col-idx`
+counts within the ~200 columns the page fetches, and nothing measured gave
+a header's place in the whole frame; and the footer had lagged a sideways
+scroll by up to 500 ms, which a check could read before it caught up.
+
+**Measured on RStudio 2026.11.0-daily+78,** by
+`trial/rstudio/probes/viewer-footer-columns.spec.ts`, on `wide`, 1,000 rows
+by 450 columns, hidden and shown, and pinning and hiding in both by the
+check's test below, since the probe's click on Pin missed in a shown window:
+- **A header's `title` gives its place in the whole frame,** as "column
+  301: integer with range ...", where its `data-col-idx` says 100. It
+  matched the order the frame was built in on every header read. The
+  sidebar's column list builds only 11 or 12 "Scroll to column" buttons at
+  a time, so it cannot give a place.
+- **The footer named exactly the columns at least partly in view,** after
+  the engine's settle wait, at every reading.
+- **The lag is the grid redrawing,** not the footer alone: right after a
+  sideways scroll the footer named the old range while no header was yet in
+  view, and both caught up about 200 ms later. The settle wait, 487 to 793
+  ms, outlasted it every time.
+- **A pinned column is drawn in `#pinnedTable`,** outside the grid's
+  viewport, and the footer leaves it out: with column 3 pinned, at the
+  grid's start, it said 1 to 5 while the viewport drew 1, 2, 4 and 5.
+- **A hidden column keeps its place in the range,** undrawn: with column 2
+  hidden, "columns 1 to 6 of 450 (1 hidden)".
+
+**The check, `data-viewer-footer-columns-in-view`,** in
+`trial/rstudio/phileas/checks/data-viewer/`, on by default, with the rows
+check's shape, chosen from two offered over asserting the footer's exact
+rounding: every column wholly in the grid's view is among X to Y, and every
+place from X to Y is a column at least partly in view or pinned, by each
+header's title. As many places as the footer says are hidden may be
+neither, chosen from three offered over requiring them to lie between the
+columns drawn, unmeasured at the view's edge, and over setting the check
+aside while any column is hidden, which a Route does often. That lets one
+wrong place through for each hidden column. It is a check of its own,
+chosen over widening the rows check, so that check keeps its name and its
+findings.
+
+**The Fix, `data-viewer-wide`,** builds `wide` and views it, since
+`data-viewer-paged`'s 120 columns never reach the second form of the
+footer. Chosen over widening `paged`, which would change that Fix's
+fingerprint and what its recorded Routes replay.
+
+**Shown to apply, stay quiet and fire,** by
+`trial/rstudio/probes/data-viewer-columns-check.spec.ts`, which runs the Fix
+outside a Route and settles after every move, passing hidden and shown. It
+did not apply with nothing open or on a frame of 120 columns. It applied and
+was quiet as opened, at six sideways positions with the leftmost column
+from 0.12 to 1.00 in view, after
+the sidebar's "Scroll to column n010", with a column pinned at the start and
+scrolled away, and with a column hidden. It fired with the footer narrowed
+to its first column, with the footer widened two columns past the view with
+one hidden, where one past was quiet as the control, and with a column in
+view retitled to place 999.
+
 ## 2026-10-21: a hidden window that had shown for a moment was starved of frames
 
 **Why.** A hidden window could lay the application out as no shown window
