@@ -316,11 +316,15 @@ and the one failure was issue 64. **A batch of 600 on 2026.10.0** followed
 on 2026-10-08, 100 Routes of 20 Hops from each of six starts, two at a
 time: 594 passed, and its one new RStudio bug, detaching utils breaking the
 package vulnerability check, is `ronplusron/phileas` issue 97.
-`docs/HISTORY.md` has it, and the engine repairs it led to. Its
-`known-findings.json` holds 36 entries: the 8 log findings are settled,
-seven filed against five issues, issue 97's one error being three
-entries, and one dismissed as a false alarm; the 28 WCAG findings, from
-the check that is off by default, are all unfiled.
+`docs/HISTORY.md` has it, and the engine repairs it led to. **A bug
+found by a check that knows intent** came on 2026-10-22, from the
+first Journey of `data-viewer-footer-columns-in-view`: pinning a second
+column leaves the data viewer's footer naming columns no longer in view
+until the grid is next scrolled, issue 127. Its `known-findings.json`
+holds 37 entries: the 8 log findings are settled, seven filed against
+five issues, issue 97's one error being three entries, and one dismissed
+as a false alarm; the 28 WCAG findings, from the check that is off by
+default, are all unfiled; and the footer's, filed as issue 127.
 **Its adapter has five checks of its own:** `unsaved-mark-matches-save`,
 since 2026-10-16, in `trial/rstudio/phileas/checks/source/`, the selected
 document's unsaved mark against the main toolbar's Save; and four in

@@ -74,17 +74,41 @@ findings.
 footer. Chosen over widening `paged`, which would change that Fix's
 fingerprint and what its recorded Routes replay.
 
+**Its first Journey,** d67de3d75474, 10 Routes of 20 Hops from the new Fix,
+hidden: 7 passed and 3 failed, each on this check, and every check and
+relation of RStudio's applied on some step. Replayed step by step by
+`trial/rstudio/probes/viewer-footer-columns-routes.spec.ts`:
+- **Route 8 found RStudio's:** with n003 pinned and then n005, the grid's
+  view narrowed to 195 px and drew columns 1 to 3, while the footer still
+  said "columns 1 to 5", column 5 wholly out of view. A 1 px scroll made it
+  say 1 to 3. So the footer is not worked out again when a pin narrows the
+  view, only on the next scroll. Reproduced in all 3 replays, 2 hidden and
+  1 shown, and filed as `ronplusron/phileas` issue 127, its finding
+  `bbef0d7a` known and filed against it.
+- **Routes 6 and 9 were the check's:** each widened the view, by closing
+  the summary panel and by the main page's "Summary" button, and the footer
+  then named the column at the view's new right edge, 3 px and 0 px of it
+  showing, whose header the grid draws only on the next scroll. So the
+  footer's first or last column may now be undrawn where it is the one just
+  past those drawn and they end within 5 px of the view's edge, chosen from
+  two offered over never requiring either end to be drawn, which would have
+  passed route 8. Replayed with the rule, routes 6 and 9 are quiet at the
+  footers they failed on, and route 8 still fires. Their findings,
+  `0adce834` and `2904bba8`, were the check's and were removed from the
+  known findings.
+
 **Shown to apply, stay quiet and fire,** by
 `trial/rstudio/probes/data-viewer-columns-check.spec.ts`, which runs the Fix
 outside a Route and settles after every move, passing hidden and shown. It
 did not apply with nothing open or on a frame of 120 columns. It applied and
 was quiet as opened, at six sideways positions with the leftmost column
-from 0.12 to 1.00 in view, after
-the sidebar's "Scroll to column n010", with a column pinned at the start and
-scrolled away, and with a column hidden. It fired with the footer narrowed
-to its first column, with the footer widened two columns past the view with
-one hidden, where one past was quiet as the control, and with a column in
-view retitled to place 999.
+from 0.12 to 1.00 in view, after the sidebar's "Scroll to column n010", with
+one column pinned, with two pinned once scrolled 1 px and when scrolled
+away, with a column hidden, and with the summary panel closed. It fired on
+RStudio's own stale footer after route 8's two pins, with the footer
+narrowed to its first column, with the footer widened two columns past the
+view with one hidden, where one past was quiet as the control, and with a
+column in view retitled to place 999.
 
 ## 2026-10-21: a hidden window that had shown for a moment was starved of frames
 

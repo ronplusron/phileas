@@ -81,6 +81,18 @@ async function scroll(page: Page, share: number, columns = 0): Promise<string> {
   );
 }
 
+/** Scrolls the grid 1 px right and back, which makes the footer work out its range again, and settles. */
+async function nudge(page: Page): Promise<void> {
+  for (const by of [1, -1]) {
+    await frameFor(page)?.evaluate((by) => {
+      const viewport = document.getElementById('gridViewport');
+      if (viewport) viewport.scrollLeft += by;
+    }, by);
+    await page.waitForTimeout(500);
+  }
+  await settle(page, 10_000);
+}
+
 async function clickInViewer(page: Page, name: string): Promise<void> {
   await frameFor(page)?.getByRole('button', { name, exact: true }).first().click({ timeout: 5_000 });
   await settle(page, 10_000);
@@ -156,19 +168,38 @@ test('data-viewer-footer-columns-in-view applies, stays quiet, and fires on a co
   await clickInViewer(page, 'Scroll to column n010');
   expect(await verdict(context, 'sidebar: scroll to column n010')).toEqual({ applies: true, found: [] });
 
-  // A column pinned, as opened and scrolled away from it.
+  // A column pinned, as opened, where the footer happens to stay right.
   await scroll(page, 0);
-  await clickInViewer(page, 'Pin column n002');
-  expect(await verdict(context, 'n002 pinned, at the start')).toEqual({ applies: true, found: [] });
+  await clickInViewer(page, 'Pin column n003');
+  expect(await verdict(context, 'n003 pinned, at the start')).toEqual({ applies: true, found: [] });
+
+  // RStudio's own: a second pin narrows the view again, and the footer is
+  // not worked out again until the next scroll, as on route 8 of Journey
+  // d67de3d75474, whose steps these are (probes/viewer-footer-columns-routes.spec.ts).
+  // The check fires on it, and a 1 px scroll, which puts the footer right,
+  // quiets it.
+  await clickInViewer(page, 'Pin column n005');
+  const stale = await verdict(context, "n005 pinned too: RStudio's stale footer");
+  expect(stale.applies).toBe(true);
+  expect(JSON.stringify(stale.found)).toMatch(/says columns 1 to 5, and names column 5, neither in view nor pinned/);
+  await nudge(page);
+  expect(await verdict(context, 'scrolled 1 px and back, the control')).toEqual({ applies: true, found: [] });
   await scroll(page, 0.5);
-  expect(await verdict(context, 'n002 pinned, sideways to 0.5')).toEqual({ applies: true, found: [] });
+  expect(await verdict(context, 'two pinned, sideways to 0.5')).toEqual({ applies: true, found: [] });
 
   // A column hidden, where the footer counts what is left.
   await scroll(page, 0);
   await clickInViewer(page, 'Hide column n001');
-  expect(await verdict(context, 'n001 hidden, n002 pinned, at the start')).toEqual({ applies: true, found: [] });
+  expect(await verdict(context, 'n001 hidden, two pinned, at the start')).toEqual({ applies: true, found: [] });
   await scroll(page, 0.3);
-  expect(await verdict(context, 'n001 hidden, n002 pinned, sideways to 0.3')).toEqual({ applies: true, found: [] });
+  expect(await verdict(context, 'n001 hidden, two pinned, sideways to 0.3')).toEqual({ applies: true, found: [] });
+
+  // The view widened by closing the summary panel, as on route 6: the footer
+  // names the column at the view's new edge before the grid draws it.
+  await clickInViewer(page, 'Toggle column summary panel');
+  expect(await verdict(context, 'summary panel closed, the view widened')).toEqual({ applies: true, found: [] });
+  await scroll(page, 0.3);
+  expect(await verdict(context, 'summary panel closed, sideways to 0.3')).toEqual({ applies: true, found: [] });
 
   // Where it has nothing to compare: a frame under ~200 columns, whose
   // footer says "120 total columns".
@@ -188,8 +219,10 @@ test('data-viewer-footer-columns-in-view applies, stays quiet, and fires on a co
   // says "(1 hidden)" and one place it names may be neither in view nor pinned.
 
   // One way: the footer narrowed to its first column alone, leaving out the
-  // columns wholly in view after it.
-  await scroll(page, 0.3);
+  // columns wholly in view after it. Half a column across, so the last
+  // column the footer names is drawn and partly in view, not one at the
+  // view's very edge, which the check allows only as the footer's last.
+  await scroll(page, 0.3, 0.5);
   const before = await sayColumns(page, 0, 0);
   expect(before, 'the footer was found').toBeDefined();
   const { from, to } = before as { from: number; to: number };

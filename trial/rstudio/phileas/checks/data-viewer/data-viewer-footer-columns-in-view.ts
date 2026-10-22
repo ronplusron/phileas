@@ -6,8 +6,10 @@ import { shownViewer } from './viewer';
  * Past ~200 columns, the data viewer's footer adds "columns X to Y of N",
  * and those name the columns in the grid's view: every column wholly in view
  * is among X to Y, and every column from X to Y is at least partly in view,
- * or pinned, or one of those the footer says are hidden. Two places on screen stating one fact (R18), the columns half of
- * what `data-viewer-footer-rows-in-view` checks for rows. Under ~200 columns
+ * or pinned, or one of those the footer says are hidden, or the one at the
+ * very edge of the view, below. Two places on screen stating one fact (R18),
+ * the columns half of what `data-viewer-footer-rows-in-view` checks for
+ * rows. Under ~200 columns
  * the footer says "N total columns" instead, and this does not apply.
  *
  * **Measured on RStudio 2026.11.0-daily+78, not taken from its code,** by
@@ -33,6 +35,21 @@ import { shownViewer } from './viewer';
  *   That lets one wrong place through for each hidden column, chosen on
  *   2026-10-22 over setting the check aside whenever a column is hidden,
  *   which a Route does often.
+ * - **The footer may name the column at the view's very edge, undrawn,**
+ *   once the view has widened, as it does when the summary panel closes:
+ *   measured on 2026-10-22 by `viewer-footer-columns-routes.spec.ts`,
+ *   replaying routes 6 and 9 of the check's first Journey, d67de3d75474,
+ *   which it failed. The grid drew up to 3 px and 0 px short of the view's
+ *   right edge, the footer named the next column, and the grid drew that
+ *   column's header only once it was next scrolled. So the footer's first
+ *   or last column may be undrawn where it is the one just past those drawn
+ *   and they end within 5 px of the view's edge, chosen the same day over
+ *   never requiring either end to be drawn.
+ * - **The footer is not worked out again when a pin narrows the view,**
+ *   only on the next scroll, measured the same way from route 8: with a
+ *   second column pinned the view showed columns 1 to 3 while the footer
+ *   still said 1 to 5, column 5 wholly out of view, and a 1 px scroll made
+ *   it say 1 to 3. That is RStudio's, and this check finds it.
  * - **The footer lags a sideways scroll** until the grid has drawn the new
  *   columns, about 200 ms, and the headers in view lag with it; the settle
  *   wait outlasted it at every reading.
@@ -44,15 +61,20 @@ import { shownViewer } from './viewer';
 const FOOTER = /columns ([\d,]+) to ([\d,]+) of ([\d,]+)/;
 const PLACE = /^column (\d+):/;
 const HIDDEN = /\(([\d,]+) hidden\)/;
+/** How near the view's edge the columns drawn must end for the footer to name the next one undrawn. */
+const EDGE_PX = 5;
 
 const count = (text: string) => Number(text.replace(/,/g, ''));
 
 /**
  * The footer's text; the places of the unpinned columns wholly and partly in
- * the grid's view, lowest first; the places of the pinned columns; and how
- * many headers in view carry no place in their title.
+ * the grid's view, lowest first; the places of the pinned columns; how many
+ * headers in view carry no place in their title; and how far inside the
+ * view's left and right edges the columns partly in view begin and end.
  */
-async function footerAndColumns(frame: Frame): Promise<{ footer?: string; whole: number[]; partly: number[]; pinned: number[]; unplaced: number }> {
+async function footerAndColumns(
+  frame: Frame
+): Promise<{ footer?: string; whole: number[]; partly: number[]; pinned: number[]; unplaced: number; leftGap: number; rightGap: number }> {
   return frame.evaluate((placePattern) => {
     const place = new RegExp(placePattern);
     const footer = [...document.querySelectorAll<HTMLElement>('*')].find((element) =>
@@ -65,6 +87,7 @@ async function footerAndColumns(frame: Frame): Promise<{ footer?: string; whole:
     const partly: number[] = [];
     const pinned: number[] = [];
     let unplaced = 0;
+    let [first, last] = [Infinity, -Infinity];
     for (const header of document.querySelectorAll<HTMLElement>('th[role="columnheader"]')) {
       const box = header.getBoundingClientRect();
       const at = place.exec(header.getAttribute('title') ?? '');
@@ -78,10 +101,20 @@ async function footerAndColumns(frame: Frame): Promise<{ footer?: string; whole:
         continue;
       }
       partly.push(Number(at[1]));
+      first = Math.min(first, box.left);
+      last = Math.max(last, box.right);
       if (box.left >= left - 1 && box.right <= right + 1) whole.push(Number(at[1]));
     }
     const ascending = (a: number, b: number) => a - b;
-    return { footer: footer?.innerText.trim(), whole: whole.sort(ascending), partly: partly.sort(ascending), pinned: pinned.sort(ascending), unplaced };
+    return {
+      footer: footer?.innerText.trim(),
+      whole: whole.sort(ascending),
+      partly: partly.sort(ascending),
+      pinned: pinned.sort(ascending),
+      unplaced,
+      leftGap: first - left,
+      rightGap: right - last,
+    };
   }, PLACE.source);
 }
 
@@ -101,7 +134,8 @@ export const dataViewerFooterColumnsInView: AppCheck = {
   name: 'data-viewer-footer-columns-in-view',
   why:
     "Past ~200 columns, the data viewer's footer, \"columns X to Y\", names every column wholly in the grid's view, " +
-    "and only columns at least partly in it, pinned, or as many as it says are hidden, by each header's place in the frame. " +
+    "and only columns at least partly in it, pinned, as many as it says are hidden, or the one at the view's very edge, " +
+    "by each header's place in the frame. " +
     'Measured on RStudio 2026.11.0-daily+78 on 2026-10-22.',
 
   async appliesWhen({ page }) {
@@ -114,14 +148,20 @@ export const dataViewerFooterColumnsInView: AppCheck = {
   async run({ page }) {
     const shown = await shownViewer(page);
     if (!shown) return { notRun: 'the data viewer went away before it could be read' };
-    const { footer, whole, partly, pinned, unplaced } = await footerAndColumns(shown.frame);
+    const { footer, whole, partly, pinned, unplaced, leftGap, rightGap } = await footerAndColumns(shown.frame);
     const match = footer === undefined ? null : FOOTER.exec(footer);
     if (!match?.[1] || !match[2]) return { notRun: `the data viewer's footer for ${shown.object} reads "${footer ?? ''}", which is not a range of columns this check knows` };
     if (unplaced > 0) return { notRun: `the data viewer for ${shown.object} draws ${unplaced} column ${unplaced === 1 ? 'header' : 'headers'} in view with no place in ${unplaced === 1 ? 'its' : 'their'} title` };
     if (whole.length === 0) return { notRun: `the data viewer for ${shown.object} no longer draws an unpinned column wholly in view` };
     const [said, saidTo] = [count(match[1]), count(match[2])];
     const leftOut = whole.filter((place) => place < said || place > saidTo);
-    const accounted = new Set([...partly, ...pinned]);
+    // The column just past those drawn, at either end, where they end at the view's very edge.
+    const atEdge = (gap: number) => gap >= -1 && gap <= EDGE_PX;
+    const edges = [
+      ...(atEdge(leftGap) && partly.length ? [(partly[0] as number) - 1] : []),
+      ...(atEdge(rightGap) && partly.length ? [(partly[partly.length - 1] as number) + 1] : []),
+    ];
+    const accounted = new Set([...partly, ...pinned, ...edges.filter((place) => place === said || place === saidTo)]);
     const unseen = Array.from({ length: Math.max(0, saidTo - said + 1) }, (_, i) => said + i).filter((place) => !accounted.has(place));
     const hidden = count(HIDDEN.exec(footer ?? '')?.[1] ?? '0');
     const wrong = [
